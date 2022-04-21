@@ -1,6 +1,7 @@
 project(contextualplanner)
 cmake_minimum_required(VERSION 2.8)
 
+include(contextualplanner-config.cmake)
 
 # Making a lib
 set(CHATBOTPLANNER_HPPS
