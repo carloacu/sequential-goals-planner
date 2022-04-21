@@ -170,6 +170,10 @@ struct CONTEXTUALPLANNER_API Domain
 {
   Domain(const std::map<ActionId, Action>& pActions);
 
+  void addAction(ActionId pActionId,
+                 const Action& pAction);
+  void removeAction(ActionId pActionId);
+
   const std::map<ActionId, Action>& actions() const { return _actions; }
   const std::map<std::string, std::set<ActionId>>& preconditionToActions() const { return _preconditionToActions; }
   const std::map<std::string, std::set<ActionId>>& preconditionToActionsExps() const { return _preconditionToActionsExps; }
