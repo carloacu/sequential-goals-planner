@@ -156,6 +156,29 @@ void _noPreconditionGoalImmediatlyReached()
 }
 
 
+void _removeFirstGoalsThatAreAlreadySatisfied()
+{
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
+  cp::Domain domain(actions);
+
+  cp::Problem problem;
+  problem.setGoals({_fact_beHappy});
+
+  std::map<std::string, std::string> parameters;
+  auto actionId = cp::lookForAnActionToDo(parameters, problem, domain);
+  assert_eq(_action_goodBoy, cp::printActionIdWithParameters(actionId, parameters));
+
+  auto itAction = domain.actions().find(_action_goodBoy);
+  assert_true(itAction != domain.actions().end());
+  problem.notifyActionDone(_action_goodBoy, parameters, itAction->second.effects, nullptr);
+
+  assert_true(!problem.goals().empty());
+  problem.removeFirstGoalsThatAreAlreadySatisfied();
+  assert_true(problem.goals().empty());
+}
+
+
 void _removeAnAction()
 {
   std::map<cp::ActionId, cp::Action> actions;
@@ -773,6 +796,7 @@ int main(int argc, char *argv[])
   test_arithmeticEvaluator();
   _test_setOfFactsFromStr();
   _noPreconditionGoalImmediatlyReached();
+  _removeFirstGoalsThatAreAlreadySatisfied();
   _removeAnAction();
   _removeSomeGoals();
   _noPlanWithALengthOf2();

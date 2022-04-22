@@ -239,6 +239,7 @@ struct CONTEXTUALPLANNER_API Problem
   void pushFrontGoal(const Goal& pGoal);
   void pushBackGoal(const Goal& pGoal);
   void removeGoals(const std::string& pGoalGroupId);
+  ActionId removeFirstGoalsThatAreAlreadySatisfied();
   void notifyActionDone(const std::string& pActionId,
                         const std::map<std::string, std::string>& pParameters,
                         const SetOfFacts& pEffect,

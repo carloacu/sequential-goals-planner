@@ -1162,6 +1162,25 @@ void Problem::removeGoals(const std::string& pGoalGroupId)
 }
 
 
+ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
+{
+  ActionId res;
+  auto isGoalNotAlreadySatisfied = [&](const Goal& pGoal){
+    auto* goalConditionFactPtr = pGoal.conditionFactPtr();
+    if (goalConditionFactPtr == nullptr ||
+        _facts.count(*goalConditionFactPtr) > 0)
+    {
+      auto& goalFact = pGoal.fact();
+      return _facts.count(goalFact) == 0;
+    }
+    return true;
+  };
+
+  iterateOnGoalAndRemoveNonPersistent(isGoalNotAlreadySatisfied);
+  return res;
+}
+
+
 void Problem::notifyActionDone(const std::string& pActionId,
     const std::map<std::string, std::string>& pParameters,
     const SetOfFacts& pEffect,
