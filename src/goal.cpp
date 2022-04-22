@@ -7,10 +7,12 @@ const std::string Goal::persistFunctionName = "persist";
 const std::string Goal::implyFunctionName = "imply";
 
 
-Goal::Goal(const std::string& pStr)
+Goal::Goal(const std::string& pStr,
+           const std::string& pGoalGroupId)
   : _isPersistent(false),
     _conditionFactPtr(),
-    _fact(Fact::fromStr(pStr))
+    _fact(Fact::fromStr(pStr)),
+    _goalGroupId(pGoalGroupId)
 {
   if (_fact.name == persistFunctionName &&
       _fact.parameters.size() == 1 &&
@@ -32,7 +34,8 @@ Goal::Goal(const std::string& pStr)
 Goal::Goal(const Goal& pOther)
   : _isPersistent(pOther._isPersistent),
     _conditionFactPtr(pOther._conditionFactPtr ? std::unique_ptr<Fact>(new Fact(*pOther._conditionFactPtr)) : std::unique_ptr<Fact>()),
-    _fact(pOther._fact)
+    _fact(pOther._fact),
+    _goalGroupId(pOther._goalGroupId)
 {
 }
 
@@ -41,12 +44,14 @@ void Goal::operator=(const Goal& pOther)
   _isPersistent = pOther._isPersistent;
   _conditionFactPtr = pOther._conditionFactPtr ? std::unique_ptr<Fact>(new Fact(*pOther._conditionFactPtr)) : std::unique_ptr<Fact>();
   _fact = pOther._fact;
+  _goalGroupId = pOther._goalGroupId;
 }
 
 bool Goal::operator==(const Goal& pOther) const
 {
   return _isPersistent == pOther._isPersistent &&
-      _fact == pOther._fact;
+      _fact == pOther._fact &&
+      _goalGroupId == pOther._goalGroupId;
 }
 
 

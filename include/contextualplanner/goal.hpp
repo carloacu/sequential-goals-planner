@@ -13,7 +13,8 @@ namespace cp
 
 struct CONTEXTUALPLANNER_API Goal
 {
-  Goal(const std::string& pStr);
+  Goal(const std::string& pStr,
+       const std::string& pGoalGroupId = "");
   Goal(const Goal& pOther);
 
   void operator=(const Goal& pOther);
@@ -24,6 +25,7 @@ struct CONTEXTUALPLANNER_API Goal
   bool isPersistent() const { return _isPersistent; }
   const Fact* conditionFactPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
   const Fact& fact() const { return _fact; }
+  const std::string& getGoalGroupId() const { return _goalGroupId; }
 
   static const std::string persistFunctionName;
   static const std::string implyFunctionName;
@@ -32,6 +34,7 @@ private:
   bool _isPersistent;
   std::unique_ptr<Fact> _conditionFactPtr;
   Fact _fact;
+  std::string _goalGroupId;
 };
 
 } // !cp

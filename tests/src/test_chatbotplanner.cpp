@@ -170,6 +170,25 @@ void _removeAnAction()
 }
 
 
+void _removeSomeGoals()
+{
+  const std::string goalGroupId = "greetAndCheckIn";
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+  actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
+  cp::Domain domain(actions);
+
+  cp::Problem problem;
+  problem.setGoals({_fact_beHappy});
+  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, goalGroupId));
+  problem.pushFrontGoal(cp::Goal(_fact_greeted, goalGroupId));
+  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  problem.removeGoals(goalGroupId);
+  assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
+}
+
+
 void _noPlanWithALengthOf2()
 {
   std::map<std::string, cp::Action> actions;
@@ -755,6 +774,7 @@ int main(int argc, char *argv[])
   _test_setOfFactsFromStr();
   _noPreconditionGoalImmediatlyReached();
   _removeAnAction();
+  _removeSomeGoals();
   _noPlanWithALengthOf2();
   _noPlanWithALengthOf3();
   _2preconditions();

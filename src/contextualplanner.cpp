@@ -1129,10 +1129,36 @@ void Problem::addGoals(const std::vector<Goal>& pGoals)
   onGoalsChanged(_goals);
 }
 
+
+void Problem::pushFrontGoal(const Goal& pGoal)
+{
+  _goals.insert(_goals.begin(), pGoal);
+  onGoalsChanged(_goals);
+}
+
 void Problem::pushBackGoal(const Goal& pGoal)
 {
   _goals.push_back(pGoal);
   onGoalsChanged(_goals);
+}
+
+void Problem::removeGoals(const std::string& pGoalGroupId)
+{
+  bool aGoalHasBeenRemoved = false;
+  for (auto it = _goals.begin(); it != _goals.end(); )
+  {
+    if (it->getGoalGroupId() == pGoalGroupId)
+    {
+      it = _goals.erase(it);
+      aGoalHasBeenRemoved = true;
+    }
+    else
+    {
+      ++it;
+    }
+  }
+  if (aGoalHasBeenRemoved)
+    onGoalsChanged(_goals);
 }
 
 
