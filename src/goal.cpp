@@ -52,7 +52,12 @@ bool Goal::operator==(const Goal& pOther) const
 
 std::string Goal::toStr() const
 {
-  return _fact.toStr();
+  auto res = _fact.toStr();
+  if (_conditionFactPtr)
+    res = implyFunctionName + "(" + res + ")";
+  if (_isPersistent)
+    res = persistFunctionName + "(" + res + ")";
+  return res;
 }
 
 
