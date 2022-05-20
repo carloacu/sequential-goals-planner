@@ -8,8 +8,12 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/exportsymbols/macro.hpp
     include/contextualplanner/api.hpp
     include/contextualplanner/alias.hpp
+    include/contextualplanner/expression.hpp
     include/contextualplanner/fact.hpp
     include/contextualplanner/goal.hpp
+    include/contextualplanner/historical.hpp
+    include/contextualplanner/problem.hpp
+    include/contextualplanner/setoffacts.hpp
     include/contextualplanner/contextualplanner.hpp
     include/contextualplanner/arithmeticevaluator.hpp
     include/contextualplanner/observableunsafe.hpp
@@ -19,6 +23,9 @@ set(CHATBOTPLANNER_HPPS
 set(CHATBOTPLANNER_SRCS
     src/fact.cpp
     src/goal.cpp
+    src/historical.cpp
+    src/problem.cpp
+    src/setoffacts.cpp
     src/contextualplanner.cpp
     src/arithmeticevaluator.cpp
 )

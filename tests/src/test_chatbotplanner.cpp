@@ -204,8 +204,8 @@ void _removeSomeGoals()
 
   cp::Problem problem;
   problem.setGoals({_fact_beHappy});
-  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, goalGroupId));
-  problem.pushFrontGoal(cp::Goal(_fact_greeted, goalGroupId));
+  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, 10, false, -1, goalGroupId));
+  problem.pushFrontGoal(cp::Goal(_fact_greeted, 10, false, -1, goalGroupId));
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   problem.removeGoals(goalGroupId);
   assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));

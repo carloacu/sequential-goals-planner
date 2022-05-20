@@ -14,6 +14,9 @@ namespace cp
 struct CONTEXTUALPLANNER_API Goal
 {
   Goal(const std::string& pStr,
+       int pPriority = 10,
+       bool pIsStackable = false,
+       int pInMaxTimeToKeepInactive = -1,
        const std::string& pGoalGroupId = "");
   Goal(const Goal& pOther);
 
@@ -22,7 +25,7 @@ struct CONTEXTUALPLANNER_API Goal
   bool operator!=(const Goal& pOther) const { return !operator==(pOther); }
 
   std::string toStr() const;
-  bool isPersistent() const { return _isPersistent; }
+  bool isPersistent() const { return _isPersistentIfSkipped; }
   const Fact* conditionFactPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
   const Fact& fact() const { return _fact; }
   const std::string& getGoalGroupId() const { return _goalGroupId; }
@@ -31,9 +34,12 @@ struct CONTEXTUALPLANNER_API Goal
   static const std::string implyFunctionName;
 
 private:
-  bool _isPersistent;
-  std::unique_ptr<Fact> _conditionFactPtr;
   Fact _fact;
+  int _priority;
+  bool _isStackable;
+  int _maxTimeToKeepInactive;
+  bool _isPersistentIfSkipped;
+  std::unique_ptr<Fact> _conditionFactPtr;
   std::string _goalGroupId;
 };
 
