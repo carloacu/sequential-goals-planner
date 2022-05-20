@@ -8,59 +8,13 @@
 #include <assert.h>
 #include "api.hpp"
 #include <contextualplanner/alias.hpp>
+#include <contextualplanner/domain.hpp>
 #include <contextualplanner/problem.hpp>
 
 
 
 namespace cp
 {
-
-
-struct CONTEXTUALPLANNER_API Action
-{
-  Action(const SetOfFacts& pPreconditions,
-         const SetOfFacts& pEffects,
-         const SetOfFacts& pPreferInContext = {},
-         bool pShouldBeDoneAsapWithoutHistoryCheck = false)
-    : parameters(),
-      preconditions(pPreconditions),
-      preferInContext(pPreferInContext),
-      effects(pEffects),
-      shouldBeDoneAsapWithoutHistoryCheck(pShouldBeDoneAsapWithoutHistoryCheck)
-  {
-  }
-
-  std::vector<std::string> parameters;
-  SetOfFacts preconditions;
-  SetOfFacts preferInContext;
-  SetOfFacts effects;
-  // If this it's true it will have a very high priority for the planner.
-  // It is approriate to use that for deduction actions.
-  bool shouldBeDoneAsapWithoutHistoryCheck;
-};
-
-struct CONTEXTUALPLANNER_API Domain
-{
-  Domain(const std::map<ActionId, Action>& pActions);
-
-  void addAction(ActionId pActionId,
-                 const Action& pAction);
-  void removeAction(ActionId pActionId);
-
-  const std::map<ActionId, Action>& actions() const { return _actions; }
-  const std::map<std::string, std::set<ActionId>>& preconditionToActions() const { return _preconditionToActions; }
-  const std::map<std::string, std::set<ActionId>>& preconditionToActionsExps() const { return _preconditionToActionsExps; }
-  const std::map<std::string, std::set<ActionId>>& notPreconditionToActions() const { return _notPreconditionToActions; }
-  const std::set<ActionId>& actionsWithoutPrecondition() const { return _actionsWithoutPrecondition; }
-
-private:
-  std::map<ActionId, Action> _actions;
-  std::map<std::string, std::set<ActionId>> _preconditionToActions;
-  std::map<std::string, std::set<ActionId>> _preconditionToActionsExps;
-  std::map<std::string, std::set<ActionId>> _notPreconditionToActions;
-  std::set<ActionId> _actionsWithoutPrecondition;
-};
-
 
 
 

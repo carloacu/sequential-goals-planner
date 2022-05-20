@@ -7,7 +7,9 @@ include(contextualplanner-config.cmake)
 set(CHATBOTPLANNER_HPPS
     include/contextualplanner/exportsymbols/macro.hpp
     include/contextualplanner/api.hpp
+    include/contextualplanner/action.hpp
     include/contextualplanner/alias.hpp
+    include/contextualplanner/domain.hpp
     include/contextualplanner/expression.hpp
     include/contextualplanner/fact.hpp
     include/contextualplanner/goal.hpp
@@ -21,6 +23,7 @@ set(CHATBOTPLANNER_HPPS
 
 
 set(CHATBOTPLANNER_SRCS
+    src/domain.cpp
     src/fact.cpp
     src/goal.cpp
     src/historical.cpp
