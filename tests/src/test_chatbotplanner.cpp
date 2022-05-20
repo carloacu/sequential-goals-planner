@@ -204,8 +204,8 @@ void _removeSomeGoals()
 
   cp::Problem problem;
   problem.setGoalsForAPriority({_fact_beHappy});
-  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, false, -1, goalGroupId));
-  problem.pushFrontGoal(cp::Goal(_fact_greeted, false, -1, goalGroupId));
+  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, true, -1, goalGroupId));
+  problem.pushFrontGoal(cp::Goal(_fact_greeted, true, -1, goalGroupId));
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   problem.removeGoals(goalGroupId);
   assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
@@ -801,6 +801,29 @@ void _checkPriorities()
             _action_goodBoy, _solveStr(problem, actions));
 }
 
+
+void _stackablePropertyOfGoals()
+{
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+  actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
+  actions.emplace(_action_presentation, cp::Action({}, {_fact_presented}));
+  cp::Domain domain(actions);
+
+  cp::Problem problem;
+  problem.setGoals({{10, {cp::Goal(_fact_greeted, false)}}, {9, {cp::Goal(_fact_checkedIn, false), _fact_beHappy}}});
+  assert_eq(_action_greet + _sep +
+            _action_goodBoy, _solveStr(problem, actions));
+
+  cp::Problem problem2;
+  problem2.setGoals({{10, {cp::Goal(_fact_greeted, false)}}, {9, {cp::Goal(_fact_checkedIn, false), _fact_beHappy}}});
+  problem2.pushFrontGoal(_fact_presented, 10);
+  assert_eq(_action_presentation + _sep +
+            _action_goodBoy, _solveStr(problem2, actions));
+}
+
+
 }
 
 
@@ -845,6 +868,7 @@ int main(int argc, char *argv[])
   _checkPreviousBugAboutSelectingAnInappropriateAction();
   _dontLinkActionWithPreferredInContext();
   _checkPriorities();
+  _stackablePropertyOfGoals();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

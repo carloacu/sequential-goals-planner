@@ -82,6 +82,8 @@ private:
 
   void _clearRechableAndRemovableFacts();
   void _addFactNameRef(const std::string& pFactName);
+
+  void _removeNoStackableGoals(bool pCheckOnlyForSecondGoal);
 };
 
 } // !cp

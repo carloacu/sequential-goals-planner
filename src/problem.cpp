@@ -294,6 +294,7 @@ void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals)
   if (_goals != pGoals)
   {
     _goals = pGoals;
+    _removeNoStackableGoals(false);
     onGoalsChanged(_goals);
   }
 }
@@ -313,6 +314,7 @@ void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals)
     auto& existingGoals = _goals[currGoals.first];
     existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
   }
+  _removeNoStackableGoals(false);
   onGoalsChanged(_goals);
 }
 
@@ -322,6 +324,7 @@ void Problem::pushFrontGoal(const Goal& pGoal,
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.insert(existingGoals.begin(), pGoal);
+  _removeNoStackableGoals(true);
   onGoalsChanged(_goals);
 }
 
@@ -330,6 +333,7 @@ void Problem::pushBackGoal(const Goal& pGoal,
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.push_back(pGoal);
+  _removeNoStackableGoals(true);
   onGoalsChanged(_goals);
 }
 
@@ -357,7 +361,10 @@ void Problem::removeGoals(const std::string& pGoalGroupId)
       ++itGroup;
   }
   if (aGoalHasBeenRemoved)
+  {
+    _removeNoStackableGoals(false);
     onGoalsChanged(_goals);
+  }
 }
 
 
@@ -405,6 +412,49 @@ void Problem::notifyActionDone(const std::string& pActionId,
     }
     if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
       addGoals(*pGoalsToAdd);
+}
+
+
+void Problem::_removeNoStackableGoals(bool pCheckOnlyForSecondGoal)
+{
+  bool firstGoal = true;
+  bool hasGoalChanged = false;
+  bool shouldBreak = false;
+  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
+  {
+    --itGoalsGroup;
+    for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
+    {
+      if (firstGoal)
+      {
+        firstGoal = false;
+        ++itGoal;
+        continue;
+      }
+
+      if (itGoal->isStackable())
+      {
+        ++itGoal;
+      }
+      else
+      {
+        itGoal = itGoalsGroup->second.erase(itGoal);
+        hasGoalChanged = true;
+      }
+      if (pCheckOnlyForSecondGoal)
+      {
+        shouldBreak = true;
+        break;
+      }
+    }
+
+    if (itGoalsGroup->second.empty())
+      itGoalsGroup = _goals.erase(itGoalsGroup);
+    if (shouldBreak)
+      break;
+  }
+  if (hasGoalChanged)
+    onGoalsChanged(_goals);
 }
 
 } // !cp

@@ -38,6 +38,7 @@ Goal::Goal(const std::string& pStr,
 Goal::Goal(const Goal& pOther)
   : _fact(pOther._fact),
     _isStackable(pOther._isStackable),
+    _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
     _conditionFactPtr(pOther._conditionFactPtr ? std::unique_ptr<Fact>(new Fact(*pOther._conditionFactPtr)) : std::unique_ptr<Fact>()),
     _goalGroupId(pOther._goalGroupId)
@@ -46,9 +47,11 @@ Goal::Goal(const Goal& pOther)
 
 void Goal::operator=(const Goal& pOther)
 {
+  _fact = pOther._fact;
+  _isStackable = pOther._isStackable;
+  _maxTimeToKeepInactive = pOther._maxTimeToKeepInactive;
   _isPersistentIfSkipped = pOther._isPersistentIfSkipped;
   _conditionFactPtr = pOther._conditionFactPtr ? std::unique_ptr<Fact>(new Fact(*pOther._conditionFactPtr)) : std::unique_ptr<Fact>();
-  _fact = pOther._fact;
   _goalGroupId = pOther._goalGroupId;
 }
 
