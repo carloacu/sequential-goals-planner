@@ -611,12 +611,13 @@ ActionId lookForAnActionToDo(
     std::map<std::string, std::string>& pParameters,
     Problem& pProblem,
     const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     const Historical* pGlobalHistorical)
 {
   fillReachableFacts(pProblem, pDomain);
 
   ActionId res;
-  auto tryToFindAnActionTowardGoal = [&](const Goal& pGoal){
+  auto tryToFindAnActionTowardGoal = [&](Goal& pGoal){
     auto& facts = pProblem.facts();
     auto* goalConditionFactPtr = pGoal.conditionFactPtr();
     if (goalConditionFactPtr == nullptr ||
@@ -627,13 +628,18 @@ ActionId lookForAnActionToDo(
       {
         res = _nextStepOfTheProblemForAGoal(pParameters, goalFact, pProblem,
                                             pDomain, pGlobalHistorical);
-        return !res.empty();
+        if (!res.empty())
+        {
+          pGoal.notifyActivity();
+          return true;
+        }
+        return false;
       }
     }
     return false;
   };
 
-  pProblem.iterateOnGoalAndRemoveNonPersistent(tryToFindAnActionTowardGoal);
+  pProblem.iterateOnGoalAndRemoveNonPersistent(tryToFindAnActionTowardGoal, pNow);
   return res;
 }
 
@@ -663,13 +669,14 @@ std::string printActionIdWithParameters(
 
 std::list<ActionId> solve(Problem& pProblem,
                           const Domain& pDomain,
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                           Historical* pGlobalHistorical)
 {
   std::list<std::string> res;
   while (!pProblem.goals().empty())
   {
     std::map<std::string, std::string> parameters;
-    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pGlobalHistorical);
+    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, pGlobalHistorical);
     if (actionToDo.empty())
       break;
     res.emplace_back(printActionIdWithParameters(actionToDo, parameters));

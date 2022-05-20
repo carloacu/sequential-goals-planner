@@ -39,16 +39,22 @@ struct CONTEXTUALPLANNER_API Problem
   void addRemovableFacts(const std::set<Fact>& pFacts);
   void noNeedToAddReachableFacts() { _needToAddReachableFacts = false; }
   bool needToAddReachableFacts() const { return _needToAddReachableFacts; }
-  void iterateOnGoalAndRemoveNonPersistent(
-      const std::function<bool(const Goal&)>& pManageGoal);
+  void iterateOnGoalAndRemoveNonPersistent(const std::function<bool (Goal&)>& pManageGoal,
+                                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   static const int defaultPriority;
-  void setGoals(const std::map<int, std::vector<Goal>>& pGoals);
-  void setGoalsForAPriority(const std::vector<Goal>& pGoals, int pPriority = defaultPriority);
-  void addGoals(const std::map<int, std::vector<Goal>>& pGoals);
-  void pushFrontGoal(const Goal& pGoal, int pPriority = defaultPriority);
-  void pushBackGoal(const Goal& pGoal, int pPriority = defaultPriority);
-  void removeGoals(const std::string& pGoalGroupId);
+  void setGoals(const std::map<int, std::vector<Goal>>& pGoals,
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+  void setGoalsForAPriority(const std::vector<Goal>& pGoals, int pPriority = defaultPriority,
+                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+  void addGoals(const std::map<int, std::vector<Goal>>& pGoals,
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+  void pushFrontGoal(const Goal& pGoal, int pPriority = defaultPriority,
+                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+  void pushBackGoal(const Goal& pGoal, int pPriority = defaultPriority,
+                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+  void removeGoals(const std::string& pGoalGroupId,
+                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
   ActionId removeFirstGoalsThatAreAlreadySatisfied();
   const std::map<int, std::vector<Goal>>& goals() const { return _goals; }
 
@@ -83,7 +89,8 @@ private:
   void _clearRechableAndRemovableFacts();
   void _addFactNameRef(const std::string& pFactName);
 
-  void _removeNoStackableGoals(bool pCheckOnlyForSecondGoal);
+  void _removeNoStackableGoals(bool pCheckOnlyForSecondGoal,
+                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 };
 
 } // !cp

@@ -255,7 +255,8 @@ void Problem::addRemovableFacts(const std::set<Fact>& pFacts)
 
 
 void Problem::iterateOnGoalAndRemoveNonPersistent(
-    const std::function<bool(const Goal&)>& pManageGoal)
+    const std::function<bool(Goal&)>& pManageGoal,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool hasGoalChanged = false;
   for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
@@ -263,15 +264,17 @@ void Problem::iterateOnGoalAndRemoveNonPersistent(
     --itGoalsGroup;
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
-      if (pManageGoal(*itGoal))
+      bool wasInactiveForTooLong = itGoal->wasInactiveForTooLong(pNow);
+      if (!wasInactiveForTooLong && pManageGoal(*itGoal))
       {
         if (hasGoalChanged)
           onGoalsChanged(_goals);
         return;
       }
 
-      if (itGoal->isPersistent())
+      if (itGoal->isPersistent() && !wasInactiveForTooLong)
       {
+        itGoal->setInactiveSinceIfNotAlreadySet(pNow);
         ++itGoal;
       }
       else
@@ -289,23 +292,26 @@ void Problem::iterateOnGoalAndRemoveNonPersistent(
 }
 
 
-void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals)
+void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (_goals != pGoals)
   {
     _goals = pGoals;
-    _removeNoStackableGoals(false);
+    _removeNoStackableGoals(false, pNow);
     onGoalsChanged(_goals);
   }
 }
 
 void Problem::setGoalsForAPriority(const std::vector<Goal>& pGoals,
-                                   int pPriority)
+                                   int pPriority,
+                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  setGoals(std::map<int, std::vector<Goal>>{{pPriority, pGoals}});
+  setGoals(std::map<int, std::vector<Goal>>{{pPriority, pGoals}}, pNow);
 }
 
-void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals)
+void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (pGoals.empty())
     return;
@@ -314,30 +320,33 @@ void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals)
     auto& existingGoals = _goals[currGoals.first];
     existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
   }
-  _removeNoStackableGoals(false);
+  _removeNoStackableGoals(false, pNow);
   onGoalsChanged(_goals);
 }
 
 
 void Problem::pushFrontGoal(const Goal& pGoal,
-                            int pPriority)
+                            int pPriority,
+                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.insert(existingGoals.begin(), pGoal);
-  _removeNoStackableGoals(true);
+  _removeNoStackableGoals(true, pNow);
   onGoalsChanged(_goals);
 }
 
 void Problem::pushBackGoal(const Goal& pGoal,
-                           int pPriority)
+                           int pPriority,
+                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.push_back(pGoal);
-  _removeNoStackableGoals(true);
+  _removeNoStackableGoals(true, pNow);
   onGoalsChanged(_goals);
 }
 
-void Problem::removeGoals(const std::string& pGoalGroupId)
+void Problem::removeGoals(const std::string& pGoalGroupId,
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool aGoalHasBeenRemoved = false;
   for (auto itGroup = _goals.begin(); itGroup != _goals.end(); )
@@ -362,7 +371,7 @@ void Problem::removeGoals(const std::string& pGoalGroupId)
   }
   if (aGoalHasBeenRemoved)
   {
-    _removeNoStackableGoals(false);
+    _removeNoStackableGoals(false, pNow);
     onGoalsChanged(_goals);
   }
 }
@@ -382,7 +391,7 @@ ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
     return true;
   };
 
-  iterateOnGoalAndRemoveNonPersistent(isGoalNotAlreadySatisfied);
+  iterateOnGoalAndRemoveNonPersistent(isGoalNotAlreadySatisfied, {});
   return res;
 }
 
@@ -415,7 +424,8 @@ void Problem::notifyActionDone(const std::string& pActionId,
 }
 
 
-void Problem::_removeNoStackableGoals(bool pCheckOnlyForSecondGoal)
+void Problem::_removeNoStackableGoals(bool pCheckOnlyForSecondGoal,
+                                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool firstGoal = true;
   bool hasGoalChanged = false;
@@ -432,8 +442,9 @@ void Problem::_removeNoStackableGoals(bool pCheckOnlyForSecondGoal)
         continue;
       }
 
-      if (itGoal->isStackable())
+      if (itGoal->isStackable() && !itGoal->wasInactiveForTooLong(pNow))
       {
+        itGoal->setInactiveSinceIfNotAlreadySet(pNow);
         ++itGoal;
       }
       else

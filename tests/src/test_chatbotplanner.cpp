@@ -81,15 +81,16 @@ std::string _solveStrConst(const cp::Problem& pProblem,
 {
   auto problem = pProblem;
   cp::Domain domain(pActions);
-  return _listOfStrToStr(cp::solve(problem, domain, pGlobalHistorical));
+  return _listOfStrToStr(cp::solve(problem, domain, {}, pGlobalHistorical));
 }
 
 std::string _solveStr(cp::Problem& pProblem,
                       const std::map<std::string, cp::Action>& pActions,
+                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                       cp::Historical* pGlobalHistorical = nullptr)
 {
   cp::Domain domain(pActions);
-  return _listOfStrToStr(cp::solve(pProblem, domain, pGlobalHistorical));
+  return _listOfStrToStr(cp::solve(pProblem, domain, pNow, pGlobalHistorical));
 }
 
 
@@ -631,7 +632,7 @@ void _triggerActionThatRemoveAFact()
   problem.addFact(_fact_beSad);
   problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_joke + _sep +
-            _action_goodBoy, _solveStr(problem, actions, &historical));
+            _action_goodBoy, _solveStr(problem, actions, {}, &historical));
 }
 
 
@@ -824,6 +825,28 @@ void _stackablePropertyOfGoals()
 }
 
 
+
+void _checkMaxTimeToKeepInactiveForGoals()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+
+
+  cp::Problem problem;
+  problem.setGoals({{10, {_fact_greeted, cp::Goal(_fact_checkedIn, true, 60)}}}, now);
+  assert_eq(_action_greet + _sep +
+            _action_checkIn, _solveStr(problem, actions, now));
+
+
+  cp::Problem problem2;
+  problem2.setGoals({{10, {_fact_greeted, cp::Goal(_fact_checkedIn, true, 60)}}}, now);
+  now = std::make_unique<std::chrono::steady_clock::time_point>(*now + std::chrono::seconds(100));
+  assert_eq(_action_greet, _solveStr(problem2, actions, now));
+}
+
 }
 
 
@@ -869,6 +892,7 @@ int main(int argc, char *argv[])
   _dontLinkActionWithPreferredInContext();
   _checkPriorities();
   _stackablePropertyOfGoals();
+  _checkMaxTimeToKeepInactiveForGoals();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
