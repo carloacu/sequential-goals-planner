@@ -20,7 +20,7 @@ struct CONTEXTUALPLANNER_API Problem
   Historical historical{};
   cpstd::observable::ObservableUnsafe<void (const std::map<std::string, std::string>&)> onVariablesToValueChanged{};
   cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsChanged{};
-  cpstd::observable::ObservableUnsafe<void (const std::vector<Goal>&)> onGoalsChanged{};
+  cpstd::observable::ObservableUnsafe<void (const std::map<int, std::vector<Goal>>&)> onGoalsChanged{};
 
   std::string getCurrentGoal() const;
   void addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue);
@@ -41,17 +41,21 @@ struct CONTEXTUALPLANNER_API Problem
   bool needToAddReachableFacts() const { return _needToAddReachableFacts; }
   void iterateOnGoalAndRemoveNonPersistent(
       const std::function<bool(const Goal&)>& pManageGoal);
-  void setGoals(const std::vector<Goal>& pGoals);
-  void addGoals(const std::vector<Goal>& pGoals);
-  void pushFrontGoal(const Goal& pGoal);
-  void pushBackGoal(const Goal& pGoal);
+
+  static const int defaultPriority;
+  void setGoals(const std::map<int, std::vector<Goal>>& pGoals);
+  void setGoalsForAPriority(const std::vector<Goal>& pGoals, int pPriority = defaultPriority);
+  void addGoals(const std::map<int, std::vector<Goal>>& pGoals);
+  void pushFrontGoal(const Goal& pGoal, int pPriority = defaultPriority);
+  void pushBackGoal(const Goal& pGoal, int pPriority = defaultPriority);
   void removeGoals(const std::string& pGoalGroupId);
   ActionId removeFirstGoalsThatAreAlreadySatisfied();
+  const std::map<int, std::vector<Goal>>& goals() const { return _goals; }
+
   void notifyActionDone(const std::string& pActionId,
                         const std::map<std::string, std::string>& pParameters,
                         const SetOfFacts& pEffect,
-                        const std::vector<Goal>* pGoalsToAdd);
-  const std::vector<Goal>& goals() const { return _goals; }
+                        const std::map<int, std::vector<Goal>>* pGoalsToAdd);
   const std::set<Fact>& facts() const { return _facts; }
   const std::map<std::string, std::size_t>& factNamesToNbOfFactOccurences() const { return _factNamesToNbOfFactOccurences; }
   const std::map<std::string, std::string>& variablesToValue() const { return _variablesToValue; }
@@ -60,7 +64,8 @@ struct CONTEXTUALPLANNER_API Problem
   const std::set<Fact>& removableFacts() const { return _removableFacts; }
 
 private:
-  std::vector<Goal> _goals{};
+  /// Map of priority to goals
+  std::map<int, std::vector<Goal>> _goals{};
   std::map<std::string, std::string> _variablesToValue{};
   std::set<Fact> _facts{};
   std::map<std::string, std::size_t> _factNamesToNbOfFactOccurences{};

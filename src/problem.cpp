@@ -3,6 +3,8 @@
 
 namespace cp
 {
+const int Problem::defaultPriority = 10;
+
 
 namespace
 {
@@ -61,7 +63,10 @@ Problem::Problem(const Problem& pOther)
 
 std::string Problem::getCurrentGoal() const
 {
-  return _goals.empty() ? "" : _goals.front().toStr();
+  for (auto itGoalGroup = _goals.rbegin(); itGoalGroup != _goals.rend(); ++itGoalGroup)
+    if (!itGoalGroup->second.empty())
+      return itGoalGroup->second.front().toStr();
+  return "";
 }
 
 void Problem::addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue)
@@ -252,23 +257,39 @@ void Problem::addRemovableFacts(const std::set<Fact>& pFacts)
 void Problem::iterateOnGoalAndRemoveNonPersistent(
     const std::function<bool(const Goal&)>& pManageGoal)
 {
-  for (auto itGoal = _goals.begin(); itGoal != _goals.end(); )
+  bool hasGoalChanged = false;
+  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
   {
-    if (pManageGoal(*itGoal))
-      return;
-    if (itGoal->isPersistent())
+    --itGoalsGroup;
+    for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
-      ++itGoal;
+      if (pManageGoal(*itGoal))
+      {
+        if (hasGoalChanged)
+          onGoalsChanged(_goals);
+        return;
+      }
+
+      if (itGoal->isPersistent())
+      {
+        ++itGoal;
+      }
+      else
+      {
+        itGoal = itGoalsGroup->second.erase(itGoal);
+        hasGoalChanged = true;
+      }
     }
-    else
-    {
-      itGoal = _goals.erase(itGoal);
-      onGoalsChanged(_goals);
-    }
+
+    if (itGoalsGroup->second.empty())
+      itGoalsGroup = _goals.erase(itGoalsGroup);
   }
+  if (hasGoalChanged)
+    onGoalsChanged(_goals);
 }
 
-void Problem::setGoals(const std::vector<Goal>& pGoals)
+
+void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals)
 {
   if (_goals != pGoals)
   {
@@ -277,41 +298,63 @@ void Problem::setGoals(const std::vector<Goal>& pGoals)
   }
 }
 
-void Problem::addGoals(const std::vector<Goal>& pGoals)
+void Problem::setGoalsForAPriority(const std::vector<Goal>& pGoals,
+                                   int pPriority)
+{
+  setGoals(std::map<int, std::vector<Goal>>{{pPriority, pGoals}});
+}
+
+void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals)
 {
   if (pGoals.empty())
     return;
-  _goals.insert(_goals.begin(), pGoals.begin(), pGoals.end());
+  for (auto& currGoals : pGoals)
+  {
+    auto& existingGoals = _goals[currGoals.first];
+    existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
+  }
   onGoalsChanged(_goals);
 }
 
 
-void Problem::pushFrontGoal(const Goal& pGoal)
+void Problem::pushFrontGoal(const Goal& pGoal,
+                            int pPriority)
 {
-  _goals.insert(_goals.begin(), pGoal);
+  auto& existingGoals = _goals[pPriority];
+  existingGoals.insert(existingGoals.begin(), pGoal);
   onGoalsChanged(_goals);
 }
 
-void Problem::pushBackGoal(const Goal& pGoal)
+void Problem::pushBackGoal(const Goal& pGoal,
+                           int pPriority)
 {
-  _goals.push_back(pGoal);
+  auto& existingGoals = _goals[pPriority];
+  existingGoals.push_back(pGoal);
   onGoalsChanged(_goals);
 }
 
 void Problem::removeGoals(const std::string& pGoalGroupId)
 {
   bool aGoalHasBeenRemoved = false;
-  for (auto it = _goals.begin(); it != _goals.end(); )
+  for (auto itGroup = _goals.begin(); itGroup != _goals.end(); )
   {
-    if (it->getGoalGroupId() == pGoalGroupId)
+    for (auto it = itGroup->second.begin(); it != itGroup->second.end(); )
     {
-      it = _goals.erase(it);
-      aGoalHasBeenRemoved = true;
+      if (it->getGoalGroupId() == pGoalGroupId)
+      {
+        it = itGroup->second.erase(it);
+        aGoalHasBeenRemoved = true;
+      }
+      else
+      {
+        ++it;
+      }
     }
+
+    if (itGroup->second.empty())
+      itGroup = _goals.erase(itGroup);
     else
-    {
-      ++it;
-    }
+      ++itGroup;
   }
   if (aGoalHasBeenRemoved)
     onGoalsChanged(_goals);
@@ -340,7 +383,7 @@ ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
 void Problem::notifyActionDone(const std::string& pActionId,
     const std::map<std::string, std::string>& pParameters,
     const SetOfFacts& pEffect,
-    const std::vector<Goal>* pGoalsToAdd)
+    const std::map<int, std::vector<Goal>>* pGoalsToAdd)
 {
     historical.notifyActionDone(pActionId);
     if (pParameters.empty())

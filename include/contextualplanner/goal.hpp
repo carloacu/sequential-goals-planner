@@ -14,7 +14,6 @@ namespace cp
 struct CONTEXTUALPLANNER_API Goal
 {
   Goal(const std::string& pStr,
-       int pPriority = 10,
        bool pIsStackable = false,
        int pInMaxTimeToKeepInactive = -1,
        const std::string& pGoalGroupId = "");
@@ -35,7 +34,6 @@ struct CONTEXTUALPLANNER_API Goal
 
 private:
   Fact _fact;
-  int _priority;
   bool _isStackable;
   int _maxTimeToKeepInactive;
   bool _isPersistentIfSkipped;

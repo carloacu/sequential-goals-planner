@@ -149,7 +149,7 @@ void _noPreconditionGoalImmediatlyReached()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_goodBoy, _lookForAnActionToDo(problem, domain));
   assert_true(!problem.goals().empty());
   problem.addFact(_fact_beHappy);
@@ -163,7 +163,7 @@ void _removeFirstGoalsThatAreAlreadySatisfied()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
 
   std::map<std::string, std::string> parameters;
   auto actionId = cp::lookForAnActionToDo(parameters, problem, domain);
@@ -186,7 +186,7 @@ void _removeAnAction()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
   domain.removeAction(_action_goodBoy);
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain));
@@ -203,9 +203,9 @@ void _removeSomeGoals()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
-  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, 10, false, -1, goalGroupId));
-  problem.pushFrontGoal(cp::Goal(_fact_greeted, 10, false, -1, goalGroupId));
+  problem.setGoalsForAPriority({_fact_beHappy});
+  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, false, -1, goalGroupId));
+  problem.pushFrontGoal(cp::Goal(_fact_greeted, false, -1, goalGroupId));
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   problem.removeGoals(goalGroupId);
   assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
@@ -220,7 +220,7 @@ void _noPlanWithALengthOf2()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -236,7 +236,7 @@ void _noPlanWithALengthOf3()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -252,7 +252,7 @@ void _2preconditions()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_checkIn, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
@@ -268,7 +268,7 @@ void _2Goals()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_greeted, _fact_beHappy});
+  problem.setGoalsForAPriority({_fact_greeted, _fact_beHappy});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -284,7 +284,7 @@ void _2UnrelatedGoals()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_greeted, _fact_beHappy});
+  problem.setGoalsForAPriority({_fact_greeted, _fact_beHappy});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -300,7 +300,7 @@ void _impossibleGoal()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_greeted, _fact_beHappy});
+  problem.setGoalsForAPriority({_fact_greeted, _fact_beHappy});
   assert_eq(_action_checkIn, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -318,7 +318,7 @@ void _privigelizeTheActionsThatHaveManyPreconditions()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_greeted, _fact_beHappy});
+  problem.setGoalsForAPriority({_fact_greeted, _fact_beHappy});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -347,7 +347,7 @@ void _preconditionThatCannotBeSolved()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_true(_lookForAnActionToDo(problem, domain).empty());
 }
 
@@ -361,7 +361,7 @@ void _preferInContext()
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_checkedIn}, {_fact_beHappy}));
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_greet + _sep +
             _action_checkInWithPassword + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
@@ -410,7 +410,7 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
   actions.emplace(_action_goodBoy, cp::Action({_fact_presented, _fact_checkedIn}, {_fact_beHappy}));
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_checkIn + _sep +
             _action_presentation + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
@@ -431,16 +431,16 @@ void _avoidToDo2TimesTheSameActionIfPossble()
   actions.emplace(_action_goodBoy, cp::Action({_fact_presented, _fact_checkedIn}, {_fact_beHappy}));
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setGoals({_fact_greeted});
+  problem.setGoalsForAPriority({_fact_greeted});
   assert_eq(_action_greet, _solveStr(problem, actions));
 
   problem.setFacts({});
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_checkIn + _sep +
             _action_presentation + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -456,7 +456,7 @@ void _takeHistoricalIntoAccount()
   actions.emplace(_action_goodBoy, cp::Action({_fact_presented, _fact_checkedIn}, {_fact_beHappy}));
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions, &problem.historical));
@@ -477,7 +477,7 @@ void _goDoTheActionThatHaveTheMostPrerequisitValidated()
 
   cp::Problem problem;
   problem.setFacts({_fact_is_close});
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_checkIn, _lookForAnActionToDo(problem, domain));
 }
 
@@ -491,7 +491,7 @@ void _checkShouldBeDoneAsap()
 
   cp::Problem problem;
   problem.setFacts({_fact_is_close});
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -505,7 +505,7 @@ void _checkNotInAPrecondition()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_greeted});
+  problem.setGoalsForAPriority({_fact_greeted});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   problem.modifyFacts({_fact_checkedIn});
   assert_eq(std::string(), _lookForAnActionToDoConst(problem, domain));
@@ -518,7 +518,7 @@ void _checkClearGoalsWhenItsAlreadySatisfied()
   cp::Domain domain(actions);
   cp::Problem problem;
   problem.setFacts({_fact_greeted});
-  problem.setGoals({_fact_greeted});
+  problem.setGoalsForAPriority({_fact_greeted});
   assert_eq<std::size_t>(1, problem.goals().size());
   _lookForAnActionToDo(problem, domain);
   assert_eq<std::size_t>(0, problem.goals().size());
@@ -563,7 +563,7 @@ void _testIncrementOfVariables()
   assert(cp::areFactsTrue(cp::SetOfFacts::fromStr("${max-number-of-questions}=${number-of-question}+4-1", '\n'), problem));
   for (std::size_t i = 0; i < 3; ++i)
   {
-    problem.setGoals({_fact_finishToAskQuestions});
+    problem.setGoalsForAPriority({_fact_finishToAskQuestions});
     auto actionToDo = _lookForAnActionToDo(problem, domain);
     if (i == 0 || i == 2)
       assert_eq<std::string>(_action_askQuestion1, actionToDo);
@@ -578,7 +578,7 @@ void _testIncrementOfVariables()
   assert(cp::areFactsTrue(actionQ1.preconditions, problem));
   assert(cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
   assert(!cp::areFactsTrue(actionSayQuestionBilan.preconditions, problem));
-  problem.setGoals({_fact_finishToAskQuestions});
+  problem.setGoalsForAPriority({_fact_finishToAskQuestions});
   auto actionToDo = _lookForAnActionToDo(problem, domain);
   assert_eq<std::string>(_action_finisehdToAskQuestions, actionToDo);
   problem.historical.notifyActionDone(actionToDo);
@@ -600,7 +600,7 @@ void _precoditionEqualEffect()
   assert_true(domain.actions().empty());
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_true(_lookForAnActionToDo(problem, domain).empty());
 }
 
@@ -615,7 +615,7 @@ void _circularDependencies()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain));
 }
 
@@ -629,7 +629,7 @@ void _triggerActionThatRemoveAFact()
   cp::Historical historical;
   cp::Problem problem;
   problem.addFact(_fact_beSad);
-  problem.setGoals({_fact_beHappy});
+  problem.setGoalsForAPriority({_fact_beHappy});
   assert_eq(_action_joke + _sep +
             _action_goodBoy, _solveStr(problem, actions, &historical));
 }
@@ -642,7 +642,7 @@ void _actionWithConstantValue()
   actions.emplace(_action_navigate, navigate);
 
   cp::Problem problem;
-  problem.setGoals({cp::Goal("place=kitchen")});
+  problem.setGoalsForAPriority({cp::Goal("place=kitchen")});
   assert_eq(_action_navigate, _solveStr(problem, actions));
 }
 
@@ -655,7 +655,7 @@ void _actionWithParameterizedValue()
   actions.emplace(_action_navigate, navigate);
 
   cp::Problem problem;
-  problem.setGoals({cp::Goal("place=kitchen")});
+  problem.setGoalsForAPriority({cp::Goal("place=kitchen")});
   assert_eq(_action_navigate + "(target -> kitchen)", _solveStr(problem, actions));
 }
 
@@ -668,7 +668,7 @@ void _actionWithParameterizedParameter()
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
-  problem.setGoals({cp::Goal("isHappy(1)")});
+  problem.setGoalsForAPriority({cp::Goal("isHappy(1)")});
   assert_eq(_action_joke + "(human -> 1)", _solveStr(problem, actions));
 }
 
@@ -682,7 +682,7 @@ void _actionWithParametersInPreconditionsAndEffects()
 
   cp::Problem problem;
   problem.addFact(cp::Fact::fromStr("isEngaged(1)"));
-  problem.setGoals({cp::Goal("isHappy(1)")});
+  problem.setGoalsForAPriority({cp::Goal("isHappy(1)")});
   assert_eq(_action_joke + "(human -> 1)", _solveStr(problem, actions));
 }
 
@@ -696,7 +696,7 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 
   cp::Problem problem;
   problem.addFact(cp::Fact::fromStr("isEngaged(2)"));
-  problem.setGoals({cp::Goal("isHappy(1)")});
+  problem.setGoalsForAPriority({cp::Goal("isHappy(1)")});
   assert_eq<std::string>("", _solveStr(problem, actions));
 }
 
@@ -710,7 +710,7 @@ void _actionWithParametersInsideThePath()
   actions.emplace(_action_welcome, cp::Action({cp::Fact::fromStr("place=entrance")}, {cp::Fact::fromStr("welcomePeople")}));
 
   cp::Problem problem;
-  problem.setGoals({cp::Goal("welcomePeople")});
+  problem.setGoalsForAPriority({cp::Goal("welcomePeople")});
   assert_eq<std::string>(_action_navigate + "(target -> entrance)" + _sep +
                          _action_welcome, _solveStr(problem, actions));
 }
@@ -722,7 +722,7 @@ void _testPersistGoal()
   actions.emplace(_action_welcome, cp::Action({}, {cp::Fact::fromStr("welcomePeople")}));
 
   cp::Problem problem;
-  problem.setGoals({cp::Goal("welcomePeople")});
+  problem.setGoalsForAPriority({cp::Goal("welcomePeople")});
   assert_eq<std::size_t>(1, problem.goals().size());
   assert_eq<std::string>(_action_welcome, _solveStr(problem, actions));
   assert_eq<std::size_t>(0, problem.goals().size());
@@ -730,7 +730,7 @@ void _testPersistGoal()
   assert_eq<std::size_t>(0, problem.goals().size());
 
   problem = cp::Problem();
-  problem.setGoals({cp::Goal("persist(welcomePeople)")});
+  problem.setGoalsForAPriority({cp::Goal("persist(welcomePeople)")});
   assert_eq<std::size_t>(1, problem.goals().size());
   assert_eq<std::string>(_action_welcome, _solveStr(problem, actions));
   assert_eq<std::size_t>(1, problem.goals().size());
@@ -746,7 +746,7 @@ void _testImplyGoal()
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
 
   cp::Problem problem;
-  problem.setGoals({cp::Goal("persist(imply(" + _fact_greeted + ", " + _fact_checkedIn + "))")});
+  problem.setGoalsForAPriority({cp::Goal("persist(imply(" + _fact_greeted + ", " + _fact_checkedIn + "))")});
   assert_eq<std::string>("", _solveStr(problem, actions));
   problem.addFact(_fact_greeted);
   assert_eq<std::string>(_action_checkIn, _solveStr(problem, actions));
@@ -764,7 +764,7 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
   cp::Historical historical;
   cp::Problem problem;
   problem.setFacts({_fact_engagedWithUser});
-  problem.setGoals({"persist(" + _fact_userSatisfied + ")"});
+  problem.setGoalsForAPriority({"persist(" + _fact_userSatisfied + ")"});
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
   problem.removeFact(_fact_userSatisfied);
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
@@ -782,10 +782,24 @@ void _dontLinkActionWithPreferredInContext()
   cp::Historical historical;
   cp::Problem problem;
   problem.setFacts({_fact_engagedWithUser});
-  problem.setGoals({_fact_userSatisfied});
+  problem.setGoalsForAPriority({_fact_userSatisfied});
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
 }
 
+
+void _checkPriorities()
+{
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+  actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
+  cp::Domain domain(actions);
+
+  cp::Problem problem;
+  problem.setGoals({{10, {_fact_greeted}}, {9, {_fact_beHappy}}});
+  assert_eq(_action_greet + _sep +
+            _action_goodBoy, _solveStr(problem, actions));
+}
 
 }
 
@@ -830,6 +844,7 @@ int main(int argc, char *argv[])
   _testImplyGoal();
   _checkPreviousBugAboutSelectingAnInappropriateAction();
   _dontLinkActionWithPreferredInContext();
+  _checkPriorities();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

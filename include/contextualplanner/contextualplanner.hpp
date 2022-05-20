@@ -16,8 +16,6 @@
 namespace cp
 {
 
-
-
 CONTEXTUALPLANNER_API
 void replaceVariables(std::string& pStr,
                       const Problem& pProblem);

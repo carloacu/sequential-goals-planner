@@ -8,12 +8,10 @@ const std::string Goal::implyFunctionName = "imply";
 
 
 Goal::Goal(const std::string& pStr,
-           int pPriority,
            bool pIsStackable,
            int pInMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
   :  _fact(Fact::fromStr(pStr)),
-    _priority(pPriority),
     _isStackable(pIsStackable),
     _maxTimeToKeepInactive(pInMaxTimeToKeepInactive),
     _isPersistentIfSkipped(false),
@@ -39,7 +37,6 @@ Goal::Goal(const std::string& pStr,
 
 Goal::Goal(const Goal& pOther)
   : _fact(pOther._fact),
-    _priority(pOther._priority),
     _isStackable(pOther._isStackable),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
     _conditionFactPtr(pOther._conditionFactPtr ? std::unique_ptr<Fact>(new Fact(*pOther._conditionFactPtr)) : std::unique_ptr<Fact>()),
@@ -58,7 +55,6 @@ void Goal::operator=(const Goal& pOther)
 bool Goal::operator==(const Goal& pOther) const
 {
   return _fact == pOther._fact &&
-      _priority == pOther._priority &&
       _isStackable == pOther._isStackable &&
       _maxTimeToKeepInactive == pOther._maxTimeToKeepInactive &&
       _isPersistentIfSkipped == pOther._isPersistentIfSkipped &&
