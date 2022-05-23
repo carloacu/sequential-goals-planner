@@ -336,8 +336,8 @@ void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals,
 }
 
 void Problem::setGoalsForAPriority(const std::vector<Goal>& pGoals,
-                                   int pPriority,
-                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                   int pPriority)
 {
   setGoals(std::map<int, std::vector<Goal>>{{pPriority, pGoals}}, pNow);
 }
@@ -358,8 +358,8 @@ void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals,
 
 
 void Problem::pushFrontGoal(const Goal& pGoal,
-                            int pPriority,
-                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                            int pPriority)
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.insert(existingGoals.begin(), pGoal);
@@ -368,8 +368,8 @@ void Problem::pushFrontGoal(const Goal& pGoal,
 }
 
 void Problem::pushBackGoal(const Goal& pGoal,
-                           int pPriority,
-                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                           int pPriority)
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.push_back(pGoal);
@@ -431,6 +431,7 @@ ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
 void Problem::notifyActionDone(const std::string& pActionId,
                                const std::map<std::string, std::string>& pParameters,
                                const SetOfFacts& pEffect,
+                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                const std::map<int, std::vector<Goal>>* pGoalsToAdd)
 {
   historical.notifyActionDone(pActionId);
@@ -452,7 +453,7 @@ void Problem::notifyActionDone(const std::string& pActionId,
     modifyFacts(effect);
   }
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
-    addGoals(*pGoalsToAdd);
+    addGoals(*pGoalsToAdd, pNow);
 }
 
 

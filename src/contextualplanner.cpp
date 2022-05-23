@@ -686,7 +686,7 @@ std::list<ActionId> solve(Problem& pProblem,
     {
       if (pGlobalHistorical != nullptr)
         pGlobalHistorical->notifyActionDone(actionToDo);
-      pProblem.notifyActionDone(actionToDo, parameters, itAction->second.effects, nullptr);
+      pProblem.notifyActionDone(actionToDo, parameters, itAction->second.effects, pNow, nullptr);
     }
   }
   return res;

@@ -44,23 +44,27 @@ struct CONTEXTUALPLANNER_API Problem
 
   static const int defaultPriority;
   void setGoals(const std::map<int, std::vector<Goal>>& pGoals,
-                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
-  void setGoalsForAPriority(const std::vector<Goal>& pGoals, int pPriority = defaultPriority,
-                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void setGoalsForAPriority(const std::vector<Goal>& pGoals,
+                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                            int pPriority = defaultPriority);
   void addGoals(const std::map<int, std::vector<Goal>>& pGoals,
-                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
-  void pushFrontGoal(const Goal& pGoal, int pPriority = defaultPriority,
-                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
-  void pushBackGoal(const Goal& pGoal, int pPriority = defaultPriority,
-                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void pushFrontGoal(const Goal& pGoal,
+                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                     int pPriority = defaultPriority);
+  void pushBackGoal(const Goal& pGoal,
+                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                    int pPriority = defaultPriority);
   void removeGoals(const std::string& pGoalGroupId,
-                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {});
+                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
   ActionId removeFirstGoalsThatAreAlreadySatisfied();
   const std::map<int, std::vector<Goal>>& goals() const { return _goals; }
 
   void notifyActionDone(const std::string& pActionId,
                         const std::map<std::string, std::string>& pParameters,
                         const SetOfFacts& pEffect,
+                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                         const std::map<int, std::vector<Goal>>* pGoalsToAdd);
   const std::set<Fact>& facts() const { return _facts; }
   const std::map<std::string, std::size_t>& factNamesToNbOfFactOccurences() const { return _factNamesToNbOfFactOccurences; }
