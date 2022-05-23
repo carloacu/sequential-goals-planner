@@ -1,5 +1,7 @@
 #include <contextualplanner/problem.hpp>
 #include <sstream>
+#include <iomanip>
+
 
 namespace cp
 {
@@ -41,22 +43,52 @@ void _incrementStr(std::string& pStr)
     catch (...) {}
   }
 }
+
+void _limiteSizeStr(std::string& pStr, std::size_t pMaxSize)
+{
+  if (pStr.size() > pMaxSize && pMaxSize > 3)
+  {
+    pStr.resize(pMaxSize - 3);
+    pStr += "...";
+  }
+  pStr.resize(pMaxSize, ' ');
+}
+
+
+std::string _prettyPrintTime(int pNbOfSeconds)
+{
+  std::stringstream ss;
+  if (pNbOfSeconds < 60)
+  {
+    ss << pNbOfSeconds << "s";
+  }
+  else
+  {
+    int nbOfMinutes = pNbOfSeconds / 60;
+    ss << nbOfMinutes << "min";
+    int nbOfSeconds = pNbOfSeconds % 60;
+    if (nbOfSeconds > 0)
+      ss << " " << nbOfSeconds << "s";
+  }
+  return ss.str();
+}
+
 }
 
 
 Problem::Problem(const Problem& pOther)
- : historical(pOther.historical),
-   onVariablesToValueChanged(),
-   onFactsChanged(),
-   onGoalsChanged(),
-   _goals(pOther._goals),
-   _variablesToValue(pOther._variablesToValue),
-   _facts(pOther._facts),
-   _factNamesToNbOfFactOccurences(pOther._factNamesToNbOfFactOccurences),
-   _reachableFacts(pOther._reachableFacts),
-   _reachableFactsWithAnyValues(pOther._reachableFactsWithAnyValues),
-   _removableFacts(pOther._removableFacts),
-   _needToAddReachableFacts(pOther._needToAddReachableFacts)
+  : historical(pOther.historical),
+    onVariablesToValueChanged(),
+    onFactsChanged(),
+    onGoalsChanged(),
+    _goals(pOther._goals),
+    _variablesToValue(pOther._variablesToValue),
+    _facts(pOther._facts),
+    _factNamesToNbOfFactOccurences(pOther._factNamesToNbOfFactOccurences),
+    _reachableFacts(pOther._reachableFacts),
+    _reachableFactsWithAnyValues(pOther._reachableFactsWithAnyValues),
+    _removableFacts(pOther._removableFacts),
+    _needToAddReachableFacts(pOther._needToAddReachableFacts)
 {
 }
 
@@ -397,30 +429,96 @@ ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
 
 
 void Problem::notifyActionDone(const std::string& pActionId,
-    const std::map<std::string, std::string>& pParameters,
-    const SetOfFacts& pEffect,
-    const std::map<int, std::vector<Goal>>* pGoalsToAdd)
+                               const std::map<std::string, std::string>& pParameters,
+                               const SetOfFacts& pEffect,
+                               const std::map<int, std::vector<Goal>>* pGoalsToAdd)
 {
-    historical.notifyActionDone(pActionId);
-    if (pParameters.empty())
+  historical.notifyActionDone(pActionId);
+  if (pParameters.empty())
+  {
+    modifyFacts(pEffect);
+  }
+  else
+  {
+    cp::SetOfFacts effect;
+    effect.notFacts = pEffect.notFacts;
+    effect.exps = pEffect.exps;
+    for (auto& currFact : pEffect.facts)
     {
-      modifyFacts(pEffect);
+      auto fact = currFact;
+      fact.fillParameters(pParameters);
+      effect.facts.insert(std::move(fact));
     }
-    else
+    modifyFacts(effect);
+  }
+  if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
+    addGoals(*pGoalsToAdd);
+}
+
+
+std::string Problem::printGoals(std::size_t pGoalNameMaxSize,
+                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  std::stringstream res;
+
+  std::string nameLabel = "Name";
+  _limiteSizeStr(nameLabel, pGoalNameMaxSize);
+  res << nameLabel;
+
+  std::size_t prioritySize = 12;
+  res << std::setw(prioritySize) << std::setfill(' ') << "Priority";
+
+  std::size_t stackageSize = 12;
+  res << std::setw(stackageSize) << std::setfill(' ') << "Stackable";
+
+  std::size_t stackTimeSize = 0;
+  std::size_t maxStackTimeSize = 0;
+  if (pNow)
+  {
+    stackTimeSize = 13;
+    res << std::setw(stackTimeSize) << std::setfill(' ') << "Stack time";
+
+    maxStackTimeSize = 17;
+    res << std::setw(maxStackTimeSize) << std::setfill(' ') << "Max stack time";
+  }
+  res << "\n";
+
+  std::string separator(pGoalNameMaxSize + prioritySize + stackageSize + stackTimeSize + maxStackTimeSize, '-');
+  res << separator << "\n";
+
+  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
+  {
+    --itGoalsGroup;
+    for (auto& currGoal : itGoalsGroup->second)
     {
-      cp::SetOfFacts effect;
-      effect.notFacts = pEffect.notFacts;
-      effect.exps = pEffect.exps;
-      for (auto& currFact : pEffect.facts)
+      std::string goalName = currGoal.toStr();
+      auto& goalGroupId = currGoal.getGoalGroupId();
+      if (!goalGroupId.empty())
+        goalName += " groupId: " + goalGroupId;
+      _limiteSizeStr(goalName, pGoalNameMaxSize);
+
+      res << goalName;
+      res << std::setw(prioritySize) << std::setfill(' ') << itGoalsGroup->first;
+      res << std::setw(stackageSize) << std::setfill(' ') << (currGoal.isStackable() ? "true" : "false");
+
+      if (pNow)
       {
-        auto fact = currFact;
-        fact.fillParameters(pParameters);
-        effect.facts.insert(std::move(fact));
+        if (currGoal.getInactiveSince())
+          res << std::setw(stackTimeSize) << std::setfill(' ') << _prettyPrintTime(std::chrono::duration_cast<std::chrono::seconds>(*pNow - *currGoal.getInactiveSince()).count());
+        else
+          res << std::setw(stackTimeSize) << std::setfill(' ') << "-";
+
+        if (currGoal.getMaxTimeToKeepInactive() > 0)
+          res << std::setw(maxStackTimeSize) << std::setfill(' ') << _prettyPrintTime(currGoal.getMaxTimeToKeepInactive());
+        else
+          res << std::setw(maxStackTimeSize) << std::setfill(' ') << "-";
       }
-      modifyFacts(effect);
+
+      res << "\n";
     }
-    if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
-      addGoals(*pGoalsToAdd);
+  }
+
+  return res.str();
 }
 
 

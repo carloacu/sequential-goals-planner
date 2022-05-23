@@ -27,6 +27,7 @@ struct CONTEXTUALPLANNER_API Goal
   void setInactiveSinceIfNotAlreadySet(const std::unique_ptr<std::chrono::steady_clock::time_point>& pInactiveSince);
   bool wasInactiveForTooLong(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
   void notifyActivity();
+  const std::unique_ptr<std::chrono::steady_clock::time_point>& getInactiveSince() const { return _inactiveSince; }
 
   std::string toStr() const;
   bool isStackable() const { return _isStackable; }
@@ -34,6 +35,7 @@ struct CONTEXTUALPLANNER_API Goal
   const Fact* conditionFactPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
   const Fact& fact() const { return _fact; }
   const std::string& getGoalGroupId() const { return _goalGroupId; }
+  int getMaxTimeToKeepInactive() const { return _maxTimeToKeepInactive; }
 
   static const std::string persistFunctionName;
   static const std::string implyFunctionName;
