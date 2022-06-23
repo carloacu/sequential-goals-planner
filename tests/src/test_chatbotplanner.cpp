@@ -100,7 +100,7 @@ std::string _lookForAnActionToDo(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
     const cp::Historical* pGlobalHistorical = nullptr)
 {
-  return cp::lookForAnActionToDo(pParameters, pProblem, pDomain, pNow, pGlobalHistorical);
+  return cp::lookForAnActionToDo(pParameters, pProblem, pDomain, pNow, nullptr, pGlobalHistorical);
 }
 
 std::string _lookForAnActionToDo(cp::Problem& pProblem,

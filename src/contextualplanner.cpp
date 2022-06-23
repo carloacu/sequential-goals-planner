@@ -607,11 +607,11 @@ bool areFactsTrue(const SetOfFacts& pSetOfFacts,
 }
 
 
-ActionId lookForAnActionToDo(
-    std::map<std::string, std::string>& pParameters,
+ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    std::string* pGoalOfTheAction,
     const Historical* pGlobalHistorical)
 {
   fillReachableFacts(pProblem, pDomain);
@@ -630,6 +630,8 @@ ActionId lookForAnActionToDo(
                                             pDomain, pGlobalHistorical);
         if (!res.empty())
         {
+          if (pGoalOfTheAction != nullptr)
+            *pGoalOfTheAction = pGoal.toStr();
           pGoal.notifyActivity();
           return true;
         }
@@ -676,7 +678,7 @@ std::list<ActionId> solve(Problem& pProblem,
   while (!pProblem.goals().empty())
   {
     std::map<std::string, std::string> parameters;
-    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, pGlobalHistorical);
+    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, nullptr, pGlobalHistorical);
     if (actionToDo.empty())
       break;
     res.emplace_back(printActionIdWithParameters(actionToDo, parameters));
