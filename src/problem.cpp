@@ -457,19 +457,6 @@ void Problem::notifyActionDone(const std::string& pActionId,
 }
 
 
-std::vector<std::string> Problem::getGoalsStr() const
-{
-  std::vector<std::string> res;
-  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
-  {
-    --itGoalsGroup;
-    for (auto& currGoal : itGoalsGroup->second)
-      res.push_back(currGoal.toStr());
-  }
-  return res;
-}
-
-
 std::string Problem::printGoals(std::size_t pGoalNameMaxSize,
                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow) const
 {

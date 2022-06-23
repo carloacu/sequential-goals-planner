@@ -74,7 +74,6 @@ struct CONTEXTUALPLANNER_API Problem
   const std::set<Fact>& removableFacts() const { return _removableFacts; }
 
   std::string printGoals(std::size_t pGoalNameMaxSize, const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow) const;
-  std::vector<std::string> getGoalsStr() const;
 
 private:
   /// Map of priority to goals
