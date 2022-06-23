@@ -56,6 +56,9 @@ struct CONTEXTUALPLANNER_API Problem
   void pushBackGoal(const Goal& pGoal,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                     int pPriority = defaultPriority);
+  void setGoalPriority(const std::string& pGoalStr,
+                       int pPriority,
+                       bool pPushFrontOrBttomInCaseOfConflictWithAnotherGoal);
   void removeGoals(const std::string& pGoalGroupId,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
   ActionId removeFirstGoalsThatAreAlreadySatisfied();

@@ -865,6 +865,57 @@ void _checkMaxTimeToKeepInactiveForGoals()
   assert_eq(_action_greet, _solveStr(problem2, actions, now));
 }
 
+
+
+
+void _changePriorityOfGoal()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+
+
+  cp::Problem problem;
+  problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
+  {
+    auto& goals = problem.goals();
+    assert_eq<std::size_t>(1, goals.find(9)->second.size());
+    assert_eq<std::size_t>(2, goals.find(10)->second.size());
+  }
+
+  problem.setGoalPriority(_fact_checkedIn, 9, true);
+  {
+    auto& goals = problem.goals();
+    assert_eq<std::size_t>(2, goals.find(9)->second.size());
+    assert_eq(_fact_checkedIn, goals.find(9)->second[0].toStr());
+    assert_eq(_fact_userSatisfied, goals.find(9)->second[1].toStr());
+    assert_eq<std::size_t>(1, goals.find(10)->second.size());
+  }
+
+  problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
+  problem.setGoalPriority(_fact_checkedIn, 9, false);
+  {
+    auto& goals = problem.goals();
+    assert_eq<std::size_t>(2, goals.find(9)->second.size());
+    assert_eq(_fact_userSatisfied, goals.find(9)->second[0].toStr());
+    assert_eq(_fact_checkedIn, goals.find(9)->second[1].toStr());
+    assert_eq<std::size_t>(1, goals.find(10)->second.size());
+  }
+
+
+  problem.setGoals({{10, {_fact_greeted, _fact_checkedIn}}}, now);
+  problem.setGoalPriority(_fact_checkedIn, 9, true);
+  {
+    auto& goals = problem.goals();
+    assert_eq<std::size_t>(1, goals.find(9)->second.size());
+    assert_eq(_fact_checkedIn, goals.find(9)->second[0].toStr());
+    assert_eq<std::size_t>(1, goals.find(10)->second.size());
+  }
+}
+
+
 }
 
 
@@ -911,6 +962,7 @@ int main(int argc, char *argv[])
   _checkPriorities();
   _stackablePropertyOfGoals();
   _checkMaxTimeToKeepInactiveForGoals();
+  _changePriorityOfGoal();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

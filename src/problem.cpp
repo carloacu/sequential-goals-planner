@@ -377,6 +377,43 @@ void Problem::pushBackGoal(const Goal& pGoal,
   onGoalsChanged(_goals);
 }
 
+
+void Problem::setGoalPriority(const std::string& pGoalStr,
+                              int pPriority,
+                              bool pPushFrontOrBttomInCaseOfConflictWithAnotherGoal)
+{
+  std::unique_ptr<Goal> goalToMove;
+  for (auto itGroup = _goals.begin(); itGroup != _goals.end(); )
+  {
+    for (auto it = itGroup->second.begin(); it != itGroup->second.end(); )
+    {
+      if (it->toStr() == pGoalStr)
+      {
+        goalToMove = std::make_unique<Goal>(std::move(*it));
+        itGroup->second.erase(it);
+        break;
+      }
+      ++it;
+    }
+
+    if (itGroup->second.empty())
+      itGroup = _goals.erase(itGroup);
+    else
+      ++itGroup;
+
+    if (goalToMove)
+    {
+      auto& goalsForThePriority = _goals[pPriority];
+      if (pPushFrontOrBttomInCaseOfConflictWithAnotherGoal)
+        goalsForThePriority.insert(goalsForThePriority.begin(), *goalToMove);
+      else
+        goalsForThePriority.push_back(*goalToMove);
+      break;
+    }
+  }
+}
+
+
 void Problem::removeGoals(const std::string& pGoalGroupId,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
