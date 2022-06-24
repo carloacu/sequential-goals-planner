@@ -35,7 +35,7 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
                              Problem& pProblem,
                              const Domain& pDomain,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                             std::string* pGoalOfTheAction = nullptr,
+                             const Goal** pGoalOfTheAction = nullptr,
                              const Historical* pGlobalHistorical = nullptr);
 
 CONTEXTUALPLANNER_API

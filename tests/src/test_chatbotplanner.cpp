@@ -184,9 +184,11 @@ void _removeFirstGoalsThatAreAlreadySatisfied()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
 
+  const cp::Goal* goal = nullptr;
   std::map<std::string, std::string> parameters;
-  auto actionId = cp::lookForAnActionToDo(parameters, problem, domain, {});
+  auto actionId = cp::lookForAnActionToDo(parameters, problem, domain, {}, &goal);
   assert_eq(_action_goodBoy, cp::printActionIdWithParameters(actionId, parameters));
+  assert_eq(_fact_beHappy, goal->toStr());
 
   auto itAction = domain.actions().find(_action_goodBoy);
   assert_true(itAction != domain.actions().end());
@@ -867,7 +869,6 @@ void _checkMaxTimeToKeepInactiveForGoals()
 
 
 
-
 void _changePriorityOfGoal()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
@@ -903,7 +904,6 @@ void _changePriorityOfGoal()
     assert_eq(_fact_checkedIn, goals.find(9)->second[1].toStr());
     assert_eq<std::size_t>(1, goals.find(10)->second.size());
   }
-
 
   problem.setGoals({{10, {_fact_greeted, _fact_checkedIn}}}, now);
   problem.setGoalPriority(_fact_checkedIn, 9, true);

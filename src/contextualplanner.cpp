@@ -611,7 +611,7 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    std::string* pGoalOfTheAction,
+    const Goal** pGoalOfTheAction,
     const Historical* pGlobalHistorical)
 {
   fillReachableFacts(pProblem, pDomain);
@@ -631,7 +631,7 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
         if (!res.empty())
         {
           if (pGoalOfTheAction != nullptr)
-            *pGoalOfTheAction = pGoal.toStr();
+            *pGoalOfTheAction = &pGoal;
           pGoal.notifyActivity();
           return true;
         }
