@@ -131,6 +131,12 @@ void _setGoalsForAPriority(cp::Problem& pProblem,
 }
 
 
+void _test_createEmptyGoal()
+{
+  cp::Goal("goal_name", true, -1, "");
+}
+
+
 void _test_setOfFactsFromStr()
 {
   {
@@ -879,7 +885,6 @@ void _changePriorityOfGoal()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
 
-
   cp::Problem problem;
   problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
   {
@@ -925,6 +930,7 @@ void _changePriorityOfGoal()
 int main(int argc, char *argv[])
 {
   test_arithmeticEvaluator();
+  _test_createEmptyGoal();
   _test_setOfFactsFromStr();
   _noPreconditionGoalImmediatlyReached();
   _removeFirstGoalsThatAreAlreadySatisfied();
