@@ -287,7 +287,7 @@ void Problem::addRemovableFacts(const std::set<Fact>& pFacts)
 
 
 void Problem::iterateOnGoalAndRemoveNonPersistent(
-    const std::function<bool(Goal&)>& pManageGoal,
+    const std::function<bool(Goal&, int)>& pManageGoal,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool hasGoalChanged = false;
@@ -297,7 +297,7 @@ void Problem::iterateOnGoalAndRemoveNonPersistent(
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
       bool wasInactiveForTooLong = itGoal->wasInactiveForTooLong(pNow);
-      if (!wasInactiveForTooLong && pManageGoal(*itGoal))
+      if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
       {
         if (hasGoalChanged)
           onGoalsChanged(_goals);
@@ -449,7 +449,7 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
 ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
 {
   ActionId res;
-  auto isGoalNotAlreadySatisfied = [&](const Goal& pGoal){
+  auto isGoalNotAlreadySatisfied = [&](const Goal& pGoal, int){
     auto* goalConditionFactPtr = pGoal.conditionFactPtr();
     if (goalConditionFactPtr == nullptr ||
         _facts.count(*goalConditionFactPtr) > 0)

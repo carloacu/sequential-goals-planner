@@ -39,7 +39,7 @@ struct CONTEXTUALPLANNER_API Problem
   void addRemovableFacts(const std::set<Fact>& pFacts);
   void noNeedToAddReachableFacts() { _needToAddReachableFacts = false; }
   bool needToAddReachableFacts() const { return _needToAddReachableFacts; }
-  void iterateOnGoalAndRemoveNonPersistent(const std::function<bool (Goal&)>& pManageGoal,
+  void iterateOnGoalAndRemoveNonPersistent(const std::function<bool (Goal&, int)>& pManageGoal,
                                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   static const int defaultPriority;

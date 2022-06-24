@@ -100,7 +100,7 @@ std::string _lookForAnActionToDo(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
     const cp::Historical* pGlobalHistorical = nullptr)
 {
-  return cp::lookForAnActionToDo(pParameters, pProblem, pDomain, pNow, nullptr, pGlobalHistorical);
+  return cp::lookForAnActionToDo(pParameters, pProblem, pDomain, pNow, nullptr, nullptr, pGlobalHistorical);
 }
 
 std::string _lookForAnActionToDo(cp::Problem& pProblem,
@@ -185,10 +185,12 @@ void _removeFirstGoalsThatAreAlreadySatisfied()
   _setGoalsForAPriority(problem, {_fact_beHappy});
 
   const cp::Goal* goal = nullptr;
+  int priority = 0;
   std::map<std::string, std::string> parameters;
-  auto actionId = cp::lookForAnActionToDo(parameters, problem, domain, {}, &goal);
+  auto actionId = cp::lookForAnActionToDo(parameters, problem, domain, {}, &goal, &priority);
   assert_eq(_action_goodBoy, cp::printActionIdWithParameters(actionId, parameters));
   assert_eq(_fact_beHappy, goal->toStr());
+  assert_eq(10, priority);
 
   auto itAction = domain.actions().find(_action_goodBoy);
   assert_true(itAction != domain.actions().end());

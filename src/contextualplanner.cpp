@@ -608,16 +608,17 @@ bool areFactsTrue(const SetOfFacts& pSetOfFacts,
 
 
 ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
-    Problem& pProblem,
-    const Domain& pDomain,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    const Goal** pGoalOfTheAction,
-    const Historical* pGlobalHistorical)
+                             Problem& pProblem,
+                             const Domain& pDomain,
+                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                             const Goal** pGoalOfTheAction,
+                             int* pGoalPriority,
+                             const Historical* pGlobalHistorical)
 {
   fillReachableFacts(pProblem, pDomain);
 
   ActionId res;
-  auto tryToFindAnActionTowardGoal = [&](Goal& pGoal){
+  auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
     auto& facts = pProblem.facts();
     auto* goalConditionFactPtr = pGoal.conditionFactPtr();
     if (goalConditionFactPtr == nullptr ||
@@ -630,6 +631,8 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
                                             pDomain, pGlobalHistorical);
         if (!res.empty())
         {
+          if (pGoalPriority != nullptr)
+            *pGoalPriority = pPriority;
           if (pGoalOfTheAction != nullptr)
             *pGoalOfTheAction = &pGoal;
           pGoal.notifyActivity();
@@ -678,7 +681,7 @@ std::list<ActionId> solve(Problem& pProblem,
   while (!pProblem.goals().empty())
   {
     std::map<std::string, std::string> parameters;
-    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, nullptr, pGlobalHistorical);
+    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, nullptr, nullptr, pGlobalHistorical);
     if (actionToDo.empty())
       break;
     res.emplace_back(printActionIdWithParameters(actionToDo, parameters));
