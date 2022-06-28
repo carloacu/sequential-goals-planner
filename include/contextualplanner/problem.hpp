@@ -28,6 +28,8 @@ struct CONTEXTUALPLANNER_API Problem
   template<typename FACTS>
   bool addFacts(const FACTS& pFacts);
 
+  bool hasFact(const Fact& pFact) const;
+
   bool removeFact(const Fact& pFact);
   template<typename FACTS>
   bool removeFacts(const FACTS& pFacts);

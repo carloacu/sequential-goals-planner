@@ -123,6 +123,11 @@ bool Problem::addFacts(const FACTS& pFacts)
   return res;
 }
 
+bool Problem::hasFact(const Fact& pFact) const
+{
+  return _facts.count(pFact) > 0;
+}
+
 bool Problem::removeFact(const Fact& pFact)
 {
   return removeFacts(std::vector<Fact>{pFact});

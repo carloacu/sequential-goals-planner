@@ -181,7 +181,9 @@ void _noPreconditionGoalImmediatlyReached()
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_eq(_action_goodBoy, _lookForAnActionToDo(problem, domain));
   assert_true(!problem.goals().empty());
+  assert_true(!problem.hasFact(_fact_beHappy));
   problem.addFact(_fact_beHappy);
+  assert_true(problem.hasFact(_fact_beHappy));
 }
 
 
