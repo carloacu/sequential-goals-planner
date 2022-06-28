@@ -136,6 +136,10 @@ void _test_createEmptyGoal()
   cp::Goal("goal_name", true, -1, "");
 }
 
+void _test_goalToStr()
+{
+  assert_eq<std::string>("imply(condition, goal_name)", cp::Goal("imply(condition, goal_name)").toStr());
+}
 
 void _test_setOfFactsFromStr()
 {
@@ -931,6 +935,7 @@ int main(int argc, char *argv[])
 {
   test_arithmeticEvaluator();
   _test_createEmptyGoal();
+  _test_goalToStr();
   _test_setOfFactsFromStr();
   _noPreconditionGoalImmediatlyReached();
   _removeFirstGoalsThatAreAlreadySatisfied();

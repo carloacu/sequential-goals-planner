@@ -94,7 +94,7 @@ std::string Goal::toStr() const
 {
   auto res = _fact.toStr();
   if (_conditionFactPtr)
-    res = implyFunctionName + "(" + res + ")";
+    res = implyFunctionName + "(" + _conditionFactPtr->toStr() + ", " + res + ")";
   if (_isPersistentIfSkipped)
     res = persistFunctionName + "(" + res + ")";
   return res;
