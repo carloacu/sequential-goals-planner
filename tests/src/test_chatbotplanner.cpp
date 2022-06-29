@@ -1,4 +1,5 @@
 #include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/goalsremovedtracker.hpp>
 #include <iostream>
 #include <assert.h>
 #include "test_arithmeticevaluator.hpp"
@@ -896,11 +897,17 @@ void _changePriorityOfGoal()
   auto onGoalsChangedConnection = problem.onGoalsChanged.connectUnsafe([&](const std::map<int, std::vector<cp::Goal>>& pGoals) {
     goalsFromSubscription = pGoals;
   });
+  cp::GoalsRemovedTracker goalsRemovedTracker(problem);
+  std::set<std::string> goalsRemoved;
+  auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
+    goalsRemoved = pGoalsRemoved;
+  });
 
   problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
+    assert_true(goalsRemoved.empty());
     assert_eq<std::size_t>(1, goals.find(9)->second.size());
     assert_eq<std::size_t>(2, goals.find(10)->second.size());
   }
@@ -909,6 +916,7 @@ void _changePriorityOfGoal()
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
+    assert_true(goalsRemoved.empty());
     assert_eq<std::size_t>(2, goals.find(9)->second.size());
     assert_eq(_fact_checkedIn, goals.find(9)->second[0].toStr());
     assert_eq(_fact_userSatisfied, goals.find(9)->second[1].toStr());
@@ -920,6 +928,7 @@ void _changePriorityOfGoal()
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
+    assert_true(goalsRemoved.empty());
     assert_eq<std::size_t>(2, goals.find(9)->second.size());
     assert_eq(_fact_userSatisfied, goals.find(9)->second[0].toStr());
     assert_eq(_fact_checkedIn, goals.find(9)->second[1].toStr());
@@ -931,10 +940,13 @@ void _changePriorityOfGoal()
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
+    assert_eq<std::size_t>(1, goalsRemoved.size());
+    assert_eq(_fact_userSatisfied, *goalsRemoved.begin());
     assert_eq<std::size_t>(1, goals.find(9)->second.size());
     assert_eq(_fact_checkedIn, goals.find(9)->second[0].toStr());
     assert_eq<std::size_t>(1, goals.find(10)->second.size());
   }
+  onGoalsRemovedConnection.disconnect();
   onGoalsChangedConnection.disconnect();
 }
 

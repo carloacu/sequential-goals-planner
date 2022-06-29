@@ -11,6 +11,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/alias.hpp
     include/contextualplanner/domain.hpp
     include/contextualplanner/expression.hpp
+    include/contextualplanner/goalsremovedtracker.hpp
     include/contextualplanner/fact.hpp
     include/contextualplanner/goal.hpp
     include/contextualplanner/historical.hpp
@@ -26,6 +27,7 @@ set(CHATBOTPLANNER_SRCS
     src/domain.cpp
     src/fact.cpp
     src/goal.cpp
+    src/goalsremovedtracker.cpp
     src/historical.cpp
     src/problem.cpp
     src/setoffacts.cpp
