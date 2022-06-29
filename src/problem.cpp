@@ -388,6 +388,7 @@ void Problem::setGoalPriority(const std::string& pGoalStr,
                               bool pPushFrontOrBttomInCaseOfConflictWithAnotherGoal)
 {
   std::unique_ptr<Goal> goalToMove;
+  bool goalsChanged = false;
   for (auto itGroup = _goals.begin(); itGroup != _goals.end(); )
   {
     for (auto it = itGroup->second.begin(); it != itGroup->second.end(); )
@@ -396,15 +397,21 @@ void Problem::setGoalPriority(const std::string& pGoalStr,
       {
         goalToMove = std::make_unique<Goal>(std::move(*it));
         itGroup->second.erase(it);
+        goalsChanged = true;
         break;
       }
       ++it;
     }
 
     if (itGroup->second.empty())
+    {
       itGroup = _goals.erase(itGroup);
+      goalsChanged = true;
+    }
     else
+    {
       ++itGroup;
+    }
 
     if (goalToMove)
     {
@@ -416,6 +423,9 @@ void Problem::setGoalPriority(const std::string& pGoalStr,
       break;
     }
   }
+
+  if (goalsChanged)
+    onGoalsChanged(_goals);
 }
 
 

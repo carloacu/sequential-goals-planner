@@ -66,7 +66,6 @@ bool Goal::operator==(const Goal& pOther) const
   return _fact == pOther._fact &&
       _isStackable == pOther._isStackable &&
       _maxTimeToKeepInactive == pOther._maxTimeToKeepInactive &&
-      _inactiveSince == pOther._inactiveSince &&
       _isPersistentIfSkipped == pOther._isPersistentIfSkipped &&
       _goalGroupId == pOther._goalGroupId;
 }

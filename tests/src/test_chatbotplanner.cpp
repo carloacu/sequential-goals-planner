@@ -891,10 +891,16 @@ void _changePriorityOfGoal()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
 
+  std::map<int, std::vector<cp::Goal>> goalsFromSubscription;
   cp::Problem problem;
+  auto onGoalsChangedConnection = problem.onGoalsChanged.connectUnsafe([&](const std::map<int, std::vector<cp::Goal>>& pGoals) {
+    goalsFromSubscription = pGoals;
+  });
+
   problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
   {
     auto& goals = problem.goals();
+    assert_eq(goalsFromSubscription, goals);
     assert_eq<std::size_t>(1, goals.find(9)->second.size());
     assert_eq<std::size_t>(2, goals.find(10)->second.size());
   }
@@ -902,6 +908,7 @@ void _changePriorityOfGoal()
   problem.setGoalPriority(_fact_checkedIn, 9, true);
   {
     auto& goals = problem.goals();
+    assert_eq(goalsFromSubscription, goals);
     assert_eq<std::size_t>(2, goals.find(9)->second.size());
     assert_eq(_fact_checkedIn, goals.find(9)->second[0].toStr());
     assert_eq(_fact_userSatisfied, goals.find(9)->second[1].toStr());
@@ -912,6 +919,7 @@ void _changePriorityOfGoal()
   problem.setGoalPriority(_fact_checkedIn, 9, false);
   {
     auto& goals = problem.goals();
+    assert_eq(goalsFromSubscription, goals);
     assert_eq<std::size_t>(2, goals.find(9)->second.size());
     assert_eq(_fact_userSatisfied, goals.find(9)->second[0].toStr());
     assert_eq(_fact_checkedIn, goals.find(9)->second[1].toStr());
@@ -922,10 +930,12 @@ void _changePriorityOfGoal()
   problem.setGoalPriority(_fact_checkedIn, 9, true);
   {
     auto& goals = problem.goals();
+    assert_eq(goalsFromSubscription, goals);
     assert_eq<std::size_t>(1, goals.find(9)->second.size());
     assert_eq(_fact_checkedIn, goals.find(9)->second[0].toStr());
     assert_eq<std::size_t>(1, goals.find(10)->second.size());
   }
+  onGoalsChangedConnection.disconnect();
 }
 
 
