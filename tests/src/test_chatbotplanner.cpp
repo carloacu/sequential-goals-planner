@@ -140,6 +140,7 @@ void _test_createEmptyGoal()
 void _test_goalToStr()
 {
   assert_eq<std::string>("imply(condition, goal_name)", cp::Goal("imply(condition, goal_name)").toStr());
+  assert_eq<std::string>("persist(imply(condition, goal_name))", cp::Goal("persist(imply(condition, goal_name))").toStr());
 }
 
 void _test_setOfFactsFromStr()
@@ -775,7 +776,7 @@ void _testPersistGoal()
 }
 
 
-void _testImplyGoal()
+void _testPersistImplyGoal()
 {
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
@@ -786,6 +787,21 @@ void _testImplyGoal()
   assert_eq<std::string>("", _solveStr(problem, actions));
   problem.addFact(_fact_greeted);
   assert_eq<std::string>(_action_checkIn, _solveStr(problem, actions));
+}
+
+
+void _testImplyGoal()
+{
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_greeted + ", " + _fact_checkedIn + ")")});
+  assert_eq<std::string>("", _solveStr(problem, actions));
+  // It is not a persistent goal it is removed
+  problem.addFact(_fact_greeted);
+  assert_eq<std::string>("", _solveStr(problem, actions));
 }
 
 
@@ -993,6 +1009,7 @@ int main(int argc, char *argv[])
   _actionWithParametersInPreconditionsAndEffectsWithoutSolution();
   _actionWithParametersInsideThePath();
   _testPersistGoal();
+  _testPersistImplyGoal();
   _testImplyGoal();
   _checkPreviousBugAboutSelectingAnInappropriateAction();
   _dontLinkActionWithPreferredInContext();
