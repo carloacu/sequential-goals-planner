@@ -24,7 +24,9 @@ Goal::Goal(const std::string& pStr,
       _fact.value.empty())
   {
     _isPersistentIfSkipped = true;
-    _fact = _fact.parameters.front();
+    // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
+    auto factFirstParameters = std::move(_fact.parameters.front());
+    _fact = std::move(factFirstParameters);
   }
 
   if (_fact.name == implyFunctionName &&
@@ -32,7 +34,9 @@ Goal::Goal(const std::string& pStr,
       _fact.value.empty())
   {
     _conditionFactPtr = std::unique_ptr<Fact>(new Fact(_fact.parameters[0]));
-    _fact = _fact.parameters[1];
+    // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
+    auto factSecondParameters = std::move(_fact.parameters[1]);
+    _fact = std::move(factSecondParameters);
   }
 }
 
