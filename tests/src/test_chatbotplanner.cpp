@@ -991,6 +991,7 @@ void _factChangedNotification()
 
   std::set<cp::Fact> factsChangedFromSubscription;
   cp::Problem problem;
+  problem.addFact(_fact_beginOfConversation);
   auto factsChangedConnection = problem.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
@@ -1009,17 +1010,17 @@ void _factChangedNotification()
 
   auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   assert_eq<std::string>(_action_greet, plannerResult.actionId);
-  assert_eq({_fact_greeted}, factsChangedFromSubscription);
+  assert_eq({_fact_beginOfConversation, _fact_greeted}, factsChangedFromSubscription);
   assert_eq({_fact_greeted}, factsAdded);
   assert_eq({}, factsRemoved);
 
   plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   assert_eq<std::string>(_action_checkIn, plannerResult.actionId);
-  assert_eq({_fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
+  assert_eq({_fact_beginOfConversation, _fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
   assert_eq({_fact_checkedIn}, factsAdded);
   assert_eq({}, factsRemoved);
   problem.removeFact(_fact_greeted);
-  assert_eq({_fact_checkedIn}, factsChangedFromSubscription);
+  assert_eq({_fact_beginOfConversation, _fact_checkedIn}, factsChangedFromSubscription);
   assert_eq({_fact_checkedIn}, factsAdded);
   assert_eq({_fact_greeted}, factsRemoved);
 
