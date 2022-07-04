@@ -1,5 +1,6 @@
 #include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/goalsremovedtracker.hpp>
+#include <contextualplanner/trackers/factsaddedtracker.hpp>
+#include <contextualplanner/trackers/goalsremovedtracker.hpp>
 #include <iostream>
 #include <assert.h>
 #include "test_arithmeticevaluator.hpp"
@@ -123,6 +124,26 @@ std::string _lookForAnActionToDoConst(const cp::Problem& pProblem,
 }
 
 
+struct PlannerResult
+{
+  std::string actionId;
+  std::map<std::string, std::string> parameters;
+  const cp::Goal* goal = nullptr;
+  int priority = 0;
+};
+
+PlannerResult _lookForAnActionToDoThenNotify(cp::Problem& pProblem,
+                                             const cp::Domain& pDomain)
+{
+  PlannerResult res;
+  res.actionId = cp::lookForAnActionToDo(res.parameters, pProblem, pDomain, {}, &res.goal, &res.priority);
+
+  auto itAction = pDomain.actions().find(res.actionId);
+  assert_true(itAction != pDomain.actions().end());
+  pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effects, {}, nullptr);
+  return res;
+}
+
 void _setGoalsForAPriority(cp::Problem& pProblem,
                            const std::vector<cp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
@@ -198,17 +219,10 @@ void _removeFirstGoalsThatAreAlreadySatisfied()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
 
-  const cp::Goal* goal = nullptr;
-  int priority = 0;
-  std::map<std::string, std::string> parameters;
-  auto actionId = cp::lookForAnActionToDo(parameters, problem, domain, {}, &goal, &priority);
-  assert_eq(_action_goodBoy, cp::printActionIdWithParameters(actionId, parameters));
-  assert_eq(_fact_beHappy, goal->toStr());
-  assert_eq(10, priority);
-
-  auto itAction = domain.actions().find(_action_goodBoy);
-  assert_true(itAction != domain.actions().end());
-  problem.notifyActionDone(_action_goodBoy, parameters, itAction->second.effects, {}, nullptr);
+  auto plannerResult = _lookForAnActionToDoThenNotify(problem, domain);
+  assert_eq(_action_goodBoy, cp::printActionIdWithParameters(plannerResult.actionId, plannerResult.parameters));
+  assert_eq(_fact_beHappy, plannerResult.goal->toStr());
+  assert_eq(10, plannerResult.priority);
 
   assert_true(!problem.goals().empty());
   problem.removeFirstGoalsThatAreAlreadySatisfied();
@@ -967,6 +981,43 @@ void _changePriorityOfGoal()
 }
 
 
+void _factChangedNotification()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+  cp::Domain domain(actions);
+
+  std::set<cp::Fact> factsChangedFromSubscription;
+  cp::Problem problem;
+  auto factsChangedConnection = problem.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+    factsChangedFromSubscription = pFacts;
+  });
+  cp::FactsAddedTracker factsAddedTracker(problem);
+  std::set<cp::Fact> factsAdded;
+  auto onFactsAddedConnection = factsAddedTracker.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+    factsAdded = pFacts;
+  });
+
+  problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
+  assert_eq({}, factsChangedFromSubscription);
+
+  auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
+  assert_eq<std::string>(_action_greet, plannerResult.actionId);
+  assert_eq({_fact_greeted}, factsChangedFromSubscription);
+  assert_eq({_fact_greeted}, factsAdded);
+
+  plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
+  assert_eq<std::string>(_action_checkIn, plannerResult.actionId);
+  assert_eq({_fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
+  assert_eq({_fact_checkedIn}, factsAdded);
+
+  onFactsAddedConnection.disconnect();
+  factsChangedConnection.disconnect();
+}
+
+
 }
 
 
@@ -1017,6 +1068,7 @@ int main(int argc, char *argv[])
   _stackablePropertyOfGoals();
   _checkMaxTimeToKeepInactiveForGoals();
   _changePriorityOfGoal();
+  _factChangedNotification();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

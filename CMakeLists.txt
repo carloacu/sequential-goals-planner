@@ -6,12 +6,13 @@ include(contextualplanner-config.cmake)
 # Making a lib
 set(CHATBOTPLANNER_HPPS
     include/contextualplanner/exportsymbols/macro.hpp
+    include/contextualplanner/trackers/goalsremovedtracker.hpp
+    include/contextualplanner/trackers/factsaddedtracker.hpp
     include/contextualplanner/api.hpp
     include/contextualplanner/action.hpp
     include/contextualplanner/alias.hpp
     include/contextualplanner/domain.hpp
     include/contextualplanner/expression.hpp
-    include/contextualplanner/goalsremovedtracker.hpp
     include/contextualplanner/fact.hpp
     include/contextualplanner/goal.hpp
     include/contextualplanner/historical.hpp
@@ -24,10 +25,11 @@ set(CHATBOTPLANNER_HPPS
 
 
 set(CHATBOTPLANNER_SRCS
+    src/trackers/goalsremovedtracker.cpp
+    src/trackers/factsaddedtracker.cpp
     src/domain.cpp
     src/fact.cpp
     src/goal.cpp
-    src/goalsremovedtracker.cpp
     src/historical.cpp
     src/problem.cpp
     src/setoffacts.cpp

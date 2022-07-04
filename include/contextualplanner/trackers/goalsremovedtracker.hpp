@@ -1,9 +1,9 @@
-#ifndef INCLUDE_GOALSREMOVeDTRACKER_HPP
-#define INCLUDE_GOALSREMOVeDTRACKER_HPP
+#ifndef INCLUDE_TRACKERS_GOALSREMOVEDTRACKER_HPP
+#define INCLUDE_TRACKERS_GOALSREMOVEDTRACKER_HPP
 
 #include <set>
 #include <string>
-#include "api.hpp"
+#include "../api.hpp"
 #include <contextualplanner/observableunsafe.hpp>
 #include <contextualplanner/problem.hpp>
 
@@ -26,4 +26,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_GOALSREMOVeDTRACKER_HPP
+#endif // INCLUDE_TRACKERS_GOALSREMOVEDTRACKER_HPP
