@@ -8,7 +8,7 @@ namespace cp
 FactsChangedTracker::FactsChangedTracker(const Problem& pProblem)
   : onFactsAdded(),
     onFactsRemoved(),
-    _existingFacts(),
+    _existingFacts(pProblem.facts()),
     _onFactsChangedConneection(
       pProblem.onFactsChanged.connectUnsafe([this](const std::set<Fact>& pFacts) {
   std::set<Fact> newFacts;
