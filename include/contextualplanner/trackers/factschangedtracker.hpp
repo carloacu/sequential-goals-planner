@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TRACKERS_FACTSADDEDTRACKER_HPP
-#define INCLUDE_TRACKERS_FACTSADDEDTRACKER_HPP
+#ifndef INCLUDE_TRACKERS_FACTSCHANGEDTRACKER_HPP
+#define INCLUDE_TRACKERS_FACTSCHANGEDTRACKER_HPP
 
 #include <set>
 #include <string>
@@ -11,11 +11,12 @@
 namespace cp
 {
 
-struct CONTEXTUALPLANNER_API FactsAddedTracker
+struct CONTEXTUALPLANNER_API FactsChangedTracker
 {
-  FactsAddedTracker(const Problem& pProblem);
-  ~FactsAddedTracker();
+  FactsChangedTracker(const Problem& pProblem);
+  ~FactsChangedTracker();
   cpstd::observable::ObservableUnsafe<void (const std::set<cp::Fact>&)> onFactsAdded{};
+  cpstd::observable::ObservableUnsafe<void (const std::set<cp::Fact>&)> onFactsRemoved{};
 
 
 private:
@@ -26,4 +27,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_TRACKERS_FACTSADDEDTRACKER_HPP
+#endif // INCLUDE_TRACKERS_FACTSCHANGEDTRACKER_HPP

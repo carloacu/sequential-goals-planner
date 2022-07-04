@@ -1,5 +1,5 @@
 #include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/trackers/factsaddedtracker.hpp>
+#include <contextualplanner/trackers/factschangedtracker.hpp>
 #include <contextualplanner/trackers/goalsremovedtracker.hpp>
 #include <iostream>
 #include <assert.h>
@@ -994,10 +994,14 @@ void _factChangedNotification()
   auto factsChangedConnection = problem.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
-  cp::FactsAddedTracker factsAddedTracker(problem);
+  cp::FactsChangedTracker factsChangedTracker(problem);
   std::set<cp::Fact> factsAdded;
-  auto onFactsAddedConnection = factsAddedTracker.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+  auto onFactsAddedConnection = factsChangedTracker.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsAdded = pFacts;
+  });
+  std::set<cp::Fact> factsRemoved;
+  auto onFactsRemovedConnection = factsChangedTracker.onFactsRemoved.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+    factsRemoved = pFacts;
   });
 
   problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
@@ -1007,12 +1011,19 @@ void _factChangedNotification()
   assert_eq<std::string>(_action_greet, plannerResult.actionId);
   assert_eq({_fact_greeted}, factsChangedFromSubscription);
   assert_eq({_fact_greeted}, factsAdded);
+  assert_eq({}, factsRemoved);
 
   plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   assert_eq<std::string>(_action_checkIn, plannerResult.actionId);
   assert_eq({_fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
   assert_eq({_fact_checkedIn}, factsAdded);
+  assert_eq({}, factsRemoved);
+  problem.removeFact(_fact_greeted);
+  assert_eq({_fact_checkedIn}, factsChangedFromSubscription);
+  assert_eq({_fact_checkedIn}, factsAdded);
+  assert_eq({_fact_greeted}, factsRemoved);
 
+  onFactsRemovedConnection.disconnect();
   onFactsAddedConnection.disconnect();
   factsChangedConnection.disconnect();
 }

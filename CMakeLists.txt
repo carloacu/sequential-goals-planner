@@ -7,7 +7,7 @@ include(contextualplanner-config.cmake)
 set(CHATBOTPLANNER_HPPS
     include/contextualplanner/exportsymbols/macro.hpp
     include/contextualplanner/trackers/goalsremovedtracker.hpp
-    include/contextualplanner/trackers/factsaddedtracker.hpp
+    include/contextualplanner/trackers/factschangedtracker.hpp
     include/contextualplanner/api.hpp
     include/contextualplanner/action.hpp
     include/contextualplanner/alias.hpp
@@ -26,7 +26,7 @@ set(CHATBOTPLANNER_HPPS
 
 set(CHATBOTPLANNER_SRCS
     src/trackers/goalsremovedtracker.cpp
-    src/trackers/factsaddedtracker.cpp
+    src/trackers/factschangedtracker.cpp
     src/domain.cpp
     src/fact.cpp
     src/goal.cpp
