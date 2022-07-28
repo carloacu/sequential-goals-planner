@@ -1,8 +1,8 @@
-#include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
 #include <algorithm>
 #include <assert.h>
 #include <sstream>
-#include <contextualplanner/arithmeticevaluator.hpp>
+#include <contextualplanner/util/arithmeticevaluator.hpp>
 
 
 namespace cp
@@ -62,6 +62,36 @@ bool SetOfFacts::containsFact(const Fact& pFact) const
         return true;
   return false;
 }
+
+
+bool SetOfFacts::isIncludedIn(const SetOfFacts& pOther) const
+{
+  for (auto& currFact : facts)
+    if (pOther.facts.count(currFact) == 0)
+      return false;
+
+  for (auto& currNotFact : notFacts)
+    if (pOther.notFacts.count(currNotFact) == 0)
+      return false;
+
+  for (auto& currExpression : exps)
+  {
+    bool found = false;
+    for (auto& currExpression2 : pOther.exps)
+    {
+      if (currExpression == currExpression2)
+      {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      return false;
+  }
+  return true;
+}
+
 
 void SetOfFacts::rename(const Fact& pOldFact,
                         const Fact& pNewFact)

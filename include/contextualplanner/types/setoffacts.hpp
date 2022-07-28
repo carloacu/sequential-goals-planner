@@ -1,12 +1,11 @@
 #ifndef INCLUDE_CONTEXTUALPLANNER_SETOFFACTS_HPP
 #define INCLUDE_CONTEXTUALPLANNER_SETOFFACTS_HPP
 
-#include <set>
 #include <list>
 #include <set>
-#include "api.hpp"
-#include <contextualplanner/fact.hpp>
-#include <contextualplanner/expression.hpp>
+#include "../util/api.hpp"
+#include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/expression.hpp>
 
 
 namespace cp
@@ -38,6 +37,7 @@ struct CONTEXTUALPLANNER_API SetOfFacts
     exps.insert(exps.begin(), pOther.exps.begin(), pOther.exps.end());
   }
   bool containsFact(const Fact& pFact) const;
+  bool isIncludedIn(const SetOfFacts& pOther) const;
   void rename(const Fact& pOldFact,
               const Fact& pNewFact);
   std::list<std::pair<std::string, std::string>> toFactsStrs() const;

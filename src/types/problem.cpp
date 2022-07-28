@@ -1,7 +1,5 @@
-#include <contextualplanner/problem.hpp>
+#include <contextualplanner/types/problem.hpp>
 #include <sstream>
-#include <iomanip>
-
 
 namespace cp
 {
@@ -25,7 +23,6 @@ T _lexical_cast(const std::string& pStr)
   return atoi(pStr.c_str());
 }
 
-
 void _incrementStr(std::string& pStr)
 {
   if (pStr.empty())
@@ -44,34 +41,6 @@ void _incrementStr(std::string& pStr)
   }
 }
 
-void _limiteSizeStr(std::string& pStr, std::size_t pMaxSize)
-{
-  if (pStr.size() > pMaxSize && pMaxSize > 3)
-  {
-    pStr.resize(pMaxSize - 3);
-    pStr += "...";
-  }
-  pStr.resize(pMaxSize, ' ');
-}
-
-
-std::string _prettyPrintTime(int pNbOfSeconds)
-{
-  std::stringstream ss;
-  if (pNbOfSeconds < 60)
-  {
-    ss << pNbOfSeconds << "s";
-  }
-  else
-  {
-    int nbOfMinutes = pNbOfSeconds / 60;
-    ss << nbOfMinutes << "min";
-    int nbOfSeconds = pNbOfSeconds % 60;
-    if (nbOfSeconds > 0)
-      ss << " " << nbOfSeconds << "s";
-  }
-  return ss.str();
-}
 
 }
 
@@ -340,9 +309,9 @@ void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals,
   }
 }
 
-void Problem::setGoalsForAPriority(const std::vector<Goal>& pGoals,
-                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                                   int pPriority)
+void Problem::setGoals(const std::vector<Goal>& pGoals,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                       int pPriority)
 {
   setGoals(std::map<int, std::vector<Goal>>{{pPriority, pGoals}}, pNow);
 }
@@ -506,72 +475,6 @@ void Problem::notifyActionDone(const std::string& pActionId,
   }
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
     addGoals(*pGoalsToAdd, pNow);
-}
-
-
-std::string Problem::printGoals(std::size_t pGoalNameMaxSize,
-                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow) const
-{
-  std::stringstream res;
-
-  std::string nameLabel = "Name";
-  _limiteSizeStr(nameLabel, pGoalNameMaxSize);
-  res << nameLabel;
-
-  std::size_t prioritySize = 12;
-  res << std::setw(prioritySize) << std::setfill(' ') << "Priority";
-
-  std::size_t stackageSize = 12;
-  res << std::setw(stackageSize) << std::setfill(' ') << "Stackable";
-
-  std::size_t stackTimeSize = 0;
-  std::size_t maxStackTimeSize = 0;
-  if (pNow)
-  {
-    stackTimeSize = 13;
-    res << std::setw(stackTimeSize) << std::setfill(' ') << "Stack time";
-
-    maxStackTimeSize = 17;
-    res << std::setw(maxStackTimeSize) << std::setfill(' ') << "Max stack time";
-  }
-  res << "\n";
-
-  std::string separator(pGoalNameMaxSize + prioritySize + stackageSize + stackTimeSize + maxStackTimeSize, '-');
-  res << separator << "\n";
-
-  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
-  {
-    --itGoalsGroup;
-    for (auto& currGoal : itGoalsGroup->second)
-    {
-      std::string goalName = currGoal.toStr();
-      auto& goalGroupId = currGoal.getGoalGroupId();
-      if (!goalGroupId.empty())
-        goalName += " groupId: " + goalGroupId;
-      _limiteSizeStr(goalName, pGoalNameMaxSize);
-
-      res << goalName;
-      res << std::setw(prioritySize) << std::setfill(' ') << itGoalsGroup->first;
-      res << std::setw(stackageSize) << std::setfill(' ') << (currGoal.isStackable() ? "true" : "false");
-
-      if (pNow)
-      {
-        if (currGoal.getInactiveSince())
-          res << std::setw(stackTimeSize) << std::setfill(' ') << _prettyPrintTime(std::chrono::duration_cast<std::chrono::seconds>(*pNow - *currGoal.getInactiveSince()).count());
-        else
-          res << std::setw(stackTimeSize) << std::setfill(' ') << "-";
-
-        if (currGoal.getMaxTimeToKeepInactive() > 0)
-          res << std::setw(maxStackTimeSize) << std::setfill(' ') << _prettyPrintTime(currGoal.getMaxTimeToKeepInactive());
-        else
-          res << std::setw(maxStackTimeSize) << std::setfill(' ') << "-";
-      }
-
-      res << "\n";
-    }
-  }
-
-  return res.str();
 }
 
 

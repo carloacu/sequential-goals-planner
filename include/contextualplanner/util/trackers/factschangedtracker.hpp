@@ -4,8 +4,8 @@
 #include <set>
 #include <string>
 #include "../api.hpp"
-#include <contextualplanner/observableunsafe.hpp>
-#include <contextualplanner/problem.hpp>
+#include <contextualplanner/types/problem.hpp>
+#include <contextualplanner/util/observableunsafe.hpp>
 
 
 namespace cp

@@ -1,4 +1,4 @@
-#include <contextualplanner/goal.hpp>
+#include <contextualplanner/types/goal.hpp>
 
 
 namespace cp

@@ -2,12 +2,12 @@
 #define INCLUDE_CONTEXTUALPLANNER_PROBLEM_HPP
 
 #include <set>
-#include "api.hpp"
-#include <contextualplanner/historical.hpp>
-#include <contextualplanner/observableunsafe.hpp>
-#include <contextualplanner/fact.hpp>
-#include <contextualplanner/goal.hpp>
-#include <contextualplanner/setoffacts.hpp>
+#include "../util/api.hpp"
+#include <contextualplanner/types/historical.hpp>
+#include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/goal.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
+#include <contextualplanner/util/observableunsafe.hpp>
 
 
 namespace cp
@@ -47,9 +47,9 @@ struct CONTEXTUALPLANNER_API Problem
   static const int defaultPriority;
   void setGoals(const std::map<int, std::vector<Goal>>& pGoals,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
-  void setGoalsForAPriority(const std::vector<Goal>& pGoals,
-                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                            int pPriority = defaultPriority);
+  void setGoals(const std::vector<Goal>& pGoals,
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                int pPriority = defaultPriority);
   void addGoals(const std::map<int, std::vector<Goal>>& pGoals,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
   void pushFrontGoal(const Goal& pGoal,
@@ -78,7 +78,6 @@ struct CONTEXTUALPLANNER_API Problem
   const std::set<Fact>& reachableFactsWithAnyValues() const { return _reachableFactsWithAnyValues; }
   const std::set<Fact>& removableFacts() const { return _removableFacts; }
 
-  std::string printGoals(std::size_t pGoalNameMaxSize, const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow) const;
 
 private:
   /// Map of priority to goals

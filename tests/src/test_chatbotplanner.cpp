@@ -1,9 +1,12 @@
 #include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/trackers/factschangedtracker.hpp>
-#include <contextualplanner/trackers/goalsremovedtracker.hpp>
+#include <contextualplanner/util/trackers/factschangedtracker.hpp>
+#include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
+#include <contextualplanner/util/print.hpp>
 #include <iostream>
 #include <assert.h>
 #include "test_arithmeticevaluator.hpp"
+#include "docexamples/test_planningDummyExample.hpp"
+#include "docexamples/test_planningExampleWithAPreconditionSolve.hpp"
 
 
 namespace
@@ -83,7 +86,7 @@ std::string _solveStrConst(const cp::Problem& pProblem,
 {
   auto problem = pProblem;
   cp::Domain domain(pActions);
-  return _listOfStrToStr(cp::solve(problem, domain, {}, pGlobalHistorical));
+  return _listOfStrToStr(cp::printResolutionPlan(problem, domain, {}, pGlobalHistorical));
 }
 
 std::string _solveStr(cp::Problem& pProblem,
@@ -92,7 +95,7 @@ std::string _solveStr(cp::Problem& pProblem,
                       cp::Historical* pGlobalHistorical = nullptr)
 {
   cp::Domain domain(pActions);
-  return _listOfStrToStr(cp::solve(pProblem, domain, pNow, pGlobalHistorical));
+  return _listOfStrToStr(cp::printResolutionPlan(pProblem, domain, pNow, pGlobalHistorical));
 }
 
 std::string _lookForAnActionToDo(
@@ -140,7 +143,8 @@ PlannerResult _lookForAnActionToDoThenNotify(cp::Problem& pProblem,
 
   auto itAction = pDomain.actions().find(res.actionId);
   assert_true(itAction != pDomain.actions().end());
-  pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effects, {}, nullptr);
+  pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effect.factsModifications, {},
+                            &itAction->second.effect.goalsToAdd);
   return res;
 }
 
@@ -149,7 +153,7 @@ void _setGoalsForAPriority(cp::Problem& pProblem,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = cp::Problem::defaultPriority)
 {
-  pProblem.setGoalsForAPriority(pGoals, pNow, pPriority);
+  pProblem.setGoals(pGoals, pNow, pPriority);
 }
 
 
@@ -193,6 +197,8 @@ void _test_setOfFactsFromStr()
     assert(sOfFacts.facts.count(cp::Fact("f")) == 0);
   }
 }
+
+
 
 void _noPreconditionGoalImmediatlyReached()
 {
@@ -623,7 +629,7 @@ void _testIncrementOfVariables()
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
-    problem.modifyFacts(itAction->second.effects);
+    problem.modifyFacts(itAction->second.effect.factsModifications);
     problem.modifyFacts(cp::SetOfFacts({}, {_fact_askAllTheQuestions}));
   }
   assert(cp::areFactsTrue(actionQ1.preconditions, problem));
@@ -635,12 +641,12 @@ void _testIncrementOfVariables()
   problem.historical.notifyActionDone(actionToDo);
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
-  problem.modifyFacts(itAction->second.effects);
+  problem.modifyFacts(itAction->second.effect.factsModifications);
   assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDo(problem, domain));
   assert(cp::areFactsTrue(actionQ1.preconditions, problem));
   assert(cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
   assert(cp::areFactsTrue(actionSayQuestionBilan.preconditions, problem));
-  problem.modifyFacts(actionSayQuestionBilan.effects);
+  problem.modifyFacts(actionSayQuestionBilan.effect.factsModifications);
 }
 
 void _precoditionEqualEffect()
@@ -674,7 +680,7 @@ void _circularDependencies()
 void _triggerActionThatRemoveAFact()
 {
   std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_joke, cp::Action({_fact_beSad}, cp::SetOfFacts({}, {_fact_beSad})));
+  actions.emplace(_action_joke, cp::Action({_fact_beSad}, cp::WorldModification({}, {_fact_beSad})));
   actions.emplace(_action_goodBoy, cp::Action(cp::SetOfFacts({}, {_fact_beSad}), {_fact_beHappy}));
 
   cp::Historical historical;
@@ -1037,6 +1043,8 @@ void _factChangedNotification()
 int main(int argc, char *argv[])
 {
   test_arithmeticEvaluator();
+  planningDummyExample();
+  planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();
   _test_goalToStr();
   _test_setOfFactsFromStr();

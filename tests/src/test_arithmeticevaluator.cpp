@@ -1,7 +1,7 @@
 #include "test_arithmeticevaluator.hpp"
 #include <iostream>
 #include <assert.h>
-#include <contextualplanner/arithmeticevaluator.hpp>
+#include <contextualplanner/util/arithmeticevaluator.hpp>
 
 using namespace cp;
 

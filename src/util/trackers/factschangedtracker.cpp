@@ -1,5 +1,5 @@
-#include <contextualplanner/trackers/factschangedtracker.hpp>
-#include <contextualplanner/fact.hpp>
+#include <contextualplanner/util/trackers/factschangedtracker.hpp>
+#include <contextualplanner/types/fact.hpp>
 
 namespace cp
 {

@@ -1,4 +1,4 @@
-#include <contextualplanner/domain.hpp>
+#include <contextualplanner/types/domain.hpp>
 
 
 namespace cp
@@ -11,11 +11,13 @@ Domain::Domain(const std::map<ActionId, Action>& pActions)
 }
 
 
-void Domain::addAction(ActionId pActionId,
+void Domain::addAction(const ActionId& pActionId,
                        const Action& pAction)
 {
-  if (pAction.preconditions == pAction.effects ||
-      pAction.effects.empty())
+  if ((pAction.effect.factsModifications.isIncludedIn(pAction.preconditions) &&
+       pAction.effect.potentialFactsModifications.isIncludedIn(pAction.preconditions)) ||
+      pAction.effect.empty() ||
+      _actions.count(pActionId) > 0)
     return;
   _actions.emplace(pActionId, pAction);
   for (const auto& currPrecondition : pAction.preconditions.facts)

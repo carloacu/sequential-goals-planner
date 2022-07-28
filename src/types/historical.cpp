@@ -1,4 +1,4 @@
-#include <contextualplanner/historical.hpp>
+#include <contextualplanner/types/historical.hpp>
 
 
 namespace cp

@@ -1,4 +1,4 @@
-#include <contextualplanner/fact.hpp>
+#include <contextualplanner/types/fact.hpp>
 #include <assert.h>
 
 

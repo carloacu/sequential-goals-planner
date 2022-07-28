@@ -15,6 +15,10 @@ add_executable(
   src/test_chatbotplanner.cpp
   src/test_arithmeticevaluator.hpp
   src/test_arithmeticevaluator.cpp
+  src/docexamples/test_planningDummyExample.hpp
+  src/docexamples/test_planningDummyExample.cpp
+  src/docexamples/test_planningExampleWithAPreconditionSolve.hpp
+  src/docexamples/test_planningExampleWithAPreconditionSolve.cpp
 )
 
 

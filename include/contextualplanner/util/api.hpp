@@ -1,7 +1,7 @@
 #ifndef INCLUDE_CONTEXTUALPLANNER_API_HPP
 #define INCLUDE_CONTEXTUALPLANNER_API_HPP
 
-#include <contextualplanner/exportsymbols/macro.hpp>
+#include <contextualplanner/util/exportsymbols/macro.hpp>
 
 #if !defined(SWIG) && defined(contextualplanner_EXPORTS)
 # define CONTEXTUALPLANNER_API CONTEXTUALPLANNER_LIB_API_EXPORTS(contextualplanner)
