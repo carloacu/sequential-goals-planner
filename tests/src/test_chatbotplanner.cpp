@@ -159,7 +159,7 @@ void _setGoalsForAPriority(cp::Problem& pProblem,
 
 void _test_createEmptyGoal()
 {
-  cp::Goal("goal_name", true, -1, "");
+  cp::Goal("goal_name", -1, "");
 }
 
 void _test_goalToStr()
@@ -261,8 +261,8 @@ void _removeSomeGoals()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, true, -1, goalGroupId), {});
-  problem.pushFrontGoal(cp::Goal(_fact_greeted, true, -1, goalGroupId), {});
+  problem.pushFrontGoal(cp::Goal(_fact_checkedIn, -1, goalGroupId), {});
+  problem.pushFrontGoal(cp::Goal(_fact_greeted, -1, goalGroupId), {});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   problem.removeGoals(goalGroupId, {});
   assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
@@ -884,12 +884,12 @@ void _stackablePropertyOfGoals()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setGoals({{10, {cp::Goal(_fact_greeted, false)}}, {9, {cp::Goal(_fact_checkedIn, false), _fact_beHappy}}}, {});
+  problem.setGoals({{10, {cp::Goal(_fact_greeted, 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions));
 
   cp::Problem problem2;
-  problem2.setGoals({{10, {cp::Goal(_fact_greeted, false)}}, {9, {cp::Goal(_fact_checkedIn, false), _fact_beHappy}}}, {});
+  problem2.setGoals({{10, {cp::Goal(_fact_greeted, 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
   problem2.pushFrontGoal(_fact_presented, {}, 10);
   assert_eq(_action_presentation + _sep +
             _action_goodBoy, _solveStr(problem2, actions));
@@ -907,13 +907,13 @@ void _checkMaxTimeToKeepInactiveForGoals()
 
 
   cp::Problem problem;
-  problem.setGoals({{10, {_fact_greeted, cp::Goal(_fact_checkedIn, true, 60)}}}, now);
+  problem.setGoals({{10, {_fact_greeted, cp::Goal(_fact_checkedIn, 60)}}}, now);
   assert_eq(_action_greet + _sep +
             _action_checkIn, _solveStr(problem, actions, now));
 
 
   cp::Problem problem2;
-  problem2.setGoals({{10, {_fact_greeted, cp::Goal(_fact_checkedIn, true, 60)}}}, now);
+  problem2.setGoals({{10, {_fact_greeted, cp::Goal(_fact_checkedIn, 60)}}}, now);
   now = std::make_unique<std::chrono::steady_clock::time_point>(*now + std::chrono::seconds(100));
   assert_eq(_action_greet, _solveStr(problem2, actions, now));
 }
@@ -948,7 +948,7 @@ void _changePriorityOfGoal()
     assert_eq<std::size_t>(2, goals.find(10)->second.size());
   }
 
-  problem.setGoalPriority(_fact_checkedIn, 9, true);
+  problem.changeGoalPriority(_fact_checkedIn, 9, true);
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
@@ -960,7 +960,7 @@ void _changePriorityOfGoal()
   }
 
   problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
-  problem.setGoalPriority(_fact_checkedIn, 9, false);
+  problem.changeGoalPriority(_fact_checkedIn, 9, false);
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
@@ -972,7 +972,7 @@ void _changePriorityOfGoal()
   }
 
   problem.setGoals({{10, {_fact_greeted, _fact_checkedIn}}}, now);
-  problem.setGoalPriority(_fact_checkedIn, 9, true);
+  problem.changeGoalPriority(_fact_checkedIn, 9, true);
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);

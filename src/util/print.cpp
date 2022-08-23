@@ -107,9 +107,6 @@ std::string printGoals(std::size_t pGoalNameMaxSize,
   std::size_t prioritySize = 12;
   res << std::setw(prioritySize) << std::setfill(' ') << "Priority";
 
-  std::size_t stackageSize = 12;
-  res << std::setw(stackageSize) << std::setfill(' ') << "Stackable";
-
   std::size_t stackTimeSize = 0;
   std::size_t maxStackTimeSize = 0;
   if (pNow)
@@ -122,7 +119,7 @@ std::string printGoals(std::size_t pGoalNameMaxSize,
   }
   res << "\n";
 
-  std::string separator(pGoalNameMaxSize + prioritySize + stackageSize + stackTimeSize + maxStackTimeSize, '-');
+  std::string separator(pGoalNameMaxSize + prioritySize + stackTimeSize + maxStackTimeSize, '-');
   res << separator << "\n";
 
   auto& goals = pProblem.goals();
@@ -139,7 +136,6 @@ std::string printGoals(std::size_t pGoalNameMaxSize,
 
       res << goalName;
       res << std::setw(prioritySize) << std::setfill(' ') << itGoalsGroup->first;
-      res << std::setw(stackageSize) << std::setfill(' ') << (currGoal.isStackable() ? "true" : "false");
 
       if (pNow)
       {

@@ -16,7 +16,8 @@ https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language
  * Domain: Set of all the actions that the bot can do.
  * Fact: Axiomatic knowledge
  * World: Set of facts currently true
- * Goal: Characteritics that the world should have. It is the motivation of the bot for doing actions that will modify the world in order to repect these characteristics.
+ * Goal: Characteritics that the world should have. It is the motivation of the bot for doing actions to respect these characteristics.
+ * Problem: Current world, goal for the world and historical of actions done.
 
 
 ### Drawbacks of existing planners
@@ -56,6 +57,12 @@ Here are the types providec by this library:
 
  * [Action](include/contextualplanner/types/action.hpp): Axiomatic thing that the bot can do.
  * [Domain](include/contextualplanner/types/domain.hpp): Set of all the actions that the bot can do.
+ * [Expression](include/contextualplanner/types/expression.hpp): Expression for making arithmetic comparisons between facts.
+ * [Fact](include/contextualplanner/types/fact.hpp): Axiomatic knowledge that can be contained in the world.
+ * [Goal](include/contextualplanner/types/goal.hpp): A characteritic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
+ * [Historical](include/contextualplanner/types/historical.hpp): Container of the actions already done.
+ * [Problem](include/contextualplanner/types/historical.hpp): Current world, goal for the world and historical of actions done.
+ * [SetOfFacts](include/contextualplanner/types/setoffacts.hpp): Container of a set of facts.
  * [WorldModification](include/contextualplanner/types/worldmodification.hpp): Specification of a modification of the world.
 
 

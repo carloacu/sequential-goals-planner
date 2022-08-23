@@ -30,14 +30,15 @@ void Historical::_notifyActionDone(const ActionId& pActionId)
   ++_actionToNumberOfTimeAleardyDone[pActionId];
 }
 
-bool Historical::hasActionId(const ActionId& pActionId) const
+
+bool Historical::hasActionAlreadyBeenDone(const ActionId& pActionId) const
 {
   if (_mutexPtr)
   {
     std::lock_guard<std::mutex> lock(*_mutexPtr);
-    return _hasActionId(pActionId);
+    return _hasActionAlreadyBeenDone(pActionId);
   }
-  return _hasActionId(pActionId);
+  return _hasActionAlreadyBeenDone(pActionId);
 }
 
 std::size_t Historical::getNbOfTimeAnActionHasAlreadyBeenDone(const ActionId& pActionId) const
@@ -50,7 +51,7 @@ std::size_t Historical::getNbOfTimeAnActionHasAlreadyBeenDone(const ActionId& pA
   return _getNbOfTimeAnActionHasAlreadyBeenDone(pActionId);
 }
 
-bool Historical::_hasActionId(const ActionId& pActionId) const
+bool Historical::_hasActionAlreadyBeenDone(const ActionId& pActionId) const
 {
   return _actionToNumberOfTimeAleardyDone.count(pActionId) > 0;
 }

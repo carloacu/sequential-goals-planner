@@ -5,6 +5,7 @@ include(contextualplanner-config.cmake)
 
 # Making a lib
 set(CHATBOTPLANNER_HPPS
+    include/contextualplanner/types/enum/expressionelementtype.hpp
     include/contextualplanner/types/action.hpp
     include/contextualplanner/types/domain.hpp
     include/contextualplanner/types/expression.hpp
@@ -29,6 +30,7 @@ set(CHATBOTPLANNER_HPPS
 
 set(CHATBOTPLANNER_SRCS
     src/types/domain.cpp
+    src/types/expression.cpp
     src/types/fact.cpp
     src/types/goal.cpp
     src/types/historical.cpp

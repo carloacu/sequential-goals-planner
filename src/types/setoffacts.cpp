@@ -9,6 +9,16 @@ namespace cp
 {
 namespace
 {
+
+enum class ExpressionOperator
+{
+  PLUSPLUS,
+  PLUS,
+  MINUS,
+  EQUAL,
+  NOT
+};
+
 const std::map<std::string, ExpressionOperator> _strToBeginOfTextOperators
 {{"++", ExpressionOperator::PLUSPLUS}};
 const std::map<char, ExpressionOperator> _charToOperators

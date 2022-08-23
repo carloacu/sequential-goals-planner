@@ -8,11 +8,9 @@ const std::string Goal::implyFunctionName = "imply";
 
 
 Goal::Goal(const std::string& pStr,
-           bool pIsStackable,
            int pMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
   :  _fact(Fact::fromStr(pStr)),
-    _isStackable(pIsStackable),
     _maxTimeToKeepInactive(pMaxTimeToKeepInactive),
     _inactiveSince(),
     _isPersistentIfSkipped(false),
@@ -42,7 +40,6 @@ Goal::Goal(const std::string& pStr,
 
 Goal::Goal(const Goal& pOther)
   : _fact(pOther._fact),
-    _isStackable(pOther._isStackable),
     _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),
     _inactiveSince(pOther._inactiveSince ? std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince) : std::unique_ptr<std::chrono::steady_clock::time_point>()),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
@@ -54,7 +51,6 @@ Goal::Goal(const Goal& pOther)
 void Goal::operator=(const Goal& pOther)
 {
   _fact = pOther._fact;
-  _isStackable = pOther._isStackable;
   _maxTimeToKeepInactive = pOther._maxTimeToKeepInactive;
   if (pOther._inactiveSince)
     _inactiveSince = std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince);
@@ -68,7 +64,6 @@ void Goal::operator=(const Goal& pOther)
 bool Goal::operator==(const Goal& pOther) const
 {
   return _fact == pOther._fact &&
-      _isStackable == pOther._isStackable &&
       _maxTimeToKeepInactive == pOther._maxTimeToKeepInactive &&
       _isPersistentIfSkipped == pOther._isPersistentIfSkipped &&
       _goalGroupId == pOther._goalGroupId;
@@ -82,9 +77,13 @@ void Goal::setInactiveSinceIfNotAlreadySet(const std::unique_ptr<std::chrono::st
 }
 
 
-bool Goal::wasInactiveForTooLong(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+bool Goal::isInactiveForTooLong(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  return _inactiveSince && pNow && _maxTimeToKeepInactive > 0 &&
+  if (_maxTimeToKeepInactive < 0)
+    return false;
+  if (_maxTimeToKeepInactive == 0)
+    return true;
+  return _inactiveSince && pNow &&
       std::chrono::duration_cast<std::chrono::seconds>(*pNow - *_inactiveSince).count() > _maxTimeToKeepInactive;
 }
 

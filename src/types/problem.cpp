@@ -1,5 +1,6 @@
 #include <contextualplanner/types/problem.hpp>
 #include <sstream>
+#include <contextualplanner/types/domain.hpp>
 
 namespace cp
 {
@@ -41,8 +42,39 @@ void _incrementStr(std::string& pStr)
   }
 }
 
+void _getTheFactsToAddFromTheActionEffects(std::set<Fact>& pNewFacts,
+                                           std::vector<Fact>& pNewFactsWithAnyValues,
+                                           const Action& pAction,
+                                           const std::set<Fact>& pFacts1,
+                                           const std::set<Fact>& pFacts2)
+{
+  pAction.effect.forAllFacts([&](const cp::Fact& pFact) {
+    if (pFacts1.count(pFact) == 0 &&
+        pFacts2.count(pFact) == 0)
+    {
+      auto factToInsert = pFact;
+      if (factToInsert.replaceParametersByAny(pAction.parameters))
+        pNewFactsWithAnyValues.push_back(std::move(factToInsert));
+      else
+        pNewFacts.insert(std::move(factToInsert));
+    }
+  });
+}
+
+void _getTheFactsToRemoveFromTheActionEffects(std::set<Fact>& pFactsToRemove,
+                                              const Action& pAction,
+                                              const std::set<Fact>& pFacts1,
+                                              const std::set<Fact>& pFacts2)
+{
+  pAction.effect.forAllNotFacts([&](const cp::Fact& pNotFact) {
+    if (pFacts1.count(pNotFact) > 0 &&
+        pFacts2.count(pNotFact) == 0)
+      pFactsToRemove.insert(pNotFact);
+  });
+}
 
 }
+
 
 
 Problem::Problem(const Problem& pOther)
@@ -53,7 +85,7 @@ Problem::Problem(const Problem& pOther)
     _goals(pOther._goals),
     _variablesToValue(pOther._variablesToValue),
     _facts(pOther._facts),
-    _factNamesToNbOfFactOccurences(pOther._factNamesToNbOfFactOccurences),
+    _factNamesToNbOfOccurences(pOther._factNamesToNbOfOccurences),
     _reachableFacts(pOther._reachableFacts),
     _reachableFactsWithAnyValues(pOther._reachableFactsWithAnyValues),
     _removableFacts(pOther._removableFacts),
@@ -62,13 +94,34 @@ Problem::Problem(const Problem& pOther)
 }
 
 
-std::string Problem::getCurrentGoal() const
+void Problem::notifyActionDone(const std::string& pActionId,
+                               const std::map<std::string, std::string>& pParameters,
+                               const SetOfFacts& pEffect,
+                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                               const std::map<int, std::vector<Goal>>* pGoalsToAdd)
 {
-  for (auto itGoalGroup = _goals.rbegin(); itGoalGroup != _goals.rend(); ++itGoalGroup)
-    if (!itGoalGroup->second.empty())
-      return itGoalGroup->second.front().toStr();
-  return "";
+  historical.notifyActionDone(pActionId);
+  if (pParameters.empty())
+  {
+    modifyFacts(pEffect);
+  }
+  else
+  {
+    cp::SetOfFacts effect;
+    effect.notFacts = pEffect.notFacts;
+    effect.exps = pEffect.exps;
+    for (auto& currFact : pEffect.facts)
+    {
+      auto fact = currFact;
+      fact.fillParameters(pParameters);
+      effect.facts.insert(std::move(fact));
+    }
+    modifyFacts(effect);
+  }
+  if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
+    addGoals(*pGoalsToAdd, pNow);
 }
+
 
 void Problem::addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue)
 {
@@ -117,9 +170,9 @@ template bool Problem::addFacts<std::vector<Fact>>(const std::vector<Fact>&);
 
 void Problem::_addFactNameRef(const std::string& pFactName)
 {
-  auto itFactName = _factNamesToNbOfFactOccurences.find(pFactName);
-  if (itFactName == _factNamesToNbOfFactOccurences.end())
-    _factNamesToNbOfFactOccurences[pFactName] = 1;
+  auto itFactName = _factNamesToNbOfOccurences.find(pFactName);
+  if (itFactName == _factNamesToNbOfOccurences.end())
+    _factNamesToNbOfOccurences[pFactName] = 1;
   else
     ++itFactName->second;
 }
@@ -140,7 +193,7 @@ bool Problem::_addFactsWithoutFactNotification(const FACTS& pFacts)
     if (itReachable != _reachableFacts.end())
       _reachableFacts.erase(itReachable);
     else
-      _clearRechableAndRemovableFacts();
+      _clearReachableAndRemovableFacts();
   }
   return res;
 }
@@ -158,15 +211,15 @@ bool Problem::_removeFactsWithoutFactNotification(const FACTS& pFacts)
     res = true;
     _facts.erase(it);
     {
-      auto itFactName = _factNamesToNbOfFactOccurences.find(currFact.name);
-      if (itFactName == _factNamesToNbOfFactOccurences.end())
+      auto itFactName = _factNamesToNbOfOccurences.find(currFact.name);
+      if (itFactName == _factNamesToNbOfOccurences.end())
         assert(false);
       else if (itFactName->second == 1)
-        _factNamesToNbOfFactOccurences.erase(itFactName);
+        _factNamesToNbOfOccurences.erase(itFactName);
       else
         --itFactName->second;
     }
-    _clearRechableAndRemovableFacts();
+    _clearReachableAndRemovableFacts();
   }
   return res;
 }
@@ -176,7 +229,7 @@ template bool Problem::_addFactsWithoutFactNotification<std::set<Fact>>(const st
 template bool Problem::_addFactsWithoutFactNotification<std::vector<Fact>>(const std::vector<Fact>&);
 
 
-void Problem::_clearRechableAndRemovableFacts()
+void Problem::_clearReachableAndRemovableFacts()
 {
   _needToAddReachableFacts = true;
   _reachableFacts.clear();
@@ -236,41 +289,119 @@ void Problem::setFacts(const std::set<Fact>& pFacts)
   if (_facts != pFacts)
   {
     _facts = pFacts;
-    _factNamesToNbOfFactOccurences.clear();
+    _factNamesToNbOfOccurences.clear();
     for (const auto& currFact : pFacts)
       _addFactNameRef(currFact.name);
-    _clearRechableAndRemovableFacts();
+    _clearReachableAndRemovableFacts();
     onFactsChanged(_facts);
   }
 }
 
-void Problem::addReachableFacts(const std::set<Fact>& pFacts)
+
+bool Problem::canFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const
 {
-  _reachableFacts.insert(pFacts.begin(), pFacts.end());
+  for (const auto& currFact : pSetOfFacts.facts)
+  {
+    if (_facts.count(currFact) == 0 &&
+        _reachableFacts.count(currFact) == 0)
+    {
+      bool reableFactFound = false;
+      for (const auto& currReachableFact : _reachableFactsWithAnyValues)
+      {
+        if (currFact.areEqualExceptAnyValues(currReachableFact))
+        {
+          reableFactFound = true;
+          break;
+        }
+      }
+      if (!reableFactFound)
+        return false;
+    }
+  }
+  for (const auto& currFact : pSetOfFacts.notFacts)
+    if (_facts.count(currFact) > 0 &&
+        _removableFacts.count(currFact) == 0)
+      return false;
+  return areExpsValid(pSetOfFacts.exps, _variablesToValue);
 }
 
-void Problem::addReachableFactsWithAnyValues(const std::vector<Fact>& pFacts)
+
+void Problem::fillReachableFacts(const Domain& pDomain)
 {
-  _reachableFactsWithAnyValues.insert(pFacts.begin(), pFacts.end());
+  if (!_needToAddReachableFacts)
+    return;
+  for (const auto& currFact : _facts)
+  {
+    if (_reachableFacts.count(currFact) == 0)
+      _feedReachableFacts(currFact, pDomain);
+  }
+  _feedReachableFactsFromSetOfActions(pDomain.actionsWithoutPrecondition(), pDomain);
+  _needToAddReachableFacts = false;
 }
 
-void Problem::addRemovableFacts(const std::set<Fact>& pFacts)
+
+void Problem::_feedReachableFactsFromSetOfActions(const std::set<ActionId>& pActions,
+                                                  const Domain& pDomain)
 {
-  _removableFacts.insert(pFacts.begin(), pFacts.end());
+  for (const auto& currAction : pActions)
+  {
+    auto itAction = pDomain.actions().find(currAction);
+    if (itAction != pDomain.actions().end())
+    {
+      auto& action = itAction->second;
+      if (canFactsBecomeTrue(action.preconditions))
+      {
+        std::set<Fact> reachableFactsToAdd;
+        std::vector<Fact> reachableFactsToAddWithAnyValues;
+        _getTheFactsToAddFromTheActionEffects(reachableFactsToAdd, reachableFactsToAddWithAnyValues, action, _facts, _reachableFacts);
+        std::set<Fact> removableFactsToAdd;
+        _getTheFactsToRemoveFromTheActionEffects(removableFactsToAdd, action, _facts, _removableFacts);
+        if (!reachableFactsToAdd.empty() || !reachableFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
+        {
+          _reachableFacts.insert(reachableFactsToAdd.begin(), reachableFactsToAdd.end());
+          _reachableFactsWithAnyValues.insert(reachableFactsToAddWithAnyValues.begin(), reachableFactsToAddWithAnyValues.end());
+          _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
+          for (const auto& currNewFact : reachableFactsToAdd)
+            _feedReachableFacts(currNewFact, pDomain);
+          for (const auto& currNewFact : removableFactsToAdd)
+            _feedReachableFacts(currNewFact, pDomain);
+        }
+      }
+    }
+  }
 }
 
 
-void Problem::iterateOnGoalAndRemoveNonPersistent(
+void Problem::_feedReachableFacts(const Fact& pFact,
+                                  const Domain& pDomain)
+{
+  auto itPrecToActions = pDomain.preconditionToActions().find(pFact.name);
+  if (itPrecToActions != pDomain.preconditionToActions().end())
+    _feedReachableFactsFromSetOfActions(itPrecToActions->second, pDomain);
+}
+
+std::string Problem::getCurrentGoal() const
+{
+  for (auto itGoalGroup = _goals.rbegin(); itGoalGroup != _goals.rend(); ++itGoalGroup)
+    if (!itGoalGroup->second.empty())
+      return itGoalGroup->second.front().toStr();
+  return "";
+}
+
+
+void Problem::iterateOnGoalsAndRemoveNonPersistent(
     const std::function<bool(Goal&, int)>& pManageGoal,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
+  bool firstGoal = true;
   bool hasGoalChanged = false;
   for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
   {
     --itGoalsGroup;
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
-      bool wasInactiveForTooLong = itGoal->wasInactiveForTooLong(pNow);
+      bool wasInactiveForTooLong = firstGoal ? false : itGoal->isInactiveForTooLong(pNow);
+      firstGoal = false;
       if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
       {
         if (hasGoalChanged)
@@ -352,7 +483,7 @@ void Problem::pushBackGoal(const Goal& pGoal,
 }
 
 
-void Problem::setGoalPriority(const std::string& pGoalStr,
+void Problem::changeGoalPriority(const std::string& pGoalStr,
                               int pPriority,
                               bool pPushFrontOrBttomInCaseOfConflictWithAnotherGoal)
 {
@@ -430,9 +561,8 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
 }
 
 
-ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
+void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 {
-  ActionId res;
   auto isGoalNotAlreadySatisfied = [&](const Goal& pGoal, int){
     auto* goalConditionFactPtr = pGoal.conditionFactPtr();
     if (goalConditionFactPtr == nullptr ||
@@ -444,37 +574,7 @@ ActionId Problem::removeFirstGoalsThatAreAlreadySatisfied()
     return true;
   };
 
-  iterateOnGoalAndRemoveNonPersistent(isGoalNotAlreadySatisfied, {});
-  return res;
-}
-
-
-void Problem::notifyActionDone(const std::string& pActionId,
-                               const std::map<std::string, std::string>& pParameters,
-                               const SetOfFacts& pEffect,
-                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                               const std::map<int, std::vector<Goal>>* pGoalsToAdd)
-{
-  historical.notifyActionDone(pActionId);
-  if (pParameters.empty())
-  {
-    modifyFacts(pEffect);
-  }
-  else
-  {
-    cp::SetOfFacts effect;
-    effect.notFacts = pEffect.notFacts;
-    effect.exps = pEffect.exps;
-    for (auto& currFact : pEffect.facts)
-    {
-      auto fact = currFact;
-      fact.fillParameters(pParameters);
-      effect.facts.insert(std::move(fact));
-    }
-    modifyFacts(effect);
-  }
-  if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
-    addGoals(*pGoalsToAdd, pNow);
+  iterateOnGoalsAndRemoveNonPersistent(isGoalNotAlreadySatisfied, {});
 }
 
 
@@ -496,7 +596,7 @@ void Problem::_removeNoStackableGoals(bool pCheckOnlyForSecondGoal,
         continue;
       }
 
-      if (itGoal->isStackable() && !itGoal->wasInactiveForTooLong(pNow))
+      if (!itGoal->isInactiveForTooLong(pNow))
       {
         itGoal->setInactiveSinceIfNotAlreadySet(pNow);
         ++itGoal;

@@ -4,6 +4,23 @@
 
 namespace cp
 {
+namespace {
+
+void _parametersToStr(std::string& pStr,
+                      const std::vector<Fact>& pParameters)
+{
+  bool firstIteration = true;
+  for (auto& param : pParameters)
+  {
+    if (firstIteration)
+      firstIteration = false;
+    else
+      pStr += ", ";
+    pStr += param.toStr();
+  }
+}
+}
+
 const std::string Fact::anyValue = "<any>_it_is_a_language_token_for_the_planner_engine";
 
 
@@ -53,7 +70,7 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther) const
 
 
 std::string Fact::tryToExtractParameterValueFromExemple(
-    const std::string& pParameter,
+    const std::string& pParameterValue,
     const Fact& pOther) const
 {
   if (name != pOther.name ||
@@ -63,23 +80,19 @@ std::string Fact::tryToExtractParameterValueFromExemple(
   std::string res;
   if (value != pOther.value)
   {
-    if (value == pParameter)
+    if (value == pParameterValue)
       res = pOther.value;
     else
       return "";
   }
 
   auto itParam = parameters.begin();
-  auto itOtherParam = parameters.begin();
+  auto itOtherParam = pOther.parameters.begin();
   while (itParam != parameters.end())
   {
-    if (*itParam != *itOtherParam)
-    {
-      if (itParam->name == pParameter)
-        res = itOtherParam->name;
-      else
-        return "";
-    }
+    auto subRes = itParam->tryToExtractParameterValueFromExemple(pParameterValue, *itOtherParam);
+    if (subRes != "")
+      return subRes;
     ++itParam;
     ++itOtherParam;
   }
@@ -124,6 +137,17 @@ std::string Fact::toStr() const
     res += "=" + value;
   return res;
 }
+
+
+Fact Fact::fromStr(const std::string& pStr)
+{
+  Fact res;
+  auto endPos = res.fillFactFromStr(pStr, 0, ',');
+  assert(!res.name.empty());
+  assert(endPos == pStr.size());
+  return res;
+}
+
 
 std::size_t Fact::fillFactFromStr(
     const std::string& pStr,
@@ -177,15 +201,6 @@ std::size_t Fact::fillFactFromStr(
   return pos;
 }
 
-Fact Fact::fromStr(const std::string& pStr)
-{
-  Fact res;
-  auto endPos = res.fillFactFromStr(pStr, 0, ',');
-  assert(!res.name.empty());
-  assert(endPos == pStr.size());
-  return res;
-}
-
 
 bool Fact::replaceParametersByAny(const std::vector<std::string>& pParameters)
 {
@@ -209,20 +224,6 @@ bool Fact::replaceParametersByAny(const std::vector<std::string>& pParameters)
   return res;
 }
 
-
-void Fact::_parametersToStr(std::string& pStr,
-                            const std::vector<Fact>& pParameters)
-{
-  bool firstIteration = true;
-  for (auto& param : pParameters)
-  {
-    if (firstIteration)
-      firstIteration = false;
-    else
-      pStr += ", ";
-    pStr += param.toStr();
-  }
-}
 
 
 } // !cp
