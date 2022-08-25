@@ -165,11 +165,11 @@ struct CONTEXTUALPLANNER_API Problem
    * @brief Change the priority of a goal.
    * @param pGoalStr Goal concerned.
    * @param pPriority New priority to set.
-   * @param pPushFrontOrBttomInCaseOfConflictWithAnotherGoal Push in front or in bottom in case of conflict with another goal.
+   * @param pPushFrontOrBottomInCaseOfConflictWithAnotherGoal Push in front or in bottom in case of conflict with another goal.
    */
   void changeGoalPriority(const std::string& pGoalStr,
                           int pPriority,
-                          bool pPushFrontOrBttomInCaseOfConflictWithAnotherGoal);
+                          bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal);
 
   /**
    * @brief Remove some goals.

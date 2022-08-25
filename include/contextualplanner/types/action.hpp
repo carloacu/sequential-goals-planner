@@ -18,7 +18,7 @@ struct CONTEXTUALPLANNER_API Action
    * @brief Construct an Action.
    * @param pPreconditions Set of facts that should be present in the world to be able to do this action.
    * @param pEffect How the world will change when this action will be finished.
-   * @param pPreferInContext Set of facts that will increase the priority of this action, if they are present in the world.
+   * @param pPreferInContext Set of facts that will increase the priority of this action if they are present in the world.
    * @param pShouldBeDoneAsapWithoutHistoryCheck If true this action will done as soon as it contribute to an existing goal.
    */
   Action(const SetOfFacts& pPreconditions,
@@ -37,7 +37,7 @@ struct CONTEXTUALPLANNER_API Action
   std::vector<std::string> parameters;
   /// Set of facts that should be present in the world to be able to do this action.
   SetOfFacts preconditions;
-  /// Set of facts that will increase the priority of this action, if they are present in the world.
+  /// Set of facts that will increase the priority of this action if they are present in the world.
   SetOfFacts preferInContext;
   /// How the world will change when this action will be finished.
   WorldModification effect;

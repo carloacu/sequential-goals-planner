@@ -11,12 +11,12 @@
 namespace cp
 {
 
-// A characteritic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
+// A characteristic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
 struct CONTEXTUALPLANNER_API Goal
 {
   /**
    * @brief Construct a goal.
-   * @param pStr Serialized string corresponding to the goal to construct.
+   * @param pStr Serialized string corresponding to the fact contained in this goal.
    * @param pMaxTimeToKeepInactive Max time to keep this goal not in the top of the goals stack.
    * @param pGoalGroupId Identifier of a group of goals.
    */
@@ -58,7 +58,7 @@ struct CONTEXTUALPLANNER_API Goal
   /// Know if the goal will be kept in the goals stack, when we succeded or failed to satisfy it.
   bool isPersistent() const { return _isPersistentIfSkipped; }
 
-  /// Get the conditon associated. It is a fact that should be present in the world to enable this goal.
+  /// Get the condition associated. It is a fact that should be present in the world to enable this goal.
   const Fact* conditionFactPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
 
   /// Get the fact contained in this goal.
@@ -90,7 +90,7 @@ private:
   std::unique_ptr<std::chrono::steady_clock::time_point> _inactiveSince;
   /// Know if the goal will be kept in the goals stack, when we succeded or failed to satisfy it.
   bool _isPersistentIfSkipped;
-  /// Conditon associated, it is a fact that should be present in the world to enable this goal.
+  /// Condition associated, it is a fact that should be present in the world to enable this goal.
   std::unique_ptr<Fact> _conditionFactPtr;
   /// Group identifier of this goal. It can be empty if the goal does not belong to a group.
   std::string _goalGroupId;

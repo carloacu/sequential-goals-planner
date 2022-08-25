@@ -11,7 +11,7 @@ void planningExampleWithAPreconditionSolve()
   const std::string userIsGreeted = "user_is_greeted";
   const std::string proposedOurHelpToUser = "proposed_our_help_to_user";
 
-  // Action ids
+  // Action identifiers
   const std::string sayHi = "say_hi";
   const std::string askHowICanHelp = "ask_how_I_can_help";
 
@@ -28,7 +28,7 @@ void planningExampleWithAPreconditionSolve()
   cp::Problem problem;
   problem.setGoals({proposedOurHelpToUser}, now);
 
-  // Look for the next action to do
+  // Look for an action to do
   std::map<std::string, std::string> parameters;
   auto actionToDo1 = cp::lookForAnActionToDo(parameters, problem, domain, now);
   assert(sayHi == actionToDo1); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"

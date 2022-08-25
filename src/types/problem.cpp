@@ -484,8 +484,8 @@ void Problem::pushBackGoal(const Goal& pGoal,
 
 
 void Problem::changeGoalPriority(const std::string& pGoalStr,
-                              int pPriority,
-                              bool pPushFrontOrBttomInCaseOfConflictWithAnotherGoal)
+                                 int pPriority,
+                                 bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal)
 {
   std::unique_ptr<Goal> goalToMove;
   bool goalsChanged = false;
@@ -516,7 +516,7 @@ void Problem::changeGoalPriority(const std::string& pGoalStr,
     if (goalToMove)
     {
       auto& goalsForThePriority = _goals[pPriority];
-      if (pPushFrontOrBttomInCaseOfConflictWithAnotherGoal)
+      if (pPushFrontOrBottomInCaseOfConflictWithAnotherGoal)
         goalsForThePriority.insert(goalsForThePriority.begin(), *goalToMove);
       else
         goalsForThePriority.push_back(*goalToMove);

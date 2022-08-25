@@ -10,7 +10,7 @@ void planningDummyExample()
   // Fact
   const std::string userIsGreeted = "user_is_greeted";
 
-  // Action id
+  // Action identifier
   const std::string sayHi = "say_hi";
 
   // Current clock to set to different functions
@@ -25,7 +25,7 @@ void planningDummyExample()
   cp::Problem problem;
   problem.setGoals({userIsGreeted}, now);
 
-  // Look for the next action to do
+  // Look for an action to do
   std::map<std::string, std::string> parameters;
   auto actionToDo1 = cp::lookForAnActionToDo(parameters, problem, domain, now);
   assert(sayHi == actionToDo1); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"

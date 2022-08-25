@@ -16,7 +16,7 @@ https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language
  * Domain: Set of all the actions that the bot can do.
  * Fact: Axiomatic knowledge
  * World: Set of facts currently true
- * Goal: Characteritics that the world should have. It is the motivation of the bot for doing actions to respect these characteristics.
+ * Goal: Characteristics that the world should have. It is the motivation of the bot for doing actions to respect these characteristics.
  * Problem: Current world, goal for the world and historical of actions done.
 
 
@@ -59,7 +59,7 @@ Here are the types providec by this library:
  * [Domain](include/contextualplanner/types/domain.hpp): Set of all the actions that the bot can do.
  * [Expression](include/contextualplanner/types/expression.hpp): Expression for making arithmetic comparisons between facts.
  * [Fact](include/contextualplanner/types/fact.hpp): Axiomatic knowledge that can be contained in the world.
- * [Goal](include/contextualplanner/types/goal.hpp): A characteritic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
+ * [Goal](include/contextualplanner/types/goal.hpp): A characteristic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
  * [Historical](include/contextualplanner/types/historical.hpp): Container of the actions already done.
  * [Problem](include/contextualplanner/types/historical.hpp): Current world, goal for the world and historical of actions done.
  * [SetOfFacts](include/contextualplanner/types/setoffacts.hpp): Container of a set of fact modifications to apply in the world.
@@ -84,7 +84,7 @@ void planningDummyExample()
   // Fact
   const std::string userIsGreeted = "user_is_greeted";
 
-  // Action id
+  // Action identifier
   const std::string sayHi = "say_hi";
 
   // Current clock to set to different functions
@@ -99,7 +99,7 @@ void planningDummyExample()
   cp::Problem problem;
   problem.setGoals({userIsGreeted}, now);
 
-  // Look for the next action to do
+  // Look for an action to do
   std::map<std::string, std::string> parameters;
   auto actionToDo1 = cp::lookForAnActionToDo(parameters, problem, domain, now);
   assert(sayHi == actionToDo1); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
@@ -129,7 +129,7 @@ void planningExampleWithAPreconditionSolve()
   const std::string userIsGreeted = "user_is_greeted";
   const std::string proposedOurHelpToUser = "proposed_our_help_to_user";
 
-  // Action ids
+  // Action identifiers
   const std::string sayHi = "say_hi";
   const std::string askHowICanHelp = "ask_how_I_can_help";
 
@@ -146,7 +146,7 @@ void planningExampleWithAPreconditionSolve()
   cp::Problem problem;
   problem.setGoals({proposedOurHelpToUser}, now);
 
-  // Look for the next action to do
+  // Look for an action to do
   std::map<std::string, std::string> parameters;
   auto actionToDo1 = cp::lookForAnActionToDo(parameters, problem, domain, now);
   assert(sayHi == actionToDo1); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
