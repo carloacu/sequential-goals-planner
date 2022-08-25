@@ -62,6 +62,14 @@ void _splitFacts(
 }
 
 
+void SetOfFacts::add(const SetOfFacts& pOther)
+{
+  facts.insert(pOther.facts.begin(), pOther.facts.end());
+  notFacts.insert(pOther.notFacts.begin(), pOther.notFacts.end());
+  exps.insert(exps.begin(), pOther.exps.begin(), pOther.exps.end());
+}
+
+
 bool SetOfFacts::containsFact(const Fact& pFact) const
 {
   if (facts.count(pFact) > 0 || notFacts.count(pFact) > 0)

@@ -62,7 +62,7 @@ Here are the types providec by this library:
  * [Goal](include/contextualplanner/types/goal.hpp): A characteritic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
  * [Historical](include/contextualplanner/types/historical.hpp): Container of the actions already done.
  * [Problem](include/contextualplanner/types/historical.hpp): Current world, goal for the world and historical of actions done.
- * [SetOfFacts](include/contextualplanner/types/setoffacts.hpp): Container of a set of facts.
+ * [SetOfFacts](include/contextualplanner/types/setoffacts.hpp): Container of a set of fact modifications to apply in the world.
  * [WorldModification](include/contextualplanner/types/worldmodification.hpp): Specification of a modification of the world.
 
 
