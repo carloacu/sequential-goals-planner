@@ -24,6 +24,12 @@ std::list<std::string> printResolutionPlan(Problem& pProblem,
                                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                            Historical* pGlobalHistorical = nullptr);
 
+
+CONTEXTUALPLANNER_API
+std::string printGoals(std::size_t pGoalNameMaxSize,
+                       const Problem& pProblem,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
 }
 
 #endif // INCLUDE_CONTEXTUALPLANNER_UTIL_PRINT_HPP
