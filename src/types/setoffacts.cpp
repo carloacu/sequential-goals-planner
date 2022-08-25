@@ -265,12 +265,5 @@ SetOfFacts SetOfFacts::fromStr(const std::string& pStr,
   return res;
 }
 
-std::vector<cp::Fact> factsFromString(const std::string& pStr,
-                                      char pSeparator)
-{
-  std::vector<cp::Fact> res;
-  _splitFacts(res, pStr, pSeparator);
-  return res;
-}
 
 } // !cp

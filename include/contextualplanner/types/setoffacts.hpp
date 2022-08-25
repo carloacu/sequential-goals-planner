@@ -103,11 +103,6 @@ struct CONTEXTUALPLANNER_API SetOfFacts
 };
 
 
-CONTEXTUALPLANNER_API
-std::vector<cp::Fact> factsFromString(const std::string& pStr,
-                                      char pSeparator);
-
-
 } // !cp
 
 
