@@ -239,11 +239,9 @@ private:
 
   /**
    * @brief Remove no stackable goals.
-   * @param pCheckOnlyForSecondGoal True if we can remove only the second goal.
    * @param pNow Current time.
    */
-  void _removeNoStackableGoals(bool pCheckOnlyForSecondGoal,
-                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void _removeNoStackableGoals(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Feed reachable facts from a set of actions.

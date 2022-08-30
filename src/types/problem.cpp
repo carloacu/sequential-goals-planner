@@ -435,7 +435,7 @@ void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals,
   if (_goals != pGoals)
   {
     _goals = pGoals;
-    _removeNoStackableGoals(false, pNow);
+    _removeNoStackableGoals(pNow);
     onGoalsChanged(_goals);
   }
 }
@@ -457,7 +457,7 @@ void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals,
     auto& existingGoals = _goals[currGoals.first];
     existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
   }
-  _removeNoStackableGoals(false, pNow);
+  _removeNoStackableGoals(pNow);
   onGoalsChanged(_goals);
 }
 
@@ -468,7 +468,7 @@ void Problem::pushFrontGoal(const Goal& pGoal,
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.insert(existingGoals.begin(), pGoal);
-  _removeNoStackableGoals(true, pNow);
+  _removeNoStackableGoals(pNow);
   onGoalsChanged(_goals);
 }
 
@@ -478,7 +478,7 @@ void Problem::pushBackGoal(const Goal& pGoal,
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.push_back(pGoal);
-  _removeNoStackableGoals(true, pNow);
+  _removeNoStackableGoals(pNow);
   onGoalsChanged(_goals);
 }
 
@@ -555,7 +555,7 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
   }
   if (aGoalHasBeenRemoved)
   {
-    _removeNoStackableGoals(false, pNow);
+    _removeNoStackableGoals(pNow);
     onGoalsChanged(_goals);
   }
 }
@@ -578,12 +578,10 @@ void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 }
 
 
-void Problem::_removeNoStackableGoals(bool pCheckOnlyForSecondGoal,
-                                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+void Problem::_removeNoStackableGoals(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool firstGoal = true;
   bool hasGoalChanged = false;
-  bool shouldBreak = false;
   for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
   {
     --itGoalsGroup;
@@ -606,17 +604,10 @@ void Problem::_removeNoStackableGoals(bool pCheckOnlyForSecondGoal,
         itGoal = itGoalsGroup->second.erase(itGoal);
         hasGoalChanged = true;
       }
-      if (pCheckOnlyForSecondGoal)
-      {
-        shouldBreak = true;
-        break;
-      }
     }
 
     if (itGoalsGroup->second.empty())
       itGoalsGroup = _goals.erase(itGoalsGroup);
-    if (shouldBreak)
-      break;
   }
   if (hasGoalChanged)
     onGoalsChanged(_goals);

@@ -199,6 +199,18 @@ void _test_setOfFactsFromStr()
 }
 
 
+void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
+{
+  cp::Problem problem;
+  assert_eq<std::size_t>(0u, problem.goals().size());
+  problem.pushBackGoal(cp::Goal(_fact_advertised), {}, 10);
+  problem.pushBackGoal(cp::Goal(_fact_beHappy), {}, 9);
+  assert_eq<std::size_t>(2u, problem.goals().size());
+  problem.pushBackGoal(cp::Goal(_fact_checkedIn, 0), {}, 9);
+  assert_eq<std::size_t>(2u, problem.goals().size());
+  assert_eq<std::size_t>(1u, problem.goals().find(9)->second.size());
+}
+
 
 void _noPreconditionGoalImmediatlyReached()
 {
@@ -1048,6 +1060,7 @@ int main(int argc, char *argv[])
   _test_createEmptyGoal();
   _test_goalToStr();
   _test_setOfFactsFromStr();
+  _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0();
   _noPreconditionGoalImmediatlyReached();
   _removeFirstGoalsThatAreAlreadySatisfied();
   _removeAnAction();
