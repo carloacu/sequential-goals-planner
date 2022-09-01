@@ -462,6 +462,14 @@ void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals,
 }
 
 
+void Problem::addGoals(const std::vector<Goal>& pGoals,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                       int pPriority)
+{
+  addGoals(std::map<int, std::vector<Goal>>{{pPriority, pGoals}}, pNow);
+}
+
+
 void Problem::pushFrontGoal(const Goal& pGoal,
                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                             int pPriority)

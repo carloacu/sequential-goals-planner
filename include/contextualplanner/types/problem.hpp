@@ -134,12 +134,21 @@ struct CONTEXTUALPLANNER_API Problem
 
   /**
    * @brief Add some goals.
+   * @param pGoals Map of priority to the associated goals.
+   * @param pNow Current time.
+   */
+  void addGoals(const std::map<int, std::vector<Goal>>& pGoals,
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
+  /**
+   * @brief Add some goals.
    * @param pGoals Set of goals to add.
    * @param pNow Current time.
    * @param pPriority Priority of the goals to add.
    */
-  void addGoals(const std::map<int, std::vector<Goal>>& pGoals,
-                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void addGoals(const std::vector<Goal>& pGoals,
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                int pPriority = defaultPriority);
 
   /**
    * @brief Add a goal in front of the existing goals that have the same level of priority.
