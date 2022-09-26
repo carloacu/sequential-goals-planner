@@ -909,6 +909,24 @@ void _stackablePropertyOfGoals()
 
 
 
+void _bugMaxTimeToKeepInactiveEqual0BelowANotActivatedImply()
+{
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+  actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
+  actions.emplace(_action_presentation, cp::Action({}, {_fact_presented}));
+  cp::Domain domain(actions);
+
+  // Even if _fact_checkedIn has maxTimeToKeepInactive equal to 0, it is not removed because the goal with a higher priority is inactive.
+  cp::Problem problem;
+  problem.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
+  assert_eq(_action_checkIn + _sep +
+            _action_goodBoy, _solveStr(problem, actions));
+}
+
+
+
 void _checkMaxTimeToKeepInactiveForGoals()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
@@ -1099,6 +1117,7 @@ int main(int argc, char *argv[])
   _dontLinkActionWithPreferredInContext();
   _checkPriorities();
   _stackablePropertyOfGoals();
+  _bugMaxTimeToKeepInactiveEqual0BelowANotActivatedImply();
   _checkMaxTimeToKeepInactiveForGoals();
   _changePriorityOfGoal();
   _factChangedNotification();

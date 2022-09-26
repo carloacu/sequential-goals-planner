@@ -398,26 +398,22 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
   ActionId res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
     auto& facts = pProblem.facts();
-    auto* goalConditionFactPtr = pGoal.conditionFactPtr();
-    if (goalConditionFactPtr == nullptr ||
-        facts.count(*goalConditionFactPtr) > 0)
+
+    auto& goalFact = pGoal.fact();
+    if (facts.count(goalFact) == 0)
     {
-      auto& goalFact = pGoal.fact();
-      if (facts.count(goalFact) == 0)
+      res = _nextStepOfTheProblemForAGoal(pParameters, goalFact, pProblem,
+                                          pDomain, pGlobalHistorical);
+      if (!res.empty())
       {
-        res = _nextStepOfTheProblemForAGoal(pParameters, goalFact, pProblem,
-                                            pDomain, pGlobalHistorical);
-        if (!res.empty())
-        {
-          if (pGoalPriority != nullptr)
-            *pGoalPriority = pPriority;
-          if (pGoalOfTheAction != nullptr)
-            *pGoalOfTheAction = &pGoal;
-          pGoal.notifyActivity();
-          return true;
-        }
-        return false;
+        if (pGoalPriority != nullptr)
+          *pGoalPriority = pPriority;
+        if (pGoalOfTheAction != nullptr)
+          *pGoalOfTheAction = &pGoal;
+        pGoal.notifyActivity();
+        return true;
       }
+      return false;
     }
     return false;
   };

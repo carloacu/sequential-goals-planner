@@ -401,12 +401,18 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
       bool wasInactiveForTooLong = firstGoal ? false : itGoal->isInactiveForTooLong(pNow);
-      firstGoal = false;
-      if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
+
+      auto* goalConditionFactPtr = itGoal->conditionFactPtr();
+      if (goalConditionFactPtr == nullptr ||
+          _facts.count(*goalConditionFactPtr) > 0)
       {
-        if (hasGoalChanged)
-          onGoalsChanged(_goals);
-        return;
+        firstGoal = false;
+        if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
+        {
+          if (hasGoalChanged)
+            onGoalsChanged(_goals);
+          return;
+        }
       }
 
       if (itGoal->isPersistent() && !wasInactiveForTooLong)
@@ -572,14 +578,8 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
 void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 {
   auto isGoalNotAlreadySatisfied = [&](const Goal& pGoal, int){
-    auto* goalConditionFactPtr = pGoal.conditionFactPtr();
-    if (goalConditionFactPtr == nullptr ||
-        _facts.count(*goalConditionFactPtr) > 0)
-    {
-      auto& goalFact = pGoal.fact();
-      return _facts.count(goalFact) == 0;
-    }
-    return true;
+    auto& goalFact = pGoal.fact();
+    return _facts.count(goalFact) == 0;
   };
 
   iterateOnGoalsAndRemoveNonPersistent(isGoalNotAlreadySatisfied, {});
@@ -595,6 +595,12 @@ void Problem::_removeNoStackableGoals(const std::unique_ptr<std::chrono::steady_
     --itGoalsGroup;
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
+      if (itGoal->conditionFactPtr() != nullptr && _facts.count(*itGoal->conditionFactPtr()) == 0)
+      {
+        ++itGoal;
+        continue;
+      }
+
       if (firstGoal)
       {
         firstGoal = false;
