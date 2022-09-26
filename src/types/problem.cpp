@@ -78,10 +78,10 @@ void _getTheFactsToRemoveFromTheActionEffects(std::set<Fact>& pFactsToRemove,
 
 
 Problem::Problem(const Problem& pOther)
-  : historical(pOther.historical),
-    onVariablesToValueChanged(),
+  : onVariablesToValueChanged(),
     onFactsChanged(),
     onGoalsChanged(),
+    historical(pOther.historical),
     _goals(pOther._goals),
     _variablesToValue(pOther._variablesToValue),
     _facts(pOther._facts),
@@ -103,7 +103,7 @@ void Problem::notifyActionDone(const std::string& pActionId,
   historical.notifyActionDone(pActionId);
   if (pParameters.empty())
   {
-    modifyFacts(pEffect);
+    modifyFacts(pEffect, pNow);
   }
   else
   {
@@ -116,7 +116,7 @@ void Problem::notifyActionDone(const std::string& pActionId,
       fact.fillParameters(pParameters);
       effect.facts.insert(std::move(fact));
     }
-    modifyFacts(effect);
+    modifyFacts(effect, pNow);
   }
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
     addGoals(*pGoalsToAdd, pNow);
@@ -131,15 +131,17 @@ void Problem::addVariablesToValue(const std::map<std::string, std::string>& pVar
   onVariablesToValueChanged(_variablesToValue);
 }
 
-bool Problem::addFact(const Fact& pFact)
+bool Problem::addFact(const Fact& pFact,
+                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  return addFacts(std::vector<Fact>{pFact});
+  return addFacts(std::vector<Fact>{pFact}, pNow);
 }
 
 template<typename FACTS>
-bool Problem::addFacts(const FACTS& pFacts)
+bool Problem::addFacts(const FACTS& pFacts,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool res = _addFactsWithoutFactNotification(pFacts);
+  bool res = _addFactsWithoutFactNotification(pFacts, pNow);
   if (res)
     onFactsChanged(_facts);
   return res;
@@ -150,22 +152,24 @@ bool Problem::hasFact(const Fact& pFact) const
   return _facts.count(pFact) > 0;
 }
 
-bool Problem::removeFact(const Fact& pFact)
+bool Problem::removeFact(const Fact& pFact,
+                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  return removeFacts(std::vector<Fact>{pFact});
+  return removeFacts(std::vector<Fact>{pFact}, pNow);
 }
 
 template<typename FACTS>
-bool Problem::removeFacts(const FACTS& pFacts)
+bool Problem::removeFacts(const FACTS& pFacts,
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool res = _removeFactsWithoutFactNotification(pFacts);
+  bool res = _removeFactsWithoutFactNotification(pFacts, pNow);
   if (res)
     onFactsChanged(_facts);
   return res;
 }
 
-template bool Problem::addFacts<std::set<Fact>>(const std::set<Fact>&);
-template bool Problem::addFacts<std::vector<Fact>>(const std::vector<Fact>&);
+template bool Problem::addFacts<std::set<Fact>>(const std::set<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template bool Problem::addFacts<std::vector<Fact>>(const std::vector<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 
 
 void Problem::_addFactNameRef(const std::string& pFactName)
@@ -178,7 +182,8 @@ void Problem::_addFactNameRef(const std::string& pFactName)
 }
 
 template<typename FACTS>
-bool Problem::_addFactsWithoutFactNotification(const FACTS& pFacts)
+bool Problem::_addFactsWithoutFactNotification(const FACTS& pFacts,
+                                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool res = false;
   for (const auto& currFact : pFacts)
@@ -195,12 +200,14 @@ bool Problem::_addFactsWithoutFactNotification(const FACTS& pFacts)
     else
       _clearReachableAndRemovableFacts();
   }
+  _removeNoStackableGoals(pNow);
   return res;
 }
 
 
 template<typename FACTS>
-bool Problem::_removeFactsWithoutFactNotification(const FACTS& pFacts)
+bool Problem::_removeFactsWithoutFactNotification(const FACTS& pFacts,
+                                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool res = false;
   for (const auto& currFact : pFacts)
@@ -221,12 +228,13 @@ bool Problem::_removeFactsWithoutFactNotification(const FACTS& pFacts)
     }
     _clearReachableAndRemovableFacts();
   }
+  _removeNoStackableGoals(pNow);
   return res;
 }
 
 
-template bool Problem::_addFactsWithoutFactNotification<std::set<Fact>>(const std::set<Fact>&);
-template bool Problem::_addFactsWithoutFactNotification<std::vector<Fact>>(const std::vector<Fact>&);
+template bool Problem::_addFactsWithoutFactNotification<std::set<Fact>>(const std::set<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template bool Problem::_addFactsWithoutFactNotification<std::vector<Fact>>(const std::vector<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 
 
 void Problem::_clearReachableAndRemovableFacts()
@@ -237,10 +245,11 @@ void Problem::_clearReachableAndRemovableFacts()
   _removableFacts.clear();
 }
 
-bool Problem::modifyFacts(const SetOfFacts& pSetOfFacts)
+bool Problem::modifyFacts(const SetOfFacts& pSetOfFacts,
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool factsChanged = _addFactsWithoutFactNotification(pSetOfFacts.facts);
-  factsChanged = _removeFactsWithoutFactNotification(pSetOfFacts.notFacts) || factsChanged;
+  bool factsChanged = _addFactsWithoutFactNotification(pSetOfFacts.facts, pNow);
+  factsChanged = _removeFactsWithoutFactNotification(pSetOfFacts.notFacts, pNow) || factsChanged;
   bool variablesToValueChanged = false;
   for (auto& currExp : pSetOfFacts.exps)
   {
@@ -284,7 +293,8 @@ bool Problem::modifyFacts(const SetOfFacts& pSetOfFacts)
 }
 
 
-void Problem::setFacts(const std::set<Fact>& pFacts)
+void Problem::setFacts(const std::set<Fact>& pFacts,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (_facts != pFacts)
   {
@@ -293,6 +303,7 @@ void Problem::setFacts(const std::set<Fact>& pFacts)
     for (const auto& currFact : pFacts)
       _addFactNameRef(currFact.name);
     _clearReachableAndRemovableFacts();
+    _removeNoStackableGoals(pNow);
     onFactsChanged(_facts);
   }
 }

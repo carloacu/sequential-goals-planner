@@ -214,6 +214,7 @@ void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
 
 void _noPreconditionGoalImmediatlyReached()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
   cp::Domain domain(actions);
@@ -223,7 +224,7 @@ void _noPreconditionGoalImmediatlyReached()
   assert_eq(_action_goodBoy, _lookForAnActionToDo(problem, domain));
   assert_true(!problem.goals().empty());
   assert_true(!problem.hasFact(_fact_beHappy));
-  problem.addFact(_fact_beHappy);
+  problem.addFact(_fact_beHappy, now);
   assert_true(problem.hasFact(_fact_beHappy));
 }
 
@@ -378,6 +379,7 @@ void _impossibleGoal()
 
 void _privigelizeTheActionsThatHaveManyPreconditions()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
@@ -393,13 +395,13 @@ void _privigelizeTheActionsThatHaveManyPreconditions()
             _action_checkIn + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setFacts({_fact_hasQrCode});
+  problem.setFacts({_fact_hasQrCode}, now);
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithQrCode + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setFacts({_fact_hasCheckInPasword});
+  problem.setFacts({_fact_hasCheckInPasword}, now);
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithPassword + _sep +
@@ -423,6 +425,7 @@ void _preconditionThatCannotBeSolved()
 
 void _preferInContext()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkInWithQrCode, cp::Action({}, {_fact_checkedIn}, {_fact_hasQrCode}));
@@ -435,35 +438,35 @@ void _preferInContext()
             _action_checkInWithPassword + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setFacts({_fact_hasQrCode});
+  problem.setFacts({_fact_hasQrCode}, {});
   assert_eq(_action_checkInWithQrCode + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setFacts({_fact_hasCheckInPasword});
+  problem.setFacts({_fact_hasCheckInPasword}, now);
   assert_eq(_action_checkInWithPassword + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
-  problem.setFacts({});
+  problem.setFacts({}, now);
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setFacts({_fact_hasQrCode});
+  problem.setFacts({_fact_hasQrCode}, now);
   assert_eq(_action_checkInWithQrCode + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setFacts({_fact_hasCheckInPasword});
+  problem.setFacts({_fact_hasCheckInPasword}, now);
   assert_eq(_action_checkInWithPassword + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
   auto dontHaveAQrCode = cp::SetOfFacts::fromStr("!" + _fact_hasQrCode, ',');
   actions.emplace(_action_checkInWithRealPerson, cp::Action({}, {_fact_checkedIn}, dontHaveAQrCode));
-  problem.setFacts({});
+  problem.setFacts({}, now);
   assert_eq(_action_checkInWithRealPerson + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
@@ -472,6 +475,7 @@ void _preferInContext()
 
 void _preferWhenPreconditionAreCloserToTheRealFacts()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted, _fact_presented}, {_fact_beginOfConversation}));
   actions.emplace(_action_presentation, cp::Action({}, {_fact_presented}));
@@ -484,7 +488,7 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
             _action_presentation + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.setFacts({_fact_beginOfConversation});
+  problem.setFacts({_fact_beginOfConversation}, now);
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -493,6 +497,7 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
 
 void _avoidToDo2TimesTheSameActionIfPossble()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted, _fact_presented}));
   actions.emplace(_action_presentation, cp::Action({}, {_fact_presented}, {_fact_beginOfConversation}));
@@ -508,7 +513,7 @@ void _avoidToDo2TimesTheSameActionIfPossble()
   _setGoalsForAPriority(problem, {_fact_greeted});
   assert_eq(_action_greet, _solveStr(problem, actions));
 
-  problem.setFacts({});
+  problem.setFacts({}, now);
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_eq(_action_checkIn + _sep +
             _action_presentation + _sep +
@@ -538,6 +543,7 @@ void _takeHistoricalIntoAccount()
 
 void _goDoTheActionThatHaveTheMostPrerequisitValidated()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_advertise, cp::Action({}, {_fact_advertised}));
   actions.emplace(_action_checkIn, cp::Action({_fact_is_close}, {_fact_checkedIn}));
@@ -545,7 +551,7 @@ void _goDoTheActionThatHaveTheMostPrerequisitValidated()
   cp::Domain domain(actions);
 
   cp::Problem problem;
-  problem.setFacts({_fact_is_close});
+  problem.setFacts({_fact_is_close}, now);
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_eq(_action_checkIn, _lookForAnActionToDo(problem, domain));
 }
@@ -553,13 +559,14 @@ void _goDoTheActionThatHaveTheMostPrerequisitValidated()
 
 void _checkShouldBeDoneAsap()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}, {}, true));
   actions.emplace(_action_checkIn, cp::Action({_fact_is_close}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_checkedIn}, {_fact_beHappy}));
 
   cp::Problem problem;
-  problem.setFacts({_fact_is_close});
+  problem.setFacts({_fact_is_close}, now);
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -569,6 +576,7 @@ void _checkShouldBeDoneAsap()
 
 void _checkNotInAPrecondition()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action(cp::SetOfFacts({}, {_fact_checkedIn}), {_fact_greeted}));
   cp::Domain domain(actions);
@@ -576,17 +584,18 @@ void _checkNotInAPrecondition()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
-  problem.modifyFacts({_fact_checkedIn});
+  problem.modifyFacts({_fact_checkedIn}, now);
   assert_eq(std::string(), _lookForAnActionToDoConst(problem, domain));
 }
 
 
 void _checkClearGoalsWhenItsAlreadySatisfied()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   cp::Domain domain(actions);
   cp::Problem problem;
-  problem.setFacts({_fact_greeted});
+  problem.setFacts({_fact_greeted}, now);
   _setGoalsForAPriority(problem, {_fact_greeted});
   assert_eq<std::size_t>(1, problem.goals().size());
   _lookForAnActionToDo(problem, domain);
@@ -608,6 +617,7 @@ void _fromAndToStrOfSetOfFacts()
 
 void _testIncrementOfVariables()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   const cp::Action actionQ1({}, cp::SetOfFacts::fromStr(_fact_askAllTheQuestions + "\n++${number-of-question}", '\n'));
   const cp::Action actionFinishToActActions(cp::SetOfFacts::fromStr("${number-of-question}=${max-number-of-questions}", '\n'), {_fact_askAllTheQuestions}, {}, true);
@@ -622,7 +632,7 @@ void _testIncrementOfVariables()
   auto initFacts = cp::SetOfFacts::fromStr(initFactsStr, '\n');
   assert_eq(initFactsStr, initFacts.toStr("\n"));
   cp::Problem problem;
-  problem.modifyFacts(initFacts);
+  problem.modifyFacts(initFacts, now);
   assert(cp::areFactsTrue(initFacts, problem));
   assert(cp::areFactsTrue(actionQ1.preconditions, problem));
   assert(!cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
@@ -641,8 +651,8 @@ void _testIncrementOfVariables()
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
-    problem.modifyFacts(itAction->second.effect.factsModifications);
-    problem.modifyFacts(cp::SetOfFacts({}, {_fact_askAllTheQuestions}));
+    problem.modifyFacts(itAction->second.effect.factsModifications, now);
+    problem.modifyFacts(cp::SetOfFacts({}, {_fact_askAllTheQuestions}), now);
   }
   assert(cp::areFactsTrue(actionQ1.preconditions, problem));
   assert(cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
@@ -653,12 +663,12 @@ void _testIncrementOfVariables()
   problem.historical.notifyActionDone(actionToDo);
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
-  problem.modifyFacts(itAction->second.effect.factsModifications);
+  problem.modifyFacts(itAction->second.effect.factsModifications, now);
   assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDo(problem, domain));
   assert(cp::areFactsTrue(actionQ1.preconditions, problem));
   assert(cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
   assert(cp::areFactsTrue(actionSayQuestionBilan.preconditions, problem));
-  problem.modifyFacts(actionSayQuestionBilan.effect.factsModifications);
+  problem.modifyFacts(actionSayQuestionBilan.effect.factsModifications, now);
 }
 
 void _precoditionEqualEffect()
@@ -691,13 +701,14 @@ void _circularDependencies()
 
 void _triggerActionThatRemoveAFact()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_joke, cp::Action({_fact_beSad}, cp::WorldModification({}, {_fact_beSad})));
   actions.emplace(_action_goodBoy, cp::Action(cp::SetOfFacts({}, {_fact_beSad}), {_fact_beHappy}));
 
   cp::Historical historical;
   cp::Problem problem;
-  problem.addFact(_fact_beSad);
+  problem.addFact(_fact_beSad, now);
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_eq(_action_joke + _sep +
             _action_goodBoy, _solveStr(problem, actions, {}, &historical));
@@ -744,13 +755,14 @@ void _actionWithParameterizedParameter()
 
 void _actionWithParametersInPreconditionsAndEffects()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   cp::Action joke({cp::Fact::fromStr("isEngaged(human)")}, {cp::Fact::fromStr("isHappy(human)")});
   joke.parameters.emplace_back("human");
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
-  problem.addFact(cp::Fact::fromStr("isEngaged(1)"));
+  problem.addFact(cp::Fact::fromStr("isEngaged(1)"), now);
   _setGoalsForAPriority(problem, {cp::Goal("isHappy(1)")});
   assert_eq(_action_joke + "(human -> 1)", _solveStr(problem, actions));
 }
@@ -758,13 +770,14 @@ void _actionWithParametersInPreconditionsAndEffects()
 
 void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   cp::Action joke({cp::Fact::fromStr("isEngaged(human)")}, {cp::Fact::fromStr("isHappy(human)")});
   joke.parameters.emplace_back("human");
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
-  problem.addFact(cp::Fact::fromStr("isEngaged(2)"));
+  problem.addFact(cp::Fact::fromStr("isEngaged(2)"), now);
   _setGoalsForAPriority(problem, {cp::Goal("isHappy(1)")});
   assert_eq<std::string>("", _solveStr(problem, actions));
 }
@@ -810,6 +823,7 @@ void _testPersistGoal()
 
 void _testPersistImplyGoal()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
@@ -817,13 +831,14 @@ void _testPersistImplyGoal()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("persist(imply(" + _fact_greeted + ", " + _fact_checkedIn + "))")});
   assert_eq<std::string>("", _solveStr(problem, actions));
-  problem.addFact(_fact_greeted);
+  problem.addFact(_fact_greeted, now);
   assert_eq<std::string>(_action_checkIn, _solveStr(problem, actions));
 }
 
 
 void _testImplyGoal()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
@@ -832,13 +847,14 @@ void _testImplyGoal()
   _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_greeted + ", " + _fact_checkedIn + ")")});
   assert_eq<std::string>("", _solveStr(problem, actions));
   // It is not a persistent goal it is removed
-  problem.addFact(_fact_greeted);
+  problem.addFact(_fact_greeted, now);
   assert_eq<std::string>("", _solveStr(problem, actions));
 }
 
 
 void _checkPreviousBugAboutSelectingAnInappropriateAction()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action({_fact_engagedWithUser}, {_fact_userSatisfied}, removeLearntBehavior));
@@ -847,16 +863,17 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
 
   cp::Historical historical;
   cp::Problem problem;
-  problem.setFacts({_fact_engagedWithUser});
+  problem.setFacts({_fact_engagedWithUser}, now);
   _setGoalsForAPriority(problem, {"persist(" + _fact_userSatisfied + ")"});
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
-  problem.removeFact(_fact_userSatisfied);
+  problem.removeFact(_fact_userSatisfied, now);
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
 }
 
 
 void _dontLinkActionWithPreferredInContext()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action({}, {_fact_userSatisfied}, {_fact_checkedIn}));
@@ -865,7 +882,7 @@ void _dontLinkActionWithPreferredInContext()
 
   cp::Historical historical;
   cp::Problem problem;
-  problem.setFacts({_fact_engagedWithUser});
+  problem.setFacts({_fact_engagedWithUser}, now);
   _setGoalsForAPriority(problem, {_fact_userSatisfied});
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
 }
@@ -909,8 +926,9 @@ void _stackablePropertyOfGoals()
 
 
 
-void _bugMaxTimeToKeepInactiveEqual0BelowANotActivatedImply()
+void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNotSatisfied()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
@@ -923,6 +941,26 @@ void _bugMaxTimeToKeepInactiveEqual0BelowANotActivatedImply()
   problem.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
   assert_eq(_action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
+
+  cp::Problem problem2;
+  problem2.addFact(_fact_presented, now); // The difference here is that the condition of the first goal is satisfied
+  problem2.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
+  assert_eq(_action_greet + _sep +
+            _action_goodBoy, _solveStr(problem2, actions));
+
+
+  cp::Problem problem3;
+  problem3.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
+  problem3.addFact(_fact_presented, now); // The difference here is that the condition is validated after the add of the goal
+  assert_eq(_action_greet + _sep +
+            _action_goodBoy, _solveStr(problem3, actions));
+
+
+  cp::Problem problem4;
+  problem4.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
+  problem4.addFact(_fact_presented, now); // Here _fact_checkedIn goal shoud be removed from the stack
+  problem4.removeFact(_fact_presented, now); // The difference here is that the condition was validated only punctually
+  assert_eq(_action_goodBoy, _solveStr(problem4, actions));
 }
 
 
@@ -1027,7 +1065,7 @@ void _factChangedNotification()
 
   std::set<cp::Fact> factsChangedFromSubscription;
   cp::Problem problem;
-  problem.addFact(_fact_beginOfConversation);
+  problem.addFact(_fact_beginOfConversation, now);
   auto factsChangedConnection = problem.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
@@ -1055,7 +1093,7 @@ void _factChangedNotification()
   assert_eq({_fact_beginOfConversation, _fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
   assert_eq({_fact_checkedIn}, factsAdded);
   assert_eq({}, factsRemoved);
-  problem.removeFact(_fact_greeted);
+  problem.removeFact(_fact_greeted, now);
   assert_eq({_fact_beginOfConversation, _fact_checkedIn}, factsChangedFromSubscription);
   assert_eq({_fact_checkedIn}, factsAdded);
   assert_eq({_fact_greeted}, factsRemoved);
@@ -1117,7 +1155,7 @@ int main(int argc, char *argv[])
   _dontLinkActionWithPreferredInContext();
   _checkPriorities();
   _stackablePropertyOfGoals();
-  _bugMaxTimeToKeepInactiveEqual0BelowANotActivatedImply();
+  _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNotSatisfied();
   _checkMaxTimeToKeepInactiveForGoals();
   _changePriorityOfGoal();
   _factChangedNotification();

@@ -51,28 +51,58 @@ struct CONTEXTUALPLANNER_API Problem
   /// Add variables to value.
   void addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue);
 
-  /// Add a fact.
-  bool addFact(const Fact& pFact);
+  /**
+  * @brief Add a fact.
+  * @param pFact Fact to add.
+  * @param pNow Current time.
+  */
+  bool addFact(const Fact& pFact,
+               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /// Add several facts.
+  /**
+  * @brief Add several facts.
+  * @param pSetOfFacts Facts to add.
+  * @param pNow Current time.
+  */
   template<typename FACTS>
-  bool addFacts(const FACTS& pFacts);
+  bool addFacts(const FACTS& pFacts,
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /// Check if the world has a fact.
   bool hasFact(const Fact& pFact) const;
 
-  /// Remove a fact.
-  bool removeFact(const Fact& pFact);
+  /**
+  * @brief Remove a fact.
+  * @param pFact Fact to remove.
+  * @param pNow Current time.
+  */
+  bool removeFact(const Fact& pFact,
+                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /// Remove several facts.
+  /**
+  * @brief Remove several facts.
+  * @param pFacts Facts to remove.
+  * @param pNow Current time.
+  */
   template<typename FACTS>
-  bool removeFacts(const FACTS& pFacts);
+  bool removeFacts(const FACTS& pFacts,
+                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /// Modify some facts in the world.
-  bool modifyFacts(const SetOfFacts& pSetOfFacts);
+  /**
+  * @brief Modify some facts in the world.
+  * @param pSetOfFacts Facts to modify in the world.
+  * @param pNow Current time.
+  */
+  bool modifyFacts(const SetOfFacts& pSetOfFacts,
+                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /// Set the facts of the world.
-  void setFacts(const std::set<Fact>& pFacts);
+  /**
+   * @brief Set the facts of the world.
+   * @param pFacts New set of facts for the world.
+   * @param pNow Current time.
+   */
+  void setFacts(const std::set<Fact>& pFacts,
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Fill reachable facts internally, according to a domain.
@@ -224,18 +254,22 @@ private:
   /**
    * @brief Add facts without raising a notification.
    * @param pFacts Facts to add.
+   * @param pNow Current time.
    * @return True if some facts were added, false otherwise.
    */
   template<typename FACTS>
-  bool _addFactsWithoutFactNotification(const FACTS& pFacts);
+  bool _addFactsWithoutFactNotification(const FACTS& pFacts,
+                                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Remove facts without raising a notification.
    * @param pFacts Facts to add.
+   * @param pNow Current time.
    * @return True if some facts were removed, false otherwise.
    */
   template<typename FACTS>
-  bool _removeFactsWithoutFactNotification(const FACTS& pFacts);
+  bool _removeFactsWithoutFactNotification(const FACTS& pFacts,
+                                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /// Clear reachable and removable facts.
   void _clearReachableAndRemovableFacts();
