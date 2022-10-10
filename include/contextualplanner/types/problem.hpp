@@ -130,8 +130,11 @@ struct CONTEXTUALPLANNER_API Problem
   // Goal stack
   // ----------
 
-  /// Get the goal in top of the stack of goals.
-  std::string getCurrentGoal() const;
+  /// Get the goal serialized in string in top of the stack of goals, an empty string is returned if there is no goal.
+  std::string getCurrentGoalStr() const;
+
+  /// Get the goal in top of the stack of goals, nullptr is returned if there is no goal.
+  const Goal* getCurrentGoalPtr() const;
 
   /**
    * @brief Iterate on goals and remove non persistent goals.

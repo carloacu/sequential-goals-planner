@@ -391,12 +391,20 @@ void Problem::_feedReachableFacts(const Fact& pFact,
     _feedReachableFactsFromSetOfActions(itPrecToActions->second, pDomain);
 }
 
-std::string Problem::getCurrentGoal() const
+std::string Problem::getCurrentGoalStr() const
 {
   for (auto itGoalGroup = _goals.rbegin(); itGoalGroup != _goals.rend(); ++itGoalGroup)
     if (!itGoalGroup->second.empty())
       return itGoalGroup->second.front().toStr();
   return "";
+}
+
+const Goal* Problem::getCurrentGoalPtr() const
+{
+  for (auto itGoalGroup = _goals.rbegin(); itGoalGroup != _goals.rend(); ++itGoalGroup)
+    if (!itGoalGroup->second.empty())
+      return &itGoalGroup->second.front();
+  return nullptr;
 }
 
 
