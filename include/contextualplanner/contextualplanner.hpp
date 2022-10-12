@@ -49,16 +49,6 @@ void notifyActionDone(Problem& pProblem,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
-/**
- * @brief Are the facts in the world hold in the problem.
- * @param[in] pSetOfFacts Fact to check.
- * @param[in] pProblem Problem containing the world.
- * @return True if all the fact are contained in the world, false otherwise.
- */
-CONTEXTUALPLANNER_API
-bool areFactsTrue(const SetOfFacts& pSetOfFacts,
-                  const Problem& pProblem);
-
 
 } // !cp
 

@@ -112,94 +112,6 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 }
 
 
-bool _doesFactInFacts(
-    std::map<std::string, std::string>& pParameters,
-    const Fact& pFact,
-    const std::set<Fact>& pFacts,
-    bool pParametersAreForTheFact)
-{
-  for (const auto& currFact : pFacts)
-  {
-    if (currFact.name != pFact.name ||
-        currFact.parameters.size() != pFact.parameters.size())
-      continue;
-
-    auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
-      if (pFactValue == pValueToLookFor)
-        return true;
-      if (pParameters.empty())
-        return false;
-
-      auto itParam = pParameters.find(pFactValue);
-      if (itParam != pParameters.end())
-      {
-        if (!itParam->second.empty())
-        {
-          if (itParam->second == pValueToLookFor)
-            return true;
-        }
-        else
-        {
-          pParameters[pFactValue] = pValueToLookFor;
-          return true;
-        }
-      }
-      return false;
-    };
-
-    {
-      bool doesParametersMatches = true;
-      auto itFactParameters = currFact.parameters.begin();
-      auto itLookForParameters = pFact.parameters.begin();
-      while (itFactParameters != currFact.parameters.end())
-      {
-        if (*itFactParameters != *itLookForParameters)
-        {
-          if (!itFactParameters->parameters.empty() ||
-              !itFactParameters->value.empty() ||
-              !itLookForParameters->parameters.empty() ||
-              !itLookForParameters->value.empty() ||
-              (!pParametersAreForTheFact && !doesItMatch(itFactParameters->name, itLookForParameters->name)) ||
-              (pParametersAreForTheFact && !doesItMatch(itLookForParameters->name, itFactParameters->name)))
-            doesParametersMatches = false;
-        }
-        ++itFactParameters;
-        ++itLookForParameters;
-      }
-      if (!doesParametersMatches)
-        continue;
-    }
-
-    if (pParametersAreForTheFact)
-    {
-      if (doesItMatch(pFact.value, currFact.value))
-        return true;
-    }
-    else
-    {
-      if (doesItMatch(currFact.value, pFact.value))
-        return true;
-    }
-  }
-  return false;
-}
-
-
-bool _areFactsTrue(std::map<std::string, std::string>& pParameters,
-                   const SetOfFacts& pSetOfFacts,
-                   const Problem& pProblem)
-{
-  auto& facts = pProblem.facts();
-  for (const auto& currFact : pSetOfFacts.facts)
-    if (!_doesFactInFacts(pParameters, currFact, facts, true))
-      return false;
-  for (const auto& currFact : pSetOfFacts.notFacts)
-    if (_doesFactInFacts(pParameters, currFact, facts, true))
-      return false;
-  return areExpsValid(pSetOfFacts.exps, pProblem.variablesToValue());
-}
-
-
 bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
                              const WorldModification& pEffectToCheck,
                              const Fact& pEffectToLookFor,
@@ -276,9 +188,9 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
                              const Domain& pDomain,
                              FactsAlreadychecked& pFactsAlreadychecked)
 {
-  if (_doesFactInFacts(pParameters, pEffectToLookFor, pEffectToCheck.factsModifications.facts, false))
+  if (pEffectToLookFor.isInFacts(pEffectToCheck.factsModifications.facts, false, &pParameters))
     return true;
-  if (_doesFactInFacts(pParameters, pEffectToLookFor, pEffectToCheck.potentialFactsModifications.facts, false))
+  if (pEffectToLookFor.isInFacts(pEffectToCheck.potentialFactsModifications.facts, false, &pParameters))
     return true;
 
   auto& preconditionToActions = pDomain.preconditionToActions();
@@ -319,7 +231,7 @@ bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       auto& action = itAction->second;
       FactsAlreadychecked factsAlreadychecked;
       auto newPotRes = PotentialNextAction(currAction, action);
-      if (_areFactsTrue(newPotRes.parameters, action.preconditions, pProblem) &&
+      if (pProblem.areFactsTrue(action.preconditions, &newPotRes.parameters) &&
           _lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadychecked))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))
@@ -435,15 +347,6 @@ void notifyActionDone(Problem& pProblem,
     pProblem.notifyActionDone(pActionId, pParameters, itAction->second.effect.factsModifications,
                               pNow, &itAction->second.effect.goalsToAdd);
 }
-
-
-bool areFactsTrue(const SetOfFacts& pSetOfFacts,
-                  const Problem& pProblem)
-{
-  std::map<std::string, std::string> parameters;
-  return _areFactsTrue(parameters, pSetOfFacts, pProblem);
-}
-
 
 
 } // !cp

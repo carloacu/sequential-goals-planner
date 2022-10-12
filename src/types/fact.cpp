@@ -225,5 +225,77 @@ bool Fact::replaceParametersByAny(const std::vector<std::string>& pParameters)
 }
 
 
+bool Fact::isInFacts(
+    const std::set<Fact>& pFacts,
+    bool pParametersAreForTheFact,
+    std::map<std::string, std::string>* pParametersPtr) const
+{
+  for (const auto& currFact : pFacts)
+  {
+    if (currFact.name != name ||
+        currFact.parameters.size() != parameters.size())
+      continue;
+
+    auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
+      if (pFactValue == pValueToLookFor)
+        return true;
+      if (pParametersPtr == nullptr || pParametersPtr->empty())
+        return false;
+      auto& parameters = *pParametersPtr;
+
+      auto itParam = parameters.find(pFactValue);
+      if (itParam != parameters.end())
+      {
+        if (!itParam->second.empty())
+        {
+          if (itParam->second == pValueToLookFor)
+            return true;
+        }
+        else
+        {
+          parameters[pFactValue] = pValueToLookFor;
+          return true;
+        }
+      }
+      return false;
+    };
+
+    {
+      bool doesParametersMatches = true;
+      auto itFactParameters = currFact.parameters.begin();
+      auto itLookForParameters = parameters.begin();
+      while (itFactParameters != currFact.parameters.end())
+      {
+        if (*itFactParameters != *itLookForParameters)
+        {
+          if (!itFactParameters->parameters.empty() ||
+              !itFactParameters->value.empty() ||
+              !itLookForParameters->parameters.empty() ||
+              !itLookForParameters->value.empty() ||
+              (!pParametersAreForTheFact && !doesItMatch(itFactParameters->name, itLookForParameters->name)) ||
+              (pParametersAreForTheFact && !doesItMatch(itLookForParameters->name, itFactParameters->name)))
+            doesParametersMatches = false;
+        }
+        ++itFactParameters;
+        ++itLookForParameters;
+      }
+      if (!doesParametersMatches)
+        continue;
+    }
+
+    if (pParametersAreForTheFact)
+    {
+      if (doesItMatch(value, currFact.value))
+        return true;
+    }
+    else
+    {
+      if (doesItMatch(currFact.value, value))
+        return true;
+    }
+  }
+  return false;
+}
+
 
 } // !cp

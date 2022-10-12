@@ -2,10 +2,12 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEM_HPP
 
 #include <set>
+#include <list>
 #include "../util/api.hpp"
 #include <contextualplanner/types/historical.hpp>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/goal.hpp>
+#include <contextualplanner/types/inference.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/util/observableunsafe.hpp>
 
@@ -117,6 +119,15 @@ struct CONTEXTUALPLANNER_API Problem
    */
   bool canFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const;
 
+  /**
+   * @brief Are the facts hold in the problem.
+   * @param[in] pSetOfFacts Fact to check.
+   * @param[oui] pParametersPtr Parameters that the facts have in the problem.
+   * @return True if all the fact are contained in the problem, false otherwise.
+   */
+  bool areFactsTrue(const SetOfFacts& pSetOfFacts,
+                    std::map<std::string, std::string>* pParametersPtr = nullptr) const;
+
   /// Facts of the world.
   const std::set<Fact>& facts() const { return _facts; }
   /// Facts name to number of occurences in the world.
@@ -208,10 +219,12 @@ struct CONTEXTUALPLANNER_API Problem
    * @param pGoalStr Goal concerned.
    * @param pPriority New priority to set.
    * @param pPushFrontOrBottomInCaseOfConflictWithAnotherGoal Push in front or in bottom in case of conflict with another goal.
+   * @param pNow Current time.
    */
   void changeGoalPriority(const std::string& pGoalStr,
                           int pPriority,
-                          bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal);
+                          bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal,
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Remove some goals.
@@ -227,6 +240,12 @@ struct CONTEXTUALPLANNER_API Problem
   /// Goals to satisfy.
   const std::map<int, std::vector<Goal>>& goals() const { return _goals; }
 
+
+  // Inferences
+  // ----------
+
+  /// Set the inferences to do when the facts or the goals change.
+  void setInferences(const std::list<Inference>& pInferences);
 
 
   // Historical of actions done
@@ -253,26 +272,40 @@ private:
   std::set<Fact> _removableFacts{};
   /// Know if we need to add reachable facts.
   bool _needToAddReachableFacts = true;
+  /// Inferences.
+  std::list<Inference> _inferences{};
+  /// Stored what changed.
+  struct WhatChanged
+  {
+    /// True if the facts changed.
+    bool facts = false;
+    /// True if the goals changed.
+    bool goals = false;
+  };
 
   /**
    * @brief Add facts without raising a notification.
-   * @param pFacts Facts to add.
-   * @param pNow Current time.
+   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pFacts Facts to add.
+   * @param[in] pNow Current time.
    * @return True if some facts were added, false otherwise.
    */
   template<typename FACTS>
-  bool _addFactsWithoutFactNotification(const FACTS& pFacts,
-                                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void _addFacts(WhatChanged& pWhatChanged,
+                 const FACTS& pFacts,
+                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Remove facts without raising a notification.
-   * @param pFacts Facts to add.
-   * @param pNow Current time.
+   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pFacts Facts to add.
+   * @param[in] pNow Current time.
    * @return True if some facts were removed, false otherwise.
    */
   template<typename FACTS>
-  bool _removeFactsWithoutFactNotification(const FACTS& pFacts,
-                                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void _removeFacts(WhatChanged& pWhatChanged,
+                    const FACTS& pFacts,
+                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /// Clear reachable and removable facts.
   void _clearReachableAndRemovableFacts();
@@ -285,9 +318,11 @@ private:
 
   /**
    * @brief Remove no stackable goals.
-   * @param pNow Current time.
+   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pNow Current time.
    */
-  void _removeNoStackableGoals(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void _removeNoStackableGoals(WhatChanged& pWhatChanged,
+                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Feed reachable facts from a set of actions.
@@ -304,6 +339,35 @@ private:
    */
   void _feedReachableFacts(const Fact& pFact,
                            const Domain& pDomain);
+
+  /**
+   * @brief Modify some facts in the world.
+   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pSetOfFacts Facts to modify in the world.
+   * @param[in] pNow Current time.
+   */
+  void _modifyFacts(WhatChanged& pWhatChanged,
+                    const SetOfFacts& pSetOfFacts,
+                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
+  /**
+   * @brief Add some goals.
+   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pGoals Set of goals to add.
+   * @param[in] pNow Current time.
+   */
+  void _addGoals(WhatChanged& pWhatChanged,
+                 const std::map<int, std::vector<Goal>>& pGoals,
+                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
+
+  /**
+   * @brief Do inferences and raise the observables if some facts or goals changed.
+   * @param[in] pWhatChanged Get what changed.
+   * @param[in] pNow Current time.
+   */
+  void _notifyWhatChanged(WhatChanged& pWhatChanged,
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 };
 
 } // !cp

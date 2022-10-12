@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "../util/api.hpp"
 
 
@@ -75,6 +76,17 @@ struct CONTEXTUALPLANNER_API Fact
    * @return True if at least one "any value" has been set, false otherwise.
    */
   bool replaceParametersByAny(const std::vector<std::string>& pParameters);
+
+  /**
+   * @brief Is the fact present in a set of facts.
+   * @param[in] pFacts Set of facts.
+   * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the set of facts.
+   * @param[in] pParameters Parameters to get.
+   * @return True if the fact is in the facts.
+   */
+  bool isInFacts(const std::set<Fact>& pFacts,
+                 bool pParametersAreForTheFact,
+                 std::map<std::string, std::string>* pParametersPtr = nullptr) const;
 
   /// Name of the fact.
   std::string name;

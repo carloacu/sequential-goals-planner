@@ -101,9 +101,10 @@ void Problem::notifyActionDone(const std::string& pActionId,
                                const std::map<int, std::vector<Goal>>* pGoalsToAdd)
 {
   historical.notifyActionDone(pActionId);
+  WhatChanged whatChanged;
   if (pParameters.empty())
   {
-    modifyFacts(pEffect, pNow);
+    _modifyFacts(whatChanged, pEffect, pNow);
   }
   else
   {
@@ -116,10 +117,11 @@ void Problem::notifyActionDone(const std::string& pActionId,
       fact.fillParameters(pParameters);
       effect.facts.insert(std::move(fact));
     }
-    modifyFacts(effect, pNow);
+    _modifyFacts(whatChanged, effect, pNow);
   }
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
-    addGoals(*pGoalsToAdd, pNow);
+    _addGoals(whatChanged, *pGoalsToAdd, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 
@@ -141,10 +143,10 @@ template<typename FACTS>
 bool Problem::addFacts(const FACTS& pFacts,
                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool res = _addFactsWithoutFactNotification(pFacts, pNow);
-  if (res)
-    onFactsChanged(_facts);
-  return res;
+  WhatChanged whatChanged;
+  _addFacts(whatChanged, pFacts, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
+  return whatChanged.facts;
 }
 
 bool Problem::hasFact(const Fact& pFact) const
@@ -162,10 +164,10 @@ template<typename FACTS>
 bool Problem::removeFacts(const FACTS& pFacts,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool res = _removeFactsWithoutFactNotification(pFacts, pNow);
-  if (res)
-    onFactsChanged(_facts);
-  return res;
+  WhatChanged whatChanged;
+  _removeFacts(whatChanged, pFacts, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
+  return whatChanged.facts;
 }
 
 template bool Problem::addFacts<std::set<Fact>>(const std::set<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
@@ -182,15 +184,15 @@ void Problem::_addFactNameRef(const std::string& pFactName)
 }
 
 template<typename FACTS>
-bool Problem::_addFactsWithoutFactNotification(const FACTS& pFacts,
-                                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+void Problem::_addFacts(WhatChanged& pWhatChanged,
+                        const FACTS& pFacts,
+                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool res = false;
   for (const auto& currFact : pFacts)
   {
     if (_facts.count(currFact) > 0)
       continue;
-    res = true;
+    pWhatChanged.facts = true;
     _facts.insert(currFact);
     _addFactNameRef(currFact.name);
 
@@ -200,22 +202,21 @@ bool Problem::_addFactsWithoutFactNotification(const FACTS& pFacts,
     else
       _clearReachableAndRemovableFacts();
   }
-  _removeNoStackableGoals(pNow);
-  return res;
+  _removeNoStackableGoals(pWhatChanged, pNow);
 }
 
 
 template<typename FACTS>
-bool Problem::_removeFactsWithoutFactNotification(const FACTS& pFacts,
-                                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+void Problem::_removeFacts(WhatChanged& pWhatChanged,
+                           const FACTS& pFacts,
+                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool res = false;
   for (const auto& currFact : pFacts)
   {
     auto it = _facts.find(currFact);
     if (it == _facts.end())
       continue;
-    res = true;
+    pWhatChanged.facts = true;
     _facts.erase(it);
     {
       auto itFactName = _factNamesToNbOfOccurences.find(currFact.name);
@@ -228,13 +229,12 @@ bool Problem::_removeFactsWithoutFactNotification(const FACTS& pFacts,
     }
     _clearReachableAndRemovableFacts();
   }
-  _removeNoStackableGoals(pNow);
-  return res;
+  _removeNoStackableGoals(pWhatChanged, pNow);
 }
 
 
-template bool Problem::_addFactsWithoutFactNotification<std::set<Fact>>(const std::set<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
-template bool Problem::_addFactsWithoutFactNotification<std::vector<Fact>>(const std::vector<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template void Problem::_addFacts<std::set<Fact>>(WhatChanged&, const std::set<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template void Problem::_addFacts<std::vector<Fact>>(WhatChanged&, const std::vector<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 
 
 void Problem::_clearReachableAndRemovableFacts()
@@ -248,8 +248,19 @@ void Problem::_clearReachableAndRemovableFacts()
 bool Problem::modifyFacts(const SetOfFacts& pSetOfFacts,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool factsChanged = _addFactsWithoutFactNotification(pSetOfFacts.facts, pNow);
-  factsChanged = _removeFactsWithoutFactNotification(pSetOfFacts.notFacts, pNow) || factsChanged;
+  WhatChanged whatChanged;
+  _modifyFacts(whatChanged, pSetOfFacts, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
+  return whatChanged.facts;
+}
+
+
+void Problem::_modifyFacts(WhatChanged& pWhatChanged,
+                           const SetOfFacts& pSetOfFacts,
+                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  _addFacts(pWhatChanged, pSetOfFacts.facts, pNow);
+  _removeFacts(pWhatChanged, pSetOfFacts.notFacts, pNow);
   bool variablesToValueChanged = false;
   for (auto& currExp : pSetOfFacts.exps)
   {
@@ -285,13 +296,9 @@ bool Problem::modifyFacts(const SetOfFacts& pSetOfFacts,
       }
     }
   }
-  if (factsChanged)
-    onFactsChanged(_facts);
   if (variablesToValueChanged)
     onVariablesToValueChanged(_variablesToValue);
-  return factsChanged;
 }
-
 
 void Problem::setFacts(const std::set<Fact>& pFacts,
                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
@@ -303,8 +310,9 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
     for (const auto& currFact : pFacts)
       _addFactNameRef(currFact.name);
     _clearReachableAndRemovableFacts();
-    _removeNoStackableGoals(pNow);
-    onFactsChanged(_facts);
+    WhatChanged whatChanged;
+    _removeNoStackableGoals(whatChanged, pNow);
+    _notifyWhatChanged(whatChanged, pNow);
   }
 }
 
@@ -332,6 +340,20 @@ bool Problem::canFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const
   for (const auto& currFact : pSetOfFacts.notFacts)
     if (_facts.count(currFact) > 0 &&
         _removableFacts.count(currFact) == 0)
+      return false;
+  return areExpsValid(pSetOfFacts.exps, _variablesToValue);
+}
+
+
+bool Problem::areFactsTrue(const SetOfFacts& pSetOfFacts,
+                           std::map<std::string, std::string>* pParametersPtr) const
+{
+  //auto& facts = pProblem.facts();
+  for (const auto& currFact : pSetOfFacts.facts)
+    if (!currFact.isInFacts(_facts, true, pParametersPtr))
+      return false;
+  for (const auto& currFact : pSetOfFacts.notFacts)
+    if (currFact.isInFacts(_facts, true, pParametersPtr))
       return false;
   return areExpsValid(pSetOfFacts.exps, _variablesToValue);
 }
@@ -413,7 +435,7 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool firstGoal = true;
-  bool hasGoalChanged = false;
+  WhatChanged whatChanged;
   for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
   {
     --itGoalsGroup;
@@ -428,8 +450,7 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
         firstGoal = false;
         if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
         {
-          if (hasGoalChanged)
-            onGoalsChanged(_goals);
+          _notifyWhatChanged(whatChanged, pNow);
           return;
         }
       }
@@ -442,15 +463,14 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
       else
       {
         itGoal = itGoalsGroup->second.erase(itGoal);
-        hasGoalChanged = true;
+        whatChanged.goals = true;
       }
     }
 
     if (itGoalsGroup->second.empty())
       itGoalsGroup = _goals.erase(itGoalsGroup);
   }
-  if (hasGoalChanged)
-    onGoalsChanged(_goals);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 
@@ -460,8 +480,10 @@ void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals,
   if (_goals != pGoals)
   {
     _goals = pGoals;
-    _removeNoStackableGoals(pNow);
-    onGoalsChanged(_goals);
+    WhatChanged whatChanged;
+    whatChanged.goals = true;
+    _removeNoStackableGoals(whatChanged, pNow);
+    _notifyWhatChanged(whatChanged, pNow);
   }
 }
 
@@ -475,15 +497,9 @@ void Problem::setGoals(const std::vector<Goal>& pGoals,
 void Problem::addGoals(const std::map<int, std::vector<Goal>>& pGoals,
                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  if (pGoals.empty())
-    return;
-  for (auto& currGoals : pGoals)
-  {
-    auto& existingGoals = _goals[currGoals.first];
-    existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
-  }
-  _removeNoStackableGoals(pNow);
-  onGoalsChanged(_goals);
+  WhatChanged whatChanged;
+  _addGoals(whatChanged, pGoals, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 
@@ -495,14 +511,31 @@ void Problem::addGoals(const std::vector<Goal>& pGoals,
 }
 
 
+void Problem::_addGoals(WhatChanged& pWhatChanged,
+                        const std::map<int, std::vector<Goal>>& pGoals,
+                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  if (pGoals.empty())
+    return;
+  for (auto& currGoals : pGoals)
+  {
+    auto& existingGoals = _goals[currGoals.first];
+    existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
+    pWhatChanged.goals = true;
+  }
+  _removeNoStackableGoals(pWhatChanged, pNow);
+}
+
+
 void Problem::pushFrontGoal(const Goal& pGoal,
                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                             int pPriority)
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.insert(existingGoals.begin(), pGoal);
-  _removeNoStackableGoals(pNow);
-  onGoalsChanged(_goals);
+  WhatChanged whatChanged;
+  _removeNoStackableGoals(whatChanged, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 void Problem::pushBackGoal(const Goal& pGoal,
@@ -511,17 +544,19 @@ void Problem::pushBackGoal(const Goal& pGoal,
 {
   auto& existingGoals = _goals[pPriority];
   existingGoals.push_back(pGoal);
-  _removeNoStackableGoals(pNow);
-  onGoalsChanged(_goals);
+  WhatChanged whatChanged;
+  _removeNoStackableGoals(whatChanged, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 
 void Problem::changeGoalPriority(const std::string& pGoalStr,
                                  int pPriority,
-                                 bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal)
+                                 bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal,
+                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   std::unique_ptr<Goal> goalToMove;
-  bool goalsChanged = false;
+  WhatChanged whatChanged;
   for (auto itGroup = _goals.begin(); itGroup != _goals.end(); )
   {
     for (auto it = itGroup->second.begin(); it != itGroup->second.end(); )
@@ -530,7 +565,7 @@ void Problem::changeGoalPriority(const std::string& pGoalStr,
       {
         goalToMove = std::make_unique<Goal>(std::move(*it));
         itGroup->second.erase(it);
-        goalsChanged = true;
+        whatChanged.goals = true;
         break;
       }
       ++it;
@@ -539,7 +574,7 @@ void Problem::changeGoalPriority(const std::string& pGoalStr,
     if (itGroup->second.empty())
     {
       itGroup = _goals.erase(itGroup);
-      goalsChanged = true;
+      whatChanged.goals = true;
     }
     else
     {
@@ -556,16 +591,14 @@ void Problem::changeGoalPriority(const std::string& pGoalStr,
       break;
     }
   }
-
-  if (goalsChanged)
-    onGoalsChanged(_goals);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 
 void Problem::removeGoals(const std::string& pGoalGroupId,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool aGoalHasBeenRemoved = false;
+  WhatChanged whatChanged;
   for (auto itGroup = _goals.begin(); itGroup != _goals.end(); )
   {
     for (auto it = itGroup->second.begin(); it != itGroup->second.end(); )
@@ -573,7 +606,7 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
       if (it->getGoalGroupId() == pGoalGroupId)
       {
         it = itGroup->second.erase(it);
-        aGoalHasBeenRemoved = true;
+        whatChanged.goals = true;
       }
       else
       {
@@ -586,11 +619,9 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
     else
       ++itGroup;
   }
-  if (aGoalHasBeenRemoved)
-  {
-    _removeNoStackableGoals(pNow);
-    onGoalsChanged(_goals);
-  }
+  if (whatChanged.goals)
+    _removeNoStackableGoals(whatChanged, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 
@@ -605,10 +636,16 @@ void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 }
 
 
-void Problem::_removeNoStackableGoals(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+void Problem::setInferences(const std::list<Inference>& pInferences)
+{
+  _inferences = pInferences;
+}
+
+
+void Problem::_removeNoStackableGoals(WhatChanged& pWhatChanged,
+                                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool firstGoal = true;
-  bool hasGoalChanged = false;
   for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
   {
     --itGoalsGroup;
@@ -635,15 +672,47 @@ void Problem::_removeNoStackableGoals(const std::unique_ptr<std::chrono::steady_
       else
       {
         itGoal = itGoalsGroup->second.erase(itGoal);
-        hasGoalChanged = true;
+        pWhatChanged.goals = true;
       }
     }
 
     if (itGoalsGroup->second.empty())
       itGoalsGroup = _goals.erase(itGoalsGroup);
   }
-  if (hasGoalChanged)
-    onGoalsChanged(_goals);
 }
+
+void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
+                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  if (pWhatChanged.facts || pWhatChanged.goals)
+  {
+    // manage the inferences
+    std::set<const Inference*> inferencesAlreadyApplied;
+    bool needAnotherLoop = true;
+    while (needAnotherLoop)
+    {
+      needAnotherLoop = false;
+      for (const auto& currInference : _inferences)
+      {
+        if (inferencesAlreadyApplied.count(&currInference) == 0 &&
+            areFactsTrue(currInference.condition))
+        {
+          inferencesAlreadyApplied.insert(&currInference);
+          _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
+          _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);
+          needAnotherLoop = true;
+        }
+      }
+    }
+
+    if (pWhatChanged.facts)
+      onFactsChanged(_facts);
+    if (pWhatChanged.goals)
+      onGoalsChanged(_goals);
+  }
+
+}
+
+
 
 } // !cp

@@ -20,6 +20,7 @@ const std::string _fact_greeted = "greeted";
 const std::string _fact_is_close = "is_close";
 const std::string _fact_hasQrCode = "has_qrcode";
 const std::string _fact_hasCheckInPasword = "has_check_in_password";
+const std::string _fact_userWantsToCheckedIn = "user_wants_to_checked_in";
 const std::string _fact_checkedIn = "checked_in";
 const std::string _fact_beSad = "be_sad";
 const std::string _fact_beHappy = "be_happy";
@@ -28,6 +29,7 @@ const std::string _fact_finishToAskQuestions = "finished_to_ask_questions";
 const std::string _fact_engagedWithUser = "engaged_with_user";
 const std::string _fact_userSatisfied = "user_satisfied";
 const std::string _fact_robotLearntABehavior = "robot_learnt_a_behavior";
+const std::string _fact_headTouched = "head_touched";
 
 const std::string _action_presentation = "presentation";
 const std::string _action_askQuestion1 = "ask_question_1";
@@ -633,13 +635,13 @@ void _testIncrementOfVariables()
   assert_eq(initFactsStr, initFacts.toStr("\n"));
   cp::Problem problem;
   problem.modifyFacts(initFacts, now);
-  assert(cp::areFactsTrue(initFacts, problem));
-  assert(cp::areFactsTrue(actionQ1.preconditions, problem));
-  assert(!cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
-  assert(!cp::areFactsTrue(actionSayQuestionBilan.preconditions, problem));
-  assert(cp::areFactsTrue(cp::SetOfFacts::fromStr("${max-number-of-questions}=${number-of-question}+3", '\n'), problem));
-  assert(!cp::areFactsTrue(cp::SetOfFacts::fromStr("${max-number-of-questions}=${number-of-question}+4", '\n'), problem));
-  assert(cp::areFactsTrue(cp::SetOfFacts::fromStr("${max-number-of-questions}=${number-of-question}+4-1", '\n'), problem));
+  assert(problem.areFactsTrue(initFacts));
+  assert(problem.areFactsTrue(actionQ1.preconditions));
+  assert(!problem.areFactsTrue(actionFinishToActActions.preconditions));
+  assert(!problem.areFactsTrue(actionSayQuestionBilan.preconditions));
+  assert(problem.areFactsTrue(cp::SetOfFacts::fromStr("${max-number-of-questions}=${number-of-question}+3", '\n')));
+  assert(!problem.areFactsTrue(cp::SetOfFacts::fromStr("${max-number-of-questions}=${number-of-question}+4", '\n')));
+  assert(problem.areFactsTrue(cp::SetOfFacts::fromStr("${max-number-of-questions}=${number-of-question}+4-1", '\n')));
   for (std::size_t i = 0; i < 3; ++i)
   {
     _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
@@ -654,9 +656,9 @@ void _testIncrementOfVariables()
     problem.modifyFacts(itAction->second.effect.factsModifications, now);
     problem.modifyFacts(cp::SetOfFacts({}, {_fact_askAllTheQuestions}), now);
   }
-  assert(cp::areFactsTrue(actionQ1.preconditions, problem));
-  assert(cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
-  assert(!cp::areFactsTrue(actionSayQuestionBilan.preconditions, problem));
+  assert(problem.areFactsTrue(actionQ1.preconditions));
+  assert(problem.areFactsTrue(actionFinishToActActions.preconditions));
+  assert(!problem.areFactsTrue(actionSayQuestionBilan.preconditions));
   _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
   auto actionToDo = _lookForAnActionToDo(problem, domain);
   assert_eq<std::string>(_action_finisehdToAskQuestions, actionToDo);
@@ -665,9 +667,9 @@ void _testIncrementOfVariables()
   assert(itAction != domain.actions().end());
   problem.modifyFacts(itAction->second.effect.factsModifications, now);
   assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDo(problem, domain));
-  assert(cp::areFactsTrue(actionQ1.preconditions, problem));
-  assert(cp::areFactsTrue(actionFinishToActActions.preconditions, problem));
-  assert(cp::areFactsTrue(actionSayQuestionBilan.preconditions, problem));
+  assert(problem.areFactsTrue(actionQ1.preconditions));
+  assert(problem.areFactsTrue(actionFinishToActActions.preconditions));
+  assert(problem.areFactsTrue(actionSayQuestionBilan.preconditions));
   problem.modifyFacts(actionSayQuestionBilan.effect.factsModifications, now);
 }
 
@@ -1016,7 +1018,7 @@ void _changePriorityOfGoal()
     assert_eq<std::size_t>(2, goals.find(10)->second.size());
   }
 
-  problem.changeGoalPriority(_fact_checkedIn, 9, true);
+  problem.changeGoalPriority(_fact_checkedIn, 9, true, now);
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
@@ -1028,7 +1030,7 @@ void _changePriorityOfGoal()
   }
 
   problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
-  problem.changeGoalPriority(_fact_checkedIn, 9, false);
+  problem.changeGoalPriority(_fact_checkedIn, 9, false, now);
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
@@ -1040,7 +1042,7 @@ void _changePriorityOfGoal()
   }
 
   problem.setGoals({{10, {_fact_greeted, _fact_checkedIn}}}, now);
-  problem.changeGoalPriority(_fact_checkedIn, 9, true);
+  problem.changeGoalPriority(_fact_checkedIn, 9, true, now);
   {
     auto& goals = problem.goals();
     assert_eq(goalsFromSubscription, goals);
@@ -1104,6 +1106,49 @@ void _factChangedNotification()
 }
 
 
+
+void _checkInferences()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+
+  cp::Problem problem;
+  assert_eq<std::string>("", _solveStr(problem, actions, now));
+  // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
+  problem.setInferences({cp::Inference(cp::SetOfFacts({_fact_headTouched}),
+                         cp::SetOfFacts({}, {_fact_headTouched}),
+                         { {{9, {_fact_checkedIn}}} })});
+  assert_eq<std::string>("", _solveStr(problem, actions, now));
+  problem.addFact(_fact_headTouched, now);
+  assert_true(!problem.hasFact(_fact_headTouched)); // removed because of the inference
+  assert_eq(_action_checkIn, _solveStr(problem, actions, now));
+}
+
+
+
+void _checkInferencesWithImply()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))")});
+  // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and add(_fact_userWantsToCheckedIn)
+  problem.setInferences({cp::Inference(cp::SetOfFacts({_fact_headTouched}),
+                         cp::SetOfFacts({ _fact_userWantsToCheckedIn }, {_fact_headTouched}),
+                         {})});
+  assert_eq<std::string>("", _solveStr(problem, actions, now));
+  problem.addFact(_fact_headTouched, now);
+  assert_true(!problem.hasFact(_fact_headTouched)); // removed because of the inference
+  assert_eq(_action_checkIn, _solveStr(problem, actions, now));
+}
+
+
+
 }
 
 
@@ -1159,6 +1204,8 @@ int main(int argc, char *argv[])
   _checkMaxTimeToKeepInactiveForGoals();
   _changePriorityOfGoal();
   _factChangedNotification();
+  _checkInferences();
+  _checkInferencesWithImply();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
