@@ -9,7 +9,7 @@ namespace
 {
 
 
-struct FactsAlreadychecked
+struct FactsAlreadyChecked
 {
   std::set<Fact> factsToAdd;
   std::set<Fact> factsToRemove;
@@ -18,12 +18,12 @@ struct FactsAlreadychecked
 
 struct PotentialNextAction
 {
- PotentialNextAction()
-   : actionId(""),
-     actionPtr(nullptr),
-     parameters()
- {
- }
+  PotentialNextAction()
+    : actionId(""),
+      actionPtr(nullptr),
+      parameters()
+  {
+  }
   PotentialNextAction(const ActionId& pActionId,
                       const Action& pAction);
 
@@ -114,20 +114,20 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 
 bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
                              const WorldModification& pEffectToCheck,
-                             const Fact& pEffectToLookFor,
+                             const Goal &pGoal,
                              const Problem& pProblem,
                              const Domain& pDomain,
-                             FactsAlreadychecked& pFactsAlreadychecked);
+                             FactsAlreadyChecked& pFactsAlreadychecked);
 
 
 bool _lookForAPossibleExistingOrNotFact(
     const Fact& pFact,
     std::map<std::string, std::string>& pParentParameters,
     const std::map<std::string, std::set<ActionId>>& pPreconditionToActions,
-    const Fact& pEffectToLookFor,
+    const Goal& pGoal,
     const Problem& pProblem,
     const Domain& pDomain,
-    FactsAlreadychecked& pFactsAlreadychecked)
+    FactsAlreadyChecked& pFactsAlreadychecked)
 {
   if (!pFactsAlreadychecked.factsToAdd.insert(pFact).second)
     return false;
@@ -144,7 +144,7 @@ bool _lookForAPossibleExistingOrNotFact(
         for (const auto& currParam : action.parameters)
           parameters[currParam];
         if (pProblem.canFactsBecomeTrue(action.preconditions) &&
-            _lookForAPossibleEffect(parameters, action.effect, pEffectToLookFor, pProblem, pDomain, pFactsAlreadychecked))
+            _lookForAPossibleEffect(parameters, action.effect, pGoal, pProblem, pDomain, pFactsAlreadychecked))
         {
           bool actionIsAPossibleFollowUp = true;
           // fill parent parameters
@@ -183,20 +183,29 @@ bool _lookForAPossibleExistingOrNotFact(
 
 bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
                              const WorldModification& pEffectToCheck,
-                             const Fact& pEffectToLookFor,
+                             const Goal& pGoal,
                              const Problem& pProblem,
                              const Domain& pDomain,
-                             FactsAlreadychecked& pFactsAlreadychecked)
+                             FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (pEffectToLookFor.isInFacts(pEffectToCheck.factsModifications.facts, false, &pParameters))
-    return true;
-  if (pEffectToLookFor.isInFacts(pEffectToCheck.potentialFactsModifications.facts, false, &pParameters))
-    return true;
+  auto& optionalFactGoal = pGoal.factOptional();
+  bool goalFactIsInEffect = optionalFactGoal.fact.isInFacts(pEffectToCheck.factsModifications.facts, false, &pParameters) ||
+      optionalFactGoal.fact.isInFacts(pEffectToCheck.potentialFactsModifications.facts, false, &pParameters);
+  if (!optionalFactGoal.isFactNegated)
+  {
+    if (goalFactIsInEffect)
+      return true;
+  }
+  else
+  {
+    if (!goalFactIsInEffect)
+      return true;
+  }
 
   auto& preconditionToActions = pDomain.preconditionToActions();
   bool subRes = pEffectToCheck.forAllFactsUntilTrue([&](const cp::Fact& pFact) {
     if (pProblem.facts().count(pFact) == 0)
-      if (_lookForAPossibleExistingOrNotFact(pFact, pParameters, preconditionToActions, pEffectToLookFor,
+      if (_lookForAPossibleExistingOrNotFact(pFact, pParameters, preconditionToActions, pGoal,
                                              pProblem, pDomain, pFactsAlreadychecked))
         return true;
     return false;
@@ -207,7 +216,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
   auto& notPreconditionToActions = pDomain.notPreconditionToActions();
   return pEffectToCheck.forAllNotFactsUntilTrue([&](const cp::Fact& pFact) {
     if (pProblem.facts().count(pFact) > 0)
-      if (_lookForAPossibleExistingOrNotFact(pFact, pParameters, notPreconditionToActions, pEffectToLookFor,
+      if (_lookForAPossibleExistingOrNotFact(pFact, pParameters, notPreconditionToActions, pGoal,
                                              pProblem, pDomain, pFactsAlreadychecked))
         return true;
     return false;
@@ -217,7 +226,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
 
 bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult,
                                                   const std::set<ActionId>& pActions,
-                                                  const Fact& pGoal,
+                                                  const Goal& pGoal,
                                                   const Problem& pProblem,
                                                   const Domain& pDomain,
                                                   const Historical* pGlobalHistorical)
@@ -229,10 +238,10 @@ bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
     if (itAction != pDomain.actions().end())
     {
       auto& action = itAction->second;
-      FactsAlreadychecked factsAlreadychecked;
+      FactsAlreadyChecked factsAlreadyChecked;
       auto newPotRes = PotentialNextAction(currAction, action);
       if (pProblem.areFactsTrue(action.preconditions, &newPotRes.parameters) &&
-          _lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadychecked))
+          _lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadyChecked))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))
         {
@@ -258,7 +267,7 @@ bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
 
 ActionId _nextStepOfTheProblemForAGoal(
     std::map<std::string, std::string>& pParameters,
-    const Fact& pGoal,
+    const Goal& pGoal,
     const Problem& pProblem,
     const Domain& pDomain,
     const Historical* pGlobalHistorical)
@@ -309,12 +318,9 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
 
   ActionId res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
-    auto& facts = pProblem.facts();
-
-    auto& goalFact = pGoal.fact();
-    if (facts.count(goalFact) == 0)
+    if (!pProblem.isOptionalFactSatisfied(pGoal.factOptional()))
     {
-      res = _nextStepOfTheProblemForAGoal(pParameters, goalFact, pProblem,
+      res = _nextStepOfTheProblemForAGoal(pParameters, pGoal, pProblem,
                                           pDomain, pGlobalHistorical);
       if (!res.empty())
       {

@@ -18,18 +18,15 @@ struct CONTEXTUALPLANNER_API Inference
   /// Construct an inference.
   Inference(const cp::SetOfFacts& pCondition,
             const cp::SetOfFacts& pFactsToModify,
-            const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd)
-    : condition(pCondition),
-      factsToModify(pFactsToModify),
-      goalsToAdd(pGoalsToAdd)
-  {
-  }
+            const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd);
 
   /**
-    * Condition to apply the facts and goals modification.
-    * The condition is true if the condition is a sub set of a corresponding world state.
-    */
+   * Condition to apply the facts and goals modification.
+   * The condition is true if the condition is a sub set of a corresponding world state.
+   */
   cp::SetOfFacts condition;
+  /// Punctual facts to have to the condition validated.
+  std::set<Fact> punctualFactsCondition;
   /// Facts to add or to remove if the condition is true.
   cp::SetOfFacts factsToModify;
   /// Goals to add if the condition is true.

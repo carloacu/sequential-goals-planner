@@ -190,6 +190,11 @@ void Problem::_addFacts(WhatChanged& pWhatChanged,
 {
   for (const auto& currFact : pFacts)
   {
+    if (currFact.isPunctual())
+    {
+      pWhatChanged.punctualFacts.insert(currFact);
+      break;
+    }
     if (_facts.count(currFact) > 0)
       continue;
     pWhatChanged.facts = true;
@@ -430,6 +435,12 @@ const Goal* Problem::getCurrentGoalPtr() const
 }
 
 
+bool Problem::isOptionalFactSatisfied(const FactOptional& pFactOptional) const
+{
+  return (pFactOptional.isFactNegated || _facts.count(pFactOptional.fact) > 0) &&
+      (!pFactOptional.isFactNegated || _facts.count(pFactOptional.fact) == 0);
+}
+
 void Problem::iterateOnGoalsAndRemoveNonPersistent(
     const std::function<bool(Goal&, int)>& pManageGoal,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
@@ -443,9 +454,9 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
     {
       bool wasInactiveForTooLong = firstGoal ? false : itGoal->isInactiveForTooLong(pNow);
 
-      auto* goalConditionFactPtr = itGoal->conditionFactPtr();
+      auto* goalConditionFactPtr = itGoal->conditionFactOptionalPtr();
       if (goalConditionFactPtr == nullptr ||
-          _facts.count(*goalConditionFactPtr) > 0)
+          isOptionalFactSatisfied(*goalConditionFactPtr))
       {
         firstGoal = false;
         if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
@@ -628,8 +639,7 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
 void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 {
   auto isGoalNotAlreadySatisfied = [&](const Goal& pGoal, int){
-    auto& goalFact = pGoal.fact();
-    return _facts.count(goalFact) == 0;
+    return !isOptionalFactSatisfied(pGoal.factOptional());
   };
 
   iterateOnGoalsAndRemoveNonPersistent(isGoalNotAlreadySatisfied, {});
@@ -651,7 +661,7 @@ void Problem::_removeNoStackableGoals(WhatChanged& pWhatChanged,
     --itGoalsGroup;
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
-      if (itGoal->conditionFactPtr() != nullptr && _facts.count(*itGoal->conditionFactPtr()) == 0)
+      if (itGoal->conditionFactOptionalPtr() != nullptr && !isOptionalFactSatisfied(*itGoal->conditionFactOptionalPtr()))
       {
         ++itGoal;
         continue;
@@ -684,7 +694,7 @@ void Problem::_removeNoStackableGoals(WhatChanged& pWhatChanged,
 void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  if (pWhatChanged.facts || pWhatChanged.goals)
+  if (pWhatChanged.somethingChanged())
   {
     // manage the inferences
     std::set<const Inference*> inferencesAlreadyApplied;
@@ -697,10 +707,22 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
         if (inferencesAlreadyApplied.count(&currInference) == 0 &&
             areFactsTrue(currInference.condition))
         {
-          inferencesAlreadyApplied.insert(&currInference);
-          _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
-          _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);
-          needAnotherLoop = true;
+          bool punctualFactSatisfied = true;
+          for (auto& currPonctualFact : currInference.punctualFactsCondition)
+          {
+            if (pWhatChanged.punctualFacts.count(currPonctualFact) == 0)
+            {
+              punctualFactSatisfied = false;
+              break;
+            }
+          }
+          if (punctualFactSatisfied)
+          {
+            inferencesAlreadyApplied.insert(&currInference);
+            _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
+            _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);
+            needAnotherLoop = true;
+          }
         }
       }
     }

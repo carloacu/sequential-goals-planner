@@ -10,6 +10,8 @@
 
 namespace cp
 {
+struct FactOptional;
+
 
 /// Axiomatic knowledge that can be contained in the world.
 struct CONTEXTUALPLANNER_API Fact
@@ -19,6 +21,22 @@ struct CONTEXTUALPLANNER_API Fact
    * @param pName Name of the fact.
    */
   Fact(const std::string& pName = "");
+  /**
+   * @brief Construct a fact.
+   * @param[in] pStr Input string to parse.
+   * @param[in] pBeginPos Begin position in the input string.
+   * @param[in] pSeparator Character to indicate the end of the fact in the input string.
+   * @param[out] pIsFactNegatedPtr Is the fact constructed negated or not.
+   * @param[out] pResPos Postion in the input string after the parse.
+   */
+  Fact(const std::string& pStr,
+       std::size_t pBeginPos,
+       char pSeparator,
+       bool* pIsFactNegatedPtr,
+       std::size_t* pResPos);
+
+  /// Destruct the fact.
+  ~Fact();
 
   /// Specify an order beween facts. It alows to use this type as key of map containers.
   bool operator<(const Fact& pOther) const;
@@ -27,6 +45,13 @@ struct CONTEXTUALPLANNER_API Fact
   bool operator==(const Fact& pOther) const;
   /// Check not equality with another ExpressionElement.
   bool operator!=(const Fact& pOther) const { return !operator==(pOther); }
+
+  /**
+   * @brief Is it a punctual fact.<br/>
+   * A punctual fact is a fact that cannot be stored in the world state.
+   * @return True if the fact is punctual.
+   */
+  bool isPunctual() const;
 
   /**
    * @brief Is equal to another Fact or if any of the 2 Fact has an "any value" that can match.
@@ -55,20 +80,27 @@ struct CONTEXTUALPLANNER_API Fact
   /// Serialize this fact to a string.
   std::string toStr() const;
 
-  /// Deserialize a string to a fact.
-  static Fact fromStr(const std::string& pStr);
+  /**
+   * @brief Construct a fact from a string.
+   * @param pStr Input string.
+   * @param pIsFactNegatedPtr Is the fact constructed negated or not.
+   * @return Fact constructed.
+   */
+  static Fact fromStr(const std::string& pStr,
+                      bool* pIsFactNegatedPtr = nullptr);
 
   /**
    * @brief Deserialize a part of a string to this fact.
    * @param pStr String containing the part to deserialize.
    * @param pBeginPos Begin index of the string for the deserialization.
    * @param pSeparator Character to specify the end of the fact.
+   * @param pIsFactNegatedPtr Is the fact constructed negated or not.
    * @return End index of the deserialization.
    */
-  std::size_t fillFactFromStr(
-      const std::string& pStr,
-      std::size_t pBeginPos,
-      char pSeparator);
+  std::size_t fillFactFromStr(const std::string& pStr,
+                              std::size_t pBeginPos,
+                              char pSeparator,
+                              bool* pIsFactNegatedPtr);
 
   /**
    * @brief Set "any value" to all of the specified parameters.
@@ -91,12 +123,14 @@ struct CONTEXTUALPLANNER_API Fact
   /// Name of the fact.
   std::string name;
   /// Parameters of the fact.
-  std::vector<Fact> parameters;
+  std::vector<FactOptional> parameters;
   /// Value of the fact.
   std::string value;
 
   /// Constant defining the "any value" special value.
   const static std::string anyValue;
+  /// Prefix to detect a punctual fact.
+  const static std::string punctualPrefix;
 };
 
 } // !cp

@@ -148,6 +148,13 @@ struct CONTEXTUALPLANNER_API Problem
   const Goal* getCurrentGoalPtr() const;
 
   /**
+   * @brief Is an optional fact satisfied in the problem.
+   * @param pFactOptional Input optional fact.
+   * @return True if the input optional fact is satisfied, false otherwise.
+   */
+  bool isOptionalFactSatisfied(const FactOptional& pFactOptional) const;
+
+  /**
    * @brief Iterate on goals and remove non persistent goals.
    * @param pManageGoal Callback to manage the goal. If the callback returns true we stop the iteration.
    * @param pNow Current time.
@@ -277,10 +284,15 @@ private:
   /// Stored what changed.
   struct WhatChanged
   {
+    /// Punctual facts that are pinged.
+    std::set<Fact> punctualFacts;
     /// True if the facts changed.
     bool facts = false;
     /// True if the goals changed.
     bool goals = false;
+
+    /// Check if something changed.
+    bool somethingChanged() const { return !punctualFacts.empty() || facts || goals; }
   };
 
   /**

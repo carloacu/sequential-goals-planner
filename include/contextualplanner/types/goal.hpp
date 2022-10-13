@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include <chrono>
-#include "fact.hpp"
+#include "factoptional.hpp"
 #include "../util/api.hpp"
 
 
@@ -59,10 +59,10 @@ struct CONTEXTUALPLANNER_API Goal
   bool isPersistent() const { return _isPersistentIfSkipped; }
 
   /// Get the condition associated. It is a fact that should be present in the world to enable this goal.
-  const Fact* conditionFactPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
+  const FactOptional* conditionFactOptionalPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
 
-  /// Get the fact contained in this goal.
-  const Fact& fact() const { return _fact; }
+  /// Get the optional fact contained in this goal.
+  const FactOptional& factOptional() const { return _factOptional; }
 
   /// Get the group identifier of this goal. It can be empty if the goal does not belong to a group.
   const std::string& getGoalGroupId() const { return _goalGroupId; }
@@ -79,8 +79,8 @@ struct CONTEXTUALPLANNER_API Goal
   static const std::string implyFunctionName;
 
 private:
-  /// Fact contained in this goal.
-  Fact _fact;
+  /// Fact that can be negated that is contained in this goal.
+  FactOptional _factOptional;
   /**
    * The maximum time that we allow for this goal to be inactive.<b/>
    * A negative value means that the time is infinite.
@@ -91,7 +91,7 @@ private:
   /// Know if the goal will be kept in the goals stack, when we succeded or failed to satisfy it.
   bool _isPersistentIfSkipped;
   /// Condition associated, it is a fact that should be present in the world to enable this goal.
-  std::unique_ptr<Fact> _conditionFactPtr;
+  std::unique_ptr<FactOptional> _conditionFactPtr;
   /// Group identifier of this goal. It can be empty if the goal does not belong to a group.
   std::string _goalGroupId;
 };

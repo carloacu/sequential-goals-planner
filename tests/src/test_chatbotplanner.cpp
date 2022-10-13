@@ -30,6 +30,7 @@ const std::string _fact_engagedWithUser = "engaged_with_user";
 const std::string _fact_userSatisfied = "user_satisfied";
 const std::string _fact_robotLearntABehavior = "robot_learnt_a_behavior";
 const std::string _fact_headTouched = "head_touched";
+const std::string _fact_punctual_headTouched = cp::Fact::punctualPrefix + "head_touched";
 
 const std::string _action_presentation = "presentation";
 const std::string _action_askQuestion1 = "ask_question_1";
@@ -180,21 +181,19 @@ void _test_setOfFactsFromStr()
   {
     cp::SetOfFacts sOfFacts = cp::SetOfFacts::fromStr(" a, b=ok , c(r)=t , d(b=ok, c(r)=t)=val , e ", ',');
     assert(sOfFacts.facts.count(cp::Fact("a")) == 1);
-    cp::Fact bFact;
-    bFact.name = "b";
-    bFact.value = "ok";
-    assert(sOfFacts.facts.count(bFact) == 1);
-    cp::Fact cFact;
-    cFact.name = "c";
-    cFact.parameters.emplace_back(cp::Fact("r"));
-    cFact.value = "t";
-    assert(sOfFacts.facts.count(cFact) == 1);
-    cp::Fact dFact;
-    dFact.name = "d";
-    dFact.parameters.emplace_back(bFact);
-    dFact.parameters.emplace_back(cFact);
-    dFact.value = "val";
-    assert(sOfFacts.facts.count(dFact) == 1);
+    cp::FactOptional bFact("b");
+    bFact.fact.name = "b";
+    bFact.fact.value = "ok";
+    assert(sOfFacts.facts.count(bFact.fact) == 1);
+    cp::FactOptional cFact("c");
+    cFact.fact.parameters.emplace_back(cp::FactOptional("r"));
+    cFact.fact.value = "t";
+    assert(sOfFacts.facts.count(cFact.fact) == 1);
+    cp::FactOptional dFact("d");
+    dFact.fact.parameters.emplace_back(bFact);
+    dFact.fact.parameters.emplace_back(cFact);
+    dFact.fact.value = "val";
+    assert(sOfFacts.facts.count(dFact.fact) == 1);
     assert(sOfFacts.facts.count(cp::Fact("e")) == 1);
     assert(sOfFacts.facts.count(cp::Fact("f")) == 0);
   }
@@ -1139,11 +1138,31 @@ void _checkInferencesWithImply()
   _setGoalsForAPriority(problem, {cp::Goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))")});
   // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and add(_fact_userWantsToCheckedIn)
   problem.setInferences({cp::Inference(cp::SetOfFacts({_fact_headTouched}),
-                         cp::SetOfFacts({ _fact_userWantsToCheckedIn }, {_fact_headTouched}),
+                         cp::SetOfFacts({ _fact_userWantsToCheckedIn }, { _fact_headTouched }),
                          {})});
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_headTouched, now);
   assert_true(!problem.hasFact(_fact_headTouched)); // removed because of the inference
+  assert_eq(_action_checkIn, _solveStr(problem, actions, now));
+}
+
+
+void _checkInfrenceWithPunctualCondition()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_checkIn, cp::Action({}, cp::WorldModification({}, {_fact_userWantsToCheckedIn})));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
+  // Inference: if (_fact_punctual_headTouched) then add(_fact_userWantsToCheckedIn)
+  problem.setInferences({cp::Inference(cp::SetOfFacts({_fact_punctual_headTouched}),
+                         cp::SetOfFacts({ _fact_userWantsToCheckedIn }),
+                         {})});
+  assert_eq<std::string>("", _solveStr(problem, actions, now));
+  problem.addFact(_fact_punctual_headTouched, now);
+  assert_true(!problem.hasFact(_fact_punctual_headTouched)); // because it is a punctual fact
   assert_eq(_action_checkIn, _solveStr(problem, actions, now));
 }
 
@@ -1206,6 +1225,7 @@ int main(int argc, char *argv[])
   _factChangedNotification();
   _checkInferences();
   _checkInferencesWithImply();
+  _checkInfrenceWithPunctualCondition();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

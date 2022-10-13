@@ -10,60 +10,60 @@ const std::string Goal::implyFunctionName = "imply";
 Goal::Goal(const std::string& pStr,
            int pMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
-  :  _fact(Fact::fromStr(pStr)),
+  : _factOptional(pStr),
     _maxTimeToKeepInactive(pMaxTimeToKeepInactive),
     _inactiveSince(),
     _isPersistentIfSkipped(false),
     _conditionFactPtr(),
     _goalGroupId(pGoalGroupId)
 {
-  if (_fact.name == persistFunctionName &&
-      _fact.parameters.size() == 1 &&
-      _fact.value.empty())
+  if (_factOptional.fact.name == persistFunctionName &&
+      _factOptional.fact.parameters.size() == 1 &&
+      _factOptional.fact.value.empty())
   {
     _isPersistentIfSkipped = true;
     // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
-    auto factFirstParameters = std::move(_fact.parameters.front());
-    _fact = std::move(factFirstParameters);
+    auto factFirstParameters = std::move(_factOptional.fact.parameters.front());
+    _factOptional = std::move(factFirstParameters);
   }
 
-  if (_fact.name == implyFunctionName &&
-      _fact.parameters.size() == 2 &&
-      _fact.value.empty())
+  if (_factOptional.fact.name == implyFunctionName &&
+      _factOptional.fact.parameters.size() == 2 &&
+      _factOptional.fact.value.empty())
   {
-    _conditionFactPtr = std::unique_ptr<Fact>(new Fact(_fact.parameters[0]));
+    _conditionFactPtr = std::make_unique<FactOptional>(_factOptional.fact.parameters[0]);
     // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
-    auto factSecondParameters = std::move(_fact.parameters[1]);
-    _fact = std::move(factSecondParameters);
+    auto factSecondParameters = std::move(_factOptional.fact.parameters[1]);
+    _factOptional = std::move(factSecondParameters);
   }
 }
 
 Goal::Goal(const Goal& pOther)
-  : _fact(pOther._fact),
+  : _factOptional(pOther._factOptional),
     _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),
     _inactiveSince(pOther._inactiveSince ? std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince) : std::unique_ptr<std::chrono::steady_clock::time_point>()),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
-    _conditionFactPtr(pOther._conditionFactPtr ? std::unique_ptr<Fact>(new Fact(*pOther._conditionFactPtr)) : std::unique_ptr<Fact>()),
+    _conditionFactPtr(pOther._conditionFactPtr ? std::make_unique<FactOptional>(*pOther._conditionFactPtr) : std::unique_ptr<FactOptional>()),
     _goalGroupId(pOther._goalGroupId)
 {
 }
 
 void Goal::operator=(const Goal& pOther)
 {
-  _fact = pOther._fact;
+  _factOptional = pOther._factOptional;
   _maxTimeToKeepInactive = pOther._maxTimeToKeepInactive;
   if (pOther._inactiveSince)
     _inactiveSince = std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince);
   else
     _inactiveSince.reset();
   _isPersistentIfSkipped = pOther._isPersistentIfSkipped;
-  _conditionFactPtr = pOther._conditionFactPtr ? std::unique_ptr<Fact>(new Fact(*pOther._conditionFactPtr)) : std::unique_ptr<Fact>();
+  _conditionFactPtr = pOther._conditionFactPtr ? std::make_unique<FactOptional>(*pOther._conditionFactPtr) : std::unique_ptr<FactOptional>();
   _goalGroupId = pOther._goalGroupId;
 }
 
 bool Goal::operator==(const Goal& pOther) const
 {
-  return _fact == pOther._fact &&
+  return _factOptional == pOther._factOptional &&
       _maxTimeToKeepInactive == pOther._maxTimeToKeepInactive &&
       _isPersistentIfSkipped == pOther._isPersistentIfSkipped &&
       _goalGroupId == pOther._goalGroupId;
@@ -94,7 +94,7 @@ void Goal::notifyActivity()
 
 std::string Goal::toStr() const
 {
-  auto res = _fact.toStr();
+  auto res = _factOptional.toStr();
   if (_conditionFactPtr)
     res = implyFunctionName + "(" + _conditionFactPtr->toStr() + ", " + res + ")";
   if (_isPersistentIfSkipped)

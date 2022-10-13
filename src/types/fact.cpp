@@ -1,4 +1,5 @@
 #include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/factoptional.hpp>
 #include <assert.h>
 
 
@@ -7,7 +8,7 @@ namespace cp
 namespace {
 
 void _parametersToStr(std::string& pStr,
-                      const std::vector<Fact>& pParameters)
+                      const std::vector<FactOptional>& pParameters)
 {
   bool firstIteration = true;
   for (auto& param : pParameters)
@@ -22,12 +23,30 @@ void _parametersToStr(std::string& pStr,
 }
 
 const std::string Fact::anyValue = "<any>_it_is_a_language_token_for_the_planner_engine";
-
+const std::string Fact::punctualPrefix = "_punctual_";
 
 Fact::Fact(const std::string& pName)
   : name(pName),
     parameters(),
     value()
+{
+}
+
+Fact::Fact(const std::string& pStr,
+           std::size_t pBeginPos,
+           char pSeparator,
+           bool* pIsFactNegatedPtr,
+           std::size_t* pResPos)
+  : name(),
+    parameters(),
+    value()
+{
+  auto resPos = fillFactFromStr(pStr, pBeginPos, pSeparator, pIsFactNegatedPtr);
+  if (pResPos != nullptr)
+    *pResPos = resPos;
+}
+
+Fact::~Fact()
 {
 }
 
@@ -47,6 +66,11 @@ bool Fact::operator<(const Fact& pOther) const
 bool Fact::operator==(const Fact& pOther) const
 {
   return name == pOther.name && value == pOther.value && parameters == pOther.parameters;
+}
+
+bool Fact::isPunctual() const
+{
+  return name.compare(0, punctualPrefix.size(), punctualPrefix) == 0;
 }
 
 bool Fact::areEqualExceptAnyValues(const Fact& pOther) const
@@ -90,7 +114,7 @@ std::string Fact::tryToExtractParameterValueFromExemple(
   auto itOtherParam = pOther.parameters.begin();
   while (itParam != parameters.end())
   {
-    auto subRes = itParam->tryToExtractParameterValueFromExemple(pParameterValue, *itOtherParam);
+    auto subRes = itParam->fact.tryToExtractParameterValueFromExemple(pParameterValue, itOtherParam->fact);
     if (subRes != "")
       return subRes;
     ++itParam;
@@ -109,15 +133,16 @@ void Fact::fillParameters(
 
   for (auto& currParam : parameters)
   {
-    if (currParam.value.empty() && currParam.parameters.empty())
+    auto& currFactParam = currParam.fact;
+    if (currFactParam.value.empty() && currFactParam.parameters.empty())
     {
-      auto itValueParam = pParameters.find(currParam.name);
+      auto itValueParam = pParameters.find(currFactParam.name);
       if (itValueParam != pParameters.end())
-        currParam.name = itValueParam->second;
+        currFactParam.name = itValueParam->second;
     }
     else
     {
-      currParam.fillParameters(pParameters);
+      currFactParam.fillParameters(pParameters);
     }
   }
 }
@@ -139,10 +164,11 @@ std::string Fact::toStr() const
 }
 
 
-Fact Fact::fromStr(const std::string& pStr)
+Fact Fact::fromStr(const std::string& pStr,
+                   bool* pIsFactNegatedPtr)
 {
   Fact res;
-  auto endPos = res.fillFactFromStr(pStr, 0, ',');
+  auto endPos = res.fillFactFromStr(pStr, 0, ',', pIsFactNegatedPtr);
   assert(!res.name.empty());
   assert(endPos == pStr.size());
   return res;
@@ -152,13 +178,21 @@ Fact Fact::fromStr(const std::string& pStr)
 std::size_t Fact::fillFactFromStr(
     const std::string& pStr,
     std::size_t pBeginPos,
-    char pSeparator)
+    char pSeparator,
+    bool* pIsFactNegatedPtr)
 {
   std::size_t pos = pBeginPos;
   while (pos < pStr.size())
   {
     if (pStr[pos] == ' ')
     {
+      ++pos;
+      continue;
+    }
+    if (pStr[pos] == '!')
+    {
+      if (pIsFactNegatedPtr != nullptr)
+        *pIsFactNegatedPtr = true;
       ++pos;
       continue;
     }
@@ -176,9 +210,8 @@ std::size_t Fact::fillFactFromStr(
         insideParenthesis = true;
         if (name.empty())
           name = pStr.substr(beginPos, pos - beginPos);
-        parameters.emplace_back();
         ++pos;
-        pos = parameters.back().fillFactFromStr(pStr, pos, ',');
+        parameters.emplace_back(pStr, pos, ',', &pos);
         beginPos = pos;
         continue;
       }
@@ -268,12 +301,12 @@ bool Fact::isInFacts(
       {
         if (*itFactParameters != *itLookForParameters)
         {
-          if (!itFactParameters->parameters.empty() ||
-              !itFactParameters->value.empty() ||
-              !itLookForParameters->parameters.empty() ||
-              !itLookForParameters->value.empty() ||
-              (!pParametersAreForTheFact && !doesItMatch(itFactParameters->name, itLookForParameters->name)) ||
-              (pParametersAreForTheFact && !doesItMatch(itLookForParameters->name, itFactParameters->name)))
+          if (!itFactParameters->fact.parameters.empty() ||
+              !itFactParameters->fact.value.empty() ||
+              !itLookForParameters->fact.parameters.empty() ||
+              !itLookForParameters->fact.value.empty() ||
+              (!pParametersAreForTheFact && !doesItMatch(itFactParameters->fact.name, itLookForParameters->fact.name)) ||
+              (pParametersAreForTheFact && !doesItMatch(itLookForParameters->fact.name, itFactParameters->fact.name)))
             doesParametersMatches = false;
         }
         ++itFactParameters;

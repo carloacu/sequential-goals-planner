@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <sstream>
 #include <contextualplanner/util/arithmeticevaluator.hpp>
+#include <contextualplanner/types/factoptional.hpp>
 
 
 namespace cp
@@ -40,23 +41,25 @@ static inline std::string _listOfStrToStr(const CONTAINER_TYPE& pStrs,
 }
 
 void _splitFacts(
-    std::vector<cp::Fact>& pFacts,
+    std::vector<std::pair<bool, cp::Fact>>& pFacts,
     const std::string& pStr,
     char pSeparator)
 {
   std::size_t pos = 0u;
+  bool isFactNegated = false;
   cp::Fact currFact;
   while (pos < pStr.size())
   {
-    pos = currFact.fillFactFromStr(pStr, pos, pSeparator) + 1;
+    pos = currFact.fillFactFromStr(pStr, pos, pSeparator, &isFactNegated) + 1;
     if (!currFact.name.empty())
     {
-      pFacts.emplace_back(std::move(currFact));
+      pFacts.emplace_back(isFactNegated, std::move(currFact));
+      isFactNegated = false;
       currFact = cp::Fact();
     }
   }
   if (!currFact.name.empty())
-    pFacts.emplace_back(std::move(currFact));
+    pFacts.emplace_back(isFactNegated, std::move(currFact));
 }
 
 }
@@ -178,12 +181,13 @@ std::string SetOfFacts::toStr(const std::string& pSeparator) const
 SetOfFacts SetOfFacts::fromStr(const std::string& pStr,
                                char pSeparator)
 {
-  std::vector<cp::Fact> vect;
+  std::vector<std::pair<bool, cp::Fact>> vect;
   _splitFacts(vect, pStr, pSeparator);
   SetOfFacts res;
 
-  for (auto& currFact : vect)
+  for (auto& currIsNegatedAndFact : vect)
   {
+    auto& currFact = currIsNegatedAndFact.second;
     if (currFact.name.empty())
       continue;
     std::string currentToken;
@@ -200,7 +204,8 @@ SetOfFacts SetOfFacts::fromStr(const std::string& pStr,
     if (!currFact.parameters.empty() ||
         (currFact.name[0] != '+' && currFact.name[0] != '$'))
     {
-      if (currFact.name[0] == '!')
+      bool isCurrFactNegated = currIsNegatedAndFact.first;
+      if (isCurrFactNegated)
       {
         currFact.name = currFact.name.substr(1, currFact.name.size() - 1);
         res.notFacts.insert(currFact);
