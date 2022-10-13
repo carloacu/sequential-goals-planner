@@ -42,18 +42,19 @@ void _incrementStr(std::string& pStr)
   }
 }
 
-void _getTheFactsToAddFromTheActionEffects(std::set<Fact>& pNewFacts,
-                                           std::vector<Fact>& pNewFactsWithAnyValues,
-                                           const Action& pAction,
-                                           const std::set<Fact>& pFacts1,
-                                           const std::set<Fact>& pFacts2)
+void _getTheFactsToAddFromAWorldModification(std::set<Fact>& pNewFacts,
+                                             std::vector<Fact>& pNewFactsWithAnyValues,
+                                             const WorldModification& pWorldModification,
+                                             const std::vector<std::string>& pParameters,
+                                             const std::set<Fact>& pFacts1,
+                                             const std::set<Fact>& pFacts2)
 {
-  pAction.effect.forAllFacts([&](const cp::Fact& pFact) {
+  pWorldModification.forAllFacts([&](const cp::Fact& pFact) {
     if (pFacts1.count(pFact) == 0 &&
         pFacts2.count(pFact) == 0)
     {
       auto factToInsert = pFact;
-      if (factToInsert.replaceParametersByAny(pAction.parameters))
+      if (factToInsert.replaceParametersByAny(pParameters))
         pNewFactsWithAnyValues.push_back(std::move(factToInsert));
       else
         pNewFacts.insert(std::move(factToInsert));
@@ -61,12 +62,12 @@ void _getTheFactsToAddFromTheActionEffects(std::set<Fact>& pNewFacts,
   });
 }
 
-void _getTheFactsToRemoveFromTheActionEffects(std::set<Fact>& pFactsToRemove,
-                                              const Action& pAction,
-                                              const std::set<Fact>& pFacts1,
-                                              const std::set<Fact>& pFacts2)
+void _getTheFactsToRemoveFromAWorldModification(std::set<Fact>& pFactsToRemove,
+                                                const WorldModification& pWorldModification,
+                                                const std::set<Fact>& pFacts1,
+                                                const std::set<Fact>& pFacts2)
 {
-  pAction.effect.forAllNotFacts([&](const cp::Fact& pNotFact) {
+  pWorldModification.forAllNotFacts([&](const cp::Fact& pNotFact) {
     if (pFacts1.count(pNotFact) > 0 &&
         pFacts2.count(pNotFact) == 0)
       pFactsToRemove.insert(pNotFact);
@@ -89,7 +90,11 @@ Problem::Problem(const Problem& pOther)
     _reachableFacts(pOther._reachableFacts),
     _reachableFactsWithAnyValues(pOther._reachableFactsWithAnyValues),
     _removableFacts(pOther._removableFacts),
-    _needToAddReachableFacts(pOther._needToAddReachableFacts)
+    _needToAddReachableFacts(pOther._needToAddReachableFacts),
+    _inferences(pOther._inferences),
+    _conditionToInferences(pOther._conditionToInferences),
+    _notConditionToInferences(pOther._notConditionToInferences),
+    _inferencesWithoutFactToAddInCondition(pOther._inferencesWithoutFactToAddInCondition)
 {
 }
 
@@ -322,9 +327,20 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
 }
 
 
-bool Problem::canFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const
+bool Problem::canSetOfFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const
 {
-  for (const auto& currFact : pSetOfFacts.facts)
+  if (!canFactsBecomeTrue(pSetOfFacts.facts))
+    return false;
+  for (const auto& currFact : pSetOfFacts.notFacts)
+    if (_facts.count(currFact) > 0 &&
+        _removableFacts.count(currFact) == 0)
+      return false;
+  return areExpsValid(pSetOfFacts.exps, _variablesToValue);
+}
+
+bool Problem::canFactsBecomeTrue(const std::set<Fact>& pFacts) const
+{
+  for (const auto& currFact : pFacts)
   {
     if (_facts.count(currFact) == 0 &&
         _reachableFacts.count(currFact) == 0)
@@ -342,13 +358,8 @@ bool Problem::canFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const
         return false;
     }
   }
-  for (const auto& currFact : pSetOfFacts.notFacts)
-    if (_facts.count(currFact) > 0 &&
-        _removableFacts.count(currFact) == 0)
-      return false;
-  return areExpsValid(pSetOfFacts.exps, _variablesToValue);
+  return true;
 }
-
 
 bool Problem::areFactsTrue(const SetOfFacts& pSetOfFacts,
                            std::map<std::string, std::string>* pParametersPtr) const
@@ -371,9 +382,10 @@ void Problem::fillReachableFacts(const Domain& pDomain)
   for (const auto& currFact : _facts)
   {
     if (_reachableFacts.count(currFact) == 0)
-      _feedReachableFacts(currFact, pDomain);
+      _feedReachableFactsFromFact(currFact, pDomain);
   }
-  _feedReachableFactsFromSetOfActions(pDomain.actionsWithoutPrecondition(), pDomain);
+  _feedReachableFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain);
+  _feedReachableFactsFromSetOfInferences(_inferencesWithoutFactToAddInCondition, pDomain);
   _needToAddReachableFacts = false;
 }
 
@@ -381,42 +393,91 @@ void Problem::fillReachableFacts(const Domain& pDomain)
 void Problem::_feedReachableFactsFromSetOfActions(const std::set<ActionId>& pActions,
                                                   const Domain& pDomain)
 {
+  auto& actions = pDomain.actions();
   for (const auto& currAction : pActions)
   {
-    auto itAction = pDomain.actions().find(currAction);
-    if (itAction != pDomain.actions().end())
+    auto itAction = actions.find(currAction);
+    if (itAction != actions.end())
     {
       auto& action = itAction->second;
-      if (canFactsBecomeTrue(action.preconditions))
-      {
-        std::set<Fact> reachableFactsToAdd;
-        std::vector<Fact> reachableFactsToAddWithAnyValues;
-        _getTheFactsToAddFromTheActionEffects(reachableFactsToAdd, reachableFactsToAddWithAnyValues, action, _facts, _reachableFacts);
-        std::set<Fact> removableFactsToAdd;
-        _getTheFactsToRemoveFromTheActionEffects(removableFactsToAdd, action, _facts, _removableFacts);
-        if (!reachableFactsToAdd.empty() || !reachableFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
-        {
-          _reachableFacts.insert(reachableFactsToAdd.begin(), reachableFactsToAdd.end());
-          _reachableFactsWithAnyValues.insert(reachableFactsToAddWithAnyValues.begin(), reachableFactsToAddWithAnyValues.end());
-          _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
-          for (const auto& currNewFact : reachableFactsToAdd)
-            _feedReachableFacts(currNewFact, pDomain);
-          for (const auto& currNewFact : removableFactsToAdd)
-            _feedReachableFacts(currNewFact, pDomain);
-        }
-      }
+      _feedReachableFactsFromDeduction(action.preconditions, action.effect,
+                                       action.parameters, pDomain);
     }
   }
 }
 
 
-void Problem::_feedReachableFacts(const Fact& pFact,
-                                  const Domain& pDomain)
+void Problem::_feedReachableFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
+                                                     const Domain& pDomain)
+{
+  for (const auto& currInference : pInferences)
+  {
+    auto itInference = _inferences.find(currInference);
+    if (itInference != _inferences.end())
+    {
+      auto& inference = itInference->second;
+      if (canFactsBecomeTrue(inference.punctualFactsCondition))
+      {
+        std::vector<std::string> parameters;
+        _feedReachableFactsFromDeduction(inference.condition, inference.factsToModify,
+                                         parameters, pDomain);
+      }
+    }
+  }
+}
+
+void Problem::_feedReachableFactsFromDeduction(const SetOfFacts& pCondition,
+                                               const WorldModification& pEffect,
+                                               const std::vector<std::string>& pParameters,
+                                               const Domain& pDomain)
+{
+  if (canSetOfFactsBecomeTrue(pCondition))
+  {
+    std::set<Fact> reachableFactsToAdd;
+    std::vector<Fact> reachableFactsToAddWithAnyValues;
+    _getTheFactsToAddFromAWorldModification(reachableFactsToAdd, reachableFactsToAddWithAnyValues,
+                                            pEffect, pParameters, _facts, _reachableFacts);
+    std::set<Fact> removableFactsToAdd;
+    _getTheFactsToRemoveFromAWorldModification(removableFactsToAdd, pEffect, _facts, _removableFacts);
+    if (!reachableFactsToAdd.empty() || !reachableFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
+    {
+      _reachableFacts.insert(reachableFactsToAdd.begin(), reachableFactsToAdd.end());
+      _reachableFactsWithAnyValues.insert(reachableFactsToAddWithAnyValues.begin(), reachableFactsToAddWithAnyValues.end());
+      _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
+      for (const auto& currNewFact : reachableFactsToAdd)
+        _feedReachableFactsFromFact(currNewFact, pDomain);
+      for (const auto& currNewFact : removableFactsToAdd)
+        _feedReachableFactsFromNotFact(currNewFact, pDomain);
+    }
+  }
+}
+
+
+void Problem::_feedReachableFactsFromFact(const Fact& pFact,
+                                          const Domain& pDomain)
 {
   auto itPrecToActions = pDomain.preconditionToActions().find(pFact.name);
   if (itPrecToActions != pDomain.preconditionToActions().end())
     _feedReachableFactsFromSetOfActions(itPrecToActions->second, pDomain);
+
+  auto itCondToInferences = _conditionToInferences.find(pFact.name);
+  if (itCondToInferences != _conditionToInferences.end())
+    _feedReachableFactsFromSetOfInferences(itCondToInferences->second, pDomain);
 }
+
+
+void Problem::_feedReachableFactsFromNotFact(const Fact& pFact,
+                                             const Domain& pDomain)
+{
+  auto itPrecToActions = pDomain.notPreconditionToActions().find(pFact.name);
+  if (itPrecToActions != pDomain.notPreconditionToActions().end())
+    _feedReachableFactsFromSetOfActions(itPrecToActions->second, pDomain);
+
+  auto itCondToInferences = _notConditionToInferences.find(pFact.name);
+  if (itCondToInferences != _notConditionToInferences.end())
+    _feedReachableFactsFromSetOfInferences(itCondToInferences->second, pDomain);
+}
+
 
 std::string Problem::getCurrentGoalStr() const
 {
@@ -646,9 +707,39 @@ void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 }
 
 
-void Problem::setInferences(const std::list<Inference>& pInferences)
+void Problem::addInference(const InferenceId& pInferenceId,
+                           const Inference& pInference)
 {
-  _inferences = pInferences;
+  if (_inferences.count(pInferenceId) > 0)
+    return;
+  _inferences.emplace(pInferenceId, pInference);
+
+  for (const auto& currFact : pInference.condition.facts)
+    _conditionToInferences[currFact.name].insert(pInferenceId);
+  for (const auto& currFact : pInference.punctualFactsCondition)
+    _conditionToInferences[currFact.name].insert(pInferenceId);
+  for (const auto& currNotFact : pInference.condition.notFacts)
+    _notConditionToInferences[currNotFact.name].insert(pInferenceId);
+  if (pInference.condition.facts.empty() && pInference.punctualFactsCondition.empty())
+    _inferencesWithoutFactToAddInCondition.insert(pInferenceId);
+}
+
+
+void Problem::removeInference(const InferenceId& pInferenceId)
+{
+  auto it = _inferences.find(pInferenceId);
+  if (it == _inferences.end())
+    return;
+  auto& inferenceThatWillBeRemoved = it->second;
+  for (const auto& currFact : inferenceThatWillBeRemoved.condition.facts)
+    _conditionToInferences[currFact.name].erase(pInferenceId);
+  for (const auto& currFact : inferenceThatWillBeRemoved.punctualFactsCondition)
+    _conditionToInferences[currFact.name].erase(pInferenceId);
+  for (const auto& currFact : inferenceThatWillBeRemoved.condition.notFacts)
+    _notConditionToInferences[currFact.name].erase(pInferenceId);
+  if (inferenceThatWillBeRemoved.condition.facts.empty() && inferenceThatWillBeRemoved.punctualFactsCondition.empty())
+    _inferencesWithoutFactToAddInCondition.erase(pInferenceId);
+  _inferences.erase(it);
 }
 
 
@@ -697,18 +788,18 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
   if (pWhatChanged.somethingChanged())
   {
     // manage the inferences
-    std::set<const Inference*> inferencesAlreadyApplied;
+    std::set<InferenceId> inferencesAlreadyApplied;
     bool needAnotherLoop = true;
     while (needAnotherLoop)
     {
       needAnotherLoop = false;
       for (const auto& currInference : _inferences)
       {
-        if (inferencesAlreadyApplied.count(&currInference) == 0 &&
-            areFactsTrue(currInference.condition))
+        if (inferencesAlreadyApplied.count(currInference.first) == 0 &&
+            areFactsTrue(currInference.second.condition))
         {
           bool punctualFactSatisfied = true;
-          for (auto& currPonctualFact : currInference.punctualFactsCondition)
+          for (auto& currPonctualFact : currInference.second.punctualFactsCondition)
           {
             if (pWhatChanged.punctualFacts.count(currPonctualFact) == 0)
             {
@@ -718,9 +809,9 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
           }
           if (punctualFactSatisfied)
           {
-            inferencesAlreadyApplied.insert(&currInference);
-            _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
-            _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);
+            inferencesAlreadyApplied.insert(currInference.first);
+            _modifyFacts(pWhatChanged, currInference.second.factsToModify, pNow);
+            _addGoals(pWhatChanged, currInference.second.goalsToAdd, pNow);
             needAnotherLoop = true;
           }
         }

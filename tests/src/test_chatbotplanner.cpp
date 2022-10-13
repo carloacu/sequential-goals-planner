@@ -13,6 +13,13 @@ namespace
 {
 const std::string _sep = ", ";
 
+const std::string _fact_a = "fact_a";
+const std::string _fact_b = "fact_b";
+const std::string _fact_c = "fact_c";
+const std::string _fact_d = "fact_d";
+const std::string _fact_e = "fact_e";
+const std::string _fact_f = "fact_f";
+const std::string _fact_g = "fact_g";
 const std::string _fact_advertised = "advertised";
 const std::string _fact_beginOfConversation = "begin_of_conversation";
 const std::string _fact_presented = "presented";
@@ -31,6 +38,7 @@ const std::string _fact_userSatisfied = "user_satisfied";
 const std::string _fact_robotLearntABehavior = "robot_learnt_a_behavior";
 const std::string _fact_headTouched = "head_touched";
 const std::string _fact_punctual_headTouched = cp::Fact::punctualPrefix + "head_touched";
+const std::string _fact_punctual_checkedIn = cp::Fact::punctualPrefix + "checked_in";
 
 const std::string _action_presentation = "presentation";
 const std::string _action_askQuestion1 = "ask_question_1";
@@ -280,6 +288,43 @@ void _removeSomeGoals()
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
   problem.removeGoals(goalGroupId, {});
   assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
+}
+
+
+void _handlePreconditionWithNegatedFacts()
+{
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(_action_greet, cp::Action(cp::SetOfFacts({}, {_fact_checkedIn}), {_fact_greeted}));
+  actions.emplace(_action_joke, cp::Action(cp::SetOfFacts({}, {_fact_checkedIn}), {_fact_userSatisfied}));
+  actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_userSatisfied}, {_fact_checkedIn}));
+  cp::Domain domain(actions);
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {_fact_checkedIn});
+  auto actionToDo = _lookForAnActionToDo(problem, domain);
+  assert_true(actionToDo == _action_greet || actionToDo == _action_joke);
+}
+
+
+void _testWithNegatedReachableFacts()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
+
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action(cp::SetOfFacts({_fact_e}, {_fact_b}), cp::SetOfFacts({}, {_fact_c})));
+  actions.emplace(action2, cp::Action({}, cp::SetOfFacts({}, {_fact_b})));
+  actions.emplace(action3, cp::Action(cp::SetOfFacts({_fact_a}, {_fact_c}), {_fact_d}));
+  cp::Domain domain(actions);
+
+  cp::Problem problem;
+  problem.setFacts({_fact_a, _fact_b, _fact_c}, now);
+  _setGoalsForAPriority(problem, {_fact_d});
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain));
+  problem.addFact(_fact_e, now);
+  assert_eq(action2, _lookForAnActionToDo(problem, domain));
 }
 
 
@@ -1116,9 +1161,10 @@ void _checkInferences()
   cp::Problem problem;
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
-  problem.setInferences({cp::Inference(cp::SetOfFacts({_fact_headTouched}),
-                         cp::SetOfFacts({}, {_fact_headTouched}),
-                         { {{9, {_fact_checkedIn}}} })});
+  problem.addInference("inference1",
+                       cp::Inference({_fact_headTouched},
+                                     cp::SetOfFacts({}, {_fact_headTouched}),
+                                     {{{9, {_fact_checkedIn}}}}));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_headTouched, now);
   assert_true(!problem.hasFact(_fact_headTouched)); // removed because of the inference
@@ -1136,10 +1182,10 @@ void _checkInferencesWithImply()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))")});
-  // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and add(_fact_userWantsToCheckedIn)
-  problem.setInferences({cp::Inference(cp::SetOfFacts({_fact_headTouched}),
-                         cp::SetOfFacts({ _fact_userWantsToCheckedIn }, { _fact_headTouched }),
-                         {})});
+  // Inference: if (_fact_headTouched) then add(_fact_userWantsToCheckedIn) and remove(_fact_headTouched)
+  problem.addInference("inference1",
+                       cp::Inference({_fact_headTouched},
+                                     cp::SetOfFacts({_fact_userWantsToCheckedIn}, {_fact_headTouched})));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_headTouched, now);
   assert_true(!problem.hasFact(_fact_headTouched)); // removed because of the inference
@@ -1157,14 +1203,90 @@ void _checkInfrenceWithPunctualCondition()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
   // Inference: if (_fact_punctual_headTouched) then add(_fact_userWantsToCheckedIn)
-  problem.setInferences({cp::Inference(cp::SetOfFacts({_fact_punctual_headTouched}),
-                         cp::SetOfFacts({ _fact_userWantsToCheckedIn }),
-                         {})});
+  problem.addInference("inference1", cp::Inference({_fact_punctual_headTouched}, {_fact_userWantsToCheckedIn}));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_punctual_headTouched, now);
   assert_true(!problem.hasFact(_fact_punctual_headTouched)); // because it is a punctual fact
   assert_eq(_action_checkIn, _solveStr(problem, actions, now));
 }
+
+
+void _checkInfrenceAtEndOfAPlan()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_checkIn, cp::Action({}, cp::WorldModification({ _fact_punctual_checkedIn })));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
+  problem.addInference("inference1", cp::Inference({_fact_punctual_headTouched}, {_fact_userWantsToCheckedIn}));
+  problem.addInference("inference2", cp::Inference({_fact_punctual_checkedIn},
+                                                   cp::SetOfFacts({}, { _fact_userWantsToCheckedIn })));
+  assert_eq<std::string>("", _solveStr(problem, actions, now));
+  problem.addFact(_fact_punctual_headTouched, now);
+  assert_true(!problem.hasFact(_fact_punctual_headTouched)); // because it is a punctual fact
+  assert_eq(_action_checkIn, _solveStr(problem, actions, now));
+}
+
+
+void _checkInfrenceInsideAPlan()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, cp::WorldModification({ _fact_a })));
+  actions.emplace(action2, cp::Action({_fact_c}, cp::WorldModification({ _fact_d })));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
+  problem.addInference("inference1", cp::Inference({_fact_a}, {_fact_b}));
+  problem.addInference("inference2", cp::Inference({_fact_b, _fact_d}, {_fact_c}));
+  assert_eq<std::string>("", _solveStrConst(problem, actions));
+  problem.addInference("inference3", cp::Inference({_fact_b}, {_fact_c}));
+  assert_eq(action1 + _sep + action2, _solveStrConst(problem, actions)); // check with a copy of the problem
+  assert_true(!problem.hasFact(_fact_a));
+  assert_true(!problem.hasFact(_fact_b));
+  assert_true(!problem.hasFact(_fact_c));
+  assert_true(!problem.hasFact(_fact_d));
+  assert_eq(action1 + _sep + action2, _solveStr(problem, actions));
+  assert_true(problem.hasFact(_fact_a));
+  assert_true(problem.hasFact(_fact_b));
+  assert_true(problem.hasFact(_fact_c));
+  assert_true(problem.hasFact(_fact_d));
+}
+
+
+
+void _checkInfrenceThatAddAGoal()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  const std::string action4 = "action4";
+  const std::string action5 = "action5";
+
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, cp::WorldModification({ _fact_a })));
+  actions.emplace(action2, cp::Action({_fact_c}, cp::WorldModification({ _fact_d })));
+  actions.emplace(action3, cp::Action({_fact_c, _fact_f}, cp::WorldModification({ _fact_e })));
+  actions.emplace(action4, cp::Action({_fact_b}, cp::WorldModification({ _fact_f })));
+  actions.emplace(action5, cp::Action({_fact_b}, cp::WorldModification({ _fact_g })));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_g + ", " + _fact_d)});
+  problem.addInference("inference1", cp::Inference({_fact_a}, { _fact_b }, {{cp::Problem::defaultPriority, {_fact_e}}}));
+  assert_eq<std::string>("", _solveStrConst(problem, actions));
+  problem.addInference("inference2", cp::Inference({_fact_b}, { _fact_c }));
+  assert_eq<std::string>("", _solveStrConst(problem, actions));
+  problem.addFact(_fact_g, now);
+  assert_eq(action1 + _sep + action4 + _sep + action3 + _sep + action2, _solveStr(problem, actions));
+}
+
 
 
 
@@ -1185,6 +1307,8 @@ int main(int argc, char *argv[])
   _removeFirstGoalsThatAreAlreadySatisfied();
   _removeAnAction();
   _removeSomeGoals();
+  _handlePreconditionWithNegatedFacts();
+  _testWithNegatedReachableFacts();
   _noPlanWithALengthOf2();
   _noPlanWithALengthOf3();
   _2preconditions();
@@ -1226,6 +1350,9 @@ int main(int argc, char *argv[])
   _checkInferences();
   _checkInferencesWithImply();
   _checkInfrenceWithPunctualCondition();
+  _checkInfrenceAtEndOfAPlan();
+  _checkInfrenceInsideAPlan();
+  _checkInfrenceThatAddAGoal();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

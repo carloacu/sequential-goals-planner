@@ -72,6 +72,7 @@ std::list<std::string> printResolutionPlan(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical)
 {
+  std::set<std::string> actionAlreadyInPlan;
   std::list<std::string> res;
   while (!pProblem.goals().empty())
   {
@@ -79,7 +80,11 @@ std::list<std::string> printResolutionPlan(
     auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, nullptr, nullptr, pGlobalHistorical);
     if (actionToDo.empty())
       break;
-    res.emplace_back(printActionIdWithParameters(actionToDo, parameters));
+    auto actionStr = printActionIdWithParameters(actionToDo, parameters);
+    res.emplace_back(actionStr);
+    if (actionAlreadyInPlan.count(actionStr) > 0)
+      break;
+    actionAlreadyInPlan.insert(actionStr);
 
     auto itAction = pDomain.actions().find(actionToDo);
     if (itAction != pDomain.actions().end())

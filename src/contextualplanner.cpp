@@ -120,7 +120,52 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
                              FactsAlreadyChecked& pFactsAlreadychecked);
 
 
-bool _lookForAPossibleExistingOrNotFact(
+bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
+                                const SetOfFacts& pCondition,
+                                const WorldModification& pEffect,
+                                const Fact& pFact,
+                                std::map<std::string, std::string>& pParentParameters,
+                                const Goal& pGoal,
+                                const Problem& pProblem,
+                                const Domain& pDomain,
+                                FactsAlreadyChecked& pFactsAlreadychecked)
+{
+  if (pProblem.canSetOfFactsBecomeTrue(pCondition))
+  {
+    std::map<std::string, std::string> parametersToValue;
+    for (const auto& currParam : pParameters)
+      parametersToValue[currParam];
+    if (_lookForAPossibleEffect(parametersToValue, pEffect, pGoal, pProblem, pDomain, pFactsAlreadychecked))
+    {
+      bool actionIsAPossibleFollowUp = true;
+      // fill parent parameters
+      for (auto& currParentParam : pParentParameters)
+      {
+        if (currParentParam.second.empty())
+        {
+          for (const auto& currActionPreconditionFact : pCondition.facts)
+          {
+            currParentParam.second = pFact.tryToExtractParameterValueFromExemple(currParentParam.first, currActionPreconditionFact);
+            if (!currParentParam.second.empty())
+              break;
+          }
+          if (!currParentParam.second.empty())
+            break;
+          if (currParentParam.second.empty())
+          {
+            actionIsAPossibleFollowUp = false;
+            break;
+          }
+        }
+      }
+      if (actionIsAPossibleFollowUp)
+        return true;
+    }
+  }
+  return false;
+}
+
+bool _lookForAPossibleExistingOrNotFactFromActions(
     const Fact& pFact,
     std::map<std::string, std::string>& pParentParameters,
     const std::map<std::string, std::set<ActionId>>& pPreconditionToActions,
@@ -129,48 +174,50 @@ bool _lookForAPossibleExistingOrNotFact(
     const Domain& pDomain,
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (!pFactsAlreadychecked.factsToAdd.insert(pFact).second)
-    return false;
   auto it = pPreconditionToActions.find(pFact.name);
   if (it != pPreconditionToActions.end())
   {
+    auto& actions = pDomain.actions();
     for (const auto& currActionId : it->second)
     {
-      auto itAction = pDomain.actions().find(currActionId);
-      if (itAction != pDomain.actions().end())
+      auto itAction = actions.find(currActionId);
+      if (itAction != actions.end())
       {
         auto& action = itAction->second;
-        std::map<std::string, std::string> parameters;
-        for (const auto& currParam : action.parameters)
-          parameters[currParam];
-        if (pProblem.canFactsBecomeTrue(action.preconditions) &&
-            _lookForAPossibleEffect(parameters, action.effect, pGoal, pProblem, pDomain, pFactsAlreadychecked))
+        if (_lookForAPossibleDeduction(action.parameters, action.preconditions, action.effect,
+                                       pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+bool _lookForAPossibleExistingOrNotFactFromInferences(
+    const Fact& pFact,
+    std::map<std::string, std::string>& pParentParameters,
+    const std::map<std::string, std::set<InferenceId>>& pConditionToInferences,
+    const Goal& pGoal,
+    const Problem& pProblem,
+    const Domain& pDomain,
+    FactsAlreadyChecked& pFactsAlreadychecked)
+{
+  auto it = pConditionToInferences.find(pFact.name);
+  if (it != pConditionToInferences.end())
+  {
+    auto& inferences = pProblem.inferences();
+    for (const auto& currInferenceId : it->second)
+    {
+      auto itInference = inferences.find(currInferenceId);
+      if (itInference != inferences.end())
+      {
+        auto& inference = itInference->second;
+        if (pProblem.canFactsBecomeTrue(inference.punctualFactsCondition))
         {
-          bool actionIsAPossibleFollowUp = true;
-          // fill parent parameters
-          for (auto& currParentParam : pParentParameters)
-          {
-            if (currParentParam.second.empty())
-            {
-              //for (const auto& currFact : pFacts)
-              {
-                for (const auto& currActionPreconditionFact : action.preconditions.facts)
-                {
-                  currParentParam.second = /*currFact*/ pFact.tryToExtractParameterValueFromExemple(currParentParam.first, currActionPreconditionFact);
-                  if (!currParentParam.second.empty())
-                    break;
-                }
-                if (!currParentParam.second.empty())
-                  break;
-              }
-              if (currParentParam.second.empty())
-              {
-                actionIsAPossibleFollowUp = false;
-                break;
-              }
-            }
-          }
-          if (actionIsAPossibleFollowUp)
+          std::vector<std::string> parameters;
+          if (_lookForAPossibleDeduction(parameters, inference.condition, inference.factsToModify,
+                                         pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
             return true;
         }
       }
@@ -178,7 +225,6 @@ bool _lookForAPossibleExistingOrNotFact(
   }
   return false;
 }
-
 
 
 bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
@@ -189,36 +235,48 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
                              FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto& optionalFactGoal = pGoal.factOptional();
-  bool goalFactIsInEffect = optionalFactGoal.fact.isInFacts(pEffectToCheck.factsModifications.facts, false, &pParameters) ||
-      optionalFactGoal.fact.isInFacts(pEffectToCheck.potentialFactsModifications.facts, false, &pParameters);
   if (!optionalFactGoal.isFactNegated)
   {
-    if (goalFactIsInEffect)
+    if (optionalFactGoal.fact.isInFacts(pEffectToCheck.factsModifications.facts, false, &pParameters) ||
+        optionalFactGoal.fact.isInFacts(pEffectToCheck.potentialFactsModifications.facts, false, &pParameters))
       return true;
   }
   else
   {
-    if (!goalFactIsInEffect)
+    if (optionalFactGoal.fact.isInFacts(pEffectToCheck.factsModifications.notFacts, false, &pParameters) ||
+        optionalFactGoal.fact.isInFacts(pEffectToCheck.potentialFactsModifications.notFacts, false, &pParameters))
       return true;
   }
 
   auto& preconditionToActions = pDomain.preconditionToActions();
+  auto& conditionToInferences = pProblem.conditionToInferences();
   bool subRes = pEffectToCheck.forAllFactsUntilTrue([&](const cp::Fact& pFact) {
     if (pProblem.facts().count(pFact) == 0)
-      if (_lookForAPossibleExistingOrNotFact(pFact, pParameters, preconditionToActions, pGoal,
-                                             pProblem, pDomain, pFactsAlreadychecked))
+    {
+      if (pFactsAlreadychecked.factsToAdd.insert(pFact).second &&
+          (_lookForAPossibleExistingOrNotFactFromActions(pFact, pParameters, preconditionToActions, pGoal,
+                                                         pProblem, pDomain, pFactsAlreadychecked) ||
+           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, conditionToInferences, pGoal,
+                                                            pProblem, pDomain, pFactsAlreadychecked)))
         return true;
+    }
     return false;
   });
   if (subRes)
     return true;
 
   auto& notPreconditionToActions = pDomain.notPreconditionToActions();
+  auto& notConditionToInferences = pProblem.notConditionToInferences();
   return pEffectToCheck.forAllNotFactsUntilTrue([&](const cp::Fact& pFact) {
     if (pProblem.facts().count(pFact) > 0)
-      if (_lookForAPossibleExistingOrNotFact(pFact, pParameters, notPreconditionToActions, pGoal,
-                                             pProblem, pDomain, pFactsAlreadychecked))
+    {
+      if (pFactsAlreadychecked.factsToRemove.insert(pFact).second &&
+          (_lookForAPossibleExistingOrNotFactFromActions(pFact, pParameters, notPreconditionToActions, pGoal,
+                                                         pProblem, pDomain, pFactsAlreadychecked) ||
+           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, notConditionToInferences, pGoal,
+                                                            pProblem, pDomain, pFactsAlreadychecked)))
         return true;
+    }
     return false;
   });
 }
@@ -232,10 +290,11 @@ bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
                                                   const Historical* pGlobalHistorical)
 {
   PotentialNextAction newPotNextAction;
+  auto& domainActions = pDomain.actions();
   for (const auto& currAction : pActions)
   {
-    auto itAction = pDomain.actions().find(currAction);
-    if (itAction != pDomain.actions().end())
+    auto itAction = domainActions.find(currAction);
+    if (itAction != domainActions.end())
     {
       auto& action = itAction->second;
       FactsAlreadyChecked factsAlreadyChecked;
@@ -295,8 +354,8 @@ ActionId _nextStepOfTheProblemForAGoal(
       return res.actionId;
     }
   }
-  auto& actionsWithoutPrecondition = pDomain.actionsWithoutPrecondition();
-  _nextStepOfTheProblemForAGoalAndSetOfActions(res, actionsWithoutPrecondition, pGoal, pProblem,
+  auto& actionsWithoutFactToAddInPrecondition = pDomain.actionsWithoutFactToAddInPrecondition();
+  _nextStepOfTheProblemForAGoalAndSetOfActions(res, actionsWithoutFactToAddInPrecondition, pGoal, pProblem,
                                                pDomain, pGlobalHistorical);
   pParameters = std::move(res.parameters);
   return res.actionId;

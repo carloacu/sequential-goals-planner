@@ -30,11 +30,11 @@ void Domain::addAction(const ActionId& pActionId,
       if (currElt.type == ExpressionElementType::FACT)
         _preconditionToActionsExps[currElt.value].insert(pActionId);
   if (pAction.preconditions.facts.empty() && pAction.preconditions.exps.empty())
-    _actionsWithoutPrecondition.insert(pActionId);
+    _actionsWithoutFactToAddInPrecondition.insert(pActionId);
 }
 
 
-void Domain::removeAction(ActionId pActionId)
+void Domain::removeAction(const ActionId& pActionId)
 {
   auto it = _actions.find(pActionId);
   if (it == _actions.end())
@@ -50,7 +50,7 @@ void Domain::removeAction(ActionId pActionId)
       if (currElt.type == ExpressionElementType::FACT)
         _preconditionToActionsExps[currElt.value].erase(pActionId);
   if (actionThatWillBeRemoved.preconditions.facts.empty() && actionThatWillBeRemoved.preconditions.exps.empty())
-    _actionsWithoutPrecondition.erase(pActionId);
+    _actionsWithoutFactToAddInPrecondition.erase(pActionId);
   _actions.erase(it);
 }
 

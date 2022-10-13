@@ -2,7 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEM_HPP
 
 #include <set>
-#include <list>
+#include <map>
 #include "../util/api.hpp"
 #include <contextualplanner/types/historical.hpp>
 #include <contextualplanner/types/fact.hpp>
@@ -15,6 +15,7 @@
 namespace cp
 {
 struct Domain;
+struct WorldModification;
 
 
 /// Current world, goal for the world and historical of actions done.
@@ -113,11 +114,18 @@ struct CONTEXTUALPLANNER_API Problem
   void fillReachableFacts(const Domain& pDomain);
 
   /**
+   * @brief Can some facts modification become true, according to the world and the reachable facts stored internally in this object.
+   * @param pSetOfFacts Set of facts to check if they are valid.
+   * @return True if the facts are valid for the world, false otherwise.
+   */
+  bool canSetOfFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const;
+
+  /**
    * @brief Can some facts become true, according to the world and the reachable facts stored internally in this object.
-   * @param pSetOfFacts Set of facts to check if they can become true.
+   * @param pFacts Facts to check if they can become true.
    * @return True if the facts can become true, false otherwise.
    */
-  bool canFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const;
+  bool canFactsBecomeTrue(const std::set<Fact>& pFacts) const;
 
   /**
    * @brief Are the facts hold in the problem.
@@ -251,8 +259,29 @@ struct CONTEXTUALPLANNER_API Problem
   // Inferences
   // ----------
 
-  /// Set the inferences to do when the facts or the goals change.
-  void setInferences(const std::list<Inference>& pInferences);
+  /**
+   * @brief Add an inference to check when the facts or the goals change.
+   * @param pInferenceId Identifier of the inference to add.
+   * @param pInference Inference to add.
+   */
+  void addInference(const InferenceId& pInferenceId,
+                    const Inference& pInference);
+
+  /**
+   * @brief Remove an inference.
+   * @param pInferenceId Identifier of the action to remove.
+   *
+   * If the inference is not found, this function will have no effect.
+   * No exception will be raised.
+   */
+  void removeInference(const InferenceId& pInferenceId);
+
+  /// All inferences of the problem.
+  const std::map<InferenceId, Inference>& inferences() const { return _inferences; }
+  /// All fact conditions to inference idntifiers of this problem.
+  const std::map<std::string, std::set<InferenceId>>& conditionToInferences() const { return _conditionToInferences; }
+  /// All negated fact conditions to inference idntifiers of this problem.
+  const std::map<std::string, std::set<InferenceId>>& notConditionToInferences() const { return _notConditionToInferences; }
 
 
   // Historical of actions done
@@ -279,8 +308,15 @@ private:
   std::set<Fact> _removableFacts{};
   /// Know if we need to add reachable facts.
   bool _needToAddReachableFacts = true;
-  /// Inferences.
-  std::list<Inference> _inferences{};
+  /// Map of inference indentifers to inference.
+  std::map<InferenceId, Inference> _inferences{};
+  /// Map of fact conditions to inference idntifiers.
+  std::map<std::string, std::set<InferenceId>> _conditionToInferences{};
+  /// Map of negated fact conditions to inference idntifiers.
+  std::map<std::string, std::set<InferenceId>> _notConditionToInferences{};
+  /// Set of inferences without fact to add in their condition.
+  std::set<InferenceId> _inferencesWithoutFactToAddInCondition{};
+
   /// Stored what changed.
   struct WhatChanged
   {
@@ -345,12 +381,40 @@ private:
                                            const Domain& pDomain);
 
   /**
+   * @brief Feed reachable facts from a set of inferences.
+   * @param pInferences Set of inferences.
+   * @param pDomain Domain containing all the possible actions.
+   */
+  void _feedReachableFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
+                                              const Domain& pDomain);
+
+  /**
+   * @brief Feed reachable facts from a condition and an effect.
+   * @param pCondition condition to check.
+   * @param pEffect Effect to aply.
+   * @param pParameters Parameter names.
+   * @param pDomain Domain containing all the possible actions.
+   */
+  void _feedReachableFactsFromDeduction(const SetOfFacts& pCondition,
+                                        const WorldModification& pEffect,
+                                        const std::vector<std::string>& pParameters,
+                                        const Domain& pDomain);
+
+  /**
    * @brief Feed reachable facts from a fact.
    * @param pFact A fact.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedReachableFacts(const Fact& pFact,
-                           const Domain& pDomain);
+  void _feedReachableFactsFromFact(const Fact& pFact,
+                                   const Domain& pDomain);
+
+  /**
+   * @brief Feed reachable facts from a negated fact.
+   * @param pFact A negated fact.
+   * @param pDomain Domain containing all the possible actions.
+   */
+  void _feedReachableFactsFromNotFact(const Fact& pFact,
+                                      const Domain& pDomain);
 
   /**
    * @brief Modify some facts in the world.

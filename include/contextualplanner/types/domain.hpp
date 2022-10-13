@@ -34,10 +34,10 @@ struct CONTEXTUALPLANNER_API Domain
    * @brief Remove an action.
    * @param pActionId Identifier of the action to remove.
    *
-   * If the action identifier is not found in the domain, this function will have no effect.
+   * If the action is not found, this function will have no effect.
    * No exception will be raised.
    */
-  void removeAction(ActionId pActionId);
+  void removeAction(const ActionId& pActionId);
 
   /// All action identifiers to action of this domain.
   const std::map<ActionId, Action>& actions() const { return _actions; }
@@ -47,8 +47,8 @@ struct CONTEXTUALPLANNER_API Domain
   const std::map<std::string, std::set<ActionId>>& preconditionToActionsExps() const { return _preconditionToActionsExps; }
   /// All preconditions negationed to action idntifiers of this domain.
   const std::map<std::string, std::set<ActionId>>& notPreconditionToActions() const { return _notPreconditionToActions; }
-  /// All action identifiers that does not have any precondition in this domain.
-  const std::set<ActionId>& actionsWithoutPrecondition() const { return _actionsWithoutPrecondition; }
+  /// All action identifiers that does not have any fact to add in this domain.
+  const std::set<ActionId>& actionsWithoutFactToAddInPrecondition() const { return _actionsWithoutFactToAddInPrecondition; }
 
 
 private:
@@ -60,8 +60,8 @@ private:
   std::map<std::string, std::set<ActionId>> _preconditionToActionsExps;
   /// Map of preconditions negationed to action idntifiers.
   std::map<std::string, std::set<ActionId>> _notPreconditionToActions;
-  /// Set of action identifiers that does not have any precondition.
-  std::set<ActionId> _actionsWithoutPrecondition;
+  /// Set of action identifiers that does not have any fact to add.
+  std::set<ActionId> _actionsWithoutFactToAddInPrecondition;
 };
 
 } // !cp
