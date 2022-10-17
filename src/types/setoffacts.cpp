@@ -50,7 +50,7 @@ void _splitFacts(
   cp::Fact currFact;
   while (pos < pStr.size())
   {
-    pos = currFact.fillFactFromStr(pStr, pos, pSeparator, &isFactNegated) + 1;
+    pos = currFact.fillFactFromStr(pStr, &pSeparator, pos, &isFactNegated) + 1;
     if (!currFact.name.empty())
     {
       pFacts.emplace_back(isFactNegated, std::move(currFact));

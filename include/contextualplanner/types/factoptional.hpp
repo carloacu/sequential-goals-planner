@@ -28,15 +28,15 @@ struct CONTEXTUALPLANNER_API FactOptional
   FactOptional(const FactOptional& pOther);
 
   /**
-   * @brief Construct an optional fact from a string.
+   * @brief Construct an optional fact from a part of a string.
    * @param[in] pStr Input string to parse.
+   * @param[in] pSeparatorPtr Character to indicate the end of the fact in the input string, nullptr can be set if there is only one.
    * @param[in] pBeginPos Begin position in the input string.
-   * @param[in] pSeparator Character to indicate the end of the fact in the input string.
    * @param[out] pResPos Postion in the input string after the parse.
    */
   FactOptional(const std::string& pStr,
+               const char* pSeparatorPtr = nullptr,
                std::size_t pBeginPos = 0,
-               char pSeparator = ',',
                std::size_t* pResPos = nullptr);
 
   /// Set content from another optional fact.

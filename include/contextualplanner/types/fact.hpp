@@ -18,22 +18,17 @@ struct CONTEXTUALPLANNER_API Fact
 {
   /**
    * @brief Construct a fact.
-   * @param pName Name of the fact.
-   */
-  Fact(const std::string& pName = "");
-  /**
-   * @brief Construct a fact.
    * @param[in] pStr Input string to parse.
-   * @param[in] pBeginPos Begin position in the input string.
-   * @param[in] pSeparator Character to indicate the end of the fact in the input string.
+   * @param[in] pSeparatorPtr Character to indicate the end of the fact in the input string, nullptr can be set if there is only one.
    * @param[out] pIsFactNegatedPtr Is the fact constructed negated or not.
+   * @param[in] pBeginPos Begin position in the input string.
    * @param[out] pResPos Postion in the input string after the parse.
    */
-  Fact(const std::string& pStr,
-       std::size_t pBeginPos,
-       char pSeparator,
-       bool* pIsFactNegatedPtr,
-       std::size_t* pResPos);
+  Fact(const std::string& pStr = "",
+       const char* pSeparatorPtr = nullptr,
+       bool* pIsFactNegatedPtr = nullptr,
+       std::size_t pBeginPos = 0,
+       std::size_t* pResPos = nullptr);
 
   /// Destruct the fact.
   ~Fact();
@@ -92,14 +87,14 @@ struct CONTEXTUALPLANNER_API Fact
   /**
    * @brief Deserialize a part of a string to this fact.
    * @param pStr String containing the part to deserialize.
+   * @param pSeparatorPtr Character to specify the end of the fact, you can put nullptr if there is only one fact in the input string.
    * @param pBeginPos Begin index of the string for the deserialization.
-   * @param pSeparator Character to specify the end of the fact.
    * @param pIsFactNegatedPtr Is the fact constructed negated or not.
    * @return End index of the deserialization.
    */
   std::size_t fillFactFromStr(const std::string& pStr,
+                              const char* pSeparatorPtr,
                               std::size_t pBeginPos,
-                              char pSeparator,
                               bool* pIsFactNegatedPtr);
 
   /**

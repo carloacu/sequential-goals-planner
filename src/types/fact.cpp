@@ -25,23 +25,16 @@ void _parametersToStr(std::string& pStr,
 const std::string Fact::anyValue = "<any>_it_is_a_language_token_for_the_planner_engine";
 const std::string Fact::punctualPrefix = "_punctual_";
 
-Fact::Fact(const std::string& pName)
-  : name(pName),
-    parameters(),
-    value()
-{
-}
-
 Fact::Fact(const std::string& pStr,
-           std::size_t pBeginPos,
-           char pSeparator,
+           const char* pSeparatorPtr,
            bool* pIsFactNegatedPtr,
+           std::size_t pBeginPos,
            std::size_t* pResPos)
   : name(),
     parameters(),
     value()
 {
-  auto resPos = fillFactFromStr(pStr, pBeginPos, pSeparator, pIsFactNegatedPtr);
+  auto resPos = fillFactFromStr(pStr, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
   if (pResPos != nullptr)
     *pResPos = resPos;
 }
@@ -168,7 +161,7 @@ Fact Fact::fromStr(const std::string& pStr,
                    bool* pIsFactNegatedPtr)
 {
   Fact res;
-  auto endPos = res.fillFactFromStr(pStr, 0, ',', pIsFactNegatedPtr);
+  auto endPos = res.fillFactFromStr(pStr, nullptr, 0, pIsFactNegatedPtr);
   assert(!res.name.empty());
   assert(endPos == pStr.size());
   return res;
@@ -177,10 +170,11 @@ Fact Fact::fromStr(const std::string& pStr,
 
 std::size_t Fact::fillFactFromStr(
     const std::string& pStr,
+    const char* pSeparatorPtr,
     std::size_t pBeginPos,
-    char pSeparator,
     bool* pIsFactNegatedPtr)
 {
+  static const char separatorOfParameters = ',';
   std::size_t pos = pBeginPos;
   while (pos < pStr.size())
   {
@@ -196,22 +190,22 @@ std::size_t Fact::fillFactFromStr(
       ++pos;
       continue;
     }
-    if (pStr[pos] == pSeparator || pStr[pos] == ')')
+    if ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ')')
       return pos;
 
     bool insideParenthesis = false;
     auto beginPos = pos;
     while (pos < pStr.size())
     {
-      if (!insideParenthesis && (pStr[pos] == pSeparator || pStr[pos] == ' ' || pStr[pos] == ')'))
+      if (!insideParenthesis && ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ' ' || pStr[pos] == ')'))
         break;
-      if (pStr[pos] == '(' || pStr[pos] == ',')
+      if (pStr[pos] == '(' || pStr[pos] == separatorOfParameters)
       {
         insideParenthesis = true;
         if (name.empty())
           name = pStr.substr(beginPos, pos - beginPos);
         ++pos;
-        parameters.emplace_back(pStr, pos, ',', &pos);
+        parameters.emplace_back(pStr, &separatorOfParameters, pos, &pos);
         beginPos = pos;
         continue;
       }

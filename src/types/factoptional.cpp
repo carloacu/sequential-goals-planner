@@ -18,11 +18,11 @@ FactOptional::FactOptional(const FactOptional& pOther)
 }
 
 FactOptional::FactOptional(const std::string& pStr,
+                           const char* pSeparatorPtr,
                            std::size_t pBeginPos,
-                           char pSeparator,
                            std::size_t* pResPos)
   : isFactNegated(false),
-    fact(pStr, pBeginPos, pSeparator, &isFactNegated, pResPos)
+    fact(pStr, pSeparatorPtr, &isFactNegated, pBeginPos, pResPos)
 {
 }
 
