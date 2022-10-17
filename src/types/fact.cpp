@@ -205,7 +205,7 @@ std::size_t Fact::fillFactFromStr(
     {
       if (!insideParenthesis && (pStr[pos] == pSeparator || pStr[pos] == ' ' || pStr[pos] == ')'))
         break;
-      if (pStr[pos] == '(' || pStr[pos] == pSeparator)
+      if (pStr[pos] == '(' || pStr[pos] == ',')
       {
         insideParenthesis = true;
         if (name.empty())

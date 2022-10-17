@@ -186,8 +186,11 @@ void _test_setOfFactsFromStr()
     assert(sOfFacts.facts.count(cp::Fact("a")) == 1);
     assert(sOfFacts.facts.count(cp::Fact("b")) == 1);
   }
+  const std::vector<char> spearators = {',', '&'};
+  for (auto currSeparator : spearators)
   {
-    cp::SetOfFacts sOfFacts = cp::SetOfFacts::fromStr(" a, b=ok , c(r)=t , d(b=ok, c(r)=t)=val , e ", ',');
+    std::string currSeparatorStr(1, currSeparator);
+    cp::SetOfFacts sOfFacts = cp::SetOfFacts::fromStr(" a" + currSeparatorStr + " b=ok " + currSeparatorStr + " c(r)=t " + currSeparatorStr + " d(b=ok, c(r)=t)=val " + currSeparatorStr + " e ", currSeparator);
     assert(sOfFacts.facts.count(cp::Fact("a")) == 1);
     cp::FactOptional bFact("b");
     bFact.fact.name = "b";
@@ -904,7 +907,7 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
   std::map<std::string, cp::Action> actions;
   auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action({_fact_engagedWithUser}, {_fact_userSatisfied}, removeLearntBehavior));
-  actions.emplace(_action_checkIn, cp::Action({}, cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior + ", " + _fact_advertised, ',')));
+  actions.emplace(_action_checkIn, cp::Action({}, cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised, '&')));
   cp::Domain domain(actions);
 
   cp::Historical historical;
