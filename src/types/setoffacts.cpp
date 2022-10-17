@@ -206,14 +206,9 @@ SetOfFacts SetOfFacts::fromStr(const std::string& pStr,
     {
       bool isCurrFactNegated = currIsNegatedAndFact.first;
       if (isCurrFactNegated)
-      {
-        currFact.name = currFact.name.substr(1, currFact.name.size() - 1);
         res.notFacts.insert(currFact);
-      }
       else
-      {
         res.facts.insert(currFact);
-      }
       continue;
     }
 

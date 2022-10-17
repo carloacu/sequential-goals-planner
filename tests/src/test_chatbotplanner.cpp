@@ -190,12 +190,13 @@ void _test_setOfFactsFromStr()
   for (auto currSeparator : spearators)
   {
     std::string currSeparatorStr(1, currSeparator);
-    cp::SetOfFacts sOfFacts = cp::SetOfFacts::fromStr(" a" + currSeparatorStr + " b=ok " + currSeparatorStr + " c(r)=t " + currSeparatorStr + " d(b=ok, c(r)=t)=val " + currSeparatorStr + " e ", currSeparator);
+    cp::SetOfFacts sOfFacts = cp::SetOfFacts::fromStr(" a" + currSeparatorStr + " !b=ok " + currSeparatorStr + " c(r)=t " + currSeparatorStr + " d(!b=ok, c(r)=t)=val " + currSeparatorStr + " e ", currSeparator);
     assert(sOfFacts.facts.count(cp::Fact("a")) == 1);
     cp::FactOptional bFact("b");
+    bFact.isFactNegated = true;
     bFact.fact.name = "b";
     bFact.fact.value = "ok";
-    assert(sOfFacts.facts.count(bFact.fact) == 1);
+    assert(sOfFacts.notFacts.count(bFact.fact) == 1);
     cp::FactOptional cFact("c");
     cFact.fact.parameters.emplace_back(cp::FactOptional("r"));
     cFact.fact.value = "t";
@@ -1225,7 +1226,7 @@ void _checkInfrenceAtEndOfAPlan()
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
   problem.addInference("inference1", cp::Inference({_fact_punctual_headTouched}, {_fact_userWantsToCheckedIn}));
   problem.addInference("inference2", cp::Inference({_fact_punctual_checkedIn},
-                                                   cp::SetOfFacts({}, { _fact_userWantsToCheckedIn })));
+                                                   cp::SetOfFacts::fromStr("!" + _fact_userWantsToCheckedIn, '&')));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_punctual_headTouched, now);
   assert_true(!problem.hasFact(_fact_punctual_headTouched)); // because it is a punctual fact
