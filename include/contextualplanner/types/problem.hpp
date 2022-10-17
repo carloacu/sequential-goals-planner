@@ -128,8 +128,8 @@ struct CONTEXTUALPLANNER_API Problem
   bool canFactsBecomeTrue(const std::set<Fact>& pFacts) const;
 
   /**
-   * @brief Are the facts hold in the problem.
-   * @param[in] pSetOfFacts Fact to check.
+   * @brief Are the facts contained in the problem.
+   * @param[in] pSetOfFacts Facts to check.
    * @param[oui] pParametersPtr Parameters that the facts have in the problem.
    * @return True if all the fact are contained in the problem, false otherwise.
    */
