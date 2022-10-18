@@ -382,10 +382,13 @@ void Problem::fillAccessibleFacts(const Domain& pDomain)
   for (const auto& currFact : _facts)
   {
     if (_accessibleFacts.count(currFact) == 0)
-      _feedAccessibleFactsFromFact(currFact, pDomain);
+    {
+      auto itPrecToActions = pDomain.preconditionToActions().find(currFact.name);
+      if (itPrecToActions != pDomain.preconditionToActions().end())
+        _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
+    }
   }
   _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain);
-  _feedAccessibleFactsFromSetOfInferences(_inferencesWithoutFactToAddInCondition, pDomain);
   _needToAddAccessibleFacts = false;
 }
 
