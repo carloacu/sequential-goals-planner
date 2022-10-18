@@ -7,16 +7,17 @@ namespace cp
 Inference::Inference(const cp::SetOfFacts& pCondition,
                      const cp::SetOfFacts& pFactsToModify,
                      const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd)
-  : condition(pCondition),
-    factsToModify(pFactsToModify),
-    goalsToAdd(pGoalsToAdd)
+  : _condition(pCondition),
+    _punctualFactsCondition(),
+    _factsToModify(pFactsToModify),
+    _goalsToAdd(pGoalsToAdd)
 {
-  for (auto itFact = condition.facts.begin(); itFact != condition.facts.end(); )
+  for (auto itFact = _condition.facts.begin(); itFact != _condition.facts.end(); )
   {
     if (itFact->isPunctual())
     {
-      punctualFactsCondition.insert(*itFact);
-      itFact = condition.facts.erase(itFact);
+      _punctualFactsCondition.insert(*itFact);
+      itFact = _condition.facts.erase(itFact);
     }
     else
     {

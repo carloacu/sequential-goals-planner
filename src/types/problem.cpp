@@ -421,10 +421,10 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
     if (itInference != _inferences.end())
     {
       auto& inference = itInference->second;
-      if (canFactsBecomeTrue(inference.punctualFactsCondition))
+      if (canFactsBecomeTrue(inference.punctualFactsCondition()))
       {
         std::vector<std::string> parameters;
-        _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify,
+        _feedAccessibleFactsFromDeduction(inference.condition(), inference.factsToModify(),
                                          parameters, pDomain);
       }
     }
@@ -719,13 +719,13 @@ void Problem::addInference(const InferenceId& pInferenceId,
     return;
   _inferences.emplace(pInferenceId, pInference);
 
-  for (const auto& currFact : pInference.condition.facts)
+  for (const auto& currFact : pInference.condition().facts)
     _conditionToInferences[currFact.name].insert(pInferenceId);
-  for (const auto& currFact : pInference.punctualFactsCondition)
+  for (const auto& currFact : pInference.punctualFactsCondition())
     _conditionToInferences[currFact.name].insert(pInferenceId);
-  for (const auto& currNotFact : pInference.condition.notFacts)
+  for (const auto& currNotFact : pInference.condition().notFacts)
     _notConditionToInferences[currNotFact.name].insert(pInferenceId);
-  if (pInference.condition.facts.empty() && pInference.punctualFactsCondition.empty())
+  if (pInference.condition().facts.empty() && pInference.punctualFactsCondition().empty())
     _inferencesWithoutFactToAddInCondition.insert(pInferenceId);
 }
 
@@ -736,13 +736,13 @@ void Problem::removeInference(const InferenceId& pInferenceId)
   if (it == _inferences.end())
     return;
   auto& inferenceThatWillBeRemoved = it->second;
-  for (const auto& currFact : inferenceThatWillBeRemoved.condition.facts)
+  for (const auto& currFact : inferenceThatWillBeRemoved.condition().facts)
     _conditionToInferences[currFact.name].erase(pInferenceId);
-  for (const auto& currFact : inferenceThatWillBeRemoved.punctualFactsCondition)
+  for (const auto& currFact : inferenceThatWillBeRemoved.punctualFactsCondition())
     _conditionToInferences[currFact.name].erase(pInferenceId);
-  for (const auto& currFact : inferenceThatWillBeRemoved.condition.notFacts)
+  for (const auto& currFact : inferenceThatWillBeRemoved.condition().notFacts)
     _notConditionToInferences[currFact.name].erase(pInferenceId);
-  if (inferenceThatWillBeRemoved.condition.facts.empty() && inferenceThatWillBeRemoved.punctualFactsCondition.empty())
+  if (inferenceThatWillBeRemoved.condition().facts.empty() && inferenceThatWillBeRemoved.punctualFactsCondition().empty())
     _inferencesWithoutFactToAddInCondition.erase(pInferenceId);
   _inferences.erase(it);
 }
@@ -801,10 +801,10 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       for (const auto& currInference : _inferences)
       {
         if (inferencesAlreadyApplied.count(currInference.first) == 0 &&
-            areFactsTrue(currInference.second.condition))
+            areFactsTrue(currInference.second.condition()))
         {
           bool punctualFactSatisfied = true;
-          for (auto& currPonctualFact : currInference.second.punctualFactsCondition)
+          for (auto& currPonctualFact : currInference.second.punctualFactsCondition())
           {
             if (pWhatChanged.punctualFacts.count(currPonctualFact) == 0)
             {
@@ -815,8 +815,8 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
           if (punctualFactSatisfied)
           {
             inferencesAlreadyApplied.insert(currInference.first);
-            _modifyFacts(pWhatChanged, currInference.second.factsToModify, pNow);
-            _addGoals(pWhatChanged, currInference.second.goalsToAdd, pNow);
+            _modifyFacts(pWhatChanged, currInference.second.factsToModify(), pNow);
+            _addGoals(pWhatChanged, currInference.second.goalsToAdd(), pNow);
             needAnotherLoop = true;
           }
         }

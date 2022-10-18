@@ -213,10 +213,10 @@ bool _lookForAPossibleExistingOrNotFactFromInferences(
       if (itInference != inferences.end())
       {
         auto& inference = itInference->second;
-        if (pProblem.canFactsBecomeTrue(inference.punctualFactsCondition))
+        if (pProblem.canFactsBecomeTrue(inference.punctualFactsCondition()))
         {
           std::vector<std::string> parameters;
-          if (_lookForAPossibleDeduction(parameters, inference.condition, inference.factsToModify,
+          if (_lookForAPossibleDeduction(parameters, inference.condition(), inference.factsToModify(),
                                          pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
             return true;
         }
