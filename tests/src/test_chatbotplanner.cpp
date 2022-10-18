@@ -20,6 +20,7 @@ const std::string _fact_d = "fact_d";
 const std::string _fact_e = "fact_e";
 const std::string _fact_f = "fact_f";
 const std::string _fact_g = "fact_g";
+const std::string _fact_unreachable_u1 = cp::Fact::unreachablePrefix + "fact_u1";
 const std::string _fact_advertised = "advertised";
 const std::string _fact_beginOfConversation = "begin_of_conversation";
 const std::string _fact_presented = "presented";
@@ -1291,6 +1292,22 @@ void _checkInfrenceThatAddAGoal()
   assert_eq(action1 + _sep + action4 + _sep + action3 + _sep + action2, _solveStr(problem, actions));
 }
 
+void _checkThatUnReachableCannotTriggeranInference()
+{
+  const std::string action1 = "action1";
+
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, {_fact_unreachable_u1}));
+  cp::Domain domain(std::move(actions));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {_fact_a});
+  problem.addInference("inference1", cp::Inference({_fact_unreachable_u1}, { _fact_a }));
+  assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_true(!problem.hasFact(_fact_unreachable_u1));
+  assert_true(!problem.hasFact(_fact_a));
+  assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+}
 
 
 
@@ -1357,6 +1374,7 @@ int main(int argc, char *argv[])
   _checkInfrenceAtEndOfAPlan();
   _checkInfrenceInsideAPlan();
   _checkInfrenceThatAddAGoal();
+  _checkThatUnReachableCannotTriggeranInference();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
