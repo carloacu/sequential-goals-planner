@@ -230,7 +230,7 @@ void _noPreconditionGoalImmediatlyReached()
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -246,7 +246,7 @@ void _removeFirstGoalsThatAreAlreadySatisfied()
 {
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -266,7 +266,7 @@ void _removeAnAction()
 {
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -283,7 +283,7 @@ void _removeSomeGoals()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -301,7 +301,7 @@ void _handlePreconditionWithNegatedFacts()
   actions.emplace(_action_greet, cp::Action(cp::SetOfFacts({}, {_fact_checkedIn}), {_fact_greeted}));
   actions.emplace(_action_joke, cp::Action(cp::SetOfFacts({}, {_fact_checkedIn}), {_fact_userSatisfied}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_userSatisfied}, {_fact_checkedIn}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_checkedIn});
@@ -321,7 +321,7 @@ void _testWithNegatedAccessibleFacts()
   actions.emplace(action1, cp::Action(cp::SetOfFacts({_fact_e}, {_fact_b}), cp::SetOfFacts({}, {_fact_c})));
   actions.emplace(action2, cp::Action({}, cp::SetOfFacts({}, {_fact_b})));
   actions.emplace(action3, cp::Action(cp::SetOfFacts({_fact_a}, {_fact_c}), {_fact_d}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   problem.setFacts({_fact_a, _fact_b, _fact_c}, now);
@@ -337,7 +337,7 @@ void _noPlanWithALengthOf2()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -353,7 +353,7 @@ void _noPlanWithALengthOf3()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({_fact_greeted}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -369,7 +369,7 @@ void _2preconditions()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -385,7 +385,7 @@ void _2Goals()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
@@ -401,7 +401,7 @@ void _2UnrelatedGoals()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
@@ -417,7 +417,7 @@ void _impossibleGoal()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
@@ -436,7 +436,7 @@ void _privigelizeTheActionsThatHaveManyPreconditions()
   actions.emplace(_action_checkInWithQrCode, cp::Action({_fact_hasQrCode}, {_fact_checkedIn}));
   actions.emplace(_action_checkInWithPassword, cp::Action({_fact_hasCheckInPasword}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
@@ -465,7 +465,7 @@ void _preconditionThatCannotBeSolved()
   actions.emplace(_action_checkInWithQrCode, cp::Action({_fact_hasQrCode}, {_fact_checkedIn}));
   actions.emplace(_action_checkInWithPassword, cp::Action({_fact_hasCheckInPasword}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -598,7 +598,7 @@ void _goDoTheActionThatHaveTheMostPrerequisitValidated()
   actions.emplace(_action_advertise, cp::Action({}, {_fact_advertised}));
   actions.emplace(_action_checkIn, cp::Action({_fact_is_close}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({_fact_advertised, _fact_checkedIn}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   problem.setFacts({_fact_is_close}, now);
@@ -629,7 +629,7 @@ void _checkNotInAPrecondition()
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action(cp::SetOfFacts({}, {_fact_checkedIn}), {_fact_greeted}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted});
@@ -643,7 +643,7 @@ void _checkClearGoalsWhenItsAlreadySatisfied()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
   cp::Problem problem;
   problem.setFacts({_fact_greeted}, now);
   _setGoalsForAPriority(problem, {_fact_greeted});
@@ -676,7 +676,7 @@ void _testIncrementOfVariables()
   actions.emplace(_action_askQuestion2, cp::Action({}, cp::SetOfFacts::fromStr(_fact_askAllTheQuestions + "\n++${number-of-question}", '\n')));
   actions.emplace(_action_finisehdToAskQuestions, actionFinishToActActions);
   actions.emplace(_action_sayQuestionBilan, actionSayQuestionBilan);
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   std::string initFactsStr = "${number-of-question}=0\n${max-number-of-questions}=3";
   auto initFacts = cp::SetOfFacts::fromStr(initFactsStr, '\n');
@@ -725,7 +725,7 @@ void _precoditionEqualEffect()
 {
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_goodBoy, cp::Action({_fact_beHappy}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
   assert_true(domain.actions().empty());
 
   cp::Problem problem;
@@ -741,7 +741,7 @@ void _circularDependencies()
   actions.emplace(_action_checkIn, cp::Action({_fact_greeted}, {_fact_checkedIn}));
   actions.emplace("check-in-pwd", cp::Action({_fact_hasCheckInPasword}, {_fact_checkedIn}));
   actions.emplace("inverse-of-check-in-pwd", cp::Action({_fact_checkedIn}, {_fact_hasCheckInPasword}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
@@ -909,7 +909,7 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
   auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action({_fact_engagedWithUser}, {_fact_userSatisfied}, removeLearntBehavior));
   actions.emplace(_action_checkIn, cp::Action({}, cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised, '&')));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Historical historical;
   cp::Problem problem;
@@ -928,7 +928,7 @@ void _dontLinkActionWithPreferredInContext()
   auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action({}, {_fact_userSatisfied}, {_fact_checkedIn}));
   actions.emplace(_action_checkIn, cp::Action({_fact_engagedWithUser}, {_fact_checkedIn}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Historical historical;
   cp::Problem problem;
@@ -944,7 +944,7 @@ void _checkPriorities()
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   problem.setGoals({{10, {_fact_greeted}}, {9, {_fact_beHappy}}}, {});
@@ -960,7 +960,7 @@ void _stackablePropertyOfGoals()
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
   actions.emplace(_action_presentation, cp::Action({}, {_fact_presented}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
   problem.setGoals({{10, {cp::Goal(_fact_greeted, 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
@@ -984,7 +984,7 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
   actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
   actions.emplace(_action_presentation, cp::Action({}, {_fact_presented}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   // Even if _fact_checkedIn has maxTimeToKeepInactive equal to 0, it is not removed because the goal with a higher priority is inactive.
   cp::Problem problem;
@@ -1111,7 +1111,7 @@ void _factChangedNotification()
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
   actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
-  cp::Domain domain(actions);
+  cp::Domain domain(std::move(actions));
 
   std::set<cp::Fact> factsChangedFromSubscription;
   cp::Problem problem;
