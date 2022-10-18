@@ -87,10 +87,10 @@ Problem::Problem(const Problem& pOther)
     _variablesToValue(pOther._variablesToValue),
     _facts(pOther._facts),
     _factNamesToNbOfOccurences(pOther._factNamesToNbOfOccurences),
-    _reachableFacts(pOther._reachableFacts),
-    _reachableFactsWithAnyValues(pOther._reachableFactsWithAnyValues),
+    _accessibleFacts(pOther._accessibleFacts),
+    _accessibleFactsWithAnyValues(pOther._accessibleFactsWithAnyValues),
     _removableFacts(pOther._removableFacts),
-    _needToAddReachableFacts(pOther._needToAddReachableFacts),
+    _needToAddAccessibleFacts(pOther._needToAddAccessibleFacts),
     _inferences(pOther._inferences),
     _conditionToInferences(pOther._conditionToInferences),
     _notConditionToInferences(pOther._notConditionToInferences),
@@ -206,11 +206,11 @@ void Problem::_addFacts(WhatChanged& pWhatChanged,
     _facts.insert(currFact);
     _addFactNameRef(currFact.name);
 
-    auto itReachable = _reachableFacts.find(currFact);
-    if (itReachable != _reachableFacts.end())
-      _reachableFacts.erase(itReachable);
+    auto itAccessible = _accessibleFacts.find(currFact);
+    if (itAccessible != _accessibleFacts.end())
+      _accessibleFacts.erase(itAccessible);
     else
-      _clearReachableAndRemovableFacts();
+      _clearAccessibleAndRemovableFacts();
   }
   _removeNoStackableGoals(pWhatChanged, pNow);
 }
@@ -237,7 +237,7 @@ void Problem::_removeFacts(WhatChanged& pWhatChanged,
       else
         --itFactName->second;
     }
-    _clearReachableAndRemovableFacts();
+    _clearAccessibleAndRemovableFacts();
   }
   _removeNoStackableGoals(pWhatChanged, pNow);
 }
@@ -247,11 +247,11 @@ template void Problem::_addFacts<std::set<Fact>>(WhatChanged&, const std::set<Fa
 template void Problem::_addFacts<std::vector<Fact>>(WhatChanged&, const std::vector<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 
 
-void Problem::_clearReachableAndRemovableFacts()
+void Problem::_clearAccessibleAndRemovableFacts()
 {
-  _needToAddReachableFacts = true;
-  _reachableFacts.clear();
-  _reachableFactsWithAnyValues.clear();
+  _needToAddAccessibleFacts = true;
+  _accessibleFacts.clear();
+  _accessibleFactsWithAnyValues.clear();
   _removableFacts.clear();
 }
 
@@ -319,7 +319,7 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
     _factNamesToNbOfOccurences.clear();
     for (const auto& currFact : pFacts)
       _addFactNameRef(currFact.name);
-    _clearReachableAndRemovableFacts();
+    _clearAccessibleAndRemovableFacts();
     WhatChanged whatChanged;
     _removeNoStackableGoals(whatChanged, pNow);
     _notifyWhatChanged(whatChanged, pNow);
@@ -343,12 +343,12 @@ bool Problem::canFactsBecomeTrue(const std::set<Fact>& pFacts) const
   for (const auto& currFact : pFacts)
   {
     if (_facts.count(currFact) == 0 &&
-        _reachableFacts.count(currFact) == 0)
+        _accessibleFacts.count(currFact) == 0)
     {
       bool reableFactFound = false;
-      for (const auto& currReachableFact : _reachableFactsWithAnyValues)
+      for (const auto& currAccessibleFact : _accessibleFactsWithAnyValues)
       {
-        if (currFact.areEqualExceptAnyValues(currReachableFact))
+        if (currFact.areEqualExceptAnyValues(currAccessibleFact))
         {
           reableFactFound = true;
           break;
@@ -375,22 +375,22 @@ bool Problem::areFactsTrue(const SetOfFacts& pSetOfFacts,
 }
 
 
-void Problem::fillReachableFacts(const Domain& pDomain)
+void Problem::fillAccessibleFacts(const Domain& pDomain)
 {
-  if (!_needToAddReachableFacts)
+  if (!_needToAddAccessibleFacts)
     return;
   for (const auto& currFact : _facts)
   {
-    if (_reachableFacts.count(currFact) == 0)
-      _feedReachableFactsFromFact(currFact, pDomain);
+    if (_accessibleFacts.count(currFact) == 0)
+      _feedAccessibleFactsFromFact(currFact, pDomain);
   }
-  _feedReachableFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain);
-  _feedReachableFactsFromSetOfInferences(_inferencesWithoutFactToAddInCondition, pDomain);
-  _needToAddReachableFacts = false;
+  _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain);
+  _feedAccessibleFactsFromSetOfInferences(_inferencesWithoutFactToAddInCondition, pDomain);
+  _needToAddAccessibleFacts = false;
 }
 
 
-void Problem::_feedReachableFactsFromSetOfActions(const std::set<ActionId>& pActions,
+void Problem::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
                                                   const Domain& pDomain)
 {
   auto& actions = pDomain.actions();
@@ -400,14 +400,14 @@ void Problem::_feedReachableFactsFromSetOfActions(const std::set<ActionId>& pAct
     if (itAction != actions.end())
     {
       auto& action = itAction->second;
-      _feedReachableFactsFromDeduction(action.preconditions, action.effect,
+      _feedAccessibleFactsFromDeduction(action.preconditions, action.effect,
                                        action.parameters, pDomain);
     }
   }
 }
 
 
-void Problem::_feedReachableFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
+void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
                                                      const Domain& pDomain)
 {
   for (const auto& currInference : pInferences)
@@ -419,63 +419,63 @@ void Problem::_feedReachableFactsFromSetOfInferences(const std::set<InferenceId>
       if (canFactsBecomeTrue(inference.punctualFactsCondition))
       {
         std::vector<std::string> parameters;
-        _feedReachableFactsFromDeduction(inference.condition, inference.factsToModify,
+        _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify,
                                          parameters, pDomain);
       }
     }
   }
 }
 
-void Problem::_feedReachableFactsFromDeduction(const SetOfFacts& pCondition,
+void Problem::_feedAccessibleFactsFromDeduction(const SetOfFacts& pCondition,
                                                const WorldModification& pEffect,
                                                const std::vector<std::string>& pParameters,
                                                const Domain& pDomain)
 {
   if (canSetOfFactsBecomeTrue(pCondition))
   {
-    std::set<Fact> reachableFactsToAdd;
-    std::vector<Fact> reachableFactsToAddWithAnyValues;
-    _getTheFactsToAddFromAWorldModification(reachableFactsToAdd, reachableFactsToAddWithAnyValues,
-                                            pEffect, pParameters, _facts, _reachableFacts);
+    std::set<Fact> accessibleFactsToAdd;
+    std::vector<Fact> accessibleFactsToAddWithAnyValues;
+    _getTheFactsToAddFromAWorldModification(accessibleFactsToAdd, accessibleFactsToAddWithAnyValues,
+                                            pEffect, pParameters, _facts, _accessibleFacts);
     std::set<Fact> removableFactsToAdd;
     _getTheFactsToRemoveFromAWorldModification(removableFactsToAdd, pEffect, _facts, _removableFacts);
-    if (!reachableFactsToAdd.empty() || !reachableFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
+    if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
     {
-      _reachableFacts.insert(reachableFactsToAdd.begin(), reachableFactsToAdd.end());
-      _reachableFactsWithAnyValues.insert(reachableFactsToAddWithAnyValues.begin(), reachableFactsToAddWithAnyValues.end());
+      _accessibleFacts.insert(accessibleFactsToAdd.begin(), accessibleFactsToAdd.end());
+      _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
       _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
-      for (const auto& currNewFact : reachableFactsToAdd)
-        _feedReachableFactsFromFact(currNewFact, pDomain);
+      for (const auto& currNewFact : accessibleFactsToAdd)
+        _feedAccessibleFactsFromFact(currNewFact, pDomain);
       for (const auto& currNewFact : removableFactsToAdd)
-        _feedReachableFactsFromNotFact(currNewFact, pDomain);
+        _feedAccessibleFactsFromNotFact(currNewFact, pDomain);
     }
   }
 }
 
 
-void Problem::_feedReachableFactsFromFact(const Fact& pFact,
+void Problem::_feedAccessibleFactsFromFact(const Fact& pFact,
                                           const Domain& pDomain)
 {
   auto itPrecToActions = pDomain.preconditionToActions().find(pFact.name);
   if (itPrecToActions != pDomain.preconditionToActions().end())
-    _feedReachableFactsFromSetOfActions(itPrecToActions->second, pDomain);
+    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
 
   auto itCondToInferences = _conditionToInferences.find(pFact.name);
   if (itCondToInferences != _conditionToInferences.end())
-    _feedReachableFactsFromSetOfInferences(itCondToInferences->second, pDomain);
+    _feedAccessibleFactsFromSetOfInferences(itCondToInferences->second, pDomain);
 }
 
 
-void Problem::_feedReachableFactsFromNotFact(const Fact& pFact,
+void Problem::_feedAccessibleFactsFromNotFact(const Fact& pFact,
                                              const Domain& pDomain)
 {
   auto itPrecToActions = pDomain.notPreconditionToActions().find(pFact.name);
   if (itPrecToActions != pDomain.notPreconditionToActions().end())
-    _feedReachableFactsFromSetOfActions(itPrecToActions->second, pDomain);
+    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
 
   auto itCondToInferences = _notConditionToInferences.find(pFact.name);
   if (itCondToInferences != _notConditionToInferences.end())
-    _feedReachableFactsFromSetOfInferences(itCondToInferences->second, pDomain);
+    _feedAccessibleFactsFromSetOfInferences(itCondToInferences->second, pDomain);
 }
 
 

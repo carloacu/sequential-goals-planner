@@ -108,20 +108,20 @@ struct CONTEXTUALPLANNER_API Problem
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
-   * @brief Fill reachable facts internally, according to a domain.
+   * @brief Fill accessible facts internally, according to a domain.
    * @param pDomain Domain containing the actions.
    */
-  void fillReachableFacts(const Domain& pDomain);
+  void fillAccessibleFacts(const Domain& pDomain);
 
   /**
-   * @brief Can some facts modification become true, according to the world and the reachable facts stored internally in this object.
+   * @brief Can some facts modification become true, according to the world and the accessible facts stored internally in this object.
    * @param pSetOfFacts Set of facts to check if they are valid.
    * @return True if the facts are valid for the world, false otherwise.
    */
   bool canSetOfFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const;
 
   /**
-   * @brief Can some facts become true, according to the world and the reachable facts stored internally in this object.
+   * @brief Can some facts become true, according to the world and the accessible facts stored internally in this object.
    * @param pFacts Facts to check if they can become true.
    * @return True if the facts can become true, false otherwise.
    */
@@ -301,13 +301,13 @@ private:
   /// Fact names to number of occurences in the world.
   std::map<std::string, std::size_t> _factNamesToNbOfOccurences{};
   /// Facts that can be reached with the set of actions of the domain.
-  std::set<Fact> _reachableFacts{};
+  std::set<Fact> _accessibleFacts{};
   /// Facts with values that can be reached with the set of actions of the domain.
-  std::set<Fact> _reachableFactsWithAnyValues{};
+  std::set<Fact> _accessibleFactsWithAnyValues{};
   /// Facts that can be removed with the set of actions of the domain.
   std::set<Fact> _removableFacts{};
-  /// Know if we need to add reachable facts.
-  bool _needToAddReachableFacts = true;
+  /// Know if we need to add accessible facts.
+  bool _needToAddAccessibleFacts = true;
   /// Map of inference indentifers to inference.
   std::map<InferenceId, Inference> _inferences{};
   /// Map of fact conditions to inference idntifiers.
@@ -355,8 +355,8 @@ private:
                     const FACTS& pFacts,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /// Clear reachable and removable facts.
-  void _clearReachableAndRemovableFacts();
+  /// Clear accessible and removable facts.
+  void _clearAccessibleAndRemovableFacts();
 
   /**
    * @brief Add an occurence to a fact name.
@@ -373,47 +373,47 @@ private:
                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
-   * @brief Feed reachable facts from a set of actions.
+   * @brief Feed accessible facts from a set of actions.
    * @param pActions Set of actions.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedReachableFactsFromSetOfActions(const std::set<ActionId>& pActions,
+  void _feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
                                            const Domain& pDomain);
 
   /**
-   * @brief Feed reachable facts from a set of inferences.
+   * @brief Feed accessible facts from a set of inferences.
    * @param pInferences Set of inferences.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedReachableFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
+  void _feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
                                               const Domain& pDomain);
 
   /**
-   * @brief Feed reachable facts from a condition and an effect.
+   * @brief Feed accessible facts from a condition and an effect.
    * @param pCondition condition to check.
    * @param pEffect Effect to aply.
    * @param pParameters Parameter names.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedReachableFactsFromDeduction(const SetOfFacts& pCondition,
+  void _feedAccessibleFactsFromDeduction(const SetOfFacts& pCondition,
                                         const WorldModification& pEffect,
                                         const std::vector<std::string>& pParameters,
                                         const Domain& pDomain);
 
   /**
-   * @brief Feed reachable facts from a fact.
+   * @brief Feed accessible facts from a fact.
    * @param pFact A fact.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedReachableFactsFromFact(const Fact& pFact,
+  void _feedAccessibleFactsFromFact(const Fact& pFact,
                                    const Domain& pDomain);
 
   /**
-   * @brief Feed reachable facts from a negated fact.
+   * @brief Feed accessible facts from a negated fact.
    * @param pFact A negated fact.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedReachableFactsFromNotFact(const Fact& pFact,
+  void _feedAccessibleFactsFromNotFact(const Fact& pFact,
                                       const Domain& pDomain);
 
   /**

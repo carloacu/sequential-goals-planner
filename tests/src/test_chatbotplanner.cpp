@@ -310,7 +310,7 @@ void _handlePreconditionWithNegatedFacts()
 }
 
 
-void _testWithNegatedReachableFacts()
+void _testWithNegatedAccessibleFacts()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -1312,7 +1312,7 @@ int main(int argc, char *argv[])
   _removeAnAction();
   _removeSomeGoals();
   _handlePreconditionWithNegatedFacts();
-  _testWithNegatedReachableFacts();
+  _testWithNegatedAccessibleFacts();
   _noPlanWithALengthOf2();
   _noPlanWithALengthOf3();
   _2preconditions();

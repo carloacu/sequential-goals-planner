@@ -373,7 +373,7 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
                              int* pGoalPriority,
                              const Historical* pGlobalHistorical)
 {
-  pProblem.fillReachableFacts(pDomain);
+  pProblem.fillAccessibleFacts(pDomain);
 
   ActionId res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
