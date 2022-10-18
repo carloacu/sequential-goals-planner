@@ -127,7 +127,7 @@ struct CONTEXTUALPLANNER_API Fact
   /// Constant defining the "any value" special fact.
   const static FactOptional anyValueFact;
   /// Prefix to detect a punctual fact.
-  const static std::string punctualPrefix;
+  static std::string punctualPrefix;
 };
 
 } // !cp

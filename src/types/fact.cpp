@@ -24,7 +24,7 @@ void _parametersToStr(std::string& pStr,
 
 const std::string Fact::anyValue = "<any>_it_is_a_language_token_for_the_planner_engine";
 const FactOptional Fact::anyValueFact(Fact::anyValue);
-const std::string Fact::punctualPrefix = "_punctual_";
+std::string Fact::punctualPrefix = "~punctual~";
 
 Fact::Fact(const std::string& pStr,
            const char* pSeparatorPtr,
