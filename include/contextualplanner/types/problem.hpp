@@ -3,6 +3,7 @@
 
 #include <set>
 #include <map>
+#include <memory>
 #include "../util/api.hpp"
 #include <contextualplanner/types/historical.hpp>
 #include <contextualplanner/types/fact.hpp>
@@ -16,6 +17,7 @@ namespace cp
 {
 struct Domain;
 struct WorldModification;
+struct SetOfInferences;
 
 
 /// Current world, goal for the world and historical of actions done.
@@ -265,38 +267,10 @@ struct CONTEXTUALPLANNER_API Problem
   // Inferences
   // ----------
 
-  /**
-   * @brief Add an inference to check when the facts or the goals change.
-   * @param pInferenceId Identifier of the inference to add.
-   * @param pInference Inference to add.
-   */
-  void addInference(const InferenceId& pInferenceId,
-                    const Inference& pInference);
-
-  /**
-   * @brief Remove an inference.
-   * @param pInferenceId Identifier of the action to remove.
-   *
-   * If the inference is not found, this function will have no effect.
-   * No exception will be raised.
-   */
-  void removeInference(const InferenceId& pInferenceId);
-
-  /// Links to point to inference identifiers.
-  struct InferenceLinks
-  {
-    /// Map of fact conditions to inference idntifiers.
-    std::map<std::string, std::set<InferenceId>> conditionToInferences{};
-    /// Map of negated fact conditions to inference idntifiers.
-    std::map<std::string, std::set<InferenceId>> notConditionToInferences{};
-  };
-
-  /// All inferences of the problem.
-  const std::map<InferenceId, Inference>& inferences() const { return _inferences; }
-  /// Reachable inference links.
-  const InferenceLinks& reachableInferenceLinks() const { return _reachableInferenceLinks; }
-  /// unReachable inference links.
-  const InferenceLinks& unreachableInferenceLinks() const { return _unreachableInferenceLinks; }
+  /// Set the set of inferences.
+  void setSetOfInferences(const std::shared_ptr<const SetOfInferences>& pSetOfInferences) { _setOfInferences = pSetOfInferences; }
+  /// Get the set of infrences.
+  const std::shared_ptr<const SetOfInferences>& getSetOfInferences() const { return _setOfInferences; }
 
 
   // Historical of actions done
@@ -323,12 +297,8 @@ private:
   std::set<Fact> _removableFacts{};
   /// Know if we need to add accessible facts.
   bool _needToAddAccessibleFacts = true;
-  /// Map of inference indentifers to inference.
-  std::map<InferenceId, Inference> _inferences{};
-  /// Reachable inference links.
-  InferenceLinks _reachableInferenceLinks{};
-  /// unReachable inference links.
-  InferenceLinks _unreachableInferenceLinks{};
+  /// Set of inferences.
+  std::shared_ptr<const SetOfInferences> _setOfInferences{};
 
   /// Stored what changed.
   struct WhatChanged
@@ -454,9 +424,19 @@ private:
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
+  /**
+   * @brief Try to apply some inference according to the fact that changed.
+   * @param[in, out] pInferencesAlreadyApplied Inferences that we already considered.
+   * @param[in, out] pWhatChanged The facts that changed.
+   * @param[in] pInferenceIds Inferences to consider.
+   * @param[in] pInferences All the inferences.
+   * @param[in] pNow Current time.
+   * @return True if at least one inference was applied.
+   */
   bool _tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApplied,
                              WhatChanged& pWhatChanged,
-                             const std::set<InferenceId>& pInferences,
+                             const std::set<InferenceId>& pInferenceIds,
+                             const std::map<InferenceId, Inference>& pInferences,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
