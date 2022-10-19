@@ -48,6 +48,10 @@ struct CONTEXTUALPLANNER_API Problem
   cpstd::observable::ObservableUnsafe<void (const std::map<std::string, std::string>&)> onVariablesToValueChanged{};
   /// Be notified when facts changed.
   cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsChanged{};
+  /// Be notified about the added facts.
+  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsAdded{};
+  /// Be notified about the removed facts.
+  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsRemoved{};
   /// Be notified when goals changed.
   cpstd::observable::ObservableUnsafe<void (const std::map<int, std::vector<Goal>>&)> onGoalsChanged{};
 
@@ -278,12 +282,21 @@ struct CONTEXTUALPLANNER_API Problem
    */
   void removeInference(const InferenceId& pInferenceId);
 
+  /// Links to point to inference identifiers.
+  struct InferenceLinks
+  {
+    /// Map of fact conditions to inference idntifiers.
+    std::map<std::string, std::set<InferenceId>> conditionToInferences{};
+    /// Map of negated fact conditions to inference idntifiers.
+    std::map<std::string, std::set<InferenceId>> notConditionToInferences{};
+  };
+
   /// All inferences of the problem.
   const std::map<InferenceId, Inference>& inferences() const { return _inferences; }
-  /// All fact conditions to inference idntifiers of this problem.
-  const std::map<std::string, std::set<InferenceId>>& conditionToInferences() const { return _conditionToInferences; }
-  /// All negated fact conditions to inference idntifiers of this problem.
-  const std::map<std::string, std::set<InferenceId>>& notConditionToInferences() const { return _notConditionToInferences; }
+  /// Reachable inference links.
+  const InferenceLinks& reachableInferenceLinks() const { return _reachableInferenceLinks; }
+  /// unReachable inference links.
+  const InferenceLinks& unreachableInferenceLinks() const { return _unreachableInferenceLinks; }
 
 
   // Historical of actions done
@@ -312,25 +325,27 @@ private:
   bool _needToAddAccessibleFacts = true;
   /// Map of inference indentifers to inference.
   std::map<InferenceId, Inference> _inferences{};
-  /// Map of fact conditions to inference idntifiers.
-  std::map<std::string, std::set<InferenceId>> _conditionToInferences{};
-  /// Map of negated fact conditions to inference idntifiers.
-  std::map<std::string, std::set<InferenceId>> _notConditionToInferences{};
-  /// Set of inferences without fact to add in their condition.
-  std::set<InferenceId> _inferencesWithoutFactToAddInCondition{};
+  /// Reachable inference links.
+  InferenceLinks _reachableInferenceLinks{};
+  /// unReachable inference links.
+  InferenceLinks _unreachableInferenceLinks{};
 
   /// Stored what changed.
   struct WhatChanged
   {
     /// Punctual facts that are pinged.
     std::set<Fact> punctualFacts;
-    /// True if the facts changed.
-    bool facts = false;
+    /// Facts that we added in the world.
+    std::set<Fact> addedFacts;
+    /// Facts that we removed in the world.
+    std::set<Fact> removedFacts;
     /// True if the goals changed.
     bool goals = false;
 
     /// Check if something changed.
-    bool somethingChanged() const { return !punctualFacts.empty() || facts || goals; }
+    bool somethingChanged() const { return !punctualFacts.empty() || !addedFacts.empty() || !removedFacts.empty() || goals; }
+    /// Has some facts to add or to remove.
+    bool hasFactsModifications() const { return !addedFacts.empty() || !removedFacts.empty(); }
   };
 
   /**
@@ -438,6 +453,11 @@ private:
                  const std::map<int, std::vector<Goal>>& pGoals,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
+
+  bool _tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApplied,
+                             WhatChanged& pWhatChanged,
+                             const std::set<InferenceId>& pInferences,
+                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Do inferences and raise the observables if some facts or goals changed.

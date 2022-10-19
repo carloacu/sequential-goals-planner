@@ -246,14 +246,17 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
   }
 
   auto& preconditionToActions = pDomain.preconditionToActions();
-  auto& conditionToInferences = pProblem.conditionToInferences();
+  auto& conditionToReachableInferences = pProblem.reachableInferenceLinks().conditionToInferences;
+  auto& conditionToUnreachableInferences = pProblem.unreachableInferenceLinks().conditionToInferences;
   bool subRes = pEffectToCheck.forAllFactsUntilTrue([&](const cp::Fact& pFact) {
     if (pProblem.facts().count(pFact) == 0)
     {
       if (pFactsAlreadychecked.factsToAdd.insert(pFact).second &&
           (_lookForAPossibleExistingOrNotFactFromActions(pFact, pParameters, preconditionToActions, pGoal,
                                                          pProblem, pDomain, pFactsAlreadychecked) ||
-           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, conditionToInferences, pGoal,
+           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, conditionToReachableInferences, pGoal,
+                                                            pProblem, pDomain, pFactsAlreadychecked) ||
+           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, conditionToUnreachableInferences, pGoal,
                                                             pProblem, pDomain, pFactsAlreadychecked)))
         return true;
     }
@@ -263,14 +266,17 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
     return true;
 
   auto& notPreconditionToActions = pDomain.notPreconditionToActions();
-  auto& notConditionToInferences = pProblem.notConditionToInferences();
+  auto& notConditionToReachableInferences = pProblem.reachableInferenceLinks().notConditionToInferences;
+  auto& notConditionToUnreachableInferences = pProblem.unreachableInferenceLinks().notConditionToInferences;
   return pEffectToCheck.forAllNotFactsUntilTrue([&](const cp::Fact& pFact) {
     if (pProblem.facts().count(pFact) > 0)
     {
       if (pFactsAlreadychecked.factsToRemove.insert(pFact).second &&
           (_lookForAPossibleExistingOrNotFactFromActions(pFact, pParameters, notPreconditionToActions, pGoal,
                                                          pProblem, pDomain, pFactsAlreadychecked) ||
-           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, notConditionToInferences, pGoal,
+           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, notConditionToReachableInferences, pGoal,
+                                                            pProblem, pDomain, pFactsAlreadychecked) ||
+           _lookForAPossibleExistingOrNotFactFromInferences(pFact, pParameters, notConditionToUnreachableInferences, pGoal,
                                                             pProblem, pDomain, pFactsAlreadychecked)))
         return true;
     }

@@ -1,5 +1,4 @@
 #include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/util/trackers/factschangedtracker.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
 #include <iostream>
@@ -1120,13 +1119,12 @@ void _factChangedNotification()
   auto factsChangedConnection = problem.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
-  cp::FactsChangedTracker factsChangedTracker(problem);
   std::set<cp::Fact> factsAdded;
-  auto onFactsAddedConnection = factsChangedTracker.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+  auto onFactsAddedConnection = problem.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsAdded = pFacts;
   });
   std::set<cp::Fact> factsRemoved;
-  auto onFactsRemovedConnection = factsChangedTracker.onFactsRemoved.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+  auto onFactsRemovedConnection = problem.onFactsRemoved.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsRemoved = pFacts;
   });
 

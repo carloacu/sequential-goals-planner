@@ -19,7 +19,6 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/worldmodification.hpp
     include/contextualplanner/util/exportsymbols/macro.hpp
     include/contextualplanner/util/trackers/goalsremovedtracker.hpp
-    include/contextualplanner/util/trackers/factschangedtracker.hpp
     include/contextualplanner/util/api.hpp
     include/contextualplanner/util/alias.hpp
     include/contextualplanner/util/arithmeticevaluator.hpp
@@ -41,7 +40,6 @@ set(CHATBOTPLANNER_SRCS
     src/types/problem.cpp
     src/types/setoffacts.cpp
     src/util/trackers/goalsremovedtracker.cpp
-    src/util/trackers/factschangedtracker.cpp
     src/util/arithmeticevaluator.cpp
     src/util/print.cpp
     src/util/replacevariables.cpp
