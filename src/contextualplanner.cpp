@@ -214,7 +214,7 @@ bool _lookForAPossibleExistingOrNotFactFromInferences(
       {
         auto& inference = itInference->second;
         std::vector<std::string> parameters;
-        if (_lookForAPossibleDeduction(parameters, inference.condition(), inference.factsToModify(),
+        if (_lookForAPossibleDeduction(parameters, inference.condition, inference.factsToModify,
                                        pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
           return true;
       }

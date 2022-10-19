@@ -431,7 +431,7 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
     {
       auto& inference = itInference->second;
       std::vector<std::string> parameters;
-      _feedAccessibleFactsFromDeduction(inference.condition(), inference.factsToModify(),
+      _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify,
                                         parameters, pDomain);
     }
   }
@@ -730,10 +730,10 @@ void Problem::addInference(const InferenceId& pInferenceId,
   if (_inferences.count(pInferenceId) > 0)
     return;
   _inferences.emplace(pInferenceId, pInference);
-  auto& links = pInference.isReachable() ? _reachableInferenceLinks : _unreachableInferenceLinks;
-  for (const auto& currFact : pInference.condition().facts)
+  auto& links = pInference.isReachable ? _reachableInferenceLinks : _unreachableInferenceLinks;
+  for (const auto& currFact : pInference.condition.facts)
     links.conditionToInferences[currFact.name].insert(pInferenceId);
-  for (const auto& currNotFact : pInference.condition().notFacts)
+  for (const auto& currNotFact : pInference.condition.notFacts)
     links.notConditionToInferences[currNotFact.name].insert(pInferenceId);
 }
 
@@ -744,10 +744,10 @@ void Problem::removeInference(const InferenceId& pInferenceId)
   if (it == _inferences.end())
     return;
   auto& inferenceThatWillBeRemoved = it->second;
-  auto& links = inferenceThatWillBeRemoved.isReachable() ? _reachableInferenceLinks : _unreachableInferenceLinks;
-  for (const auto& currFact : inferenceThatWillBeRemoved.condition().facts)
+  auto& links = inferenceThatWillBeRemoved.isReachable ? _reachableInferenceLinks : _unreachableInferenceLinks;
+  for (const auto& currFact : inferenceThatWillBeRemoved.condition.facts)
     links.conditionToInferences[currFact.name].erase(pInferenceId);
-  for (const auto& currFact : inferenceThatWillBeRemoved.condition().notFacts)
+  for (const auto& currFact : inferenceThatWillBeRemoved.condition.notFacts)
     links.notConditionToInferences[currFact.name].erase(pInferenceId);
   _inferences.erase(it);
 }
@@ -808,10 +808,10 @@ bool Problem::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApp
       if (itInference != _inferences.end())
       {
         auto& currInference = itInference->second;
-        if (areFactsTrue(currInference.condition(), pWhatChanged.punctualFacts))
+        if (areFactsTrue(currInference.condition, pWhatChanged.punctualFacts))
         {
-          _modifyFacts(pWhatChanged, currInference.factsToModify(), pNow);
-          _addGoals(pWhatChanged, currInference.goalsToAdd(), pNow);
+          _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
+          _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);
           somethingChanged = true;
         }
       }
