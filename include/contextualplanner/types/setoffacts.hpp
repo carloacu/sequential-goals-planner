@@ -93,6 +93,19 @@ struct CONTEXTUALPLANNER_API SetOfFacts
   static SetOfFacts fromStr(const std::string& pStr,
                             char pSeparator);
 
+  /**
+   * @brief Check if the set of facts can become true.<br/>
+   * For exemple if it contains an unreachable fact, it cannot become true.
+   * @return True if the set of facts can become true.
+   */
+  bool canBeTrue() const;
+
+  /**
+   * @brief Check if the set of facts can modify something in the world.<br/>
+   * For exemple if it contains only unreachable facts, it will modify the world.
+   * @return True if the set of facts can modify something in the world.
+   */
+  bool canModifySomethingInTheWorld() const;
 
   /// Facts to add when it will be applied in a world.
   std::set<Fact> facts;

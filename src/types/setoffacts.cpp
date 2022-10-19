@@ -266,4 +266,24 @@ SetOfFacts SetOfFacts::fromStr(const std::string& pStr,
 }
 
 
+bool SetOfFacts::canBeTrue() const
+{
+  for (auto& currFact : facts)
+    if (currFact.isUnreachable())
+      return false;
+  return true;
+}
+
+
+bool SetOfFacts::canModifySomethingInTheWorld() const
+{
+  if (!notFacts.empty() || !exps.empty())
+    return true;
+  for (auto& currFact : facts)
+    if (!currFact.isUnreachable())
+      return true;
+  return false;
+}
+
+
 } // !cp

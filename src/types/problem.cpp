@@ -803,28 +803,14 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       needAnotherLoop = false;
       for (const auto& currInference : _inferences)
       {
-        if (inferencesAlreadyApplied.count(currInference.first) == 0 &&
+        if (currInference.second.isReachable() &&
+            inferencesAlreadyApplied.count(currInference.first) == 0 &&
             areFactsTrue(currInference.second.condition(), pWhatChanged.punctualFacts))
         {
-          bool punctualFactSatisfied = true;
-          /*
-          for (auto& currFact : currInference.second.factsToModify().facts)
-          {
-            if (currFact.isPunctual() &&
-                pWhatChanged.punctualFacts.count(currFact) == 0)
-            {
-              punctualFactSatisfied = false;
-              break;
-            }
-          }
-          */
-          if (punctualFactSatisfied)
-          {
-            inferencesAlreadyApplied.insert(currInference.first);
-            _modifyFacts(pWhatChanged, currInference.second.factsToModify(), pNow);
-            _addGoals(pWhatChanged, currInference.second.goalsToAdd(), pNow);
-            needAnotherLoop = true;
-          }
+          inferencesAlreadyApplied.insert(currInference.first);
+          _modifyFacts(pWhatChanged, currInference.second.factsToModify(), pNow);
+          _addGoals(pWhatChanged, currInference.second.goalsToAdd(), pNow);
+          needAnotherLoop = true;
         }
       }
     }

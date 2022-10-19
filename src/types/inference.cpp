@@ -9,7 +9,8 @@ Inference::Inference(const cp::SetOfFacts& pCondition,
                      const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd)
   : _condition(pCondition),
     _factsToModify(pFactsToModify),
-    _goalsToAdd(pGoalsToAdd)
+    _goalsToAdd(pGoalsToAdd),
+    _isReachable(pCondition.canBeTrue() && (!pGoalsToAdd.empty() || pFactsToModify.canModifySomethingInTheWorld()))
 {
 }
 
