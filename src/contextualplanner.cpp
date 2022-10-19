@@ -213,13 +213,10 @@ bool _lookForAPossibleExistingOrNotFactFromInferences(
       if (itInference != inferences.end())
       {
         auto& inference = itInference->second;
-        if (pProblem.canFactsBecomeTrue(inference.punctualFactsCondition()))
-        {
-          std::vector<std::string> parameters;
-          if (_lookForAPossibleDeduction(parameters, inference.condition(), inference.factsToModify(),
-                                         pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
-            return true;
-        }
+        std::vector<std::string> parameters;
+        if (_lookForAPossibleDeduction(parameters, inference.condition(), inference.factsToModify(),
+                                       pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
+          return true;
       }
     }
   }
@@ -299,7 +296,7 @@ bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       auto& action = itAction->second;
       FactsAlreadyChecked factsAlreadyChecked;
       auto newPotRes = PotentialNextAction(currAction, action);
-      if (pProblem.areFactsTrue(action.preconditions, &newPotRes.parameters) &&
+      if (pProblem.areFactsTrue(action.preconditions, {}, &newPotRes.parameters) &&
           _lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadyChecked))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))

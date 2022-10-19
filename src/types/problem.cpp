@@ -364,12 +364,22 @@ bool Problem::canFactsBecomeTrue(const std::set<Fact>& pFacts) const
 }
 
 bool Problem::areFactsTrue(const SetOfFacts& pSetOfFacts,
+                           const std::set<Fact>& pPunctualFacts,
                            std::map<std::string, std::string>* pParametersPtr) const
 {
-  //auto& facts = pProblem.facts();
   for (const auto& currFact : pSetOfFacts.facts)
-    if (!currFact.isInFacts(_facts, true, pParametersPtr))
-      return false;
+  {
+    if (currFact.isPunctual())
+    {
+      if (pPunctualFacts.count(currFact) == 0)
+        return false;
+    }
+    else
+    {
+      if (!currFact.isInFacts(_facts, true, pParametersPtr))
+        return false;
+    }
+  }
   for (const auto& currFact : pSetOfFacts.notFacts)
     if (currFact.isInFacts(_facts, true, pParametersPtr))
       return false;
@@ -421,12 +431,9 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
     if (itInference != _inferences.end())
     {
       auto& inference = itInference->second;
-      if (canFactsBecomeTrue(inference.punctualFactsCondition()))
-      {
-        std::vector<std::string> parameters;
-        _feedAccessibleFactsFromDeduction(inference.condition(), inference.factsToModify(),
-                                         parameters, pDomain);
-      }
+      std::vector<std::string> parameters;
+      _feedAccessibleFactsFromDeduction(inference.condition(), inference.factsToModify(),
+                                        parameters, pDomain);
     }
   }
 }
@@ -721,11 +728,9 @@ void Problem::addInference(const InferenceId& pInferenceId,
 
   for (const auto& currFact : pInference.condition().facts)
     _conditionToInferences[currFact.name].insert(pInferenceId);
-  for (const auto& currFact : pInference.punctualFactsCondition())
-    _conditionToInferences[currFact.name].insert(pInferenceId);
   for (const auto& currNotFact : pInference.condition().notFacts)
     _notConditionToInferences[currNotFact.name].insert(pInferenceId);
-  if (pInference.condition().facts.empty() && pInference.punctualFactsCondition().empty())
+  if (pInference.condition().facts.empty())
     _inferencesWithoutFactToAddInCondition.insert(pInferenceId);
 }
 
@@ -738,11 +743,9 @@ void Problem::removeInference(const InferenceId& pInferenceId)
   auto& inferenceThatWillBeRemoved = it->second;
   for (const auto& currFact : inferenceThatWillBeRemoved.condition().facts)
     _conditionToInferences[currFact.name].erase(pInferenceId);
-  for (const auto& currFact : inferenceThatWillBeRemoved.punctualFactsCondition())
-    _conditionToInferences[currFact.name].erase(pInferenceId);
   for (const auto& currFact : inferenceThatWillBeRemoved.condition().notFacts)
     _notConditionToInferences[currFact.name].erase(pInferenceId);
-  if (inferenceThatWillBeRemoved.condition().facts.empty() && inferenceThatWillBeRemoved.punctualFactsCondition().empty())
+  if (inferenceThatWillBeRemoved.condition().facts.empty())
     _inferencesWithoutFactToAddInCondition.erase(pInferenceId);
   _inferences.erase(it);
 }
@@ -801,17 +804,20 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       for (const auto& currInference : _inferences)
       {
         if (inferencesAlreadyApplied.count(currInference.first) == 0 &&
-            areFactsTrue(currInference.second.condition()))
+            areFactsTrue(currInference.second.condition(), pWhatChanged.punctualFacts))
         {
           bool punctualFactSatisfied = true;
-          for (auto& currPonctualFact : currInference.second.punctualFactsCondition())
+          /*
+          for (auto& currFact : currInference.second.factsToModify().facts)
           {
-            if (pWhatChanged.punctualFacts.count(currPonctualFact) == 0)
+            if (currFact.isPunctual() &&
+                pWhatChanged.punctualFacts.count(currFact) == 0)
             {
               punctualFactSatisfied = false;
               break;
             }
           }
+          */
           if (punctualFactSatisfied)
           {
             inferencesAlreadyApplied.insert(currInference.first);

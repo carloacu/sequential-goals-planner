@@ -130,10 +130,12 @@ struct CONTEXTUALPLANNER_API Problem
   /**
    * @brief Are the facts contained in the problem.
    * @param[in] pSetOfFacts Facts to check.
+   * @param[in] pPunctualFacts Punctual facts currently true.
    * @param[oui] pParametersPtr Parameters that the facts have in the problem.
    * @return True if all the fact are contained in the problem, false otherwise.
    */
   bool areFactsTrue(const SetOfFacts& pSetOfFacts,
+                    const std::set<Fact>& pPunctualFacts = {},
                     std::map<std::string, std::string>* pParametersPtr = nullptr) const;
 
   /// Facts of the world.

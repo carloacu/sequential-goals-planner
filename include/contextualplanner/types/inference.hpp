@@ -22,8 +22,6 @@ struct CONTEXTUALPLANNER_API Inference
 
   /// Condition to apply the facts and goals modification.
   const cp::SetOfFacts& condition() const { return  _condition; }
-  /// Punctual facts to have to the condition validated.
-  const std::set<Fact>& punctualFactsCondition() const { return _punctualFactsCondition; }
   /// Facts to add or to remove if the condition is true.
   const cp::SetOfFacts& factsToModify() const { return  _factsToModify; }
   /// Goals to add if the condition is true.
@@ -35,8 +33,6 @@ private:
    * The condition is true if the condition is a sub set of a corresponding world state.
    */
   cp::SetOfFacts _condition;
-  /// Punctual facts to have to the condition validated.
-  std::set<Fact> _punctualFactsCondition;
   /// Facts to add or to remove if the condition is true.
   cp::SetOfFacts _factsToModify;
   /// Goals to add if the condition is true.
