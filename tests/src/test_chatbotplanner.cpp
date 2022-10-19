@@ -608,23 +608,6 @@ void _goDoTheActionThatHaveTheMostPrerequisitValidated()
 }
 
 
-void _checkShouldBeDoneAsap()
-{
-  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}, {}, true));
-  actions.emplace(_action_checkIn, cp::Action({_fact_is_close}, {_fact_checkedIn}));
-  actions.emplace(_action_goodBoy, cp::Action({_fact_greeted, _fact_checkedIn}, {_fact_beHappy}));
-
-  cp::Problem problem;
-  problem.setFacts({_fact_is_close}, now);
-  _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq(_action_greet + _sep +
-            _action_checkIn + _sep +
-            _action_goodBoy, _solveStr(problem, actions));
-}
-
-
 void _checkNotInAPrecondition()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
@@ -671,7 +654,7 @@ void _testIncrementOfVariables()
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   const cp::Action actionQ1({}, cp::SetOfFacts::fromStr(_fact_askAllTheQuestions + "\n++${number-of-question}", '\n'));
-  const cp::Action actionFinishToActActions(cp::SetOfFacts::fromStr("${number-of-question}=${max-number-of-questions}", '\n'), {_fact_askAllTheQuestions}, {}, true);
+  const cp::Action actionFinishToActActions(cp::SetOfFacts::fromStr("${number-of-question}=${max-number-of-questions}", '\n'), {_fact_askAllTheQuestions});
   const cp::Action actionSayQuestionBilan({_fact_askAllTheQuestions}, {_fact_finishToAskQuestions});
   actions.emplace(_action_askQuestion1, actionQ1);
   actions.emplace(_action_askQuestion2, cp::Action({}, cp::SetOfFacts::fromStr(_fact_askAllTheQuestions + "\n++${number-of-question}", '\n')));
@@ -1356,7 +1339,6 @@ int main(int argc, char *argv[])
   _avoidToDo2TimesTheSameActionIfPossble();
   _takeHistoricalIntoAccount();
   _goDoTheActionThatHaveTheMostPrerequisitValidated();
-  _checkShouldBeDoneAsap();
   _checkNotInAPrecondition();
   _checkClearGoalsWhenItsAlreadySatisfied();
   _fromAndToStrOfSetOfFacts();

@@ -79,19 +79,17 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
     return false;
   if (pOther.actionPtr == nullptr)
     return true;
-  auto& action = *actionPtr;
-  if (action.shouldBeDoneAsapWithoutHistoryCheck)
-    return true;
-  auto& otherAction = *pOther.actionPtr;
 
   auto nbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(actionId);
   auto otherNbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(pOther.actionId);
   if (nbOfTimesAlreadyDone != otherNbOfTimesAlreadyDone)
     return nbOfTimesAlreadyDone < otherNbOfTimesAlreadyDone;
 
+  auto& action = *actionPtr;
   std::size_t nbOfPreconditionsSatisfied = 0;
   std::size_t nbOfPreconditionsNotSatisfied = 0;
   _getPrecoditionStatistics(nbOfPreconditionsSatisfied, nbOfPreconditionsNotSatisfied, action, pProblem.facts());
+  auto& otherAction = *pOther.actionPtr;
   std::size_t otherNbOfPreconditionsSatisfied = 0;
   std::size_t otherNbOfPreconditionsNotSatisfied = 0;
   _getPrecoditionStatistics(otherNbOfPreconditionsSatisfied, otherNbOfPreconditionsNotSatisfied, otherAction, pProblem.facts());
@@ -298,7 +296,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
 }
 
 
-bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult,
+void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult,
                                                   const std::set<ActionId>& pActions,
                                                   const Goal& pGoal,
                                                   const Problem& pProblem,
@@ -322,8 +320,6 @@ bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
         {
           assert(newPotRes.actionPtr != nullptr);
           newPotNextAction = newPotRes;
-          if (newPotRes.actionPtr->shouldBeDoneAsapWithoutHistoryCheck)
-            break;
         }
       }
     }
@@ -333,10 +329,7 @@ bool _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
   {
     assert(newPotNextAction.actionPtr != nullptr);
     pCurrentResult = newPotNextAction;
-    if (newPotNextAction.actionPtr->shouldBeDoneAsapWithoutHistoryCheck)
-      return true;
   }
-  return false;
 }
 
 
@@ -351,24 +344,16 @@ ActionId _nextStepOfTheProblemForAGoal(
   for (const auto& currFact : pProblem.factNamesToNbOfOccurences())
   {
     auto itPrecToActions = pDomain.preconditionToActions().find(currFact.first);
-    if (itPrecToActions != pDomain.preconditionToActions().end() &&
-        _nextStepOfTheProblemForAGoalAndSetOfActions(res, itPrecToActions->second, pGoal, pProblem,
-                                                     pDomain, pGlobalHistorical))
-    {
-      pParameters = std::move(res.parameters);
-      return res.actionId;
-    }
+    if (itPrecToActions != pDomain.preconditionToActions().end())
+      _nextStepOfTheProblemForAGoalAndSetOfActions(res, itPrecToActions->second, pGoal, pProblem,
+                                                   pDomain, pGlobalHistorical);
   }
   for (const auto& currFact : pProblem.variablesToValue())
   {
     auto itPrecToActions = pDomain.preconditionToActionsExps().find(currFact.first);
-    if (itPrecToActions != pDomain.preconditionToActionsExps().end() &&
-        _nextStepOfTheProblemForAGoalAndSetOfActions(res, itPrecToActions->second, pGoal, pProblem,
-                                                     pDomain, pGlobalHistorical))
-    {
-      pParameters = std::move(res.parameters);
-      return res.actionId;
-    }
+    if (itPrecToActions != pDomain.preconditionToActionsExps().end())
+      _nextStepOfTheProblemForAGoalAndSetOfActions(res, itPrecToActions->second, pGoal, pProblem,
+                                                   pDomain, pGlobalHistorical);
   }
   auto& actionsWithoutFactToAddInPrecondition = pDomain.actionsWithoutFactToAddInPrecondition();
   _nextStepOfTheProblemForAGoalAndSetOfActions(res, actionsWithoutFactToAddInPrecondition, pGoal, pProblem,
