@@ -59,8 +59,13 @@ struct CONTEXTUALPLANNER_API Problem
   /// Be notified when goals changed.
   cpstd::observable::ObservableUnsafe<void (const std::map<int, std::vector<Goal>>&)> onGoalsChanged{};
 
-  /// Add variables to value.
-  void addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue);
+  /**
+  * @brief Add variables to value.
+  * @param pVariablesToValue Variables to value to add.
+  * @param pNow Current time.
+  */
+  void addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue,
+                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
   * @brief Add a fact.
@@ -288,7 +293,7 @@ struct CONTEXTUALPLANNER_API Problem
    */
   void removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId);
 
-  /// Get the set of infrences.
+  /// Get the set of inferences.
   const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& getSetOfInferences() const { return _setOfInferences; }
 
 
@@ -328,11 +333,13 @@ private:
     std::set<Fact> addedFacts;
     /// Facts that we removed in the world.
     std::set<Fact> removedFacts;
+    /// True if variable to values changed.
+    bool variablesToValue = false;
     /// True if the goals changed.
     bool goals = false;
 
     /// Check if something changed.
-    bool somethingChanged() const { return !punctualFacts.empty() || !addedFacts.empty() || !removedFacts.empty() || goals; }
+    bool somethingChanged() const { return !punctualFacts.empty() || !addedFacts.empty() || !removedFacts.empty() || variablesToValue || goals; }
     /// Has some facts to add or to remove.
     bool hasFactsModifications() const { return !addedFacts.empty() || !removedFacts.empty(); }
   };

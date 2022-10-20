@@ -131,12 +131,15 @@ void Problem::notifyActionDone(const std::string& pActionId,
 }
 
 
-void Problem::addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue)
+void Problem::addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue,
+                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (!pVariablesToValue.empty())
     for (const auto& currFactToVal : pVariablesToValue)
       _variablesToValue[currFactToVal.first] = currFactToVal.second;
-  onVariablesToValueChanged(_variablesToValue);
+  WhatChanged whatChanged;
+  whatChanged.variablesToValue = true;
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 bool Problem::addFact(const Fact& pFact,
@@ -274,7 +277,6 @@ void Problem::_modifyFacts(WhatChanged& pWhatChanged,
 {
   _addFacts(pWhatChanged, pSetOfFacts.facts, pNow);
   _removeFacts(pWhatChanged, pSetOfFacts.notFacts, pNow);
-  bool variablesToValueChanged = false;
   for (auto& currExp : pSetOfFacts.exps)
   {
     if (currExp.elts.size() >= 2)
@@ -288,7 +290,7 @@ void Problem::_modifyFacts(WhatChanged& pWhatChanged,
             it->type == ExpressionElementType::FACT)
         {
           _incrementStr(_variablesToValue[it->value]);
-          variablesToValueChanged = true;
+          pWhatChanged.variablesToValue = true;
         }
       }
       else if (it->type == ExpressionElementType::FACT)
@@ -303,14 +305,12 @@ void Problem::_modifyFacts(WhatChanged& pWhatChanged,
               it->type == ExpressionElementType::VALUE)
           {
             _variablesToValue[factToSet] = it->value;
-            variablesToValueChanged = true;
+            pWhatChanged.variablesToValue = true;
           }
         }
       }
     }
   }
-  if (variablesToValueChanged)
-    onVariablesToValueChanged(_variablesToValue);
 }
 
 void Problem::setFacts(const std::set<Fact>& pFacts,
@@ -825,6 +825,7 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       auto& inferences = currSetOfInferences.second->inferences();
       auto& condToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
       auto& notCondToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
+      auto& reachableInferencesWithWithAnExpressionInCondition = currSetOfInferences.second->reachableInferenceLinks().inferencesWithWithAnExpressionInCondition;
       std::set<InferenceId> inferencesAlreadyApplied;
       bool needAnotherLoop = true;
       while (needAnotherLoop)
@@ -852,6 +853,10 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
               _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, it->second, inferences, pNow))
             needAnotherLoop = true;
         }
+
+        if (pWhatChanged.variablesToValue &&
+            _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, reachableInferencesWithWithAnExpressionInCondition, inferences, pNow))
+          needAnotherLoop = true;
       }
     }
 
@@ -863,10 +868,11 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       onFactsRemoved(pWhatChanged.removedFacts);
     if (pWhatChanged.hasFactsModifications())
       onFactsChanged(_facts);
+    if (pWhatChanged.variablesToValue)
+      onVariablesToValueChanged(_variablesToValue);
     if (pWhatChanged.goals)
       onGoalsChanged(_goals);
   }
-
 }
 
 

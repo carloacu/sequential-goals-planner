@@ -1194,7 +1194,7 @@ void _checkInferencesWithImply()
 }
 
 
-void _checkInfrenceWithPunctualCondition()
+void _checkInferenceWithPunctualCondition()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
@@ -1214,7 +1214,7 @@ void _checkInfrenceWithPunctualCondition()
 }
 
 
-void _checkInfrenceAtEndOfAPlan()
+void _checkInferenceAtEndOfAPlan()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
@@ -1235,7 +1235,7 @@ void _checkInfrenceAtEndOfAPlan()
 }
 
 
-void _checkInfrenceInsideAPlan()
+void _checkInferenceInsideAPlan()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -1267,7 +1267,7 @@ void _checkInfrenceInsideAPlan()
 
 
 
-void _checkInfrenceThatAddAGoal()
+void _checkInferenceThatAddAGoal()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -1328,6 +1328,47 @@ void _checkThatUnReachableCannotTriggeranInference()
 
 
 
+void _testQuiz()
+{
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
+  std::map<std::string, cp::Action> actions;
+  cp::WorldModification questionEffect(cp::SetOfFacts::fromStr("\n++${number-of-question}", '\n'));
+  questionEffect.potentialFactsModifications = cp::SetOfFacts::fromStr(_fact_askAllTheQuestions, '\n');
+  const cp::Action actionQ1({}, questionEffect);
+  const cp::Action actionSayQuestionBilan({_fact_askAllTheQuestions}, {_fact_finishToAskQuestions});
+  actions.emplace(_action_askQuestion1, actionQ1);
+  actions.emplace(_action_askQuestion2, cp::Action({}, questionEffect));
+  actions.emplace(_action_sayQuestionBilan, actionSayQuestionBilan);
+  cp::Domain domain(std::move(actions));
+
+  auto setOfInferences = std::make_shared<cp::SetOfInferences>();
+  const cp::Inference inferenceFinishToActActions(cp::SetOfFacts::fromStr("${number-of-question}=${max-number-of-questions}", '\n'), {_fact_askAllTheQuestions});
+  setOfInferences->addInference(_action_finisehdToAskQuestions, inferenceFinishToActActions);
+
+  auto initFacts = cp::SetOfFacts::fromStr("${number-of-question}=0\n${max-number-of-questions}=3", '\n');
+
+  cp::Problem problem;
+  problem.addSetOfInferences("soi", setOfInferences);
+  _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
+  problem.modifyFacts(initFacts, now);
+  for (std::size_t i = 0; i < 3; ++i)
+  {
+    auto actionToDo = _lookForAnActionToDo(problem, domain);
+    if (i == 0 || i == 2)
+      assert_eq<std::string>(_action_askQuestion1, actionToDo);
+    else
+      assert_eq<std::string>(_action_askQuestion2, actionToDo);
+    problem.historical.notifyActionDone(actionToDo);
+    auto itAction = domain.actions().find(actionToDo);
+    assert(itAction != domain.actions().end());
+    problem.modifyFacts(itAction->second.effect.factsModifications, now);
+  }
+
+  auto actionToDo = _lookForAnActionToDo(problem, domain);
+  assert_eq(_action_sayQuestionBilan, actionToDo);
+}
+
+
 }
 
 
@@ -1386,11 +1427,12 @@ int main(int argc, char *argv[])
   _factChangedNotification();
   _checkInferences();
   _checkInferencesWithImply();
-  _checkInfrenceWithPunctualCondition();
-  _checkInfrenceAtEndOfAPlan();
-  _checkInfrenceInsideAPlan();
-  _checkInfrenceThatAddAGoal();
+  _checkInferenceWithPunctualCondition();
+  _checkInferenceAtEndOfAPlan();
+  _checkInferenceInsideAPlan();
+  _checkInferenceThatAddAGoal();
   _checkThatUnReachableCannotTriggeranInference();
+  _testQuiz();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

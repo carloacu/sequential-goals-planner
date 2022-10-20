@@ -15,6 +15,8 @@ void SetOfInferences::addInference(const InferenceId& pInferenceId,
     links.conditionToInferences[currFact.name].insert(pInferenceId);
   for (const auto& currNotFact : pInference.condition.notFacts)
     links.notConditionToInferences[currNotFact.name].insert(pInferenceId);
+  if (pInference.isReachable && !pInference.condition.exps.empty())
+    links.inferencesWithWithAnExpressionInCondition.insert(pInferenceId);
 }
 
 
