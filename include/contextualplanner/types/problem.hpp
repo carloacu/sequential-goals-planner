@@ -50,6 +50,8 @@ struct CONTEXTUALPLANNER_API Problem
   cpstd::observable::ObservableUnsafe<void (const std::map<std::string, std::string>&)> onVariablesToValueChanged{};
   /// Be notified when facts changed.
   cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsChanged{};
+  /// Be notified about the punctual facts.
+  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onPunctualFacts{};
   /// Be notified about the added facts.
   cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsAdded{};
   /// Be notified about the removed facts.

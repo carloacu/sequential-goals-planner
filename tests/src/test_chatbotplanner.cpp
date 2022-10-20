@@ -21,6 +21,7 @@ const std::string _fact_e = "fact_e";
 const std::string _fact_f = "fact_f";
 const std::string _fact_g = "fact_g";
 const std::string _fact_unreachable_u1 = cp::Fact::unreachablePrefix + "fact_u1";
+const std::string _fact_punctual_p1 = cp::Fact::punctualPrefix + "fact_p1";
 const std::string _fact_advertised = "advertised";
 const std::string _fact_beginOfConversation = "begin_of_conversation";
 const std::string _fact_presented = "presented";
@@ -1094,7 +1095,7 @@ void _factChangedNotification()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, {_fact_greeted}));
-  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn}));
+  actions.emplace(_action_checkIn, cp::Action({}, {_fact_checkedIn, _fact_punctual_p1}));
   cp::Domain domain(std::move(actions));
 
   std::set<cp::Fact> factsChangedFromSubscription;
@@ -1103,13 +1104,17 @@ void _factChangedNotification()
   auto factsChangedConnection = problem.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
-  std::set<cp::Fact> factsAdded;
-  auto onFactsAddedConnection = problem.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
-    factsAdded = pFacts;
+  std::list<cp::Fact> punctualFactsAdded;
+  auto onPunctualFactsConnection = problem.onPunctualFacts.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+    punctualFactsAdded.insert(punctualFactsAdded.end(), pFacts.begin(), pFacts.end());
   });
-  std::set<cp::Fact> factsRemoved;
+  std::list<cp::Fact> factsAdded;
+  auto onFactsAddedConnection = problem.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+    factsAdded.insert(factsAdded.end(), pFacts.begin(), pFacts.end());
+  });
+  std::list<cp::Fact> factsRemoved;
   auto onFactsRemovedConnection = problem.onFactsRemoved.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
-    factsRemoved = pFacts;
+    factsRemoved.insert(factsRemoved.end(), pFacts.begin(), pFacts.end());
   });
 
   problem.setGoals({{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, now);
@@ -1118,20 +1123,25 @@ void _factChangedNotification()
   auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   assert_eq<std::string>(_action_greet, plannerResult.actionId);
   assert_eq({_fact_beginOfConversation, _fact_greeted}, factsChangedFromSubscription);
+  assert_eq({}, punctualFactsAdded);
   assert_eq({_fact_greeted}, factsAdded);
+  factsAdded.clear();
   assert_eq({}, factsRemoved);
 
   plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   assert_eq<std::string>(_action_checkIn, plannerResult.actionId);
   assert_eq({_fact_beginOfConversation, _fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
+  assert_eq({_fact_punctual_p1}, punctualFactsAdded);
   assert_eq({_fact_checkedIn}, factsAdded);
   assert_eq({}, factsRemoved);
   problem.removeFact(_fact_greeted, now);
   assert_eq({_fact_beginOfConversation, _fact_checkedIn}, factsChangedFromSubscription);
+  assert_eq({_fact_punctual_p1}, punctualFactsAdded);
   assert_eq({_fact_checkedIn}, factsAdded);
   assert_eq({_fact_greeted}, factsRemoved);
 
   onFactsRemovedConnection.disconnect();
+  onPunctualFactsConnection.disconnect();
   onFactsAddedConnection.disconnect();
   factsChangedConnection.disconnect();
 }

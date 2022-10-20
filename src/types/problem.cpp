@@ -82,6 +82,9 @@ void _getTheFactsToRemoveFromAWorldModification(std::set<Fact>& pFactsToRemove,
 Problem::Problem(const Problem& pOther)
   : onVariablesToValueChanged(),
     onFactsChanged(),
+    onPunctualFacts(),
+    onFactsAdded(),
+    onFactsRemoved(),
     onGoalsChanged(),
     historical(pOther.historical),
     _goals(pOther._goals),
@@ -852,6 +855,8 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       }
     }
 
+    if (!pWhatChanged.punctualFacts.empty())
+      onPunctualFacts(pWhatChanged.punctualFacts);
     if (!pWhatChanged.addedFacts.empty())
       onFactsAdded(pWhatChanged.addedFacts);
     if (!pWhatChanged.removedFacts.empty())
