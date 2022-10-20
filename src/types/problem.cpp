@@ -421,21 +421,18 @@ void Problem::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pAc
 
 
 void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
+                                                      const std::map<InferenceId, Inference>& pAllInferences,
                                                       const Domain& pDomain)
 {
-  if (_setOfInferences)
+  for (const auto& currInference : pInferences)
   {
-    auto& inferences = _setOfInferences->inferences();
-    for (const auto& currInference : pInferences)
+    auto itInference = pAllInferences.find(currInference);
+    if (itInference != pAllInferences.end())
     {
-      auto itInference = inferences.find(currInference);
-      if (itInference != inferences.end())
-      {
-        auto& inference = itInference->second;
-        std::vector<std::string> parameters;
-        _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify,
-                                          parameters, pDomain);
-      }
+      auto& inference = itInference->second;
+      std::vector<std::string> parameters;
+      _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify,
+                                        parameters, pDomain);
     }
   }
 }
@@ -474,16 +471,17 @@ void Problem::_feedAccessibleFactsFromFact(const Fact& pFact,
   if (itPrecToActions != pDomain.preconditionToActions().end())
     _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
 
-  if (_setOfInferences)
+  for (auto& currSetOfInferences : _setOfInferences)
   {
-    auto& conditionToReachableInferences = _setOfInferences->reachableInferenceLinks().conditionToInferences;
+    auto& allInferences = currSetOfInferences.second->inferences();
+    auto& conditionToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
     auto itCondToReachableInferences = conditionToReachableInferences.find(pFact.name);
     if (itCondToReachableInferences != conditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, pDomain);
-    auto& conditionToUnreachableInferences = _setOfInferences->unreachableInferenceLinks().conditionToInferences;
+      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain);
+    auto& conditionToUnreachableInferences = currSetOfInferences.second->unreachableInferenceLinks().conditionToInferences;
     auto itCondToUnreachableInferences = conditionToUnreachableInferences.find(pFact.name);
     if (itCondToUnreachableInferences != conditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, pDomain);
+      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain);
   }
 }
 
@@ -495,16 +493,17 @@ void Problem::_feedAccessibleFactsFromNotFact(const Fact& pFact,
   if (itPrecToActions != pDomain.notPreconditionToActions().end())
     _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
 
-  if (_setOfInferences)
+  for (auto& currSetOfInferences : _setOfInferences)
   {
-    auto& notConditionToReachableInferences = _setOfInferences->reachableInferenceLinks().notConditionToInferences;
+    auto& allInferences = currSetOfInferences.second->inferences();
+    auto& notConditionToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
     auto itCondToReachableInferences = notConditionToReachableInferences.find(pFact.name);
     if (itCondToReachableInferences != notConditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, pDomain);
-    auto& notConditionToUnreachableInferences = _setOfInferences->unreachableInferenceLinks().notConditionToInferences;
+      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain);
+    auto& notConditionToUnreachableInferences = currSetOfInferences.second->unreachableInferenceLinks().notConditionToInferences;
     auto itCondToUnreachableInferences = notConditionToUnreachableInferences.find(pFact.name);
     if (itCondToUnreachableInferences != notConditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, pDomain);
+      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain);
   }
 }
 
@@ -737,6 +736,13 @@ void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 }
 
 
+void Problem::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
+{
+  auto it = _setOfInferences.find(pSetOfInferencesId);
+  if (it != _setOfInferences.end())
+    _setOfInferences.erase(it);
+}
+
 void Problem::_removeNoStackableGoals(WhatChanged& pWhatChanged,
                                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
@@ -811,11 +817,11 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
   if (pWhatChanged.somethingChanged())
   {
     // manage the inferences
-    if (_setOfInferences)
+    for (auto& currSetOfInferences : _setOfInferences)
     {
-      auto& inferences = _setOfInferences->inferences();
-      auto& condToReachableInferences = _setOfInferences->reachableInferenceLinks().conditionToInferences;
-      auto& notCondToReachableInferences = _setOfInferences->reachableInferenceLinks().notConditionToInferences;
+      auto& inferences = currSetOfInferences.second->inferences();
+      auto& condToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
+      auto& notCondToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
       std::set<InferenceId> inferencesAlreadyApplied;
       bool needAnotherLoop = true;
       while (needAnotherLoop)

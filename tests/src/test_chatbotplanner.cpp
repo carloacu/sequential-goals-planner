@@ -154,9 +154,9 @@ PlannerResult _lookForAnActionToDoThenNotify(cp::Problem& pProblem,
   res.actionId = cp::lookForAnActionToDo(res.parameters, pProblem, pDomain, {}, &res.goal, &res.priority);
 
   auto itAction = pDomain.actions().find(res.actionId);
-  assert_true(itAction != pDomain.actions().end());
-  pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effect.factsModifications, {},
-                            &itAction->second.effect.goalsToAdd);
+  if (itAction != pDomain.actions().end())
+    pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effect.factsModifications, {},
+                              &itAction->second.effect.goalsToAdd);
   return res;
 }
 
@@ -1147,7 +1147,7 @@ void _checkInferences()
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
-  problem.setSetOfInferences(setOfInferences);
+  problem.addSetOfInferences("soi", setOfInferences);
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
   setOfInferences->addInference("inference1",
@@ -1171,7 +1171,7 @@ void _checkInferencesWithImply()
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
-  problem.setSetOfInferences(setOfInferences);
+  problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))")});
   // Inference: if (_fact_headTouched) then add(_fact_userWantsToCheckedIn) and remove(_fact_headTouched)
   setOfInferences->addInference("inference1",
@@ -1193,7 +1193,7 @@ void _checkInfrenceWithPunctualCondition()
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
-  problem.setSetOfInferences(setOfInferences);
+  problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
   // Inference: if (_fact_punctual_headTouched) then add(_fact_userWantsToCheckedIn)
   setOfInferences->addInference("inference1", cp::Inference({_fact_punctual_headTouched}, {_fact_userWantsToCheckedIn}));
@@ -1213,7 +1213,7 @@ void _checkInfrenceAtEndOfAPlan()
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
-  problem.setSetOfInferences(setOfInferences);
+  problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
   setOfInferences->addInference("inference1", cp::Inference({_fact_punctual_headTouched}, {_fact_userWantsToCheckedIn}));
   setOfInferences->addInference("inference2", cp::Inference({_fact_punctual_checkedIn},
@@ -1237,7 +1237,7 @@ void _checkInfrenceInsideAPlan()
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
-  problem.setSetOfInferences(setOfInferences);
+  problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
   setOfInferences->addInference("inference1", cp::Inference({_fact_a}, {_fact_b}));
   setOfInferences->addInference("inference2", cp::Inference({_fact_b, _fact_d}, {_fact_c}));
@@ -1276,7 +1276,7 @@ void _checkInfrenceThatAddAGoal()
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
-  problem.setSetOfInferences(setOfInferences);
+  problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_g + ", " + _fact_d)});
   setOfInferences->addInference("inference1", cp::Inference({_fact_a}, { _fact_b }, {{cp::Problem::defaultPriority, {_fact_e}}}));
   assert_eq<std::string>("", _solveStrConst(problem, actions));
@@ -1289,6 +1289,8 @@ void _checkInfrenceThatAddAGoal()
 void _checkThatUnReachableCannotTriggeranInference()
 {
   const std::string action1 = "action1";
+  const std::string inference1 = "inference1";
+  const std::string soi = "soi";
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, {_fact_unreachable_u1}));
@@ -1296,13 +1298,22 @@ void _checkThatUnReachableCannotTriggeranInference()
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
-  problem.setSetOfInferences(setOfInferences);
   _setGoalsForAPriority(problem, {_fact_a});
-  setOfInferences->addInference("inference1", cp::Inference({_fact_unreachable_u1}, { _fact_a }));
-  assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  problem.addSetOfInferences(soi, setOfInferences);
+  setOfInferences->addInference(inference1, cp::Inference({_fact_unreachable_u1}, { _fact_a }));
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
   assert_true(!problem.hasFact(_fact_unreachable_u1));
   assert_true(!problem.hasFact(_fact_a));
-  assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  // check inferences removal
+  problem.removeSetOfInferences(soi);
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  _setGoalsForAPriority(problem, {_fact_a});
+  problem.addSetOfInferences(soi, setOfInferences);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  setOfInferences->removeInference(inference1);
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionId);
 }
 
 

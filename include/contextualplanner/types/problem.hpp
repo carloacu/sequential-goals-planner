@@ -267,10 +267,27 @@ struct CONTEXTUALPLANNER_API Problem
   // Inferences
   // ----------
 
-  /// Set the set of inferences.
-  void setSetOfInferences(const std::shared_ptr<const SetOfInferences>& pSetOfInferences) { _setOfInferences = pSetOfInferences; }
+  /**
+   * @brief Add a set of inferences.
+   * @param pSetOfInferencesId Identifier of the set of inferences to add.
+   * @param pSetOfInferences Set of inferences to add.
+   *
+   * If the identifier is already used, the addition will not be done.
+   */
+  void addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
+                          const std::shared_ptr<const SetOfInferences>& pSetOfInferences) { _setOfInferences.emplace(pSetOfInferencesId, pSetOfInferences); }
+
+  /**
+   * @brief Remove a set of inferences.
+   * @param pSetOfInferencesId Identifier of the set of inferences to remove.
+   *
+   * If the inference is not found, this function will have no effect.
+   * No exception will be raised.
+   */
+  void removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId);
+
   /// Get the set of infrences.
-  const std::shared_ptr<const SetOfInferences>& getSetOfInferences() const { return _setOfInferences; }
+  const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& getSetOfInferences() const { return _setOfInferences; }
 
 
   // Historical of actions done
@@ -297,8 +314,8 @@ private:
   std::set<Fact> _removableFacts{};
   /// Know if we need to add accessible facts.
   bool _needToAddAccessibleFacts = true;
-  /// Set of inferences.
-  std::shared_ptr<const SetOfInferences> _setOfInferences{};
+  /// Map set of inferences identifiers to the set of inferences.
+  std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>> _setOfInferences{};
 
   /// Stored what changed.
   struct WhatChanged
@@ -370,10 +387,12 @@ private:
   /**
    * @brief Feed accessible facts from a set of inferences.
    * @param pInferences Set of inferences.
+   * @param pAllInferences Set of all the possible inferences.
    * @param pDomain Domain containing all the possible actions.
    */
   void _feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
-                                              const Domain& pDomain);
+                                               const std::map<InferenceId, Inference>& pAllInferences,
+                                               const Domain& pDomain);
 
   /**
    * @brief Feed accessible facts from a condition and an effect.

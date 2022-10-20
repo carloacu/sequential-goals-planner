@@ -8,6 +8,7 @@ namespace cp
 {
 using ActionId = std::string;
 using InferenceId = std::string;
+using SetOfInferencesId = std::string;
 
 
 } // !cp

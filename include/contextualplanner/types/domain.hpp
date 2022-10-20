@@ -25,7 +25,7 @@ struct CONTEXTUALPLANNER_API Domain
    * @param pActionId Identifier of the action to add.
    * @param pAction Action to add.
    *
-   * If the action identifier is already user in the domain, the addition will not be done.
+   * If the identifier is already used, the addition will not be done.
    */
   void addAction(const ActionId& pActionId,
                  const Action& pAction);
