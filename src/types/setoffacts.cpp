@@ -1,5 +1,6 @@
 #include <contextualplanner/types/setoffacts.hpp>
 #include <algorithm>
+#include <memory>
 #include <assert.h>
 #include <sstream>
 #include <contextualplanner/util/arithmeticevaluator.hpp>
@@ -47,19 +48,20 @@ void _splitFacts(
 {
   std::size_t pos = 0u;
   bool isFactNegated = false;
-  cp::Fact currFact;
+  std::unique_ptr<cp::Fact> currFact;
   while (pos < pStr.size())
   {
-    pos = currFact.fillFactFromStr(pStr, &pSeparator, pos, &isFactNegated) + 1;
-    if (!currFact.name.empty())
+    currFact = std::make_unique<cp::Fact>(pStr, &pSeparator, &isFactNegated, pos, &pos);
+    ++pos;
+    if (!currFact->name.empty())
     {
-      pFacts.emplace_back(isFactNegated, std::move(currFact));
+      pFacts.emplace_back(isFactNegated, std::move(*currFact));
       isFactNegated = false;
-      currFact = cp::Fact();
+      currFact = std::unique_ptr<cp::Fact>();
     }
   }
-  if (!currFact.name.empty())
-    pFacts.emplace_back(isFactNegated, std::move(currFact));
+  if (currFact && !currFact->name.empty())
+    pFacts.emplace_back(isFactNegated, std::move(*currFact));
 }
 
 }

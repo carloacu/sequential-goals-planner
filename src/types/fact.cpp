@@ -167,11 +167,7 @@ std::string Fact::toStr() const
 Fact Fact::fromStr(const std::string& pStr,
                    bool* pIsFactNegatedPtr)
 {
-  Fact res;
-  auto endPos = res.fillFactFromStr(pStr, nullptr, 0, pIsFactNegatedPtr);
-  assert(!res.name.empty());
-  assert(endPos == pStr.size());
-  return res;
+  return Fact(pStr, nullptr, pIsFactNegatedPtr);
 }
 
 

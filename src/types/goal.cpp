@@ -1,4 +1,5 @@
 #include <contextualplanner/types/goal.hpp>
+#include <assert.h>
 
 
 namespace cp
@@ -36,6 +37,8 @@ Goal::Goal(const std::string& pStr,
     auto factSecondParameters = std::move(_factOptional.fact.parameters[1]);
     _factOptional = std::move(factSecondParameters);
   }
+
+  assert(!_factOptional.fact.name.empty());
 }
 
 Goal::Goal(const Goal& pOther)

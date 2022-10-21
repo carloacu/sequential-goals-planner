@@ -24,7 +24,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[in] pBeginPos Begin position in the input string.
    * @param[out] pResPos Postion in the input string after the parse.
    */
-  Fact(const std::string& pStr = "",
+  Fact(const std::string& pStr,
        const char* pSeparatorPtr = nullptr,
        bool* pIsFactNegatedPtr = nullptr,
        std::size_t pBeginPos = 0,
