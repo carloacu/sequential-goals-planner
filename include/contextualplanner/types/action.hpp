@@ -30,6 +30,17 @@ struct CONTEXTUALPLANNER_API Action
   {
   }
 
+  /// Move constructor of an action.
+  Action(SetOfFacts&& pPreconditions,
+         WorldModification&& pEffect,
+         SetOfFacts&& pPreferInContext)
+    : parameters(),
+      preconditions(std::move(pPreconditions)),
+      preferInContext(std::move(pPreferInContext)),
+      effect(std::move(pEffect))
+  {
+  }
+
   /// Check if this object contains a fact.
   bool hasFact(const cp::Fact& pFact) const;
 
