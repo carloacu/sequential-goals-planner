@@ -61,8 +61,11 @@ struct CONTEXTUALPLANNER_API Goal
   /// Get the condition associated. It is a fact that should be present in the world to enable this goal.
   const FactOptional* conditionFactOptionalPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
 
-  /// Get the optional fact contained in this goal.
+  /// Get a const reference of the optional fact contained in this goal.
   const FactOptional& factOptional() const { return _factOptional; }
+
+  /// Get a reference of the optional fact contained in this goal.
+  FactOptional& factOptional() { return _factOptional; }
 
   /// Get the group identifier of this goal. It can be empty if the goal does not belong to a group.
   const std::string& getGoalGroupId() const { return _goalGroupId; }

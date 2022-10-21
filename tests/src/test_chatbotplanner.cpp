@@ -73,6 +73,13 @@ void assert_true(const TYPE& pValue)
     assert(false);
 }
 
+template <typename TYPE>
+void assert_false(const TYPE& pValue)
+{
+  if (pValue)
+    assert(false);
+}
+
 
 std::string _listOfStrToStr(const std::list<std::string>& pStrs)
 {
@@ -638,17 +645,44 @@ void _checkClearGoalsWhenItsAlreadySatisfied()
 }
 
 
-void _fromAndToStrOfSetOfFacts()
+void _checkActionHasAFact()
+{
+  cp::WorldModification effect(cp::SetOfFacts::fromStr(_fact_a + " & !" + _fact_b, '&'));
+  effect.potentialFactsModifications.add({_fact_c});
+  effect.goalsToAdd[cp::Problem::defaultPriority] = {_fact_d};
+  const cp::Action action(cp::SetOfFacts::fromStr(_fact_e, '&'), effect, {_fact_f});
+  assert_true(action.hasFact(_fact_a));
+  assert_true(action.hasFact(_fact_b));
+  assert_true(action.hasFact(_fact_c));
+  assert_true(action.hasFact(_fact_d));
+  assert_true(action.hasFact(_fact_e));
+  assert_true(action.hasFact(_fact_f));
+  assert_false(action.hasFact(_fact_g));
+}
+
+void _checkReplacefactInAnExpression()
 {
   char sep = '\n';
   auto setOfFacts = cp::SetOfFacts::fromStr("++${var-name}", sep);
-  setOfFacts.rename(cp::Fact::fromStr("var-name"), cp::Fact::fromStr("var-new-name"));
+  setOfFacts.replaceFact(cp::Fact::fromStr("var-name"), cp::Fact::fromStr("var-new-name"));
   assert_eq<std::string>("++${var-new-name}", setOfFacts.toStr("\n"));
   setOfFacts = cp::SetOfFacts::fromStr("${var-name-to-check}=10", sep);
-  setOfFacts.rename(cp::Fact::fromStr("var-name-to-check"), cp::Fact::fromStr("var-name-to-check-new"));
+  setOfFacts.replaceFact(cp::Fact::fromStr("var-name-to-check"), cp::Fact::fromStr("var-name-to-check-new"));
   assert_eq<std::string>("${var-name-to-check-new}=10", setOfFacts.toStr("\n"));
 }
 
+void _checkActionReplacefact()
+{
+  cp::WorldModification effect(cp::SetOfFacts::fromStr(_fact_a + " & !" + _fact_b, '&'));
+  effect.potentialFactsModifications.add({_fact_c});
+  effect.goalsToAdd[cp::Problem::defaultPriority] = {_fact_d};
+  cp::Action action(cp::SetOfFacts::fromStr(_fact_e, '&'), effect, {_fact_f});
+  assert_true(action.hasFact(_fact_a));
+  assert_false(action.hasFact(_fact_g));
+  action.replaceFact(_fact_a, _fact_g);
+  assert_false(action.hasFact(_fact_a));
+  assert_true(action.hasFact(_fact_g));
+}
 
 void _testIncrementOfVariables()
 {
@@ -1403,7 +1437,9 @@ int main(int argc, char *argv[])
   _goDoTheActionThatHaveTheMostPrerequisitValidated();
   _checkNotInAPrecondition();
   _checkClearGoalsWhenItsAlreadySatisfied();
-  _fromAndToStrOfSetOfFacts();
+  _checkActionHasAFact();
+  _checkReplacefactInAnExpression();
+  _checkActionReplacefact();
   _testIncrementOfVariables();
   _precoditionEqualEffect();
   _circularDependencies();

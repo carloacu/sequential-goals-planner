@@ -30,6 +30,17 @@ struct CONTEXTUALPLANNER_API Action
   {
   }
 
+  /// Check if this object contains a fact.
+  bool hasFact(const cp::Fact& pFact) const;
+
+  /**
+   * @brief Replace a fact by another inside this object.
+   * @param pOldFact Fact to replace.
+   * @param pNewFact New fact value to set.
+   */
+  void replaceFact(const cp::Fact& pOldFact,
+                   const cp::Fact& pNewFact);
+
   /// Parameter names of this action.
   std::vector<std::string> parameters;
   /// Set of facts that should be present in the world to be able to do this action.

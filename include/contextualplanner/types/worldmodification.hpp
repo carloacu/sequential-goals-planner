@@ -55,11 +55,22 @@ struct CONTEXTUALPLANNER_API WorldModification
   bool operator==(const WorldModification& pOther) const
   { return factsModifications == pOther.factsModifications && potentialFactsModifications == pOther.potentialFactsModifications && goalsToAdd == pOther.goalsToAdd; }
 
+  /// Check if this object contains a fact.
+  bool hasFact(const cp::Fact& pFact) const;
+
   /**
    * @brief Add the content of another world modifiation.
    * @param pOther The other world modification to add.
    */
   void add(const WorldModification& pOther);
+
+  /**
+   * @brief Replace a fact by another inside this object.
+   * @param pOldFact Fact to replace.
+   * @param pNewFact New fact value to set.
+   */
+  void replaceFact(const cp::Fact& pOldFact,
+                   const cp::Fact& pNewFact);
 
   /**
    * @brief Iterate over all the facts.
@@ -100,11 +111,34 @@ struct CONTEXTUALPLANNER_API WorldModification
 
 // Implemenation
 
+inline bool WorldModification::hasFact(const cp::Fact& pFact) const
+{
+  if (factsModifications.hasFact(pFact) ||
+      potentialFactsModifications.hasFact(pFact))
+    return true;
+  for (const auto& currGoalWithPriority : goalsToAdd)
+    for (const auto& currGoal : currGoalWithPriority.second)
+      if (currGoal.factOptional().fact == pFact)
+        return true;
+  return false;
+}
+
 inline void WorldModification::add(const WorldModification& pOther)
 {
   factsModifications.add(pOther.factsModifications);
   potentialFactsModifications.add(pOther.potentialFactsModifications);
   goalsToAdd.insert(pOther.goalsToAdd.begin(), pOther.goalsToAdd.end());
+}
+
+inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
+                                           const cp::Fact& pNewFact)
+{
+  factsModifications.replaceFact(pOldFact, pNewFact);
+  potentialFactsModifications.replaceFact(pOldFact, pNewFact);
+  for (auto& currGoalWithPriority : goalsToAdd)
+    for (auto& currGoal : currGoalWithPriority.second)
+      if (currGoal.factOptional().fact == pOldFact)
+        currGoal.factOptional().fact = pNewFact;
 }
 
 inline void WorldModification::forAllFacts(const std::function<void(const cp::Fact&)>& pCallback) const

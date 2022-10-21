@@ -49,12 +49,8 @@ struct CONTEXTUALPLANNER_API SetOfFacts
    */
   void add(const SetOfFacts& pOther);
 
-  /**
-   * @brief Check if SetOfFacts contains a fact even if it is a fact to remove when this object will be applied to a world.
-   * @param pFact Fact to check.
-   * @return True if this object contains the fact, false otherwise.
-   */
-  bool containsFact(const Fact& pFact) const;
+  /// Check if this object contains a fact.
+  bool hasFact(const Fact& pFact) const;
 
   /**
    * @brief Check if this object is totally included in another SetOfFacts object.
@@ -64,12 +60,12 @@ struct CONTEXTUALPLANNER_API SetOfFacts
   bool isIncludedIn(const SetOfFacts& pOther) const;
 
   /**
-   * @brief Change the name of a fact contained in this object.
-   * @param pOldFact Current name of the fact.
-   * @param pNewFact New name of the fact.
+   * @brief Replace a fact by another inside this object.
+   * @param pOldFact Fact to replace.
+   * @param pNewFact New fact value to set.
    */
-  void rename(const Fact& pOldFact,
-              const Fact& pNewFact);
+  void replaceFact(const Fact& pOldFact,
+                   const Fact& pNewFact);
 
   /// Convert this object to a list of key-value pairs serialized in strings.
   std::list<std::pair<std::string, std::string>> toFactsStrs() const;

@@ -73,7 +73,7 @@ void SetOfFacts::add(const SetOfFacts& pOther)
 }
 
 
-bool SetOfFacts::containsFact(const Fact& pFact) const
+bool SetOfFacts::hasFact(const Fact& pFact) const
 {
   if (facts.count(pFact) > 0 || notFacts.count(pFact) > 0)
     return true;
@@ -114,21 +114,20 @@ bool SetOfFacts::isIncludedIn(const SetOfFacts& pOther) const
 }
 
 
-void SetOfFacts::rename(const Fact& pOldFact,
-                        const Fact& pNewFact)
+void SetOfFacts::replaceFact(const Fact& pOldFact,
+                             const Fact& pNewFact)
 {
-  auto it = facts.find(pOldFact);
-  if (it != facts.end())
+  auto renameASet = [&](std::set<cp::Fact>& pSet)
   {
-    facts.erase(it);
-    facts.insert(pNewFact);
-  }
-  auto itNot = notFacts.find(pOldFact);
-  if (itNot != notFacts.end())
-  {
-    notFacts.erase(itNot);
-    notFacts.insert(pNewFact);
-  }
+    auto it = pSet.find(pOldFact);
+    if (it != pSet.end())
+    {
+      pSet.erase(pOldFact);
+      pSet.insert(pNewFact);
+    }
+  };
+  renameASet(facts);
+  renameASet(notFacts);
   for (auto& currExp : exps)
     for (auto& currElt : currExp.elts)
       if (currElt.type == ExpressionElementType::FACT && currElt.value == pOldFact.toStr())

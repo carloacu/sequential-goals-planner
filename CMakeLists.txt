@@ -31,6 +31,7 @@ set(CHATBOTPLANNER_HPPS
 
 
 set(CHATBOTPLANNER_SRCS
+    src/types/action.cpp
     src/types/domain.cpp
     src/types/expression.cpp
     src/types/fact.cpp
