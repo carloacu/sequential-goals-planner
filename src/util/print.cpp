@@ -66,39 +66,6 @@ std::string printActionIdWithParameters(
 }
 
 
-std::list<std::string> printResolutionPlan(
-    Problem& pProblem,
-    const Domain& pDomain,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    Historical* pGlobalHistorical)
-{
-  std::set<std::string> actionAlreadyInPlan;
-  std::list<std::string> res;
-  while (!pProblem.goals().empty())
-  {
-    std::map<std::string, std::string> parameters;
-    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, nullptr, nullptr, pGlobalHistorical);
-    if (actionToDo.empty())
-      break;
-    auto actionStr = printActionIdWithParameters(actionToDo, parameters);
-    res.emplace_back(actionStr);
-    if (actionAlreadyInPlan.count(actionStr) > 0)
-      break;
-    actionAlreadyInPlan.insert(actionStr);
-
-    auto itAction = pDomain.actions().find(actionToDo);
-    if (itAction != pDomain.actions().end())
-    {
-      if (pGlobalHistorical != nullptr)
-        pGlobalHistorical->notifyActionDone(actionToDo);
-      pProblem.notifyActionDone(actionToDo, parameters, itAction->second.effect.factsModifications, pNow,
-                                &itAction->second.effect.goalsToAdd);
-    }
-  }
-  return res;
-}
-
-
 std::string printGoals(const std::map<int, std::vector<Goal>>& pGoals)
 {
   std::string res;

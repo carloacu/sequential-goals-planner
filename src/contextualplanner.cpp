@@ -417,4 +417,45 @@ void notifyActionDone(Problem& pProblem,
 }
 
 
+ActionWithHisParameters::ActionWithHisParameters(
+    const std::string& pActionId,
+    const std::map<std::string, std::string>& pParameters)
+  : actionId(pActionId),
+   parameters(pParameters)
+{
+}
+
+
+std::list<ActionWithHisParameters> lookForResolutionPlan(
+    Problem& pProblem,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    Historical* pGlobalHistorical)
+{
+  std::set<std::string> actionAlreadyInPlan;
+  std::list<ActionWithHisParameters> res;
+  while (!pProblem.goals().empty())
+  {
+    std::map<std::string, std::string> parameters;
+    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, nullptr, nullptr, pGlobalHistorical);
+    if (actionToDo.empty())
+      break;
+    res.emplace_back(actionToDo, parameters);
+    if (actionAlreadyInPlan.count(actionToDo) > 0)
+      break;
+    actionAlreadyInPlan.insert(actionToDo);
+
+    auto itAction = pDomain.actions().find(actionToDo);
+    if (itAction != pDomain.actions().end())
+    {
+      if (pGlobalHistorical != nullptr)
+        pGlobalHistorical->notifyActionDone(actionToDo);
+      pProblem.notifyActionDone(actionToDo, parameters, itAction->second.effect.factsModifications, pNow,
+                                &itAction->second.effect.goalsToAdd);
+    }
+  }
+  return res;
+}
+
+
 } // !cp

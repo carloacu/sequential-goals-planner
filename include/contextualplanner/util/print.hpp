@@ -11,17 +11,17 @@
 namespace cp
 {
 
+/**
+ * @brief Print an action identifier with his parameters.
+ * @param pActionId Action identifier.
+ * @param pParameters his parameters.
+ * @return String containing the action identifier with his parameters.
+ */
 CONTEXTUALPLANNER_API
 std::string printActionIdWithParameters(
     const std::string& pActionId,
     const std::map<std::string, std::string>& pParameters);
 
-
-CONTEXTUALPLANNER_API
-std::list<std::string> printResolutionPlan(Problem& pProblem,
-                                           const Domain& pDomain,
-                                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                                           Historical* pGlobalHistorical = nullptr);
 
 /**
  * @brief Print the goals separated by ", ".
