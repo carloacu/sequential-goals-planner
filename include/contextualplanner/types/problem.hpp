@@ -264,8 +264,11 @@ struct CONTEXTUALPLANNER_API Problem
   void removeGoals(const std::string& pGoalGroupId,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /// Remove the first goals that are already satisfied.
-  void removeFirstGoalsThatAreAlreadySatisfied();
+  /**
+   * @brief Remove the first goals that are already satisfied.
+   * @param pNow Current time.
+   */
+  void removeFirstGoalsThatAreAlreadySatisfied(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Check if a goal is satisfied.<br/>
@@ -338,6 +341,8 @@ private:
   bool _needToAddAccessibleFacts = true;
   /// Map set of inferences identifiers to the set of inferences.
   std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>> _setOfInferences{};
+  /// Current active goal.
+  const Goal* _currentGoalPtr = nullptr;
 
   /// Stored what changed.
   struct WhatChanged

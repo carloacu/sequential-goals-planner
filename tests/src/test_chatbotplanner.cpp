@@ -276,7 +276,7 @@ void _removeFirstGoalsThatAreAlreadySatisfied()
   assert_eq(10, plannerResult.priority);
 
   assert_true(!problem.goals().empty());
-  problem.removeFirstGoalsThatAreAlreadySatisfied();
+  problem.removeFirstGoalsThatAreAlreadySatisfied({});
   assert_true(problem.goals().empty());
 }
 
@@ -1445,6 +1445,40 @@ void _testGetNotSatisfiedGoals()
 }
 
 
+
+void _testGoalUnderPersist()
+{
+  const std::string action1 = "action1";
+
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, {_fact_b}));
+  cp::Domain domain(std::move(actions));
+
+  {
+    cp::Problem problem;
+    problem.addGoals({"persist(!" + _fact_a + ")"}, now, cp::Problem::defaultPriority + 2);
+    problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
+    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+  }
+
+  {
+    cp::Problem problem;
+    problem.addGoals({"persist(!" + _fact_a + ")"}, now, cp::Problem::defaultPriority + 2);
+    problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
+    problem.removeFirstGoalsThatAreAlreadySatisfied({});
+    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+  }
+
+  {
+    cp::Problem problem;
+    problem.addGoals({"persist(!" + _fact_a + ")"}, now, cp::Problem::defaultPriority + 2);
+    problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
+    problem.addFact(_fact_a, now);
+    assert_eq<std::string>("", _lookForAnActionToDo(problem, domain));
+  }
+}
+
 }
 
 
@@ -1513,6 +1547,7 @@ int main(int argc, char *argv[])
   _checkThatUnReachableCannotTriggeranInference();
   _testQuiz();
   _testGetNotSatisfiedGoals();
+  _testGoalUnderPersist();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

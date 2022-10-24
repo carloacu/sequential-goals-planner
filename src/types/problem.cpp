@@ -95,7 +95,8 @@ Problem::Problem(const Problem& pOther)
     _accessibleFactsWithAnyValues(pOther._accessibleFactsWithAnyValues),
     _removableFacts(pOther._removableFacts),
     _needToAddAccessibleFacts(pOther._needToAddAccessibleFacts),
-    _setOfInferences(pOther._setOfInferences)
+    _setOfInferences(pOther._setOfInferences),
+    _currentGoalPtr(pOther._currentGoalPtr)
 {
 }
 
@@ -538,25 +539,28 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
     const std::function<bool(Goal&, int)>& pManageGoal,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool firstGoal = true;
+  bool isCurrentlyActiveGoal = true;
   WhatChanged whatChanged;
   for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
   {
     --itGoalsGroup;
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
-      bool wasInactiveForTooLong = firstGoal ? false : itGoal->isInactiveForTooLong(pNow);
+      bool wasInactiveForTooLong = isCurrentlyActiveGoal ? false : itGoal->isInactiveForTooLong(pNow);
 
-      auto* goalConditionFactPtr = itGoal->conditionFactOptionalPtr();
-      if (goalConditionFactPtr == nullptr ||
-          isOptionalFactSatisfied(*goalConditionFactPtr))
+      if (!isGoalSatisfied(*itGoal))
       {
-        firstGoal = false;
+        _currentGoalPtr = &*itGoal;
         if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
         {
           _notifyWhatChanged(whatChanged, pNow);
           return;
         }
+        isCurrentlyActiveGoal = false;
+      }
+      else if (_currentGoalPtr == &*itGoal)
+      {
+        isCurrentlyActiveGoal = false;
       }
 
       if (itGoal->isPersistent() && !wasInactiveForTooLong)
@@ -583,6 +587,7 @@ void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals,
 {
   if (_goals != pGoals)
   {
+    _currentGoalPtr = nullptr;
     _goals = pGoals;
     WhatChanged whatChanged;
     whatChanged.goals = true;
@@ -729,13 +734,10 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
 }
 
 
-void Problem::removeFirstGoalsThatAreAlreadySatisfied()
+void Problem::removeFirstGoalsThatAreAlreadySatisfied(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  auto isGoalNotAlreadySatisfied = [&](const Goal& pGoal, int){
-    return !isOptionalFactSatisfied(pGoal.factOptional());
-  };
-
-  iterateOnGoalsAndRemoveNonPersistent(isGoalNotAlreadySatisfied, {});
+  auto alwaysTrue = [&](const Goal&, int){ return true; };
+  iterateOnGoalsAndRemoveNonPersistent(alwaysTrue, {});
 }
 
 
