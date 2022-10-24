@@ -739,6 +739,25 @@ void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 }
 
 
+std::map<int, std::vector<Goal>> Problem::getNotSatisfiedGoals() const
+{
+  std::map<int, std::vector<Goal>> res;
+  for (auto& currGoalWithPriority : _goals)
+  {
+    for (auto& currGoal : currGoalWithPriority.second)
+    {
+      auto* factOptPtr = currGoal.conditionFactOptionalPtr();
+      if ((factOptPtr == nullptr || isOptionalFactSatisfied(*factOptPtr)) &&
+          !isOptionalFactSatisfied(currGoal.factOptional()))
+      {
+        res[currGoalWithPriority.first].push_back(currGoal);
+      }
+    }
+  }
+  return res;
+}
+
+
 void Problem::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
 {
   auto it = _setOfInferences.find(pSetOfInferencesId);

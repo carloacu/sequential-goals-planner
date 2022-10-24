@@ -1403,6 +1403,38 @@ void _testQuiz()
 }
 
 
+void _testGetNotSatisfiedGoals()
+{
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
+  std::map<std::string, cp::Action> actions;
+  cp::Domain domain(std::move(actions));
+
+  auto goal1 = "persist(!" + _fact_a + ")";
+  auto goal2 = "persist(" + _fact_b + ")";
+  auto goal3 = "imply(" + _fact_c + ", " + _fact_d + ")";
+  auto goal4 = "persist(imply(!" + _fact_c + ", " + _fact_d + "))";
+
+  cp::Problem problem;
+  problem.addGoals({goal1}, now, cp::Problem::defaultPriority + 1);
+  problem.addGoals({goal2, goal3, goal4}, {});
+
+  assert_eq(goal1 + ", " + goal2 + ", " + goal3 + ", " + goal4, cp::printGoals(problem.goals()));
+  assert_eq(goal2 + ", " + goal4, cp::printGoals(problem.getNotSatisfiedGoals()));
+  problem.addFact(_fact_a, {});
+  assert_eq(goal1 + ", " + goal2 + ", " + goal4, cp::printGoals(problem.getNotSatisfiedGoals()));
+  problem.addFact(_fact_c, {});
+  assert_eq(goal1 + ", " + goal2 + ", " + goal3, cp::printGoals(problem.getNotSatisfiedGoals()));
+  problem.addFact(_fact_d, {});
+  assert_eq(goal1 + ", " + goal2, cp::printGoals(problem.getNotSatisfiedGoals()));
+  problem.removeFact(_fact_a, {});
+  assert_eq(goal2, cp::printGoals(problem.getNotSatisfiedGoals()));
+  problem.addFact(_fact_b, {});
+  assert_eq<std::string>("", cp::printGoals(problem.getNotSatisfiedGoals()));
+  problem.removeFact(_fact_d, {});
+  assert_eq(goal3, cp::printGoals(problem.getNotSatisfiedGoals()));
+}
+
+
 }
 
 
@@ -1469,6 +1501,7 @@ int main(int argc, char *argv[])
   _checkInferenceThatAddAGoal();
   _checkThatUnReachableCannotTriggeranInference();
   _testQuiz();
+  _testGetNotSatisfiedGoals();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

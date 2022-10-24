@@ -270,6 +270,13 @@ struct CONTEXTUALPLANNER_API Problem
   /// Goals to satisfy.
   const std::map<int, std::vector<Goal>>& goals() const { return _goals; }
 
+  /**
+   * @brief Get the not satisfied goals.<br/>
+   * A goal is not satisfied if the condtion is true (if it exist) and if the value of the goal is not true.
+   * @return Map of priority to not satisfied goals.
+   */
+  std::map<int, std::vector<Goal>> getNotSatisfiedGoals() const;
+
 
   // Inferences
   // ----------

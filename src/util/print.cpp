@@ -99,9 +99,26 @@ std::list<std::string> printResolutionPlan(
 }
 
 
-std::string printGoals(std::size_t pGoalNameMaxSize,
-                       const Problem& pProblem,
-                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+std::string printGoals(const std::map<int, std::vector<Goal>>& pGoals)
+{
+  std::string res;
+  for (auto itGoalsGroup = pGoals.end(); itGoalsGroup != pGoals.begin(); )
+  {
+    --itGoalsGroup;
+    for (auto& currGoal : itGoalsGroup->second)
+    {
+      if (!res.empty())
+        res += ", ";
+      res += currGoal.toStr();
+    }
+  }
+  return res;
+}
+
+
+std::string printGoalsTable(std::size_t pGoalNameMaxSize,
+                            const std::map<int, std::vector<Goal>>& pGoals,
+                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   std::stringstream res;
 
@@ -127,8 +144,7 @@ std::string printGoals(std::size_t pGoalNameMaxSize,
   std::string separator(pGoalNameMaxSize + prioritySize + stackTimeSize + maxStackTimeSize, '-');
   res << separator << "\n";
 
-  auto& goals = pProblem.goals();
-  for (auto itGoalsGroup = goals.end(); itGoalsGroup != goals.begin(); )
+  for (auto itGoalsGroup = pGoals.end(); itGoalsGroup != pGoals.begin(); )
   {
     --itGoalsGroup;
     for (auto& currGoal : itGoalsGroup->second)
