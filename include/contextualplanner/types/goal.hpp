@@ -85,8 +85,9 @@ private:
   /// Fact that can be negated that is contained in this goal.
   FactOptional _factOptional;
   /**
-   * The maximum time that we allow for this goal to be inactive.<b/>
-   * A negative value means that the time is infinite.
+   * The maximum time that we allow for this goal to be inactive.<br/>
+   * A negative value means that the time is infinite.<br/>
+   * A goal is inactive if the there is a not satisfied goal upper in the stack of goals of a problem.
    */
   int _maxTimeToKeepInactive;
   /// Time when this goal became inactive. It is a null pointer if the goal is active.

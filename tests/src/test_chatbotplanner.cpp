@@ -234,6 +234,16 @@ void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
 }
 
 
+void _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal()
+{
+  cp::Problem problem;
+  assert_eq<std::size_t>(0u, problem.goals().size());
+  problem.pushBackGoal(cp::Goal("persist(!" + _fact_a + ")"), {}, 10);
+  assert_eq<std::size_t>(1u, problem.goals().size());
+  problem.pushBackGoal(cp::Goal(_fact_checkedIn, 0), {}, 9);
+  assert_eq<std::size_t>(2u, problem.goals().size());
+}
+
 void _noPreconditionGoalImmediatlyReached()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
@@ -1448,6 +1458,7 @@ int main(int argc, char *argv[])
   _test_goalToStr();
   _test_setOfFactsFromStr();
   _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0();
+  _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal();
   _noPreconditionGoalImmediatlyReached();
   _removeFirstGoalsThatAreAlreadySatisfied();
   _removeAnAction();

@@ -267,12 +267,20 @@ struct CONTEXTUALPLANNER_API Problem
   /// Remove the first goals that are already satisfied.
   void removeFirstGoalsThatAreAlreadySatisfied();
 
+  /**
+   * @brief Check if a goal is satisfied.<br/>
+   * A goal is not satisfied if the condition is true (if it exist) and if the value of the goal is not true.
+   * @param pGoal Goal to check.
+   * @return True if the goal is satisfied.
+   */
+  bool isGoalSatisfied(const Goal& pGoal) const;
+
   /// Goals to satisfy.
   const std::map<int, std::vector<Goal>>& goals() const { return _goals; }
 
   /**
    * @brief Get the not satisfied goals.<br/>
-   * A goal is not satisfied if the condtion is true (if it exist) and if the value of the goal is not true.
+   * A goal is not satisfied if the condition is true (if it exist) and if the value of the goal is not true.
    * @return Map of priority to not satisfied goals.
    */
   std::map<int, std::vector<Goal>> getNotSatisfiedGoals() const;

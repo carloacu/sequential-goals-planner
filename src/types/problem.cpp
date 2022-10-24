@@ -739,21 +739,20 @@ void Problem::removeFirstGoalsThatAreAlreadySatisfied()
 }
 
 
+bool Problem::isGoalSatisfied(const Goal& pGoal) const
+{
+  auto* condFactOptPtr = pGoal.conditionFactOptionalPtr();
+  return (condFactOptPtr != nullptr && !isOptionalFactSatisfied(*condFactOptPtr)) ||
+      isOptionalFactSatisfied(pGoal.factOptional());
+}
+
 std::map<int, std::vector<Goal>> Problem::getNotSatisfiedGoals() const
 {
   std::map<int, std::vector<Goal>> res;
   for (auto& currGoalWithPriority : _goals)
-  {
     for (auto& currGoal : currGoalWithPriority.second)
-    {
-      auto* factOptPtr = currGoal.conditionFactOptionalPtr();
-      if ((factOptPtr == nullptr || isOptionalFactSatisfied(*factOptPtr)) &&
-          !isOptionalFactSatisfied(currGoal.factOptional()))
-      {
+      if (!isGoalSatisfied(currGoal))
         res[currGoalWithPriority.first].push_back(currGoal);
-      }
-    }
-  }
   return res;
 }
 
@@ -774,7 +773,7 @@ void Problem::_removeNoStackableGoals(WhatChanged& pWhatChanged,
     --itGoalsGroup;
     for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
     {
-      if (itGoal->conditionFactOptionalPtr() != nullptr && !isOptionalFactSatisfied(*itGoal->conditionFactOptionalPtr()))
+      if (isGoalSatisfied(*itGoal))
       {
         ++itGoal;
         continue;
