@@ -43,14 +43,14 @@ struct CONTEXTUALPLANNER_API Fact
 
   /**
    * @brief Is it a punctual fact.<br/>
-   * A punctual fact is a fact that is considered punctualy but not stored in the world.
+   * A punctual fact is a fact that is considered punctually but not stored in the world.
    * @return True if the fact is punctual.
    */
   bool isPunctual() const;
 
   /**
    * @brief Is it an unreachable fact.<br/>
-   * An unreachable fact is a fact that is neither considered punctualy nor stored in the world.
+   * An unreachable fact is a fact that is neither considered punctually nor stored in the world.
    * @return True if the fact is punctual.
    */
   bool isUnreachable() const;
@@ -133,9 +133,9 @@ struct CONTEXTUALPLANNER_API Fact
   const static std::string anyValue;
   /// Constant defining the "any value" special fact.
   const static FactOptional anyValueFact;
-  /// Prefix to detect a punctual fact. (= fact that is considered punctualy but not stored in the world)
+  /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)
   static std::string punctualPrefix;
-  /// Prefix to detect a unreachable fact. (= fact that is neither considered punctualy nor stored in the world)
+  /// Prefix to detect a unreachable fact. (= fact that is neither considered punctually nor stored in the world)
   static std::string unreachablePrefix;
 };
 
