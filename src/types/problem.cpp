@@ -640,9 +640,10 @@ void Problem::pushFrontGoal(const Goal& pGoal,
                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                             int pPriority)
 {
+  WhatChanged whatChanged;
   auto& existingGoals = _goals[pPriority];
   existingGoals.insert(existingGoals.begin(), pGoal);
-  WhatChanged whatChanged;
+  whatChanged.goals = true;
   _removeNoStackableGoals(whatChanged, pNow);
   _notifyWhatChanged(whatChanged, pNow);
 }
@@ -651,9 +652,10 @@ void Problem::pushBackGoal(const Goal& pGoal,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                            int pPriority)
 {
+  WhatChanged whatChanged;
   auto& existingGoals = _goals[pPriority];
   existingGoals.push_back(pGoal);
-  WhatChanged whatChanged;
+  whatChanged.goals = true;
   _removeNoStackableGoals(whatChanged, pNow);
   _notifyWhatChanged(whatChanged, pNow);
 }
@@ -737,7 +739,7 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
 void Problem::removeFirstGoalsThatAreAlreadySatisfied(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   auto alwaysTrue = [&](const Goal&, int){ return true; };
-  iterateOnGoalsAndRemoveNonPersistent(alwaysTrue, {});
+  iterateOnGoalsAndRemoveNonPersistent(alwaysTrue, pNow);
 }
 
 

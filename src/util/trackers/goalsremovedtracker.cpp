@@ -7,7 +7,7 @@ namespace cp
 
 GoalsRemovedTracker::GoalsRemovedTracker(const Problem& pProblem)
   : _existingGoals(),
-    _onGoalsChangedConneection(
+    _onGoalsChangedConnection(
       pProblem.onGoalsChanged.connectUnsafe([this](const std::map<int, std::vector<Goal>>& pGoals) {
   std::set<std::string> newGoals;
   for (const auto& currGoals : pGoals)
@@ -30,7 +30,7 @@ GoalsRemovedTracker::GoalsRemovedTracker(const Problem& pProblem)
 
 GoalsRemovedTracker::~GoalsRemovedTracker()
 {
-  _onGoalsChangedConneection.disconnect();
+  _onGoalsChangedConnection.disconnect();
 }
 
 

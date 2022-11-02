@@ -306,10 +306,17 @@ void _removeSomeGoals()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
+  cp::GoalsRemovedTracker goalsRemovedTracker(problem);
+  std::set<std::string> goalsRemoved;
+  auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
+    goalsRemoved = pGoalsRemoved;
+  });
   problem.pushFrontGoal(cp::Goal(_fact_checkedIn, -1, goalGroupId), {});
   problem.pushFrontGoal(cp::Goal(_fact_greeted, -1, goalGroupId), {});
   assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq<std::size_t>(0, goalsRemoved.size());
   problem.removeGoals(goalGroupId, {});
+  assert_eq<std::size_t>(2, goalsRemoved.size());
   assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
 }
 

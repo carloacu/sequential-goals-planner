@@ -20,7 +20,7 @@ struct CONTEXTUALPLANNER_API GoalsRemovedTracker
 
 private:
   std::set<std::string> _existingGoals;
-  cpstd::observable::Connection _onGoalsChangedConneection;
+  cpstd::observable::Connection _onGoalsChangedConnection;
 };
 
 } // !cp
