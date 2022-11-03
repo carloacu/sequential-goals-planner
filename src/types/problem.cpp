@@ -588,11 +588,17 @@ void Problem::setGoals(const std::map<int, std::vector<Goal>>& pGoals,
   if (_goals != pGoals)
   {
     _currentGoalPtr = nullptr;
-    _goals = pGoals;
-    WhatChanged whatChanged;
-    whatChanged.goals = true;
-    _removeNoStackableGoals(whatChanged, pNow);
-    _notifyWhatChanged(whatChanged, pNow);
+    {
+      _goals = pGoals;
+      WhatChanged whatChanged;
+      whatChanged.goals = true;
+      _notifyWhatChanged(whatChanged, pNow);
+    }
+    {
+      WhatChanged whatChanged;
+      _removeNoStackableGoals(whatChanged, pNow);
+      _notifyWhatChanged(whatChanged, pNow);
+    }
   }
 }
 
@@ -626,11 +632,15 @@ void Problem::_addGoals(WhatChanged& pWhatChanged,
 {
   if (pGoals.empty())
     return;
-  for (auto& currGoals : pGoals)
   {
-    auto& existingGoals = _goals[currGoals.first];
-    existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
-    pWhatChanged.goals = true;
+    WhatChanged whatChanged;
+    for (auto& currGoals : pGoals)
+    {
+      auto& existingGoals = _goals[currGoals.first];
+      existingGoals.insert(existingGoals.begin(), currGoals.second.begin(), currGoals.second.end());
+      whatChanged.goals = true;
+    }
+    _notifyWhatChanged(whatChanged, pNow);
   }
   _removeNoStackableGoals(pWhatChanged, pNow);
 }
@@ -640,24 +650,37 @@ void Problem::pushFrontGoal(const Goal& pGoal,
                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                             int pPriority)
 {
-  WhatChanged whatChanged;
-  auto& existingGoals = _goals[pPriority];
-  existingGoals.insert(existingGoals.begin(), pGoal);
-  whatChanged.goals = true;
-  _removeNoStackableGoals(whatChanged, pNow);
-  _notifyWhatChanged(whatChanged, pNow);
+  {
+    auto& existingGoals = _goals[pPriority];
+    existingGoals.insert(existingGoals.begin(), pGoal);
+
+    WhatChanged whatChanged;
+    whatChanged.goals = true;
+    _notifyWhatChanged(whatChanged, pNow);
+  }
+  {
+    WhatChanged whatChanged;
+    _removeNoStackableGoals(whatChanged, pNow);
+    _notifyWhatChanged(whatChanged, pNow);
+  }
 }
 
 void Problem::pushBackGoal(const Goal& pGoal,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                            int pPriority)
 {
-  WhatChanged whatChanged;
-  auto& existingGoals = _goals[pPriority];
-  existingGoals.push_back(pGoal);
-  whatChanged.goals = true;
-  _removeNoStackableGoals(whatChanged, pNow);
-  _notifyWhatChanged(whatChanged, pNow);
+  {
+    WhatChanged whatChanged;
+    auto& existingGoals = _goals[pPriority];
+    existingGoals.push_back(pGoal);
+    whatChanged.goals = true;
+    _notifyWhatChanged(whatChanged, pNow);
+  }
+  {
+    WhatChanged whatChanged;
+    _removeNoStackableGoals(whatChanged, pNow);
+    _notifyWhatChanged(whatChanged, pNow);
+  }
 }
 
 
@@ -702,6 +725,7 @@ void Problem::changeGoalPriority(const std::string& pGoalStr,
       break;
     }
   }
+  _removeNoStackableGoals(whatChanged, pNow);
   _notifyWhatChanged(whatChanged, pNow);
 }
 

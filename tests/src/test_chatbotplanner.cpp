@@ -321,6 +321,47 @@ void _removeSomeGoals()
 }
 
 
+void _notifyGoalRemovedWhenItIsImmediatlyRemoved()
+{
+  cp::Problem problem;
+
+  cp::GoalsRemovedTracker goalsRemovedTracker(problem);
+  std::set<std::string> goalsRemoved;
+  auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
+    goalsRemoved = pGoalsRemoved;
+  });
+
+  problem.addGoals({{10, {_fact_a}}}, {});
+
+  problem.addGoals({{9, {cp::Goal(_fact_b, 0)}}}, {});
+  assert_eq<std::size_t>(1u, goalsRemoved.size());
+  assert_eq(_fact_b, *goalsRemoved.begin());
+  goalsRemoved.clear();
+
+  problem.pushBackGoal(cp::Goal(_fact_c, 0), {}, 9);
+  assert_eq<std::size_t>(1u, goalsRemoved.size());
+  assert_eq(_fact_c, *goalsRemoved.begin());
+  goalsRemoved.clear();
+
+  problem.pushFrontGoal(cp::Goal(_fact_d, 0), {}, 9);
+  assert_eq<std::size_t>(1u, goalsRemoved.size());
+  assert_eq(_fact_d, *goalsRemoved.begin());
+  goalsRemoved.clear();
+
+  problem.pushFrontGoal(cp::Goal(_fact_e, 0), {}, 11);
+  assert_eq<std::size_t>(0u, goalsRemoved.size());
+  problem.changeGoalPriority(_fact_e, 9, true, {});
+  assert_eq<std::size_t>(1u, goalsRemoved.size());
+  assert_eq(_fact_e, *goalsRemoved.begin());
+  goalsRemoved.clear();
+
+  problem.setGoals({{10, {cp::Goal(_fact_a, 0)}}, {9, {cp::Goal(_fact_b, 0)}}}, {});
+  assert_eq<std::size_t>(1u, goalsRemoved.size());
+  assert_eq(_fact_b, *goalsRemoved.begin());
+}
+
+
+
 void _handlePreconditionWithNegatedFacts()
 {
   std::map<std::string, cp::Action> actions;
@@ -1504,6 +1545,7 @@ int main(int argc, char *argv[])
   _removeFirstGoalsThatAreAlreadySatisfied();
   _removeAnAction();
   _removeSomeGoals();
+  _notifyGoalRemovedWhenItIsImmediatlyRemoved();
   _handlePreconditionWithNegatedFacts();
   _testWithNegatedAccessibleFacts();
   _noPlanWithALengthOf2();
