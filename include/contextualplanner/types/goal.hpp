@@ -17,7 +17,7 @@ struct CONTEXTUALPLANNER_API Goal
   /**
    * @brief Construct a goal.
    * @param pStr Serialized string corresponding to the fact contained in this goal.
-   * @param pMaxTimeToKeepInactive Max time to keep this goal not in the top of the goals stack.
+   * @param pMaxTimeToKeepInactive Max time in seconds to keep this goal not in the top of the goals stack.
    * @param pGoalGroupId Identifier of a group of goals.
    */
   Goal(const std::string& pStr,
@@ -85,7 +85,7 @@ private:
   /// Fact that can be negated that is contained in this goal.
   FactOptional _factOptional;
   /**
-   * The maximum time that we allow for this goal to be inactive.<br/>
+   * The maximum time that we allow for this goal to be inactive in second.<br/>
    * A negative value means that the time is infinite.<br/>
    * A goal is inactive if the there is a not satisfied goal upper in the stack of goals of a problem.
    */

@@ -156,14 +156,15 @@ struct PlannerResult
 };
 
 PlannerResult _lookForAnActionToDoThenNotify(cp::Problem& pProblem,
-                                             const cp::Domain& pDomain)
+                                             const cp::Domain& pDomain,
+                                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
   PlannerResult res;
-  res.actionId = cp::lookForAnActionToDo(res.parameters, pProblem, pDomain, {}, &res.goal, &res.priority);
+  res.actionId = cp::lookForAnActionToDo(res.parameters, pProblem, pDomain, pNow, &res.goal, &res.priority);
 
   auto itAction = pDomain.actions().find(res.actionId);
   if (itAction != pDomain.actions().end())
-    pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effect.factsModifications, {},
+    pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effect.factsModifications, pNow,
                               &itAction->second.effect.goalsToAdd);
   return res;
 }
@@ -1497,10 +1498,12 @@ void _testGetNotSatisfiedGoals()
 void _testGoalUnderPersist()
 {
   const std::string action1 = "action1";
+  const std::string action2 = "action2";
 
-  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, {_fact_b}));
+  actions.emplace(action2, cp::Action({}, {_fact_c}));
   cp::Domain domain(std::move(actions));
 
   {
@@ -1525,6 +1528,58 @@ void _testGoalUnderPersist()
     problem.addFact(_fact_a, now);
     assert_eq<std::string>("", _lookForAnActionToDo(problem, domain));
   }
+
+  {
+    cp::Problem problem;
+    problem.addGoals({"persist(" + _fact_c + ")"}, now, cp::Problem::defaultPriority + 2);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+    assert_eq<std::string>("", _lookForAnActionToDo(problem, domain));
+    problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
+    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+  }
+
+  {
+    cp::Problem problem;
+    problem.addGoals({"persist(" + _fact_c + ")"}, now, cp::Problem::defaultPriority + 2);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+    problem.removeFirstGoalsThatAreAlreadySatisfied({});
+    problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
+    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+  }
+
+  {
+    cp::Problem problem;
+    problem.addGoals({_fact_c}, now, cp::Problem::defaultPriority + 2);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+    problem.removeFirstGoalsThatAreAlreadySatisfied({});
+    problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
+    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+  }
+
+  {
+    cp::Problem problem;
+    problem.pushBackGoal({"persist(!" + _fact_e + ")"}, now, cp::Problem::defaultPriority + 2);
+    problem.pushBackGoal(_fact_c, now, cp::Problem::defaultPriority + 2);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionId);
+    problem.removeFirstGoalsThatAreAlreadySatisfied(now);
+    problem.addGoals({cp::Goal(_fact_b, 1)}, now, cp::Problem::defaultPriority);
+    assert_eq(action1, _lookForAnActionToDo(problem, domain, now));
+    assert_eq(action1, _lookForAnActionToDo(problem, domain, now));
+
+    problem.removeFact(_fact_c, now);
+    problem.pushBackGoal(_fact_c, now, cp::Problem::defaultPriority + 2);
+    assert_eq(action2, _lookForAnActionToDo(problem, domain, now));
+
+    now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now() + std::chrono::minutes(5));
+    auto itAction = domain.actions().find(action2);
+    if (itAction != domain.actions().end())
+      problem.notifyActionDone(action2, {}, itAction->second.effect.factsModifications, now,
+                                &itAction->second.effect.goalsToAdd);
+
+    problem.removeFirstGoalsThatAreAlreadySatisfied(now);
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionId); // Not action1 because it was inactive for too long
+  }
+
 }
 
 }

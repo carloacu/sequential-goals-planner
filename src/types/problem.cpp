@@ -551,6 +551,7 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
       if (!isGoalSatisfied(*itGoal))
       {
         _currentGoalPtr = &*itGoal;
+        // Check if we are still in this goal
         if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
         {
           _notifyWhatChanged(whatChanged, pNow);
@@ -578,6 +579,10 @@ void Problem::iterateOnGoalsAndRemoveNonPersistent(
     if (itGoalsGroup->second.empty())
       itGoalsGroup = _goals.erase(itGoalsGroup);
   }
+  // If a goal was activated, but it is not anymore, and we did not find any other active goal
+  // then we do not consider anymore the previously activited goal as an activated goal
+  if (!isCurrentlyActiveGoal)
+    _currentGoalPtr = nullptr;
   _notifyWhatChanged(whatChanged, pNow);
 }
 
