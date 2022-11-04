@@ -22,6 +22,10 @@ const std::string _fact_f = "fact_f";
 const std::string _fact_g = "fact_g";
 const std::string _fact_unreachable_u1 = cp::Fact::unreachablePrefix + "fact_u1";
 const std::string _fact_punctual_p1 = cp::Fact::punctualPrefix + "fact_p1";
+const std::string _fact_punctual_p2 = cp::Fact::punctualPrefix + "fact_p2";
+const std::string _fact_punctual_p3 = cp::Fact::punctualPrefix + "fact_p3";
+const std::string _fact_punctual_p4 = cp::Fact::punctualPrefix + "fact_p4";
+const std::string _fact_punctual_p5 = cp::Fact::punctualPrefix + "fact_p5";
 const std::string _fact_advertised = "advertised";
 const std::string _fact_beginOfConversation = "begin_of_conversation";
 const std::string _fact_presented = "presented";
@@ -1582,6 +1586,28 @@ void _testGoalUnderPersist()
 
 }
 
+
+void _checkLinkedInferences()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(_action_checkIn, cp::Action({}, cp::WorldModification({ _fact_punctual_checkedIn })));
+
+  auto setOfInferences = std::make_shared<cp::SetOfInferences>();
+  cp::Problem problem;
+  problem.addSetOfInferences("soi", setOfInferences);
+  _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
+  setOfInferences->addInference("inference1", cp::Inference({_fact_punctual_p2}, {_fact_a}));
+  setOfInferences->addInference("inference2", cp::Inference({_fact_punctual_p5}, {_fact_punctual_p2, _fact_punctual_p3}));
+  setOfInferences->addInference("inference3", cp::Inference({_fact_punctual_p4}, {_fact_punctual_p5, _fact_punctual_p1}));
+
+  assert_false(problem.hasFact(_fact_a));
+  problem.addFact(_fact_punctual_p4, now);
+  assert_true(problem.hasFact(_fact_a));
+}
+
+
 }
 
 
@@ -1652,6 +1678,7 @@ int main(int argc, char *argv[])
   _testQuiz();
   _testGetNotSatisfiedGoals();
   _testGoalUnderPersist();
+  _checkLinkedInferences();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

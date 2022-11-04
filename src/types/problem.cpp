@@ -205,7 +205,7 @@ void Problem::_addFacts(WhatChanged& pWhatChanged,
     if (currFact.isPunctual())
     {
       pWhatChanged.punctualFacts.insert(currFact);
-      break;
+      continue;
     }
     if (_facts.count(currFact) > 0)
       continue;
