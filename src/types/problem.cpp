@@ -201,7 +201,7 @@ void Problem::_addFacts(WhatChanged& pWhatChanged,
   for (const auto& currFact : pFacts)
   {
     if (currFact.isUnreachable())
-      break;
+      continue;
     if (currFact.isPunctual())
     {
       pWhatChanged.punctualFacts.insert(currFact);
