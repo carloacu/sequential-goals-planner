@@ -1,6 +1,18 @@
 # Contextual Planner
 
 
+## To build
+
+:warning: Replace `${CONTEXTUAL_PLANNER_ROOT_OF_REPOSITORY}` by the root of contextual planner repository.
+
+```bash
+cd ${CONTEXTUAL_PLANNER_ROOT_OF_REPOSITORY}
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ../ && make -j4
+```
+
+
 ## Description
 
 This is C++14 library to do plannification adapted for social context.<br/>
