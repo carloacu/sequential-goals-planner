@@ -3,6 +3,7 @@
 
 #include "api.hpp"
 #include <map>
+#include <string>
 
 namespace cp
 {
