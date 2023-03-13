@@ -12,18 +12,6 @@ namespace cp
 {
 
 /**
- * @brief Print an action identifier with his parameters.
- * @param pActionId Action identifier.
- * @param pParameters his parameters.
- * @return String containing the action identifier with his parameters.
- */
-CONTEXTUALPLANNER_API
-std::string printActionIdWithParameters(
-    const std::string& pActionId,
-    const std::map<std::string, std::string>& pParameters);
-
-
-/**
  * @brief Print the goals separated by ", ".
  * @param pGoals Goals to print.
  * @return The string of printed goals.

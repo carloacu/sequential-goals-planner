@@ -85,11 +85,11 @@ void assert_false(const TYPE& pValue)
 }
 
 
-std::string _listOfActionsToStr(const std::list<cp::ActionWithHisParameters>& pActions)
+std::string _listOfActionsToStr(const std::list<cp::ActionInstance>& pActions)
 {
   auto size = pActions.size();
   if (size == 1)
-    return cp::printActionIdWithParameters(pActions.front().actionId, pActions.front().parameters);
+    return pActions.front().toStr();
   std::string res;
   bool firstIteration = true;
   for (const auto& currAction : pActions)
@@ -98,7 +98,7 @@ std::string _listOfActionsToStr(const std::list<cp::ActionWithHisParameters>& pA
       firstIteration = false;
     else
       res += _sep;
-    res += cp::printActionIdWithParameters(currAction.actionId, currAction.parameters);
+    res += currAction.toStr();
   }
   return res;
 }
@@ -122,55 +122,60 @@ std::string _solveStr(cp::Problem& pProblem,
   return _listOfActionsToStr(cp::lookForResolutionPlan(pProblem, domain, pNow, pGlobalHistorical));
 }
 
-std::string _lookForAnActionToDo(
-    std::map<std::string, std::string>& pParameters,
-    cp::Problem& pProblem,
-    const cp::Domain& pDomain,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-    const cp::Historical* pGlobalHistorical = nullptr)
+cp::OneStepOfPlannerResult _lookForAnActionToDo(cp::Problem& pProblem,
+                                                const cp::Domain& pDomain,
+                                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                                const cp::Historical* pGlobalHistorical = nullptr)
 {
-  return cp::lookForAnActionToDo(pParameters, pProblem, pDomain, pNow, nullptr, nullptr, pGlobalHistorical);
+  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical);
+  if (oneStepOfPlannerResultPtr)
+    return *oneStepOfPlannerResultPtr;
+  return cp::OneStepOfPlannerResult("", {}, cp::Goal("noGoal"), 0);
 }
 
-std::string _lookForAnActionToDo(cp::Problem& pProblem,
-                                 const cp::Domain& pDomain,
-                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
-{
-  std::map<std::string, std::string> parameters;
-  auto actionId = cp::lookForAnActionToDo(parameters, pProblem, pDomain, pNow);
-  return cp::printActionIdWithParameters(actionId, parameters);
-}
-
-std::string _lookForAnActionToDoConst(const cp::Problem& pProblem,
-                                      const cp::Domain& pDomain)
+cp::OneStepOfPlannerResult _lookForAnActionToDoConst(const cp::Problem& pProblem,
+                                                     const cp::Domain& pDomain,
+                                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                                     const cp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  std::map<std::string, std::string> parameters;
-  auto actionId = _lookForAnActionToDo(parameters, problem, pDomain);
-  return cp::printActionIdWithParameters(actionId, parameters);
+  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(problem, pDomain, pNow, pGlobalHistorical);
+  if (oneStepOfPlannerResultPtr)
+    return *oneStepOfPlannerResultPtr;
+  return cp::OneStepOfPlannerResult("", {}, cp::Goal("noGoal"), 0);
 }
 
-
-struct PlannerResult
+std::string _lookForAnActionToDoStr(cp::Problem& pProblem,
+                                    const cp::Domain& pDomain,
+                                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                    const cp::Historical* pGlobalHistorical = nullptr)
 {
-  std::string actionId;
-  std::map<std::string, std::string> parameters;
-  const cp::Goal* goal = nullptr;
-  int priority = 0;
-};
+  return _lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical).actionInstance.toStr();
+}
 
-PlannerResult _lookForAnActionToDoThenNotify(cp::Problem& pProblem,
-                                             const cp::Domain& pDomain,
-                                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
+std::string _lookForAnActionToDoConstStr(const cp::Problem& pProblem,
+                                         const cp::Domain& pDomain,
+                                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                         const cp::Historical* pGlobalHistorical = nullptr)
 {
-  PlannerResult res;
-  res.actionId = cp::lookForAnActionToDo(res.parameters, pProblem, pDomain, pNow, &res.goal, &res.priority);
+  return _lookForAnActionToDoConst(pProblem, pDomain, pNow, pGlobalHistorical).actionInstance.toStr();
+}
 
-  auto itAction = pDomain.actions().find(res.actionId);
-  if (itAction != pDomain.actions().end())
-    pProblem.notifyActionDone(res.actionId, res.parameters, itAction->second.effect.factsModifications, pNow,
-                              &itAction->second.effect.goalsToAdd);
-  return res;
+cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
+    cp::Problem& pProblem,
+    const cp::Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
+{
+  auto res = cp::lookForAnActionToDo(pProblem, pDomain, pNow);
+  if (res)
+  {
+    auto itAction = pDomain.actions().find(res->actionInstance.actionId);
+    if (itAction != pDomain.actions().end())
+      pProblem.notifyActionDone(*res, itAction->second.effect.factsModifications, pNow,
+                                &itAction->second.effect.goalsToAdd);
+    return *res;
+  }
+  return cp::OneStepOfPlannerResult("", {}, cp::Goal("noGoal"), 0);
 }
 
 void _setGoalsForAPriority(cp::Problem& pProblem,
@@ -191,6 +196,7 @@ void _test_goalToStr()
 {
   assert_eq<std::string>("imply(condition, goal_name)", cp::Goal("imply(condition, goal_name)").toStr());
   assert_eq<std::string>("persist(imply(condition, goal_name))", cp::Goal("persist(imply(condition, goal_name))").toStr());
+  assert_eq<std::string>("onStepTowards(goal_name)", cp::Goal("onStepTowards(goal_name)").toStr());
 }
 
 void _test_setOfFactsFromStr()
@@ -258,7 +264,7 @@ void _noPreconditionGoalImmediatlyReached()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq(_action_goodBoy, _lookForAnActionToDo(problem, domain));
+  assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain));
   assert_true(!problem.goals().empty());
   assert_true(!problem.hasFact(_fact_beHappy));
   problem.addFact(_fact_beHappy, now);
@@ -276,9 +282,9 @@ void _removeFirstGoalsThatAreAlreadySatisfied()
   _setGoalsForAPriority(problem, {_fact_beHappy});
 
   auto plannerResult = _lookForAnActionToDoThenNotify(problem, domain);
-  assert_eq(_action_goodBoy, cp::printActionIdWithParameters(plannerResult.actionId, plannerResult.parameters));
-  assert_eq(_fact_beHappy, plannerResult.goal->toStr());
-  assert_eq(10, plannerResult.priority);
+  assert_eq(_action_goodBoy, plannerResult.actionInstance.toStr());
+  assert_eq(_fact_beHappy, plannerResult.fromGoal.toStr());
+  assert_eq(10, plannerResult.fromGoalPriority);
 
   assert_true(!problem.goals().empty());
   problem.removeFirstGoalsThatAreAlreadySatisfied({});
@@ -294,9 +300,9 @@ void _removeAnAction()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
   domain.removeAction(_action_goodBoy);
-  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain));
+  assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
 }
 
 
@@ -318,11 +324,11 @@ void _removeSomeGoals()
   });
   problem.pushFrontGoal(cp::Goal(_fact_checkedIn, -1, goalGroupId), {});
   problem.pushFrontGoal(cp::Goal(_fact_greeted, -1, goalGroupId), {});
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq<std::size_t>(0, goalsRemoved.size());
   problem.removeGoals(goalGroupId, {});
   assert_eq<std::size_t>(2, goalsRemoved.size());
-  assert_eq(_action_goodBoy, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
 }
 
 
@@ -377,7 +383,7 @@ void _handlePreconditionWithNegatedFacts()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_checkedIn});
-  auto actionToDo = _lookForAnActionToDo(problem, domain);
+  auto actionToDo = _lookForAnActionToDoStr(problem, domain);
   assert_true(actionToDo == _action_greet || actionToDo == _action_joke);
 }
 
@@ -398,9 +404,9 @@ void _testWithNegatedAccessibleFacts()
   cp::Problem problem;
   problem.setFacts({_fact_a, _fact_b, _fact_c}, now);
   _setGoalsForAPriority(problem, {_fact_d});
-  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain));
+  assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
   problem.addFact(_fact_e, now);
-  assert_eq(action2, _lookForAnActionToDo(problem, domain));
+  assert_eq(action2, _lookForAnActionToDoStr(problem, domain));
 }
 
 
@@ -413,7 +419,7 @@ void _noPlanWithALengthOf2()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions));
 }
@@ -429,7 +435,7 @@ void _noPlanWithALengthOf3()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -445,7 +451,7 @@ void _2preconditions()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq(_action_checkIn, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_checkIn, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -461,7 +467,7 @@ void _2Goals()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -477,7 +483,7 @@ void _2UnrelatedGoals()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -493,7 +499,7 @@ void _impossibleGoal()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
-  assert_eq(_action_checkIn, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_checkIn, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
 }
@@ -512,19 +518,19 @@ void _privigelizeTheActionsThatHaveManyPreconditions()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
   problem.setFacts({_fact_hasQrCode}, now);
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithQrCode + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
   problem.setFacts({_fact_hasCheckInPasword}, now);
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithPassword + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
@@ -541,7 +547,7 @@ void _preconditionThatCannotBeSolved()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_true(_lookForAnActionToDo(problem, domain).empty());
+  assert_true(_lookForAnActionToDoStr(problem, domain).empty());
 }
 
 
@@ -675,7 +681,7 @@ void _goDoTheActionThatHaveTheMostPrerequisitValidated()
   cp::Problem problem;
   problem.setFacts({_fact_is_close}, now);
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq(_action_checkIn, _lookForAnActionToDo(problem, domain));
+  assert_eq(_action_checkIn, _lookForAnActionToDoStr(problem, domain));
 }
 
 
@@ -688,9 +694,9 @@ void _checkNotInAPrecondition()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted});
-  assert_eq(_action_greet, _lookForAnActionToDoConst(problem, domain));
+  assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   problem.modifyFacts({_fact_checkedIn}, now);
-  assert_eq(std::string(), _lookForAnActionToDoConst(problem, domain));
+  assert_eq(std::string(), _lookForAnActionToDoConstStr(problem, domain));
 }
 
 
@@ -775,7 +781,7 @@ void _testIncrementOfVariables()
   for (std::size_t i = 0; i < 3; ++i)
   {
     _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
-    auto actionToDo = _lookForAnActionToDo(problem, domain);
+    auto actionToDo = _lookForAnActionToDoStr(problem, domain);
     if (i == 0 || i == 2)
       assert_eq<std::string>(_action_askQuestion1, actionToDo);
     else
@@ -790,13 +796,13 @@ void _testIncrementOfVariables()
   assert(problem.areFactsTrue(actionFinishToActActions.preconditions));
   assert(!problem.areFactsTrue(actionSayQuestionBilan.preconditions));
   _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
-  auto actionToDo = _lookForAnActionToDo(problem, domain);
+  auto actionToDo = _lookForAnActionToDoStr(problem, domain);
   assert_eq<std::string>(_action_finisehdToAskQuestions, actionToDo);
   problem.historical.notifyActionDone(actionToDo);
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
   problem.modifyFacts(itAction->second.effect.factsModifications, now);
-  assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDo(problem, domain));
+  assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDoStr(problem, domain));
   assert(problem.areFactsTrue(actionQ1.preconditions));
   assert(problem.areFactsTrue(actionFinishToActActions.preconditions));
   assert(problem.areFactsTrue(actionSayQuestionBilan.preconditions));
@@ -812,7 +818,7 @@ void _precoditionEqualEffect()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_true(_lookForAnActionToDo(problem, domain).empty());
+  assert_true(_lookForAnActionToDoStr(problem, domain).empty());
 }
 
 
@@ -827,7 +833,7 @@ void _circularDependencies()
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
-  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain));
+  assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
 }
 
 
@@ -1218,7 +1224,7 @@ void _factChangedNotification()
   assert_eq({}, factsChangedFromSubscription);
 
   auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
-  assert_eq<std::string>(_action_greet, plannerResult.actionId);
+  assert_eq<std::string>(_action_greet, plannerResult.actionInstance.actionId);
   assert_eq({_fact_beginOfConversation, _fact_greeted}, factsChangedFromSubscription);
   assert_eq({}, punctualFactsAdded);
   assert_eq({_fact_greeted}, factsAdded);
@@ -1226,7 +1232,7 @@ void _factChangedNotification()
   assert_eq({}, factsRemoved);
 
   plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
-  assert_eq<std::string>(_action_checkIn, plannerResult.actionId);
+  assert_eq<std::string>(_action_checkIn, plannerResult.actionInstance.actionId);
   assert_eq({_fact_beginOfConversation, _fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
   assert_eq({_fact_punctual_p1}, punctualFactsAdded);
   assert_eq({_fact_checkedIn}, factsAdded);
@@ -1408,19 +1414,19 @@ void _checkThatUnReachableCannotTriggeranInference()
   _setGoalsForAPriority(problem, {_fact_a});
   problem.addSetOfInferences(soi, setOfInferences);
   setOfInferences->addInference(inference1, cp::Inference({_fact_unreachable_u1}, { _fact_a }));
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   assert_true(!problem.hasFact(_fact_unreachable_u1));
   assert_true(!problem.hasFact(_fact_a));
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   // check inferences removal
   problem.removeSetOfInferences(soi);
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   _setGoalsForAPriority(problem, {_fact_a});
   problem.addSetOfInferences(soi, setOfInferences);
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   setOfInferences->removeInference(inference1);
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionId);
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
 }
 
 
@@ -1450,7 +1456,7 @@ void _testQuiz()
   problem.modifyFacts(initFacts, now);
   for (std::size_t i = 0; i < 3; ++i)
   {
-    auto actionToDo = _lookForAnActionToDo(problem, domain);
+    auto actionToDo = _lookForAnActionToDoStr(problem, domain);
     if (i == 0 || i == 2)
       assert_eq<std::string>(_action_askQuestion1, actionToDo);
     else
@@ -1461,7 +1467,7 @@ void _testQuiz()
     problem.modifyFacts(itAction->second.effect.factsModifications, now);
   }
 
-  auto actionToDo = _lookForAnActionToDo(problem, domain);
+  auto actionToDo = _lookForAnActionToDoStr(problem, domain);
   assert_eq(_action_sayQuestionBilan, actionToDo);
 }
 
@@ -1514,7 +1520,7 @@ void _testGoalUnderPersist()
     cp::Problem problem;
     problem.addGoals({"persist(!" + _fact_a + ")"}, now, cp::Problem::defaultPriority + 2);
     problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
-    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+    assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
@@ -1522,7 +1528,7 @@ void _testGoalUnderPersist()
     problem.addGoals({"persist(!" + _fact_a + ")"}, now, cp::Problem::defaultPriority + 2);
     problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
     problem.removeFirstGoalsThatAreAlreadySatisfied({});
-    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+    assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
@@ -1530,58 +1536,59 @@ void _testGoalUnderPersist()
     problem.addGoals({"persist(!" + _fact_a + ")"}, now, cp::Problem::defaultPriority + 2);
     problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
     problem.addFact(_fact_a, now);
-    assert_eq<std::string>("", _lookForAnActionToDo(problem, domain));
+    assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     cp::Problem problem;
     problem.addGoals({"persist(" + _fact_c + ")"}, now, cp::Problem::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionId);
-    assert_eq<std::string>("", _lookForAnActionToDo(problem, domain));
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
+    assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain));
     problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
-    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+    assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     cp::Problem problem;
     problem.addGoals({"persist(" + _fact_c + ")"}, now, cp::Problem::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
     problem.removeFirstGoalsThatAreAlreadySatisfied({});
     problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
-    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+    assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     cp::Problem problem;
     problem.addGoals({_fact_c}, now, cp::Problem::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionId);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
     problem.removeFirstGoalsThatAreAlreadySatisfied({});
     problem.addGoals({cp::Goal(_fact_b, 0)}, now, cp::Problem::defaultPriority);
-    assert_eq(action1, _lookForAnActionToDo(problem, domain));
+    assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     cp::Problem problem;
     problem.pushBackGoal({"persist(!" + _fact_e + ")"}, now, cp::Problem::defaultPriority + 2);
     problem.pushBackGoal(_fact_c, now, cp::Problem::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionId);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
     problem.removeFirstGoalsThatAreAlreadySatisfied(now);
     problem.addGoals({cp::Goal(_fact_b, 1)}, now, cp::Problem::defaultPriority);
-    assert_eq(action1, _lookForAnActionToDo(problem, domain, now));
-    assert_eq(action1, _lookForAnActionToDo(problem, domain, now));
+    assert_eq(action1, _lookForAnActionToDoStr(problem, domain, now));
+    assert_eq(action1, _lookForAnActionToDoStr(problem, domain, now));
 
     problem.removeFact(_fact_c, now);
     problem.pushBackGoal(_fact_c, now, cp::Problem::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDo(problem, domain, now));
+    auto plannerResult = _lookForAnActionToDo(problem, domain, now);
+    assert_eq(action2, plannerResult.actionInstance.actionId);
 
     now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now() + std::chrono::minutes(5));
     auto itAction = domain.actions().find(action2);
     if (itAction != domain.actions().end())
-      problem.notifyActionDone(action2, {}, itAction->second.effect.factsModifications, now,
+      problem.notifyActionDone(plannerResult, itAction->second.effect.factsModifications, now,
                                 &itAction->second.effect.goalsToAdd);
 
     problem.removeFirstGoalsThatAreAlreadySatisfied(now);
-    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionId); // Not action1 because it was inactive for too long
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId); // Not action1 because it was inactive for too long
   }
 
 }
@@ -1605,6 +1612,33 @@ void _checkLinkedInferences()
   assert_false(problem.hasFact(_fact_a));
   problem.addFact(_fact_punctual_p4, now);
   assert_true(problem.hasFact(_fact_a));
+}
+
+
+
+void _onStepTowards()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<cp::ActionId, cp::Action> actions;
+  cp::WorldModification greetWordModification;
+  greetWordModification.potentialFactsModifications = cp::SetOfFacts::fromStr(_fact_greeted, '\n');
+  actions.emplace(_action_greet, cp::Action({}, greetWordModification));
+  actions.emplace(_action_goodBoy, cp::Action({}, {_fact_beHappy}));
+  static const std::string actionb = "actionb";
+  actions.emplace(actionb, cp::Action({}, {_fact_b}));
+  cp::Domain domain(std::move(actions));
+
+  cp::Problem problem;
+  problem.setGoals({{11, {cp::Goal("persist(imply(" + _fact_a + ", " + _fact_b + ")", 0)}},
+                    {10, {cp::Goal("onStepTowards(" + _fact_greeted + ")", 0)}},
+                    {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
+  problem.removeFirstGoalsThatAreAlreadySatisfied(now);
+  assert_eq(_action_greet, _lookForAnActionToDoStr(problem, domain, now));
+  assert_eq(_action_greet, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, now));
+  assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, now));
+  problem.addFact(_fact_a, now);
+  assert_eq(actionb, _lookForAnActionToDoStr(problem, domain, now));
 }
 
 
@@ -1679,6 +1713,7 @@ int main(int argc, char *argv[])
   _testGetNotSatisfiedGoals();
   _testGoalUnderPersist();
   _checkLinkedInferences();
+  _onStepTowards();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

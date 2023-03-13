@@ -42,30 +42,6 @@ void _limiteSizeStr(std::string& pStr, std::size_t pMaxSize)
 }
 
 
-
-std::string printActionIdWithParameters(
-    const std::string& pActionId,
-    const std::map<std::string, std::string>& pParameters)
-{
-  std::string res = pActionId;
-  if (!pParameters.empty())
-  {
-    res += "(";
-    bool firstIeration = true;
-    for (const auto& currParam : pParameters)
-    {
-      if (firstIeration)
-        firstIeration = false;
-      else
-        res += ", ";
-      res += currParam.first + " -> " + currParam.second;
-    }
-    res += ")";
-  }
-  return res;
-}
-
-
 std::string printGoals(const std::map<int, std::vector<Goal>>& pGoals)
 {
   std::string res;

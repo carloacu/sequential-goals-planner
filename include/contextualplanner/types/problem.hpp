@@ -18,6 +18,7 @@ namespace cp
 struct Domain;
 struct WorldModification;
 struct SetOfInferences;
+struct OneStepOfPlannerResult;
 
 
 /// Current world, goal for the world and historical of actions done.
@@ -30,14 +31,12 @@ struct CONTEXTUALPLANNER_API Problem
 
   /**
    * @brief Notify that an action has been done.
-   * @param pActionId Action identifier.
-   * @param pParameters Parameters of the action done.
+   * @param[in] pOnStepOfPlannerResult Planner result step that motivated this action.
    * @param pEffect Effect of the action done.
    * @param pNow Current time.
    * @param pGoalsToAdd Goals to add.
    */
-  void notifyActionDone(const std::string& pActionId,
-                        const std::map<std::string, std::string>& pParameters,
+  void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
                         const SetOfFacts& pEffect,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                         const std::map<int, std::vector<Goal>>* pGoalsToAdd);
@@ -363,6 +362,16 @@ private:
     /// Has some facts to add or to remove.
     bool hasFactsModifications() const { return !addedFacts.empty() || !removedFacts.empty(); }
   };
+
+  /**
+   * @brief Iterate on goals and remove non persistent goals.
+   * @param[out] pWhatChanged Get what changed.
+   * @param pManageGoal Callback to manage the goal. If the callback returns true we stop the iteration.
+   * @param[in] pNow Current time.
+   */
+  void _iterateOnGoalsAndRemoveNonPersistent(WhatChanged& pWhatChanged,
+                                             const std::function<bool (Goal&, int)>& pManageGoal,
+                                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Add facts without raising a notification.

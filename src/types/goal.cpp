@@ -6,6 +6,7 @@ namespace cp
 {
 const std::string Goal::persistFunctionName = "persist";
 const std::string Goal::implyFunctionName = "imply";
+const std::string Goal::onStepTowardsFunctionName = "onStepTowards";
 
 
 Goal::Goal(const std::string& pStr,
@@ -15,6 +16,7 @@ Goal::Goal(const std::string& pStr,
     _maxTimeToKeepInactive(pMaxTimeToKeepInactive),
     _inactiveSince(),
     _isPersistentIfSkipped(false),
+    _onStepTowards(false),
     _conditionFactPtr(),
     _goalGroupId(pGoalGroupId)
 {
@@ -23,6 +25,16 @@ Goal::Goal(const std::string& pStr,
       _factOptional.fact.value.empty())
   {
     _isPersistentIfSkipped = true;
+    // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
+    auto factFirstParameters = std::move(_factOptional.fact.parameters.front());
+    _factOptional = std::move(factFirstParameters);
+  }
+
+  if (_factOptional.fact.name == onStepTowardsFunctionName &&
+      _factOptional.fact.parameters.size() == 1 &&
+      _factOptional.fact.value.empty())
+  {
+    _onStepTowards = true;
     // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
     auto factFirstParameters = std::move(_factOptional.fact.parameters.front());
     _factOptional = std::move(factFirstParameters);
@@ -46,6 +58,7 @@ Goal::Goal(const Goal& pOther)
     _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),
     _inactiveSince(pOther._inactiveSince ? std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince) : std::unique_ptr<std::chrono::steady_clock::time_point>()),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
+    _onStepTowards(pOther._onStepTowards),
     _conditionFactPtr(pOther._conditionFactPtr ? std::make_unique<FactOptional>(*pOther._conditionFactPtr) : std::unique_ptr<FactOptional>()),
     _goalGroupId(pOther._goalGroupId)
 {
@@ -60,6 +73,7 @@ void Goal::operator=(const Goal& pOther)
   else
     _inactiveSince.reset();
   _isPersistentIfSkipped = pOther._isPersistentIfSkipped;
+  _onStepTowards = pOther._onStepTowards;
   _conditionFactPtr = pOther._conditionFactPtr ? std::make_unique<FactOptional>(*pOther._conditionFactPtr) : std::unique_ptr<FactOptional>();
   _goalGroupId = pOther._goalGroupId;
 }
@@ -69,6 +83,7 @@ bool Goal::operator==(const Goal& pOther) const
   return _factOptional == pOther._factOptional &&
       _maxTimeToKeepInactive == pOther._maxTimeToKeepInactive &&
       _isPersistentIfSkipped == pOther._isPersistentIfSkipped &&
+      _onStepTowards == pOther._onStepTowards &&
       _goalGroupId == pOther._goalGroupId;
 }
 
@@ -100,6 +115,8 @@ std::string Goal::toStr() const
   auto res = _factOptional.toStr();
   if (_conditionFactPtr)
     res = implyFunctionName + "(" + _conditionFactPtr->toStr() + ", " + res + ")";
+  if (_onStepTowards)
+    res = onStepTowardsFunctionName + "(" + res + ")";
   if (_isPersistentIfSkipped)
     res = persistFunctionName + "(" + res + ")";
   return res;

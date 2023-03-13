@@ -1,6 +1,7 @@
 #include <contextualplanner/types/problem.hpp>
 #include <sstream>
 #include <contextualplanner/types/domain.hpp>
+#include <contextualplanner/types/onestepofplannerresult.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 
 namespace cp
@@ -101,15 +102,14 @@ Problem::Problem(const Problem& pOther)
 }
 
 
-void Problem::notifyActionDone(const std::string& pActionId,
-                               const std::map<std::string, std::string>& pParameters,
+void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerResult,
                                const SetOfFacts& pEffect,
                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                const std::map<int, std::vector<Goal>>* pGoalsToAdd)
 {
-  historical.notifyActionDone(pActionId);
+  historical.notifyActionDone(pOnStepOfPlannerResult.actionInstance.actionId);
   WhatChanged whatChanged;
-  if (pParameters.empty())
+  if (pOnStepOfPlannerResult.actionInstance.parameters.empty())
   {
     _modifyFacts(whatChanged, pEffect, pNow);
   }
@@ -121,13 +121,21 @@ void Problem::notifyActionDone(const std::string& pActionId,
     for (auto& currFact : pEffect.facts)
     {
       auto fact = currFact;
-      fact.fillParameters(pParameters);
+      fact.fillParameters(pOnStepOfPlannerResult.actionInstance.parameters);
       effect.facts.insert(std::move(fact));
     }
     _modifyFacts(whatChanged, effect, pNow);
   }
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
     _addGoals(whatChanged, *pGoalsToAdd, pNow);
+
+  // Remove current goal if it was one step toward
+  if (pOnStepOfPlannerResult.fromGoal.isOnStepTowards())
+  {
+    auto isNotGoalThatHasDoneOneStepForward = [&](const Goal& pGoal, int){ return pGoal != pOnStepOfPlannerResult.fromGoal; };
+    _iterateOnGoalsAndRemoveNonPersistent(whatChanged, isNotGoalThatHasDoneOneStepForward, pNow);
+  }
+
   _notifyWhatChanged(whatChanged, pNow);
 }
 
@@ -191,6 +199,59 @@ void Problem::_addFactNameRef(const std::string& pFactName)
     _factNamesToNbOfOccurences[pFactName] = 1;
   else
     ++itFactName->second;
+}
+
+void Problem::_iterateOnGoalsAndRemoveNonPersistent(
+    WhatChanged& pWhatChanged,
+    const std::function<bool(Goal&, int)>& pManageGoal,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  bool isCurrentlyActiveGoal = true;
+  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
+  {
+    --itGoalsGroup;
+    for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
+    {
+      // If the goal was inactive for too long we remove it
+      if (!isCurrentlyActiveGoal && itGoal->isInactiveForTooLong(pNow))
+      {
+        itGoal = itGoalsGroup->second.erase(itGoal);
+        pWhatChanged.goals = true;
+        continue;
+      }
+
+      if (!isGoalSatisfied(*itGoal))
+      {
+        _currentGoalPtr = &*itGoal;
+        // Check if we are still in this goal
+        if (pManageGoal(*itGoal, itGoalsGroup->first))
+          return;
+        isCurrentlyActiveGoal = false;
+      }
+      else if (_currentGoalPtr == &*itGoal)
+      {
+        isCurrentlyActiveGoal = false;
+      }
+
+      if (itGoal->isPersistent())
+      {
+        itGoal->setInactiveSinceIfNotAlreadySet(pNow);
+        ++itGoal;
+      }
+      else
+      {
+        itGoal = itGoalsGroup->second.erase(itGoal);
+        pWhatChanged.goals = true;
+      }
+    }
+
+    if (itGoalsGroup->second.empty())
+      itGoalsGroup = _goals.erase(itGoalsGroup);
+  }
+  // If a goal was activated, but it is not anymore, and we did not find any other active goal
+  // then we do not consider anymore the previously activited goal as an activated goal
+  if (!isCurrentlyActiveGoal)
+    _currentGoalPtr = nullptr;
 }
 
 template<typename FACTS>
@@ -535,55 +596,14 @@ bool Problem::isOptionalFactSatisfied(const FactOptional& pFactOptional) const
       (!pFactOptional.isFactNegated || _facts.count(pFactOptional.fact) == 0);
 }
 
+
 void Problem::iterateOnGoalsAndRemoveNonPersistent(
     const std::function<bool(Goal&, int)>& pManageGoal,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  bool isCurrentlyActiveGoal = true;
-  WhatChanged whatChanged;
-  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
-  {
-    --itGoalsGroup;
-    for (auto itGoal = itGoalsGroup->second.begin(); itGoal != itGoalsGroup->second.end(); )
-    {
-      bool wasInactiveForTooLong = isCurrentlyActiveGoal ? false : itGoal->isInactiveForTooLong(pNow);
-
-      if (!isGoalSatisfied(*itGoal))
-      {
-        _currentGoalPtr = &*itGoal;
-        // Check if we are still in this goal
-        if (!wasInactiveForTooLong && pManageGoal(*itGoal, itGoalsGroup->first))
-        {
-          _notifyWhatChanged(whatChanged, pNow);
-          return;
-        }
-        isCurrentlyActiveGoal = false;
-      }
-      else if (_currentGoalPtr == &*itGoal)
-      {
-        isCurrentlyActiveGoal = false;
-      }
-
-      if (itGoal->isPersistent() && !wasInactiveForTooLong)
-      {
-        itGoal->setInactiveSinceIfNotAlreadySet(pNow);
-        ++itGoal;
-      }
-      else
-      {
-        itGoal = itGoalsGroup->second.erase(itGoal);
-        whatChanged.goals = true;
-      }
-    }
-
-    if (itGoalsGroup->second.empty())
-      itGoalsGroup = _goals.erase(itGoalsGroup);
-  }
-  // If a goal was activated, but it is not anymore, and we did not find any other active goal
-  // then we do not consider anymore the previously activited goal as an activated goal
-  if (!isCurrentlyActiveGoal)
-    _currentGoalPtr = nullptr;
-  _notifyWhatChanged(whatChanged, pNow);
+   WhatChanged whatChanged;
+   _iterateOnGoalsAndRemoveNonPersistent(whatChanged, pManageGoal, pNow);
+   _notifyWhatChanged(whatChanged, pNow);
 }
 
 

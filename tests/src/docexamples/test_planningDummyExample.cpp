@@ -26,14 +26,14 @@ void planningDummyExample()
   problem.setGoals({userIsGreeted}, now);
 
   // Look for an action to do
-  std::map<std::string, std::string> parameters;
-  auto actionToDo1 = cp::lookForAnActionToDo(parameters, problem, domain, now);
-  assert(sayHi == actionToDo1); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, now);
+  assert(oneStepOfPlannerResult1.operator bool());
+  assert(sayHi == oneStepOfPlannerResult1->actionInstance.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, actionToDo1, parameters, now);
+  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
 
   // Look for the next action to do
-  auto actionToDo3 = cp::lookForAnActionToDo(parameters, problem, domain, now);
-  assert("" == actionToDo3); // No action found
+  auto oneStepOfPlannerResult2 = cp::lookForAnActionToDo(problem, domain, now);
+  assert(!oneStepOfPlannerResult2.operator bool()); // No action found
 }
 

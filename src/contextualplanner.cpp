@@ -368,28 +368,25 @@ ActionId _nextStepOfTheProblemForAGoal(
 }
 
 
-ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
-                             Problem& pProblem,
-                             const Domain& pDomain,
-                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                             const Goal** pGoalOfTheAction,
-                             int* pGoalPriority,
-                             const Historical* pGlobalHistorical)
+std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
+    Problem& pProblem,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    const Historical* pGlobalHistorical)
 {
   pProblem.fillAccessibleFacts(pDomain);
 
-  ActionId res;
+  std::unique_ptr<OneStepOfPlannerResult> res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
     if (!pProblem.isOptionalFactSatisfied(pGoal.factOptional()))
     {
-      res = _nextStepOfTheProblemForAGoal(pParameters, pGoal, pProblem,
-                                          pDomain, pGlobalHistorical);
-      if (!res.empty())
+      std::map<std::string, std::string> parameters;
+      auto actionId =
+          _nextStepOfTheProblemForAGoal(parameters,
+                                        pGoal, pProblem, pDomain, pGlobalHistorical);
+      if (!actionId.empty())
       {
-        if (pGoalPriority != nullptr)
-          *pGoalPriority = pPriority;
-        if (pGoalOfTheAction != nullptr)
-          *pGoalOfTheAction = &pGoal;
+        res = std::make_unique<OneStepOfPlannerResult>(actionId, parameters, pGoal, pPriority);
         pGoal.notifyActivity();
         return true;
       }
@@ -406,41 +403,31 @@ ActionId lookForAnActionToDo(std::map<std::string, std::string>& pParameters,
 
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
-                      const std::string& pActionId,
-                      const std::map<std::string, std::string>& pParameters,
+                      const OneStepOfPlannerResult& pOnStepOfPlannerResult,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  auto itAction = pDomain.actions().find(pActionId);
+  auto itAction = pDomain.actions().find(pOnStepOfPlannerResult.actionInstance.actionId);
   if (itAction != pDomain.actions().end())
-    pProblem.notifyActionDone(pActionId, pParameters, itAction->second.effect.factsModifications,
+    pProblem.notifyActionDone(pOnStepOfPlannerResult, itAction->second.effect.factsModifications,
                               pNow, &itAction->second.effect.goalsToAdd);
 }
 
 
-ActionWithHisParameters::ActionWithHisParameters(
-    const std::string& pActionId,
-    const std::map<std::string, std::string>& pParameters)
-  : actionId(pActionId),
-   parameters(pParameters)
-{
-}
-
-
-std::list<ActionWithHisParameters> lookForResolutionPlan(
+std::list<ActionInstance> lookForResolutionPlan(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical)
 {
   std::set<std::string> actionAlreadyInPlan;
-  std::list<ActionWithHisParameters> res;
+  std::list<ActionInstance> res;
   while (!pProblem.goals().empty())
   {
-    std::map<std::string, std::string> parameters;
-    auto actionToDo = lookForAnActionToDo(parameters, pProblem, pDomain, pNow, nullptr, nullptr, pGlobalHistorical);
-    if (actionToDo.empty())
+    auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical);
+    if (!onStepOfPlannerResult)
       break;
-    res.emplace_back(actionToDo, parameters);
+    res.emplace_back(onStepOfPlannerResult->actionInstance);
+    const auto& actionToDo = onStepOfPlannerResult->actionInstance.actionId;
     if (actionAlreadyInPlan.count(actionToDo) > 0)
       break;
     actionAlreadyInPlan.insert(actionToDo);
@@ -450,7 +437,7 @@ std::list<ActionWithHisParameters> lookForResolutionPlan(
     {
       if (pGlobalHistorical != nullptr)
         pGlobalHistorical->notifyActionDone(actionToDo);
-      pProblem.notifyActionDone(actionToDo, parameters, itAction->second.effect.factsModifications, pNow,
+      pProblem.notifyActionDone(*onStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
                                 &itAction->second.effect.goalsToAdd);
     }
   }
