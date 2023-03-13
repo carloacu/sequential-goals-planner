@@ -59,7 +59,7 @@ struct CONTEXTUALPLANNER_API Goal
   bool isPersistent() const { return _isPersistentIfSkipped; }
 
   /// Know if the goal will be removed from the goals stack after the first time we try to satisfy it.
-  bool isOnStepTowards() const { return _onStepTowards; }
+  bool isOneStepTowards() const { return _oneStepTowards; }
 
   /// Get the condition associated. It is a fact that should be present in the world to enable this goal.
   const FactOptional* conditionFactOptionalPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
@@ -83,8 +83,8 @@ struct CONTEXTUALPLANNER_API Goal
   static const std::string persistFunctionName;
   /// Imply function name.
   static const std::string implyFunctionName;
-  /// OnStepTowards function name.
-  static const std::string onStepTowardsFunctionName;
+  /// OneStepTowards function name.
+  static const std::string oneStepTowardsFunctionName;
 
 private:
   /// Fact that can be negated that is contained in this goal.
@@ -100,7 +100,7 @@ private:
   /// Know if the goal will be kept in the goals stack, when we succeded or failed to satisfy it.
   bool _isPersistentIfSkipped;
   /// Know if the goal will be removed from the goals stack after the first time we try to satisfy it.
-  bool _onStepTowards;
+  bool _oneStepTowards;
   /// Condition associated, it is a fact that should be present in the world to enable this goal.
   std::unique_ptr<FactOptional> _conditionFactPtr;
   /// Group identifier of this goal. It can be empty if the goal does not belong to a group.

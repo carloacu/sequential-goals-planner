@@ -130,7 +130,7 @@ void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerRes
     _addGoals(whatChanged, *pGoalsToAdd, pNow);
 
   // Remove current goal if it was one step toward
-  if (pOnStepOfPlannerResult.fromGoal.isOnStepTowards())
+  if (pOnStepOfPlannerResult.fromGoal.isOneStepTowards())
   {
     auto isNotGoalThatHasDoneOneStepForward = [&](const Goal& pGoal, int){ return pGoal != pOnStepOfPlannerResult.fromGoal; };
     _iterateOnGoalsAndRemoveNonPersistent(whatChanged, isNotGoalThatHasDoneOneStepForward, pNow);

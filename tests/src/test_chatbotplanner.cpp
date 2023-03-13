@@ -196,7 +196,7 @@ void _test_goalToStr()
 {
   assert_eq<std::string>("imply(condition, goal_name)", cp::Goal("imply(condition, goal_name)").toStr());
   assert_eq<std::string>("persist(imply(condition, goal_name))", cp::Goal("persist(imply(condition, goal_name))").toStr());
-  assert_eq<std::string>("onStepTowards(goal_name)", cp::Goal("onStepTowards(goal_name)").toStr());
+  assert_eq<std::string>("oneStepTowards(goal_name)", cp::Goal("oneStepTowards(goal_name)").toStr());
 }
 
 void _test_setOfFactsFromStr()
@@ -1616,7 +1616,7 @@ void _checkLinkedInferences()
 
 
 
-void _onStepTowards()
+void _oneStepTowards()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<cp::ActionId, cp::Action> actions;
@@ -1630,7 +1630,7 @@ void _onStepTowards()
 
   cp::Problem problem;
   problem.setGoals({{11, {cp::Goal("persist(imply(" + _fact_a + ", " + _fact_b + ")", 0)}},
-                    {10, {cp::Goal("onStepTowards(" + _fact_greeted + ")", 0)}},
+                    {10, {cp::Goal("oneStepTowards(" + _fact_greeted + ")", 0)}},
                     {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
   problem.removeFirstGoalsThatAreAlreadySatisfied(now);
   assert_eq(_action_greet, _lookForAnActionToDoStr(problem, domain, now));
@@ -1713,7 +1713,7 @@ int main(int argc, char *argv[])
   _testGetNotSatisfiedGoals();
   _testGoalUnderPersist();
   _checkLinkedInferences();
-  _onStepTowards();
+  _oneStepTowards();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
