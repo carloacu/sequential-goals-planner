@@ -1642,6 +1642,41 @@ void _oneStepTowards()
 }
 
 
+void _infrenceLinksFromManyInferencesSets()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  std::map<cp::ActionId, cp::Action> actions;
+  cp::WorldModification actionWordModification;
+  actionWordModification.potentialFactsModifications = cp::SetOfFacts::fromStr(_fact_d, '\n');
+  actions.emplace(action1, cp::Action({}, actionWordModification));
+  actions.emplace(action2, cp::Action({}, {_fact_c}));
+  cp::Domain domain(std::move(actions));
+
+  cp::Goal aaa(_fact_b);
+  std::vector<cp::Goal> aaas = {aaa};
+  auto setOfInferences = std::make_shared<cp::SetOfInferences>();
+  cp::Problem problem;
+  problem.addSetOfInferences("soi", setOfInferences);
+  assert_true(cp::Problem::defaultPriority >= 1);
+  auto lowPriority = cp::Problem::defaultPriority - 1;
+  setOfInferences->addInference("inference1", cp::Inference({_fact_punctual_p2}, {}, {{lowPriority, {"oneStepTowards(" + _fact_d + ")"}}}));
+  problem.setGoals({{lowPriority, {cp::Goal("oneStepTowards(" + _fact_d + ")", 0)}}}, {});
+
+  auto setOfInferences2 = std::make_shared<cp::SetOfInferences>();
+  problem.addSetOfInferences("soi2", setOfInferences2);
+  setOfInferences2->addInference("inference1", cp::Inference({_fact_punctual_p1}, {_fact_b, _fact_punctual_p2}));
+  setOfInferences2->addInference("inference2", cp::Inference({_fact_b}, {}, {{cp::Problem::defaultPriority, {"oneStepTowards(" + _fact_c + ")"}}}));
+
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  problem.addFact(_fact_punctual_p1, now);
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+}
+
+
 }
 
 
@@ -1714,6 +1749,7 @@ int main(int argc, char *argv[])
   _testGoalUnderPersist();
   _checkLinkedInferences();
   _oneStepTowards();
+  _infrenceLinksFromManyInferencesSets();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

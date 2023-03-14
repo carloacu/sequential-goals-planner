@@ -658,6 +658,7 @@ void Problem::_addGoals(WhatChanged& pWhatChanged,
   if (pGoals.empty())
     return;
   {
+    // Sub whatChanged object to notify about removed goals
     WhatChanged whatChanged;
     for (auto& currGoals : pGoals)
     {
@@ -891,17 +892,18 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
   if (pWhatChanged.somethingChanged())
   {
     // manage the inferences
-    for (auto& currSetOfInferences : _setOfInferences)
+    std::map<SetOfInferencesId, std::set<InferenceId>> soiToInferencesAlreadyApplied;
+    bool needAnotherLoop = true;
+    while (needAnotherLoop)
     {
-      auto& inferences = currSetOfInferences.second->inferences();
-      auto& condToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
-      auto& notCondToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
-      auto& reachableInferencesWithWithAnExpressionInCondition = currSetOfInferences.second->reachableInferenceLinks().inferencesWithWithAnExpressionInCondition;
-      std::set<InferenceId> inferencesAlreadyApplied;
-      bool needAnotherLoop = true;
-      while (needAnotherLoop)
+      needAnotherLoop = false;
+      for (auto& currSetOfInferences : _setOfInferences)
       {
-        needAnotherLoop = false;
+        auto& inferences = currSetOfInferences.second->inferences();
+        auto& condToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
+        auto& notCondToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
+        auto& reachableInferencesWithWithAnExpressionInCondition = currSetOfInferences.second->reachableInferenceLinks().inferencesWithWithAnExpressionInCondition;
+        auto& inferencesAlreadyApplied = soiToInferencesAlreadyApplied[currSetOfInferences.first];
 
         for (auto& currAddedFact : pWhatChanged.punctualFacts)
         {
