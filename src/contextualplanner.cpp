@@ -408,8 +408,8 @@ void notifyActionDone(Problem& pProblem,
 {
   auto itAction = pDomain.actions().find(pOnStepOfPlannerResult.actionInstance.actionId);
   if (itAction != pDomain.actions().end())
-    pProblem.notifyActionDone(pOnStepOfPlannerResult, itAction->second.effect.factsModifications,
-                              pNow, &itAction->second.effect.goalsToAdd);
+    pProblem.notifyActionDone(pOnStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
+                              &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
 }
 
 
@@ -438,7 +438,7 @@ std::list<ActionInstance> lookForResolutionPlan(
       if (pGlobalHistorical != nullptr)
         pGlobalHistorical->notifyActionDone(actionToDo);
       pProblem.notifyActionDone(*onStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
-                                &itAction->second.effect.goalsToAdd);
+                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
     }
   }
   return res;

@@ -34,12 +34,14 @@ struct CONTEXTUALPLANNER_API Problem
    * @param[in] pOnStepOfPlannerResult Planner result step that motivated this action.
    * @param pEffect Effect of the action done.
    * @param pNow Current time.
-   * @param pGoalsToAdd Goals to add.
+   * @param pGoalsToAdd Priorities to goals to add.
+   * @param pGoalsToAddInCurrentPriority Goals to add in current priority.
    */
   void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
                         const SetOfFacts& pEffect,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                        const std::map<int, std::vector<Goal>>* pGoalsToAdd);
+                        const std::map<int, std::vector<Goal>>* pGoalsToAdd,
+                        const std::vector<Goal>* pGoalsToAddInCurrentPriority);
 
 
   // World state
@@ -380,6 +382,9 @@ private:
   void _iterateOnGoalsAndRemoveNonPersistent(WhatChanged& pWhatChanged,
                                              const std::function<bool (Goal&, int)>& pManageGoal,
                                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
+  /// Get the priority of the goal in top of the stack.
+  int _getCurrentPriority() const;
 
   /**
    * @brief Add facts without raising a notification.

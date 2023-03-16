@@ -1,4 +1,5 @@
 #include <contextualplanner/types/problem.hpp>
+#include <map>
 #include <sstream>
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/onestepofplannerresult.hpp>
@@ -105,7 +106,8 @@ Problem::Problem(const Problem& pOther)
 void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerResult,
                                const SetOfFacts& pEffect,
                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                               const std::map<int, std::vector<Goal>>* pGoalsToAdd)
+                               const std::map<int, std::vector<Goal>>* pGoalsToAdd,
+                               const std::vector<Goal>* pGoalsToAddInCurrentPriority)
 {
   historical.notifyActionDone(pOnStepOfPlannerResult.actionInstance.actionId);
   WhatChanged whatChanged;
@@ -127,7 +129,9 @@ void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerRes
     _modifyFacts(whatChanged, effect, pNow);
   }
 
+
   // Remove current goal if it was one step towards
+  int currentPriority = _getCurrentPriority();
   if (pOnStepOfPlannerResult.fromGoal.isOneStepTowards())
   {
     auto isNotGoalThatHasDoneOneStepForward = [&](const Goal& pGoal, int){ return pGoal != pOnStepOfPlannerResult.fromGoal; };
@@ -140,6 +144,8 @@ void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerRes
 
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
     _addGoals(whatChanged, *pGoalsToAdd, pNow);
+  if (pGoalsToAddInCurrentPriority != nullptr && !pGoalsToAddInCurrentPriority->empty())
+    _addGoals(whatChanged, std::map<int, std::vector<cp::Goal>>{{currentPriority, *pGoalsToAddInCurrentPriority}}, pNow);
 
   _notifyWhatChanged(whatChanged, pNow);
 }
@@ -258,6 +264,26 @@ void Problem::_iterateOnGoalsAndRemoveNonPersistent(
   if (!isCurrentlyActiveGoal)
     _currentGoalPtr = nullptr;
 }
+
+
+int Problem::_getCurrentPriority() const
+{
+  bool isCurrentlyActiveGoal = true;
+  for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
+  {
+    --itGoalsGroup;
+    for (const auto& currGoal : itGoalsGroup->second)
+    {
+      if (!currGoal.isPersistent())
+        return itGoalsGroup->first;
+
+      if (!isGoalSatisfied(currGoal))
+        return itGoalsGroup->first;
+    }
+  }
+  return 0;
+}
+
 
 template<typename FACTS>
 void Problem::_addFacts(WhatChanged& pWhatChanged,

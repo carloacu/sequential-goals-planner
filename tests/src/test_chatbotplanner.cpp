@@ -172,7 +172,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
     auto itAction = pDomain.actions().find(res->actionInstance.actionId);
     if (itAction != pDomain.actions().end())
       pProblem.notifyActionDone(*res, itAction->second.effect.factsModifications, pNow,
-                                &itAction->second.effect.goalsToAdd);
+                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
     return *res;
   }
   return cp::OneStepOfPlannerResult("", {}, cp::Goal("noGoal"), 0);
@@ -1582,7 +1582,7 @@ void _testGoalUnderPersist()
     auto itAction = domain.actions().find(action2);
     if (itAction != domain.actions().end())
       problem.notifyActionDone(plannerResult, itAction->second.effect.factsModifications, now,
-                                &itAction->second.effect.goalsToAdd);
+                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
 
     problem.removeFirstGoalsThatAreAlreadySatisfied(now);
     assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId); // Not action1 because it was inactive for too long
@@ -1694,7 +1694,7 @@ void _factValueModification()
 }
 
 
-void _removeGoalAlreadySatisfiedWhenAnActionFinishes()
+void _removeGoaWhenAnActionFinishesByAddingNewGoals()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   const std::string action1 = "action1";
@@ -1703,7 +1703,7 @@ void _removeGoalAlreadySatisfiedWhenAnActionFinishes()
   std::map<cp::ActionId, cp::Action> actions;
   cp::WorldModification actionWordModification;
   cp::WorldModification wm({_fact_a});
-  wm.goalsToAdd.emplace(11, std::vector<cp::Goal>(1, _fact_b));
+  wm.goalsToAddInCurrentPriority.push_back(cp::Goal(_fact_b, 0));
   actions.emplace(action1, cp::Action({}, wm));
   actions.emplace(action2, cp::Action({}, {_fact_b}));
   cp::Domain domain(std::move(actions));
@@ -1714,12 +1714,18 @@ void _removeGoalAlreadySatisfiedWhenAnActionFinishes()
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
     goalsRemoved = pGoalsRemoved;
   });
-  problem.setGoals({{10, {_fact_a}}}, now);
+  problem.setGoals({{27, {_fact_a}}}, now);
 
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
   assert_eq<std::size_t>(1u, goalsRemoved.size());
   assert_eq(_fact_a, *goalsRemoved.begin());
   onGoalsRemovedConnection.disconnect();
+
+  // The only remaning goal is the goal we just added
+  assert_eq<std::size_t>(1u, problem.goals().size());
+  assert_eq(27, problem.goals().begin()->first);
+  assert_eq<std::size_t>(1u, problem.goals().begin()->second.size());
+  assert_eq(_fact_b, problem.goals().begin()->second.begin()->toStr());
 }
 
 }
@@ -1796,7 +1802,7 @@ int main(int argc, char *argv[])
   _oneStepTowards();
   _infrenceLinksFromManyInferencesSets();
   _factValueModification();
-  _removeGoalAlreadySatisfiedWhenAnActionFinishes();
+  _removeGoaWhenAnActionFinishesByAddingNewGoals();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
