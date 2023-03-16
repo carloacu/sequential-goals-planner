@@ -265,7 +265,7 @@ struct CONTEXTUALPLANNER_API Problem
 
   /**
    * @brief Remove the first goals that are already satisfied.
-   * @param pNow Current time.
+   * @param[in] pNow Current time.
    */
   void removeFirstGoalsThatAreAlreadySatisfied(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
@@ -362,6 +362,14 @@ private:
     /// Has some facts to add or to remove.
     bool hasFactsModifications() const { return !addedFacts.empty() || !removedFacts.empty(); }
   };
+
+  /**
+   * @brief Remove the first goals that are already satisfied.
+   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pNow Current time.
+   */
+  void _removeFirstGoalsThatAreAlreadySatisfied(WhatChanged& pWhatChanged,
+                                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Iterate on goals and remove non persistent goals.

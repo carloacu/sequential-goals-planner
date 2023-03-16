@@ -126,15 +126,20 @@ void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerRes
     }
     _modifyFacts(whatChanged, effect, pNow);
   }
-  if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
-    _addGoals(whatChanged, *pGoalsToAdd, pNow);
 
-  // Remove current goal if it was one step toward
+  // Remove current goal if it was one step towards
   if (pOnStepOfPlannerResult.fromGoal.isOneStepTowards())
   {
     auto isNotGoalThatHasDoneOneStepForward = [&](const Goal& pGoal, int){ return pGoal != pOnStepOfPlannerResult.fromGoal; };
     _iterateOnGoalsAndRemoveNonPersistent(whatChanged, isNotGoalThatHasDoneOneStepForward, pNow);
   }
+  else // Else remove only the first goals already satisfied
+  {
+    _removeFirstGoalsThatAreAlreadySatisfied(whatChanged, pNow);
+  }
+
+  if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
+    _addGoals(whatChanged, *pGoalsToAdd, pNow);
 
   _notifyWhatChanged(whatChanged, pNow);
 }
@@ -190,6 +195,15 @@ bool Problem::removeFacts(const FACTS& pFacts,
 
 template bool Problem::addFacts<std::set<Fact>>(const std::set<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 template bool Problem::addFacts<std::vector<Fact>>(const std::vector<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+
+
+
+void Problem::_removeFirstGoalsThatAreAlreadySatisfied(WhatChanged& pWhatChanged,
+                                                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  auto alwaysTrue = [&](const Goal&, int){ return true; };
+  _iterateOnGoalsAndRemoveNonPersistent(pWhatChanged, alwaysTrue, pNow);
+}
 
 
 void Problem::_iterateOnGoalsAndRemoveNonPersistent(
@@ -778,8 +792,9 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
 
 void Problem::removeFirstGoalsThatAreAlreadySatisfied(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  auto alwaysTrue = [&](const Goal&, int){ return true; };
-  iterateOnGoalsAndRemoveNonPersistent(alwaysTrue, pNow);
+  WhatChanged whatChanged;
+  _removeFirstGoalsThatAreAlreadySatisfied(whatChanged, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
 }
 
 
