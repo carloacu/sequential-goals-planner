@@ -91,7 +91,7 @@ Problem::Problem(const Problem& pOther)
     _goals(pOther._goals),
     _variablesToValue(pOther._variablesToValue),
     _facts(pOther._facts),
-    _factNamesToNbOfOccurences(pOther._factNamesToNbOfOccurences),
+    _factNamesToFacts(pOther._factNamesToFacts),
     _accessibleFacts(pOther._accessibleFacts),
     _accessibleFactsWithAnyValues(pOther._accessibleFactsWithAnyValues),
     _removableFacts(pOther._removableFacts),
@@ -192,15 +192,6 @@ template bool Problem::addFacts<std::set<Fact>>(const std::set<Fact>&, const std
 template bool Problem::addFacts<std::vector<Fact>>(const std::vector<Fact>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 
 
-void Problem::_addFactNameRef(const std::string& pFactName)
-{
-  auto itFactName = _factNamesToNbOfOccurences.find(pFactName);
-  if (itFactName == _factNamesToNbOfOccurences.end())
-    _factNamesToNbOfOccurences[pFactName] = 1;
-  else
-    ++itFactName->second;
-}
-
 void Problem::_iterateOnGoalsAndRemoveNonPersistent(
     WhatChanged& pWhatChanged,
     const std::function<bool(Goal&, int)>& pManageGoal,
@@ -272,7 +263,7 @@ void Problem::_addFacts(WhatChanged& pWhatChanged,
       continue;
     pWhatChanged.addedFacts.insert(currFact);
     _facts.insert(currFact);
-    _addFactNameRef(currFact.name);
+    _factNamesToFacts[currFact.name].insert(currFact);
 
     auto itAccessible = _accessibleFacts.find(currFact);
     if (itAccessible != _accessibleFacts.end())
@@ -297,13 +288,12 @@ void Problem::_removeFacts(WhatChanged& pWhatChanged,
     pWhatChanged.removedFacts.insert(currFact);
     _facts.erase(it);
     {
-      auto itFactName = _factNamesToNbOfOccurences.find(currFact.name);
-      if (itFactName == _factNamesToNbOfOccurences.end())
+      auto itFactName = _factNamesToFacts.find(currFact.name);
+      if (itFactName == _factNamesToFacts.end())
         assert(false);
-      else if (itFactName->second == 1)
-        _factNamesToNbOfOccurences.erase(itFactName);
-      else
-        --itFactName->second;
+      itFactName->second.erase(currFact);
+      if (itFactName->second.empty())
+        _factNamesToFacts.erase(itFactName);
     }
     _clearAccessibleAndRemovableFacts();
   }
@@ -381,9 +371,9 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
   if (_facts != pFacts)
   {
     _facts = pFacts;
-    _factNamesToNbOfOccurences.clear();
+    _factNamesToFacts.clear();
     for (const auto& currFact : pFacts)
-      _addFactNameRef(currFact.name);
+      _factNamesToFacts[currFact.name].insert(currFact);
     _clearAccessibleAndRemovableFacts();
     WhatChanged whatChanged;
     _removeNoStackableGoals(whatChanged, pNow);
@@ -891,6 +881,29 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
 {
   if (pWhatChanged.somethingChanged())
   {
+    // Remove same facts than the new facts but that have another value
+    for (auto& currAddedFact : pWhatChanged.addedFacts)
+    {
+      auto it = _factNamesToFacts.find(currAddedFact.name);
+      if (it != _factNamesToFacts.end())
+      {
+        for (auto itExistingFact = it->second.begin(); itExistingFact != it->second.end(); )
+        {
+          auto& currExistingFact = *itExistingFact;
+          if (currAddedFact.parameters == currExistingFact.parameters &&
+              currAddedFact.value != currExistingFact.value)
+          {
+            ++itExistingFact;
+            _removeFacts(pWhatChanged, std::vector<cp::Fact>{currExistingFact}, pNow);
+            continue;
+          }
+          ++itExistingFact;
+        }
+        if (_factNamesToFacts.empty())
+          _factNamesToFacts.erase(it);
+      }
+    }
+
     // manage the inferences
     std::map<SetOfInferencesId, std::set<InferenceId>> soiToInferencesAlreadyApplied;
     bool needAnotherLoop = true;

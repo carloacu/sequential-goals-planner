@@ -152,8 +152,8 @@ struct CONTEXTUALPLANNER_API Problem
 
   /// Facts of the world.
   const std::set<Fact>& facts() const { return _facts; }
-  /// Facts name to number of occurences in the world.
-  const std::map<std::string, std::size_t>& factNamesToNbOfOccurences() const { return _factNamesToNbOfOccurences; }
+  /// Fact names to facts in the world.
+  const std::map<std::string, std::set<Fact>>& factNamesToFacts() const { return _factNamesToFacts; }
   /// Map of variables to value.
   const std::map<std::string, std::string>& variablesToValue() const { return _variablesToValue; }
 
@@ -328,8 +328,8 @@ private:
   std::map<std::string, std::string> _variablesToValue{};
   /// Facts of the world.
   std::set<Fact> _facts{};
-  /// Fact names to number of occurences in the world.
-  std::map<std::string, std::size_t> _factNamesToNbOfOccurences{};
+  /// Fact names to facts in the world.
+  std::map<std::string, std::set<Fact>> _factNamesToFacts{};
   /// Facts that can be reached with the set of actions of the domain.
   std::set<Fact> _accessibleFacts{};
   /// Facts with values that can be reached with the set of actions of the domain.
@@ -399,12 +399,6 @@ private:
 
   /// Clear accessible and removable facts.
   void _clearAccessibleAndRemovableFacts();
-
-  /**
-   * @brief Add an occurence to a fact name.
-   * @param pFactName Fact name to add an occurence.
-   */
-  void _addFactNameRef(const std::string& pFactName);
 
   /**
    * @brief Remove no stackable goals.

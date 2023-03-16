@@ -1654,8 +1654,6 @@ void _infrenceLinksFromManyInferencesSets()
   actions.emplace(action2, cp::Action({}, {_fact_c}));
   cp::Domain domain(std::move(actions));
 
-  cp::Goal aaa(_fact_b);
-  std::vector<cp::Goal> aaas = {aaa};
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);
@@ -1674,6 +1672,27 @@ void _infrenceLinksFromManyInferencesSets()
   problem.addFact(_fact_punctual_p1, now);
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+}
+
+void _factValueModification()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  const std::string action1 = "action1";
+
+  std::map<cp::ActionId, cp::Action> actions;
+  cp::WorldModification actionWordModification;
+  actions.emplace(action1, cp::Action({}, cp::WorldModification({}, {_fact_b})));
+  cp::Domain domain(std::move(actions));
+
+  cp::Problem problem;
+  problem.setGoals({{10, {cp::Goal("persist(imply(" + _fact_a + "=a, " + "!" + _fact_b + ")", 0)}}}, {});
+
+  problem.addFact(_fact_b, now);
+  assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain, now));
+  problem.addFact(_fact_a + "=a", now);
+  assert_eq(action1, _lookForAnActionToDoStr(problem, domain, now));
+  problem.addFact(_fact_a + "=b", now);
+  assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain, now));
 }
 
 
@@ -1750,6 +1769,7 @@ int main(int argc, char *argv[])
   _checkLinkedInferences();
   _oneStepTowards();
   _infrenceLinksFromManyInferencesSets();
+  _factValueModification();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

@@ -343,7 +343,7 @@ ActionId _nextStepOfTheProblemForAGoal(
     const Historical* pGlobalHistorical)
 {
   PotentialNextAction res;
-  for (const auto& currFact : pProblem.factNamesToNbOfOccurences())
+  for (const auto& currFact : pProblem.factNamesToFacts())
   {
     auto itPrecToActions = pDomain.preconditionToActions().find(currFact.first);
     if (itPrecToActions != pDomain.preconditionToActions().end())
