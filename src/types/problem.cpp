@@ -786,6 +786,19 @@ void Problem::changeGoalPriority(const std::string& pGoalStr,
 }
 
 
+void Problem::clearGoals(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  if (_goals.empty())
+    return;
+
+  WhatChanged whatChanged;
+  _goals.clear();
+  whatChanged.goals = true;
+  _removeNoStackableGoals(whatChanged, pNow);
+  _notifyWhatChanged(whatChanged, pNow);
+}
+
+
 void Problem::removeGoals(const std::string& pGoalGroupId,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
@@ -811,8 +824,10 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
       ++itGroup;
   }
   if (whatChanged.goals)
+  {
     _removeNoStackableGoals(whatChanged, pNow);
-  _notifyWhatChanged(whatChanged, pNow);
+    _notifyWhatChanged(whatChanged, pNow);
+  }
 }
 
 

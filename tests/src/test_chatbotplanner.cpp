@@ -326,6 +326,9 @@ void _removeSomeGoals()
   problem.removeGoals(goalGroupId, {});
   assert_eq<std::size_t>(2, goalsRemoved.size());
   assert_eq(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
+  assert_eq(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
+  problem.clearGoals({});
+  assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
 }
 
 

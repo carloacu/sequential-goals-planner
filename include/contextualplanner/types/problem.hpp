@@ -258,6 +258,12 @@ struct CONTEXTUALPLANNER_API Problem
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
+   * @brief Clear the goals.
+   * @param pNow Current time.
+   */
+  void clearGoals(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
+  /**
    * @brief Remove some goals.
    * @param pGoalGroupId Group identifier of the goals to remove.
    * @param pNow Current time.
