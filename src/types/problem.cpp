@@ -533,9 +533,9 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
 }
 
 void Problem::_feedAccessibleFactsFromDeduction(const SetOfFacts& pCondition,
-                                               const WorldModification& pEffect,
-                                               const std::vector<std::string>& pParameters,
-                                               const Domain& pDomain)
+                                                const WorldModification& pEffect,
+                                                const std::vector<std::string>& pParameters,
+                                                const Domain& pDomain)
 {
   if (canSetOfFactsBecomeTrue(pCondition))
   {
