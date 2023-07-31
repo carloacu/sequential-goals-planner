@@ -128,19 +128,10 @@ struct CONTEXTUALPLANNER_API Problem
   void fillAccessibleFacts(const Domain& pDomain);
 
   /**
-   * @brief Can some facts modification become true, according to the world and the accessible facts stored internally in this object.
-   * @param pSetOfFacts Set of facts to check if they are valid.
-   * @return True if the facts are valid for the world, false otherwise.
+   * @brief Can a fact become true, according to the world and the accessible facts stored internally in this object.
+   * @param pFact Fact to check if it can become true.
+   * @return True if the fact can become true, false otherwise.
    */
-  bool canFactConditionBecomeTrue(const FactCondition& pFactCondition) const;
-
-  /**
-   * @brief Can some facts become true, according to the world and the accessible facts stored internally in this object.
-   * @param pFacts Facts to check if they can become true.
-   * @return True if the facts can become true, false otherwise.
-   */
-  bool canFactsBecomeTrue(const std::set<Fact>& pFacts) const;
-
   bool canFactBecomeTrue(const Fact& pFact) const;
 
   /**
@@ -153,6 +144,8 @@ struct CONTEXTUALPLANNER_API Problem
   bool isConditionTrue(const std::unique_ptr<FactCondition>& pFactConditionPtr,
                        const std::set<Fact>& pPunctualFacts = {},
                        std::map<std::string, std::string>* pParametersPtr = nullptr) const;
+
+  std::string getFactValue(const Fact& pFact) const;
 
   /// Facts of the world.
   const std::set<Fact>& facts() const { return _facts; }
@@ -329,6 +322,7 @@ struct CONTEXTUALPLANNER_API Problem
 
   /// Historical of actions done.
   Historical historical{};
+
 
 
 private:
@@ -518,6 +512,9 @@ private:
    */
   void _notifyWhatChanged(WhatChanged& pWhatChanged,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
+  friend struct FactConditionNode;
+  friend struct FactConditionFact;
 };
 
 } // !cp

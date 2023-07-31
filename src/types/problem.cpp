@@ -422,35 +422,6 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
 }
 
 
-bool Problem::canFactConditionBecomeTrue(const FactCondition& pFactCondition) const
-{
-  return pFactCondition.untilFalse(
-        [&](const FactOptional& pFactOptional)
-  {
-    if (pFactOptional.isFactNegated)
-    {
-      if (_facts.count(pFactOptional.fact) > 0 &&
-          _removableFacts.count(pFactOptional.fact) == 0)
-        return false;
-      return true;
-    }
-    return canFactBecomeTrue(pFactOptional.fact);
-  },
-  [&](const Expression& pExpression)
-  {
-    return pExpression.isValid(_variablesToValue);
-  }
-  );
-}
-
-bool Problem::canFactsBecomeTrue(const std::set<Fact>& pFacts) const
-{
-  for (const auto& currFact : pFacts)
-    if (!canFactBecomeTrue(currFact))
-      return false;
-  return true;
-}
-
 bool Problem::canFactBecomeTrue(const Fact& pFact) const
 {
   if (_facts.count(pFact) == 0 &&
@@ -475,24 +446,21 @@ bool Problem::isConditionTrue(const std::unique_ptr<FactCondition>& pFactConditi
                               const std::set<Fact>& pPunctualFacts,
                               std::map<std::string, std::string>* pParametersPtr) const
 {
-  if (!pFactConditionPtr)
-    return true;
-  return pFactConditionPtr->untilFalse(
-        [&](const FactOptional& pFactOptional)
-  {
-    if (pFactOptional.isFactNegated)
-      return !pFactOptional.fact.isInFacts(_facts, true, pParametersPtr);
+  if (pFactConditionPtr)
+    return pFactConditionPtr->isTrue(*this, pPunctualFacts, pParametersPtr);
+  return true;
+}
 
-    if (pFactOptional.fact.isPunctual())
-      return pPunctualFacts.count(pFactOptional.fact) != 0;
-
-    return pFactOptional.fact.isInFacts(_facts, true, pParametersPtr);
-  },
-  [&](const Expression& pExpression)
+std::string Problem::getFactValue(const cp::Fact& pFact) const
+{
+  auto itFact = _factNamesToFacts.find(pFact.name);
+  if (itFact != _factNamesToFacts.end())
   {
-    return pExpression.isValid(_variablesToValue);
+    for (auto& currFact : itFact->second)
+      if (currFact.parameters == pFact.parameters)
+        return currFact.value;
   }
-  );
+  return "";
 }
 
 
@@ -553,7 +521,7 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
                                                 const std::vector<std::string>& pParameters,
                                                 const Domain& pDomain)
 {
-  if (!pCondition || canFactConditionBecomeTrue(*pCondition))
+  if (!pCondition || pCondition->canBecomeTrue(*this))
   {
     std::set<Fact> accessibleFactsToAdd;
     std::vector<Fact> accessibleFactsToAddWithAnyValues;
@@ -936,7 +904,7 @@ bool Problem::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApp
       if (itInference != pInferences.end())
       {
         auto& currInference = itInference->second;
-        if (isConditionTrue(currInference.condition, pWhatChanged.punctualFacts))
+        if (!currInference.condition || currInference.condition->isTrue(*this, pWhatChanged.punctualFacts, nullptr))
         {
           _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
           _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);

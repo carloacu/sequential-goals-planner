@@ -10,6 +10,8 @@
 
 namespace cp
 {
+struct Problem;
+struct FactConditionFact;
 
 enum class FactConditionType
 {
@@ -31,10 +33,16 @@ struct CONTEXTUALPLANNER_API FactCondition
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                       const std::function<void (const Expression&)>& pExpCallback) const = 0;
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                          const std::function<bool (const Expression&)>& pExpCallback) const = 0;
+                          const std::function<bool (const Expression&)>& pExpCallback,
+                          const Problem& pProblem) const = 0;
   virtual bool canBeTrue() const = 0;
+  virtual bool isTrue(const Problem& pProblem,
+                      const std::set<Fact>& pPunctualFacts,
+                      std::map<std::string, std::string>* pParametersPtr) const = 0;
+  virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
 
   virtual std::unique_ptr<FactCondition> clone() const = 0;
+  virtual const FactConditionFact* fcFactPtr() const = 0;
 
   FactConditionType type;
 
@@ -64,10 +72,16 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const std::function<void (const Expression&)>& pExpCallback) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const std::function<bool (const Expression&)>& pExpCallback) const override;
+                  const std::function<bool (const Expression&)>& pExpCallback,
+                  const Problem& pProblem) const override;
   bool canBeTrue() const override;
+  bool isTrue(const Problem& pProblem,
+              const std::set<Fact>& pPunctualFacts,
+              std::map<std::string, std::string>* pParametersPtr) const override;
+  bool canBecomeTrue(const Problem& pProblem) const override;
 
   std::unique_ptr<FactCondition> clone() const override;
+  const FactConditionFact* fcFactPtr() const override { return nullptr; }
 
   FactConditionNodeType nodeType;
   std::unique_ptr<FactCondition> leftOperand;
@@ -87,10 +101,16 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const std::function<void (const Expression&)>&) const override { pFactCallback(factOptional); }
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const std::function<bool (const Expression&)>& pExpCallback) const override { return pFactCallback(factOptional); }
+                  const std::function<bool (const Expression&)>&,
+                  const Problem& pProblem) const override { return pFactCallback(factOptional); }
   bool canBeTrue() const override { return factOptional.isFactNegated || !factOptional.fact.isUnreachable(); }
+  bool isTrue(const Problem& pProblem,
+              const std::set<Fact>& pPunctualFacts,
+              std::map<std::string, std::string>* pParametersPtr) const override;
+  bool canBecomeTrue(const Problem& pProblem) const override;
 
   std::unique_ptr<FactCondition> clone() const override;
+  const FactConditionFact* fcFactPtr() const override { return this; }
 
   FactOptional factOptional;
 };
@@ -108,10 +128,16 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
   void forAll(const std::function<void (const FactOptional&)>&,
               const std::function<void (const Expression&)>& pExpCallback) const override { pExpCallback(expression); }
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
-                  const std::function<bool (const Expression&)>& pExpCallback) const override { return pExpCallback(expression); }
+                  const std::function<bool (const Expression&)>& pExpCallback,
+                  const Problem& pProblem) const override { return pExpCallback(expression); }
   bool canBeTrue() const override { return true; }
+  bool isTrue(const Problem& pProblem,
+              const std::set<Fact>& pPunctualFacts,
+              std::map<std::string, std::string>* pParametersPtr) const override;
+  bool canBecomeTrue(const Problem& pProblem) const override;
 
   std::unique_ptr<FactCondition> clone() const override;
+  const FactConditionFact* fcFactPtr() const override { return nullptr; }
 
   Expression expression;
 };

@@ -61,6 +61,7 @@ const std::string _action_checkInWithPassword = "check_in_with_password";
 const std::string _action_goodBoy = "good_boy";
 const std::string _action_navigate = "navigate";
 const std::string _action_welcome = "welcome";
+const std::string _action_grab = "grab";
 
 template <typename TYPE>
 void assert_eq(const TYPE& pExpected,
@@ -1752,6 +1753,30 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
   assert_eq(_fact_b, problem.goals().begin()->second.begin()->toStr());
 }
 
+
+void _actionNavigationAndGrabObjectWithParameters()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action navAction({}, {cp::Fact::fromStr("location(me)=targetLocation")});
+  navAction.parameters.emplace_back("targetLocation");
+  actions.emplace(_action_navigate, navAction);
+
+  cp::Action grabAction(cp::FactCondition::fromStr("equals(location(me), location(object))"),
+                        {cp::Fact::fromStr("grab(me, object)")});
+  grabAction.parameters.emplace_back("object");
+  actions.emplace(_action_grab, grabAction);
+
+  cp::Problem problem;
+  problem.addFact(cp::Fact("location(me)=corridor"), now);
+  problem.addFact(cp::Fact("location(object)=kitchen"), now);
+  assert_eq<std::string>("kitchen", problem.getFactValue(cp::Fact("location(object)")));
+  _setGoalsForAPriority(problem, {cp::Goal("grab(me, sweets)")});
+  assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
+}
+
+
+
 }
 
 
@@ -1827,6 +1852,7 @@ int main(int argc, char *argv[])
   _infrenceLinksFromManyInferencesSets();
   _factValueModification();
   _removeGoaWhenAnActionFinishesByAddingNewGoals();
+  _actionNavigationAndGrabObjectWithParameters();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

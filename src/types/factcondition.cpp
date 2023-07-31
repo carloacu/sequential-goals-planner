@@ -1,5 +1,5 @@
 #include <contextualplanner/types/factcondition.hpp>
-
+#include <contextualplanner/types/problem.hpp>
 
 namespace cp
 {
@@ -68,7 +68,19 @@ std::unique_ptr<FactCondition> FactCondition::fromStr(const std::string& pStr)
     if (!currOptFact.fact.parameters.empty() ||
         currOptFact.fact.name[0] != '$')
     {
-      factconditions.emplace_back(std::make_unique<FactConditionFact>(currOptFact));
+      if (currOptFact.fact.name == "equals" &&
+          currOptFact.fact.parameters.size() == 2 &&
+          currOptFact.fact.value.empty())
+      {
+        factconditions.emplace_back(std::make_unique<FactConditionNode>(
+                                      FactConditionNodeType::EQUALITY,
+                                      std::make_unique<FactConditionFact>(currOptFact.fact.parameters[0]),
+                                    std::make_unique<FactConditionFact>(currOptFact.fact.parameters[1])));
+      }
+      else
+      {
+        factconditions.emplace_back(std::make_unique<FactConditionFact>(currOptFact));
+      }
       continue;
     }
 
@@ -183,12 +195,27 @@ void FactConditionNode::forAll(const std::function<void (const FactOptional&)>& 
 }
 
 bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                   const std::function<bool (const Expression&)>& pExpCallback) const
+                                   const std::function<bool (const Expression&)>& pExpCallback,
+                                   const Problem& pProblem) const
 {
-  if (leftOperand && !leftOperand->untilFalse(pFactCallback, pExpCallback))
-    return false;
-  if (rightOperand && !rightOperand->untilFalse(pFactCallback, pExpCallback))
-    return false;
+  if (nodeType == FactConditionNodeType::AND)
+  {
+    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pExpCallback, pProblem))
+      return false;
+    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pExpCallback, pProblem))
+      return false;
+  }
+  else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    auto* rightFactPtr = rightOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional.fact;
+      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      return pFactCallback(FactOptional(factToCheck));
+    }
+  }
   return true;
 }
 
@@ -200,6 +227,57 @@ bool FactConditionNode::canBeTrue() const
     return false;
   return true;
 }
+
+bool FactConditionNode::isTrue(const Problem& pProblem,
+                               const std::set<Fact>& pPunctualFacts,
+                               std::map<std::string, std::string>* pParametersPtr) const
+{
+  if (nodeType == FactConditionNodeType::AND)
+  {
+    if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pParametersPtr))
+      return false;
+    if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pParametersPtr))
+      return false;
+  }
+  else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    auto* rightFactPtr = rightOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional.fact;
+      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      if (factToCheck.isPunctual())
+        return pPunctualFacts.count(factToCheck) != 0;
+      return factToCheck.isInFacts(pProblem._facts, true, pParametersPtr);
+    }
+  }
+  return true;
+}
+
+bool FactConditionNode::canBecomeTrue(const Problem& pProblem) const
+{
+  if (nodeType == FactConditionNodeType::AND)
+  {
+    if (leftOperand && !leftOperand->canBecomeTrue(pProblem))
+      return false;
+    if (rightOperand && !rightOperand->canBecomeTrue(pProblem))
+      return false;
+  }
+  else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    auto* rightFactPtr = rightOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional.fact;
+      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      return pProblem.canFactBecomeTrue(factToCheck);
+    }
+  }
+  return true;
+}
+
 
 
 std::unique_ptr<FactCondition> FactConditionNode::clone() const
@@ -239,10 +317,36 @@ void FactConditionFact::replaceFact(const cp::Fact& pOldFact,
     factOptional.fact = pNewFact;
 }
 
+bool FactConditionFact::isTrue(const Problem& pProblem,
+                               const std::set<Fact>& pPunctualFacts,
+                               std::map<std::string, std::string>* pParametersPtr) const
+{
+  if (factOptional.isFactNegated)
+    return !factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr);
+
+  if (factOptional.fact.isPunctual())
+    return pPunctualFacts.count(factOptional.fact) != 0;
+
+  return factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr);
+}
+
+bool FactConditionFact::canBecomeTrue(const Problem& pProblem) const
+{
+  if (factOptional.isFactNegated)
+  {
+    if (pProblem._facts.count(factOptional.fact) > 0 &&
+        pProblem._removableFacts.count(factOptional.fact) == 0)
+      return false;
+    return true;
+  }
+  return pProblem.canFactBecomeTrue(factOptional.fact);
+}
+
 std::unique_ptr<FactCondition> FactConditionFact::clone() const
 {
   return std::make_unique<FactConditionFact>(factOptional);
 }
+
 
 
 FactConditionExpression::FactConditionExpression(const Expression& pExpression)
@@ -271,6 +375,19 @@ void FactConditionExpression::replaceFact(const cp::Fact& pOldFact,
     if (currElt.type == ExpressionElementType::FACT && currElt.value == pOldFact.toStr())
       currElt.value = pNewFact.toStr();
 }
+
+bool FactConditionExpression::isTrue(const Problem& pProblem,
+                                     const std::set<Fact>& pPunctualFacts,
+                                     std::map<std::string, std::string>* pParametersPtr) const
+{
+  return expression.isValid(pProblem.variablesToValue());
+}
+
+bool FactConditionExpression::canBecomeTrue(const Problem& pProblem) const
+{
+  return expression.isValid(pProblem.variablesToValue());
+}
+
 
 std::unique_ptr<FactCondition> FactConditionExpression::clone() const
 {

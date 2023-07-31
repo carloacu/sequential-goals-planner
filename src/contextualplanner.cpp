@@ -151,7 +151,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
                                 const Domain& pDomain,
                                 FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (!pCondition || pProblem.canFactConditionBecomeTrue(*pCondition))
+  if (!pCondition || pCondition->canBecomeTrue(pProblem))
   {
     std::map<std::string, std::string> parametersToValue;
     for (const auto& currParam : pParameters)
@@ -175,7 +175,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
             }
             return true;
           },
-          [](const Expression&) { return true; });
+          [](const Expression&) { return true; }, pProblem);
 
           if (!currParentParam.second.empty())
             break;
