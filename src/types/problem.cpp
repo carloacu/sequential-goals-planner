@@ -422,61 +422,77 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
 }
 
 
-bool Problem::canSetOfFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const
+bool Problem::canFactConditionBecomeTrue(const FactCondition& pFactCondition) const
 {
-  if (!canFactsBecomeTrue(pSetOfFacts.facts))
-    return false;
-  for (const auto& currFact : pSetOfFacts.notFacts)
-    if (_facts.count(currFact) > 0 &&
-        _removableFacts.count(currFact) == 0)
-      return false;
-  return areExpsValid(pSetOfFacts.exps, _variablesToValue);
+  return pFactCondition.untilFalse(
+        [&](const FactOptional& pFactOptional)
+  {
+    if (pFactOptional.isFactNegated)
+    {
+      if (_facts.count(pFactOptional.fact) > 0 &&
+          _removableFacts.count(pFactOptional.fact) == 0)
+        return false;
+      return true;
+    }
+    return canFactBecomeTrue(pFactOptional.fact);
+  },
+  [&](const Expression& pExpression)
+  {
+    return pExpression.isValid(_variablesToValue);
+  }
+  );
 }
 
 bool Problem::canFactsBecomeTrue(const std::set<Fact>& pFacts) const
 {
   for (const auto& currFact : pFacts)
+    if (!canFactBecomeTrue(currFact))
+      return false;
+  return true;
+}
+
+bool Problem::canFactBecomeTrue(const Fact& pFact) const
+{
+  if (_facts.count(pFact) == 0 &&
+      _accessibleFacts.count(pFact) == 0)
   {
-    if (_facts.count(currFact) == 0 &&
-        _accessibleFacts.count(currFact) == 0)
+    bool reableFactFound = false;
+    for (const auto& currAccessibleFact : _accessibleFactsWithAnyValues)
     {
-      bool reableFactFound = false;
-      for (const auto& currAccessibleFact : _accessibleFactsWithAnyValues)
+      if (pFact.areEqualExceptAnyValues(currAccessibleFact))
       {
-        if (currFact.areEqualExceptAnyValues(currAccessibleFact))
-        {
-          reableFactFound = true;
-          break;
-        }
+        reableFactFound = true;
+        break;
       }
-      if (!reableFactFound)
-        return false;
     }
+    if (!reableFactFound)
+      return false;
   }
   return true;
 }
 
-bool Problem::areFactsTrue(const SetOfFacts& pSetOfFacts,
-                           const std::set<Fact>& pPunctualFacts,
-                           std::map<std::string, std::string>* pParametersPtr) const
+bool Problem::isConditionTrue(const std::unique_ptr<FactCondition>& pFactConditionPtr,
+                              const std::set<Fact>& pPunctualFacts,
+                              std::map<std::string, std::string>* pParametersPtr) const
 {
-  for (const auto& currFact : pSetOfFacts.facts)
+  if (!pFactConditionPtr)
+    return true;
+  return pFactConditionPtr->untilFalse(
+        [&](const FactOptional& pFactOptional)
   {
-    if (currFact.isPunctual())
-    {
-      if (pPunctualFacts.count(currFact) == 0)
-        return false;
-    }
-    else
-    {
-      if (!currFact.isInFacts(_facts, true, pParametersPtr))
-        return false;
-    }
+    if (pFactOptional.isFactNegated)
+      return !pFactOptional.fact.isInFacts(_facts, true, pParametersPtr);
+
+    if (pFactOptional.fact.isPunctual())
+      return pPunctualFacts.count(pFactOptional.fact) != 0;
+
+    return pFactOptional.fact.isInFacts(_facts, true, pParametersPtr);
+  },
+  [&](const Expression& pExpression)
+  {
+    return pExpression.isValid(_variablesToValue);
   }
-  for (const auto& currFact : pSetOfFacts.notFacts)
-    if (currFact.isInFacts(_facts, true, pParametersPtr))
-      return false;
-  return areExpsValid(pSetOfFacts.exps, _variablesToValue);
+  );
 }
 
 
@@ -508,7 +524,7 @@ void Problem::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pAc
     if (itAction != actions.end())
     {
       auto& action = itAction->second;
-      _feedAccessibleFactsFromDeduction(action.preconditions, action.effect,
+      _feedAccessibleFactsFromDeduction(action.precondition, action.effect,
                                        action.parameters, pDomain);
     }
   }
@@ -532,12 +548,12 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
   }
 }
 
-void Problem::_feedAccessibleFactsFromDeduction(const SetOfFacts& pCondition,
+void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
                                                 const WorldModification& pEffect,
                                                 const std::vector<std::string>& pParameters,
                                                 const Domain& pDomain)
 {
-  if (canSetOfFactsBecomeTrue(pCondition))
+  if (!pCondition || canFactConditionBecomeTrue(*pCondition))
   {
     std::set<Fact> accessibleFactsToAdd;
     std::vector<Fact> accessibleFactsToAddWithAnyValues;
@@ -920,7 +936,7 @@ bool Problem::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApp
       if (itInference != pInferences.end())
       {
         auto& currInference = itInference->second;
-        if (areFactsTrue(currInference.condition, pWhatChanged.punctualFacts))
+        if (isConditionTrue(currInference.condition, pWhatChanged.punctualFacts))
         {
           _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
           _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);

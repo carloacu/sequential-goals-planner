@@ -4,14 +4,15 @@ namespace cp
 {
 
 
-Inference::Inference(const cp::SetOfFacts& pCondition,
+Inference::Inference(std::unique_ptr<FactCondition> pCondition,
                      const cp::SetOfFacts& pFactsToModify,
                      const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd)
-  : condition(pCondition),
+  : condition(pCondition ? std::move(pCondition) : std::unique_ptr<FactCondition>()),
     factsToModify(pFactsToModify),
     goalsToAdd(pGoalsToAdd),
-    isReachable(pCondition.canBeTrue() && (!pGoalsToAdd.empty() || pFactsToModify.canModifySomethingInTheWorld()))
+    isReachable(condition && condition->canBeTrue() && (!pGoalsToAdd.empty() || pFactsToModify.canModifySomethingInTheWorld()))
 {
+  assert(condition);
 }
 
 

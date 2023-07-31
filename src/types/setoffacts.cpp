@@ -41,29 +41,6 @@ static inline std::string _listOfStrToStr(const CONTAINER_TYPE& pStrs,
   return res;
 }
 
-void _splitFacts(
-    std::vector<std::pair<bool, cp::Fact>>& pFacts,
-    const std::string& pStr,
-    char pSeparator)
-{
-  std::size_t pos = 0u;
-  bool isFactNegated = false;
-  std::unique_ptr<cp::Fact> currFact;
-  while (pos < pStr.size())
-  {
-    currFact = std::make_unique<cp::Fact>(pStr, &pSeparator, &isFactNegated, pos, &pos);
-    ++pos;
-    if (!currFact->name.empty())
-    {
-      pFacts.emplace_back(isFactNegated, std::move(*currFact));
-      isFactNegated = false;
-      currFact = std::unique_ptr<cp::Fact>();
-    }
-  }
-  if (currFact && !currFact->name.empty())
-    pFacts.emplace_back(isFactNegated, std::move(*currFact));
-}
-
 }
 
 
@@ -87,31 +64,19 @@ bool SetOfFacts::hasFact(const Fact& pFact) const
 }
 
 
-bool SetOfFacts::isIncludedIn(const SetOfFacts& pOther) const
+bool SetOfFacts::isIncludedIn(const std::unique_ptr<FactCondition>& pFactConditionPtr) const
 {
   for (auto& currFact : facts)
-    if (pOther.facts.count(currFact) == 0)
+    if (!pFactConditionPtr || !pFactConditionPtr->containsFact(currFact))
       return false;
 
   for (auto& currNotFact : notFacts)
-    if (pOther.notFacts.count(currNotFact) == 0)
+    if (!pFactConditionPtr || !pFactConditionPtr->containsNotFact(currNotFact))
       return false;
 
   for (auto& currExpression : exps)
-  {
-    bool found = false;
-    for (auto& currExpression2 : pOther.exps)
-    {
-      if (currExpression == currExpression2)
-      {
-        found = true;
-        break;
-      }
-    }
-
-    if (!found)
+    if (!pFactConditionPtr || !pFactConditionPtr->containsExpression(currExpression))
       return false;
-  }
   return true;
 }
 
@@ -183,7 +148,7 @@ SetOfFacts SetOfFacts::fromStr(const std::string& pStr,
                                char pSeparator)
 {
   std::vector<std::pair<bool, cp::Fact>> vect;
-  _splitFacts(vect, pStr, pSeparator);
+  Fact::splitFacts(vect, pStr, pSeparator);
   SetOfFacts res;
 
   for (auto& currIsNegatedAndFact : vect)

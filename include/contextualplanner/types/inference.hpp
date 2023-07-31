@@ -16,15 +16,24 @@ namespace cp
 struct CONTEXTUALPLANNER_API Inference
 {
   /// Construct an inference.
-  Inference(const cp::SetOfFacts& pCondition,
+  Inference(std::unique_ptr<FactCondition> pCondition,
             const cp::SetOfFacts& pFactsToModify,
             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
+
+  Inference(const Inference& pInference)
+    : condition(pInference.condition ? pInference.condition->clone() : std::unique_ptr<FactCondition>()),
+      factsToModify(pInference.factsToModify),
+      goalsToAdd(pInference.goalsToAdd),
+      isReachable(pInference.isReachable)
+  {
+    assert(condition);
+  }
 
   /**
    * Condition to apply the facts and goals modification.
    * The condition is true if the condition is a sub set of a corresponding world state.
    */
-  const cp::SetOfFacts condition;
+  const std::unique_ptr<FactCondition> condition;
   /// Facts to add or to remove if the condition is true.
   const cp::SetOfFacts factsToModify;
   /// Goals to add if the condition is true.

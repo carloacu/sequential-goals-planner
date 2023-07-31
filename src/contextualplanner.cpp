@@ -53,7 +53,30 @@ void _getPrecoditionStatistics(std::size_t& nbOfPreconditionsSatisfied,
                                const Action& pAction,
                                const std::set<Fact>& pFacts)
 {
-  nbOfPreconditionsSatisfied = pAction.preconditions.facts.size();
+  nbOfPreconditionsSatisfied = 0;
+  if (pAction.precondition)
+  {
+    pAction.precondition->forAll(
+          [&](const FactOptional& pFactOptional)
+    {
+      if (pFactOptional.isFactNegated)
+      {
+        if (pFacts.count(pFactOptional.fact) == 0)
+          ++nbOfPreconditionsSatisfied;
+        else
+          ++nbOfPreconditionsNotSatisfied;
+      }
+      else
+      {
+        if (pFacts.count(pFactOptional.fact) > 0)
+          ++nbOfPreconditionsSatisfied;
+        else
+          ++nbOfPreconditionsNotSatisfied;
+      }
+    },
+    [](const Expression&) {});
+  }
+
   for (const auto& currFact : pAction.preferInContext.facts)
   {
     if (pFacts.count(currFact) > 0)
@@ -119,7 +142,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
 
 
 bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
-                                const SetOfFacts& pCondition,
+                                const std::unique_ptr<FactCondition>& pCondition,
                                 const WorldModification& pEffect,
                                 const Fact& pFact,
                                 std::map<std::string, std::string>& pParentParameters,
@@ -128,7 +151,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
                                 const Domain& pDomain,
                                 FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (pProblem.canSetOfFactsBecomeTrue(pCondition))
+  if (!pCondition || pProblem.canFactConditionBecomeTrue(*pCondition))
   {
     std::map<std::string, std::string> parametersToValue;
     for (const auto& currParam : pParameters)
@@ -141,12 +164,19 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
       {
         if (currParentParam.second.empty())
         {
-          for (const auto& currActionPreconditionFact : pCondition.facts)
+          pCondition->untilFalse(
+                [&](const FactOptional& pFactOptional)
           {
-            currParentParam.second = pFact.tryToExtractParameterValueFromExemple(currParentParam.first, currActionPreconditionFact);
-            if (!currParentParam.second.empty())
-              break;
-          }
+            if (!pFactOptional.isFactNegated)
+            {
+              currParentParam.second = pFact.tryToExtractParameterValueFromExemple(currParentParam.first, pFactOptional.fact);
+              if (!currParentParam.second.empty())
+                return false;
+            }
+            return true;
+          },
+          [](const Expression&) { return true; });
+
           if (!currParentParam.second.empty())
             break;
           if (currParentParam.second.empty())
@@ -182,7 +212,7 @@ bool _lookForAPossibleExistingOrNotFactFromActions(
       if (itAction != actions.end())
       {
         auto& action = itAction->second;
-        if (_lookForAPossibleDeduction(action.parameters, action.preconditions, action.effect,
+        if (_lookForAPossibleDeduction(action.parameters, action.precondition, action.effect,
                                        pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
           return true;
       }
@@ -315,7 +345,7 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       auto& action = itAction->second;
       FactsAlreadyChecked factsAlreadyChecked;
       auto newPotRes = PotentialNextAction(currAction, action);
-      if (pProblem.areFactsTrue(action.preconditions, {}, &newPotRes.parameters) &&
+      if (pProblem.isConditionTrue(action.precondition, {}, &newPotRes.parameters) &&
           _lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadyChecked))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))

@@ -5,6 +5,7 @@
 #include <set>
 #include "../util/api.hpp"
 #include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/factcondition.hpp>
 #include <contextualplanner/types/expression.hpp>
 
 
@@ -57,7 +58,7 @@ struct CONTEXTUALPLANNER_API SetOfFacts
    * @param pOther The other SetOfFacts to check.
    * @return True if this object is included, false otherwise.
    */
-  bool isIncludedIn(const SetOfFacts& pOther) const;
+  bool isIncludedIn(const std::unique_ptr<FactCondition>& pFactConditionPtr) const;
 
   /**
    * @brief Replace a fact by another inside this object.

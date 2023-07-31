@@ -14,22 +14,44 @@ Domain::Domain(const std::map<ActionId, Action>& pActions)
 void Domain::addAction(const ActionId& pActionId,
                        const Action& pAction)
 {
-  if ((pAction.effect.factsModifications.isIncludedIn(pAction.preconditions) &&
-       pAction.effect.potentialFactsModifications.isIncludedIn(pAction.preconditions)) ||
+  if ((pAction.effect.factsModifications.isIncludedIn(pAction.precondition) &&
+       pAction.effect.potentialFactsModifications.isIncludedIn(pAction.precondition)) ||
       pAction.effect.empty() ||
       _actions.count(pActionId) > 0)
     return;
   _actions.emplace(pActionId, pAction);
-  for (const auto& currPrecondition : pAction.preconditions.facts)
-    _preconditionToActions[currPrecondition.name].insert(pActionId);
-  for (const auto& currPrecondition : pAction.preconditions.notFacts)
-    _notPreconditionToActions[currPrecondition.name].insert(pActionId);
 
-  for (auto& currExp : pAction.preconditions.exps)
-    for (auto& currElt : currExp.elts)
-      if (currElt.type == ExpressionElementType::FACT)
-        _preconditionToActionsExps[currElt.value].insert(pActionId);
-  if (pAction.preconditions.facts.empty() && pAction.preconditions.exps.empty())
+  bool hasAddedAFact = false;
+  if (pAction.precondition)
+  {
+    pAction.precondition->forAll(
+          [&](const FactOptional& pFactOptional)
+    {
+      if (pFactOptional.isFactNegated)
+      {
+        _notPreconditionToActions[pFactOptional.fact.name].insert(pActionId);
+      }
+      else
+      {
+        _preconditionToActions[pFactOptional.fact.name].insert(pActionId);
+        hasAddedAFact = true;
+      }
+    },
+    [&](const Expression& pExpression)
+    {
+      for (auto& currElt : pExpression.elts)
+      {
+        if (currElt.type == ExpressionElementType::FACT)
+        {
+          _preconditionToActionsExps[currElt.value].insert(pActionId);
+          hasAddedAFact = true;
+        }
+      }
+    }
+    );
+  }
+
+  if (!hasAddedAFact)
     _actionsWithoutFactToAddInPrecondition.insert(pActionId);
 }
 
@@ -40,17 +62,30 @@ void Domain::removeAction(const ActionId& pActionId)
   if (it == _actions.end())
     return;
   auto& actionThatWillBeRemoved = it->second;
-  for (const auto& currPrecondition : actionThatWillBeRemoved.preconditions.facts)
-    _preconditionToActions[currPrecondition.name].erase(pActionId);
-  for (const auto& currPrecondition : actionThatWillBeRemoved.preconditions.notFacts)
-    _notPreconditionToActions[currPrecondition.name].erase(pActionId);
 
-  for (auto& currExp : actionThatWillBeRemoved.preconditions.exps)
-    for (auto& currElt : currExp.elts)
-      if (currElt.type == ExpressionElementType::FACT)
-        _preconditionToActionsExps[currElt.value].erase(pActionId);
-  if (actionThatWillBeRemoved.preconditions.facts.empty() && actionThatWillBeRemoved.preconditions.exps.empty())
-    _actionsWithoutFactToAddInPrecondition.erase(pActionId);
+  if (actionThatWillBeRemoved.precondition)
+  {
+    actionThatWillBeRemoved.precondition->forAll(
+          [&](const FactOptional& pFactOptional)
+    {
+      if (pFactOptional.isFactNegated)
+        _notPreconditionToActions[pFactOptional.fact.name].erase(pActionId);
+      else
+        _preconditionToActions[pFactOptional.fact.name].erase(pActionId);
+    },
+    [&](const Expression& pExpression)
+    {
+      for (auto& currElt : pExpression.elts)
+        if (currElt.type == ExpressionElementType::FACT)
+          _preconditionToActionsExps[currElt.value].erase(pActionId);
+    }
+    );
+  }
+  else
+  {
+     _actionsWithoutFactToAddInPrecondition.erase(pActionId);
+  }
+
   _actions.erase(it);
 }
 

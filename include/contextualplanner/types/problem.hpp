@@ -132,7 +132,7 @@ struct CONTEXTUALPLANNER_API Problem
    * @param pSetOfFacts Set of facts to check if they are valid.
    * @return True if the facts are valid for the world, false otherwise.
    */
-  bool canSetOfFactsBecomeTrue(const SetOfFacts& pSetOfFacts) const;
+  bool canFactConditionBecomeTrue(const FactCondition& pFactCondition) const;
 
   /**
    * @brief Can some facts become true, according to the world and the accessible facts stored internally in this object.
@@ -141,6 +141,8 @@ struct CONTEXTUALPLANNER_API Problem
    */
   bool canFactsBecomeTrue(const std::set<Fact>& pFacts) const;
 
+  bool canFactBecomeTrue(const Fact& pFact) const;
+
   /**
    * @brief Are the facts contained in the problem.
    * @param[in] pSetOfFacts Facts to check.
@@ -148,9 +150,9 @@ struct CONTEXTUALPLANNER_API Problem
    * @param[oui] pParametersPtr Parameters that the facts have in the problem.
    * @return True if all the fact are contained in the problem, false otherwise.
    */
-  bool areFactsTrue(const SetOfFacts& pSetOfFacts,
-                    const std::set<Fact>& pPunctualFacts = {},
-                    std::map<std::string, std::string>* pParametersPtr = nullptr) const;
+  bool isConditionTrue(const std::unique_ptr<FactCondition>& pFactConditionPtr,
+                       const std::set<Fact>& pPunctualFacts = {},
+                       std::map<std::string, std::string>* pParametersPtr = nullptr) const;
 
   /// Facts of the world.
   const std::set<Fact>& facts() const { return _facts; }
@@ -452,7 +454,7 @@ private:
    * @param pParameters Parameter names.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedAccessibleFactsFromDeduction(const SetOfFacts& pCondition,
+  void _feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
                                         const WorldModification& pEffect,
                                         const std::vector<std::string>& pParameters,
                                         const Domain& pDomain);

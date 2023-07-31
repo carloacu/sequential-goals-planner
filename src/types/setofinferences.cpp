@@ -11,12 +11,23 @@ void SetOfInferences::addInference(const InferenceId& pInferenceId,
     return;
   _inferences.emplace(pInferenceId, pInference);
   auto& links = pInference.isReachable ? _reachableInferenceLinks : _unreachableInferenceLinks;
-  for (const auto& currFact : pInference.condition.facts)
-    links.conditionToInferences[currFact.name].insert(pInferenceId);
-  for (const auto& currNotFact : pInference.condition.notFacts)
-    links.notConditionToInferences[currNotFact.name].insert(pInferenceId);
-  if (pInference.isReachable && !pInference.condition.exps.empty())
-    links.inferencesWithWithAnExpressionInCondition.insert(pInferenceId);
+
+  if (pInference.condition)
+  {
+    pInference.condition->forAll(
+          [&](const FactOptional& pFactOptional)
+    {
+      if (pFactOptional.isFactNegated)
+        links.notConditionToInferences[pFactOptional.fact.name].insert(pInferenceId);
+      else
+        links.conditionToInferences[pFactOptional.fact.name].insert(pInferenceId);
+    },
+    [&](const Expression&) {
+      if (pInference.isReachable)
+        links.inferencesWithWithAnExpressionInCondition.insert(pInferenceId);
+    }
+    );
+  }
 }
 
 
@@ -27,10 +38,20 @@ void SetOfInferences::removeInference(const InferenceId& pInferenceId)
     return;
   auto& inferenceThatWillBeRemoved = it->second;
   auto& links = inferenceThatWillBeRemoved.isReachable ? _reachableInferenceLinks : _unreachableInferenceLinks;
-  for (const auto& currFact : inferenceThatWillBeRemoved.condition.facts)
-    links.conditionToInferences[currFact.name].erase(pInferenceId);
-  for (const auto& currFact : inferenceThatWillBeRemoved.condition.notFacts)
-    links.notConditionToInferences[currFact.name].erase(pInferenceId);
+
+  if (inferenceThatWillBeRemoved.condition)
+  {
+    inferenceThatWillBeRemoved.condition->forAll(
+          [&](const FactOptional& pFactOptional)
+    {
+      if (pFactOptional.isFactNegated)
+        links.notConditionToInferences[pFactOptional.fact.name].erase(pInferenceId);
+      else
+        links.conditionToInferences[pFactOptional.fact.name].erase(pInferenceId);
+    },
+    [](const Expression&) {}
+    );
+  }
   _inferences.erase(it);
 }
 

@@ -1,6 +1,7 @@
 #include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/factoptional.hpp>
+#include <memory>
 #include <assert.h>
+#include <contextualplanner/types/factoptional.hpp>
 
 
 namespace cp
@@ -327,5 +328,45 @@ bool Fact::isInFacts(
   return false;
 }
 
+
+
+void Fact::splitFacts(
+    std::vector<std::pair<bool, cp::Fact>>& pFacts,
+    const std::string& pStr,
+    char pSeparator)
+{
+  std::size_t pos = 0u;
+  bool isFactNegated = false;
+  std::unique_ptr<cp::Fact> currFact;
+  while (pos < pStr.size())
+  {
+    currFact = std::make_unique<cp::Fact>(pStr, &pSeparator, &isFactNegated, pos, &pos);
+    ++pos;
+    if (!currFact->name.empty())
+    {
+      pFacts.emplace_back(isFactNegated, std::move(*currFact));
+      isFactNegated = false;
+      currFact = std::unique_ptr<cp::Fact>();
+    }
+  }
+  if (currFact && !currFact->name.empty())
+    pFacts.emplace_back(isFactNegated, std::move(*currFact));
+}
+
+
+void Fact::splitFactOptional(
+    std::vector<cp::FactOptional>& pFactsOptional,
+    const std::string& pStr,
+    char pSeparator)
+{
+  std::size_t pos = 0u;
+  while (pos < pStr.size())
+  {
+    auto currFact = std::make_unique<cp::FactOptional>(pStr, &pSeparator, pos, &pos);
+    ++pos;
+    if (!currFact->fact.name.empty())
+      pFactsOptional.emplace_back(std::move(*currFact));
+  }
+}
 
 } // !cp
