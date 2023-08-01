@@ -170,25 +170,6 @@ bool FactModificationNode::canModifySomethingInTheWorld() const
       (rightOperand && rightOperand->canModifySomethingInTheWorld());
 }
 
-bool FactModificationNode::containsFact(const Fact& pFact) const
-{
-  return (leftOperand && leftOperand->containsFact(pFact)) ||
-      (rightOperand && rightOperand->containsFact(pFact));
-}
-
-bool FactModificationNode::containsNotFact(const Fact& pFact) const
-{
-  return (leftOperand && leftOperand->containsNotFact(pFact)) ||
-      (rightOperand && rightOperand->containsNotFact(pFact));
-}
-
-bool FactModificationNode::containsExpression(const Expression& pExpression) const
-{
-  return (leftOperand && leftOperand->containsExpression(pExpression)) ||
-      (rightOperand && rightOperand->containsExpression(pExpression));
-}
-
-
 void FactModificationNode::replaceFact(const cp::Fact& pOldFact,
                                     const Fact& pNewFact)
 {
@@ -270,16 +251,6 @@ bool FactModificationFact::canModifySomethingInTheWorld() const
       !factOptional.fact.isUnreachable();
 }
 
-bool FactModificationFact::containsFact(const Fact& pFact) const
-{
-  return !factOptional.isFactNegated && factOptional.fact == pFact;
-}
-
-bool FactModificationFact::containsNotFact(const Fact& pFact) const
-{
-  return factOptional.isFactNegated && factOptional.fact == pFact;
-}
-
 void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
                                     const Fact& pNewFact)
 {
@@ -336,11 +307,6 @@ bool FactModificationExpression::hasFact(const cp::Fact& pFact) const
     if (currElt.type == ExpressionElementType::FACT && currElt.value == pFact.toStr())
       return true;
   return false;
-}
-
-bool FactModificationExpression::containsExpression(const Expression& pExpression) const
-{
-  return expression == pExpression;
 }
 
 void FactModificationExpression::replaceFact(const cp::Fact& pOldFact,

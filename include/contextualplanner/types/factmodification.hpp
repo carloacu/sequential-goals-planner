@@ -27,9 +27,6 @@ struct CONTEXTUALPLANNER_API FactModification
   virtual bool hasFact(const cp::Fact& pFact) const = 0;
   virtual bool canModifySomethingInTheWorld() const = 0;
 
-  virtual bool containsFact(const Fact& pFact) const = 0;
-  virtual bool containsNotFact(const Fact& pFact) const = 0;
-  virtual bool containsExpression(const Expression& pExpression) const = 0;
   virtual void replaceFact(const cp::Fact& pOldFact,
                            const Fact& pNewFact) = 0;
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -41,7 +38,6 @@ struct CONTEXTUALPLANNER_API FactModification
   virtual bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const = 0;
 
   virtual std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const = 0;
-  virtual const FactModificationFact* fcFactPtr() const = 0;
 
   FactModificationType type;
 
@@ -67,9 +63,6 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   bool hasFact(const Fact& pFact) const override;
   bool canModifySomethingInTheWorld() const override;
 
-  bool containsFact(const Fact& pFact) const override;
-  bool containsNotFact(const Fact& pFact) const override;
-  bool containsExpression(const Expression& pExpression) const override;
   void replaceFact(const Fact& pOldFact,
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -81,7 +74,6 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override;
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
-  const FactModificationFact* fcFactPtr() const override { return nullptr; }
 
   FactModificationNodeType nodeType;
   std::unique_ptr<FactModification> leftOperand;
@@ -95,9 +87,6 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   bool hasFact(const cp::Fact& pFact) const override;
   bool canModifySomethingInTheWorld() const override;
 
-  bool containsFact(const Fact& pFact) const override;
-  bool containsNotFact(const Fact& pFact) const override;
-  bool containsExpression(const Expression&) const override { return false; }
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -109,7 +98,6 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>&) const override { return false; }
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
-  const FactModificationFact* fcFactPtr() const override { return this; }
 
   FactOptional factOptional;
 };
@@ -121,9 +109,6 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
   bool hasFact(const cp::Fact& pFact) const override;
   bool canModifySomethingInTheWorld() const override { return true; }
 
-  bool containsFact(const Fact& pFact) const override { return false; }
-  bool containsNotFact(const Fact& pFact) const override  { return false; }
-  bool containsExpression(const Expression& pExpression) const override;
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>&,
@@ -135,7 +120,6 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return pExpCallback(expression); }
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
-  const FactModificationFact* fcFactPtr() const override { return nullptr; }
 
   Expression expression;
 };
