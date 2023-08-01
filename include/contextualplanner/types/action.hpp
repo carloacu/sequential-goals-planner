@@ -5,7 +5,6 @@
 #include "../util/api.hpp"
 #include <contextualplanner/types/factcondition.hpp>
 #include <contextualplanner/types/worldmodification.hpp>
-#include <contextualplanner/types/setoffacts.hpp>
 
 
 namespace cp
@@ -23,10 +22,10 @@ struct CONTEXTUALPLANNER_API Action
    */
   Action(std::unique_ptr<FactCondition> pPrecondition,
          const WorldModification& pEffect,
-         const SetOfFacts& pPreferInContext = {})
+         std::unique_ptr<FactCondition> pPreferInContext = {})
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<FactCondition>()),
-      preferInContext(pPreferInContext),
+      preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<FactCondition>()),
       effect(pEffect)
   {
   }
@@ -34,10 +33,10 @@ struct CONTEXTUALPLANNER_API Action
   /// Move constructor of an action.
   Action(std::unique_ptr<FactCondition>&& pPrecondition,
          WorldModification&& pEffect,
-         SetOfFacts&& pPreferInContext)
+         std::unique_ptr<FactCondition>&& pPreferInContext)
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<FactCondition>()),
-      preferInContext(std::move(pPreferInContext)),
+      preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<FactCondition>()),
       effect(std::move(pEffect))
   {
   }
@@ -45,7 +44,7 @@ struct CONTEXTUALPLANNER_API Action
   Action(const Action& pAction)
     : parameters(pAction.parameters),
       precondition(pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<FactCondition>()),
-      preferInContext(pAction.preferInContext),
+      preferInContext(pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<FactCondition>()),
       effect(pAction.effect)
   {
   }
@@ -54,7 +53,7 @@ struct CONTEXTUALPLANNER_API Action
   {
     parameters = pAction.parameters;
     precondition = pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<FactCondition>();
-    preferInContext = pAction.preferInContext;
+    preferInContext = pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<FactCondition>();
     effect = pAction.effect;
   }
 
@@ -74,7 +73,7 @@ struct CONTEXTUALPLANNER_API Action
   /// Set of facts that should be present in the world to be able to do this action.
   std::unique_ptr<FactCondition> precondition;
   /// Set of facts that will increase the priority of this action if they are present in the world.
-  SetOfFacts preferInContext;
+  std::unique_ptr<FactCondition> preferInContext;
   /// How the world will change when this action will be finished.
   WorldModification effect;
 };

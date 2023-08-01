@@ -53,44 +53,28 @@ void _getPrecoditionStatistics(std::size_t& nbOfPreconditionsSatisfied,
                                const Action& pAction,
                                const std::set<Fact>& pFacts)
 {
-  nbOfPreconditionsSatisfied = 0;
-  if (pAction.precondition)
+  auto onFact = [&](const FactOptional& pFactOptional)
   {
-    pAction.precondition->forAll(
-          [&](const FactOptional& pFactOptional)
+    if (pFactOptional.isFactNegated)
     {
-      if (pFactOptional.isFactNegated)
-      {
-        if (pFacts.count(pFactOptional.fact) == 0)
-          ++nbOfPreconditionsSatisfied;
-        else
-          ++nbOfPreconditionsNotSatisfied;
-      }
+      if (pFacts.count(pFactOptional.fact) == 0)
+        ++nbOfPreconditionsSatisfied;
       else
-      {
-        if (pFacts.count(pFactOptional.fact) > 0)
-          ++nbOfPreconditionsSatisfied;
-        else
-          ++nbOfPreconditionsNotSatisfied;
-      }
-    },
-    [](const Expression&) {});
-  }
+        ++nbOfPreconditionsNotSatisfied;
+    }
+    else
+    {
+      if (pFacts.count(pFactOptional.fact) > 0)
+        ++nbOfPreconditionsSatisfied;
+      else
+        ++nbOfPreconditionsNotSatisfied;
+    }
+  };
 
-  for (const auto& currFact : pAction.preferInContext.facts)
-  {
-    if (pFacts.count(currFact) > 0)
-      ++nbOfPreconditionsSatisfied;
-    else
-      ++nbOfPreconditionsNotSatisfied;
-  }
-  for (const auto& currFact : pAction.preferInContext.notFacts)
-  {
-    if (pFacts.count(currFact) == 0)
-      ++nbOfPreconditionsSatisfied;
-    else
-      ++nbOfPreconditionsNotSatisfied;
-  }
+  if (pAction.precondition)
+    pAction.precondition->forAll(onFact, [](const Expression&) {});
+  if (pAction.preferInContext)
+    pAction.preferInContext->forAll(onFact, [](const Expression&) {});
 }
 
 

@@ -1,4 +1,5 @@
 #include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
@@ -579,10 +580,10 @@ void _preferInContext()
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
   actions.emplace(_action_checkInWithQrCode, cp::Action({},
                                                         cp::FactModification::fromStr(_fact_checkedIn),
-                                                        {_fact_hasQrCode}));
+                                                        cp::FactCondition::fromStr(_fact_hasQrCode)));
   actions.emplace(_action_checkInWithPassword, cp::Action({},
                                                           cp::FactModification::fromStr(_fact_checkedIn),
-                                                          {_fact_hasCheckInPasword}));
+                                                          cp::FactCondition::fromStr(_fact_hasCheckInPasword)));
   actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
 
@@ -618,10 +619,9 @@ void _preferInContext()
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  auto dontHaveAQrCode = cp::SetOfFacts::fromStr("!" + _fact_hasQrCode, ',');
   actions.emplace(_action_checkInWithRealPerson, cp::Action({},
                                                             cp::FactModification::fromStr(_fact_checkedIn),
-                                                            dontHaveAQrCode));
+                                                            cp::FactCondition::fromStr("!" + _fact_hasQrCode)));
   problem.setFacts({}, now);
   assert_eq(_action_checkInWithRealPerson + _sep +
             _action_greet + _sep +
@@ -635,7 +635,7 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({},
                                             cp::FactModification::fromStr(_fact_greeted + "&" + _fact_presented),
-                                            {_fact_beginOfConversation}));
+                                            cp::FactCondition::fromStr(_fact_beginOfConversation)));
   actions.emplace(_action_presentation, cp::Action({}, cp::FactModification::fromStr(_fact_presented)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
   actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_presented + "&" + _fact_checkedIn),
@@ -662,7 +662,7 @@ void _avoidToDo2TimesTheSameActionIfPossble()
                                             cp::FactModification::fromStr(_fact_greeted + "&" + _fact_presented)));
   actions.emplace(_action_presentation, cp::Action({},
                                                    cp::FactModification::fromStr(_fact_presented),
-                                                   {_fact_beginOfConversation}));
+                                                   cp::FactCondition::fromStr(_fact_beginOfConversation)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
   actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_presented + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
@@ -758,7 +758,9 @@ void _checkActionHasAFact()
   cp::WorldModification effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
   effect.potentialFactsModifications = cp::FactModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::Problem::defaultPriority] = {_fact_d};
-  const cp::Action action(cp::FactCondition::fromStr(_fact_e), effect, {_fact_f});
+  const cp::Action action(cp::FactCondition::fromStr(_fact_e),
+                          effect,
+                          cp::FactCondition::fromStr(_fact_f));
   assert_true(action.hasFact(_fact_a));
   assert_true(action.hasFact(_fact_b));
   assert_true(action.hasFact(_fact_c));
@@ -784,7 +786,9 @@ void _checkActionReplacefact()
   cp::WorldModification effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
   effect.potentialFactsModifications = cp::FactModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::Problem::defaultPriority] = {_fact_d};
-  cp::Action action(cp::FactCondition::fromStr(_fact_e), effect, {_fact_f});
+  cp::Action action(cp::FactCondition::fromStr(_fact_e),
+                    effect,
+                    cp::FactCondition::fromStr(_fact_f));
   assert_true(action.hasFact(_fact_a));
   assert_false(action.hasFact(_fact_g));
   action.replaceFact(_fact_a, _fact_g);
@@ -1047,10 +1051,9 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action(cp::FactCondition::fromStr(_fact_engagedWithUser),
                                                    cp::FactModification::fromStr(_fact_userSatisfied),
-                                                   removeLearntBehavior));
+                                                   cp::FactCondition::fromStr("!" + _fact_robotLearntABehavior)));
   actions.emplace(_action_checkIn, cp::Action({},
                                               cp::FactModification::fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised)));
   cp::Domain domain(std::move(actions));
@@ -1072,7 +1075,7 @@ void _dontLinkActionWithPreferredInContext()
   auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action({},
                                                    cp::FactModification::fromStr(_fact_userSatisfied),
-                                                   {_fact_checkedIn}));
+                                                   cp::FactCondition::fromStr(_fact_checkedIn)));
   actions.emplace(_action_checkIn, cp::Action(cp::FactCondition::fromStr(_fact_engagedWithUser),
                                               cp::FactModification::fromStr(_fact_checkedIn)));
   cp::Domain domain(std::move(actions));

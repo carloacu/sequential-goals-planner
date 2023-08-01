@@ -8,7 +8,6 @@
 #include "../util/api.hpp"
 #include <contextualplanner/types/factmodification.hpp>
 #include <contextualplanner/types/goal.hpp>
-#include <contextualplanner/types/setoffacts.hpp>
 
 
 namespace cp

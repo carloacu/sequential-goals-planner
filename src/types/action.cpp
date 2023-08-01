@@ -8,7 +8,7 @@ namespace cp
 bool Action::hasFact(const cp::Fact& pFact) const
 {
   return (precondition && precondition->hasFact(pFact)) ||
-      preferInContext.hasFact(pFact) ||
+      (preferInContext && preferInContext->hasFact(pFact)) ||
       effect.hasFact(pFact);
 }
 
@@ -17,7 +17,8 @@ void Action::replaceFact(const cp::Fact& pOldFact,
 {
   if (precondition)
     precondition->replaceFact(pOldFact, pNewFact);
-  preferInContext.replaceFact(pOldFact, pNewFact);
+  if (preferInContext)
+    preferInContext->replaceFact(pOldFact, pNewFact);
   effect.replaceFact(pOldFact, pNewFact);
 }
 
