@@ -64,23 +64,6 @@ bool SetOfFacts::hasFact(const Fact& pFact) const
 }
 
 
-bool SetOfFacts::isIncludedIn(const std::unique_ptr<FactCondition>& pFactConditionPtr) const
-{
-  for (auto& currFact : facts)
-    if (!pFactConditionPtr || !pFactConditionPtr->containsFact(currFact))
-      return false;
-
-  for (auto& currNotFact : notFacts)
-    if (!pFactConditionPtr || !pFactConditionPtr->containsNotFact(currNotFact))
-      return false;
-
-  for (auto& currExpression : exps)
-    if (!pFactConditionPtr || !pFactConditionPtr->containsExpression(currExpression))
-      return false;
-  return true;
-}
-
-
 void SetOfFacts::replaceFact(const Fact& pOldFact,
                              const Fact& pNewFact)
 {

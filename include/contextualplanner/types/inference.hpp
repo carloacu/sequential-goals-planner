@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include "../util/api.hpp"
+#include <contextualplanner/types/factmodification.hpp>
 #include <contextualplanner/types/goal.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
 
@@ -17,16 +18,17 @@ struct CONTEXTUALPLANNER_API Inference
 {
   /// Construct an inference.
   Inference(std::unique_ptr<FactCondition> pCondition,
-            const cp::SetOfFacts& pFactsToModify,
+            std::unique_ptr<FactModification> pFactsToModify,
             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
 
   Inference(const Inference& pInference)
     : condition(pInference.condition ? pInference.condition->clone() : std::unique_ptr<FactCondition>()),
-      factsToModify(pInference.factsToModify),
+      factsToModify(pInference.factsToModify ? pInference.factsToModify->clone(nullptr) : std::unique_ptr<FactModification>()),
       goalsToAdd(pInference.goalsToAdd),
       isReachable(pInference.isReachable)
   {
     assert(condition);
+    assert(factsToModify || !goalsToAdd.empty());
   }
 
   /**
@@ -35,7 +37,7 @@ struct CONTEXTUALPLANNER_API Inference
    */
   const std::unique_ptr<FactCondition> condition;
   /// Facts to add or to remove if the condition is true.
-  const cp::SetOfFacts factsToModify;
+  const std::unique_ptr<FactModification> factsToModify;
   /// Goals to add if the condition is true.
   const std::map<int, std::vector<cp::Goal>> goalsToAdd;
   /**

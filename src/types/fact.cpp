@@ -262,68 +262,77 @@ bool Fact::isInFacts(
     std::map<std::string, std::string>* pParametersPtr) const
 {
   for (const auto& currFact : pFacts)
-  {
-    if (currFact.name != name ||
-        currFact.parameters.size() != parameters.size())
-      continue;
+    if (isInFact(currFact, pParametersAreForTheFact, pParametersPtr))
+      return true;
+  return false;
+}
 
-    auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
-      if (pFactValue == pValueToLookFor)
-        return true;
-      if (pParametersPtr == nullptr || pParametersPtr->empty())
-        return false;
-      auto& parameters = *pParametersPtr;
 
-      auto itParam = parameters.find(pFactValue);
-      if (itParam != parameters.end())
-      {
-        if (!itParam->second.empty())
-        {
-          if (itParam->second == pValueToLookFor)
-            return true;
-        }
-        else
-        {
-          parameters[pFactValue] = pValueToLookFor;
-          return true;
-        }
-      }
+bool Fact::isInFact(
+    const Fact& pFact,
+    bool pParametersAreForTheFact,
+    std::map<std::string, std::string>* pParametersPtr) const
+{
+  if (pFact.name != name ||
+      pFact.parameters.size() != parameters.size())
+    return false;
+
+  auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
+    if (pFactValue == pValueToLookFor)
+      return true;
+    if (pParametersPtr == nullptr || pParametersPtr->empty())
       return false;
-    };
+    auto& parameters = *pParametersPtr;
 
+    auto itParam = parameters.find(pFactValue);
+    if (itParam != parameters.end())
     {
-      bool doesParametersMatches = true;
-      auto itFactParameters = currFact.parameters.begin();
-      auto itLookForParameters = parameters.begin();
-      while (itFactParameters != currFact.parameters.end())
+      if (!itParam->second.empty())
       {
-        if (*itFactParameters != *itLookForParameters)
-        {
-          if (!itFactParameters->fact.parameters.empty() ||
-              !itFactParameters->fact.value.empty() ||
-              !itLookForParameters->fact.parameters.empty() ||
-              !itLookForParameters->fact.value.empty() ||
-              (!pParametersAreForTheFact && !doesItMatch(itFactParameters->fact.name, itLookForParameters->fact.name)) ||
-              (pParametersAreForTheFact && !doesItMatch(itLookForParameters->fact.name, itFactParameters->fact.name)))
-            doesParametersMatches = false;
-        }
-        ++itFactParameters;
-        ++itLookForParameters;
+        if (itParam->second == pValueToLookFor)
+          return true;
       }
-      if (!doesParametersMatches)
-        continue;
+      else
+      {
+        parameters[pFactValue] = pValueToLookFor;
+        return true;
+      }
     }
+    return false;
+  };
 
-    if (pParametersAreForTheFact)
+  {
+    bool doesParametersMatches = true;
+    auto itFactParameters = pFact.parameters.begin();
+    auto itLookForParameters = parameters.begin();
+    while (itFactParameters != pFact.parameters.end())
     {
-      if (doesItMatch(value, currFact.value))
-        return true;
+      if (*itFactParameters != *itLookForParameters)
+      {
+        if (!itFactParameters->fact.parameters.empty() ||
+            !itFactParameters->fact.value.empty() ||
+            !itLookForParameters->fact.parameters.empty() ||
+            !itLookForParameters->fact.value.empty() ||
+            (!pParametersAreForTheFact && !doesItMatch(itFactParameters->fact.name, itLookForParameters->fact.name)) ||
+            (pParametersAreForTheFact && !doesItMatch(itLookForParameters->fact.name, itFactParameters->fact.name)))
+          doesParametersMatches = false;
+      }
+      ++itFactParameters;
+      ++itLookForParameters;
     }
-    else
-    {
-      if (doesItMatch(currFact.value, value))
-        return true;
-    }
+    if (!doesParametersMatches)
+      return false;
+  }
+
+  if (pParametersAreForTheFact)
+  {
+    if (doesItMatch(value, pFact.value))
+      return true;
+  }
+  else
+  {
+    if (doesItMatch(pFact.value, value))
+      return true;
   }
   return false;
 }

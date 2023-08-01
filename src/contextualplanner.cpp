@@ -242,7 +242,8 @@ bool _lookForAPossibleExistingOrNotFactFromInferences(
       {
         auto& inference = itInference->second;
         std::vector<std::string> parameters;
-        if (_lookForAPossibleDeduction(parameters, inference.condition, inference.factsToModify,
+        if (inference.factsToModify &&
+            _lookForAPossibleDeduction(parameters, inference.condition, inference.factsToModify->clone(nullptr),
                                        pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
           return true;
       }
@@ -262,15 +263,45 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
   auto& optionalFactGoal = pGoal.factOptional();
   if (!optionalFactGoal.isFactNegated)
   {
-    if (optionalFactGoal.fact.isInFacts(pEffectToCheck.factsModifications.facts, false, &pParameters) ||
-        optionalFactGoal.fact.isInFacts(pEffectToCheck.potentialFactsModifications.facts, false, &pParameters))
+    if (pEffectToCheck.factsModifications &&
+        pEffectToCheck.factsModifications->forAllFactsUntilTrue(
+              [&](const Fact& pFact)
+        {
+          return optionalFactGoal.fact.isInFact(pFact, false, &pParameters);
+        }))
+    {
       return true;
+    }
+    if (pEffectToCheck.potentialFactsModifications &&
+        pEffectToCheck.potentialFactsModifications->forAllFactsUntilTrue(
+              [&](const Fact& pFact)
+        {
+          return optionalFactGoal.fact.isInFact(pFact, false, &pParameters);
+        }))
+    {
+      return true;
+    }
   }
   else
   {
-    if (optionalFactGoal.fact.isInFacts(pEffectToCheck.factsModifications.notFacts, false, &pParameters) ||
-        optionalFactGoal.fact.isInFacts(pEffectToCheck.potentialFactsModifications.notFacts, false, &pParameters))
+    if (pEffectToCheck.factsModifications &&
+        pEffectToCheck.factsModifications->forAllNotFactsUntilTrue(
+              [&](const Fact& pFact)
+        {
+          return optionalFactGoal.fact.isInFact(pFact, false, &pParameters);
+        }))
+    {
       return true;
+    }
+    if (pEffectToCheck.potentialFactsModifications &&
+        pEffectToCheck.potentialFactsModifications->forAllNotFactsUntilTrue(
+              [&](const Fact& pFact)
+        {
+          return optionalFactGoal.fact.isInFact(pFact, false, &pParameters);
+        }))
+    {
+      return true;
+    }
   }
 
   auto& setOfInferences = pProblem.getSetOfInferences();

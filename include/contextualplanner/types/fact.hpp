@@ -122,6 +122,11 @@ struct CONTEXTUALPLANNER_API Fact
                  bool pParametersAreForTheFact,
                  std::map<std::string, std::string>* pParametersPtr = nullptr) const;
 
+  bool isInFact(
+      const Fact& pFact,
+      bool pParametersAreForTheFact,
+      std::map<std::string, std::string>* pParametersPtr) const;
+
   static void splitFacts(
       std::vector<std::pair<bool, cp::Fact>>& pFacts,
       const std::string& pStr,

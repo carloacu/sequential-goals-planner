@@ -38,7 +38,7 @@ struct CONTEXTUALPLANNER_API Problem
    * @param pGoalsToAddInCurrentPriority Goals to add in current priority.
    */
   void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
-                        const SetOfFacts& pEffect,
+                        const std::unique_ptr<FactModification>& pEffect,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                         const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                         const std::vector<Goal>* pGoalsToAddInCurrentPriority);
@@ -110,7 +110,7 @@ struct CONTEXTUALPLANNER_API Problem
   * @param pSetOfFacts Facts to modify in the world.
   * @param pNow Current time.
   */
-  bool modifyFacts(const SetOfFacts& pSetOfFacts,
+  bool modifyFacts(const std::unique_ptr<FactModification>& pFactModification,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -476,7 +476,7 @@ private:
    * @param[in] pNow Current time.
    */
   void _modifyFacts(WhatChanged& pWhatChanged,
-                    const SetOfFacts& pSetOfFacts,
+                    const std::unique_ptr<FactModification>& pFactModification,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**

@@ -54,13 +54,6 @@ struct CONTEXTUALPLANNER_API SetOfFacts
   bool hasFact(const Fact& pFact) const;
 
   /**
-   * @brief Check if this object is totally included in another SetOfFacts object.
-   * @param pOther The other SetOfFacts to check.
-   * @return True if this object is included, false otherwise.
-   */
-  bool isIncludedIn(const std::unique_ptr<FactCondition>& pFactConditionPtr) const;
-
-  /**
    * @brief Replace a fact by another inside this object.
    * @param pOldFact Fact to replace.
    * @param pNewFact New fact value to set.

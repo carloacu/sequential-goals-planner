@@ -18,7 +18,7 @@ void planningDummyExample()
 
   // Initialize the domain with an action
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, {userIsGreeted}));
+  actions.emplace(sayHi, cp::Action({}, cp::FactModification::fromStr(userIsGreeted)));
   cp::Domain domain(actions);
 
   // Initialize the problem with the goal to satisfy

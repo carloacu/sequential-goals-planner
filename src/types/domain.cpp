@@ -3,6 +3,51 @@
 
 namespace cp
 {
+namespace
+{
+/**
+ * @brief Check if this object is totally included in another SetOfFacts object.
+ * @param pOther The other SetOfFacts to check.
+ * @return True if this object is included, false otherwise.
+ */
+bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModifications,
+                   const std::unique_ptr<FactCondition>& pFactConditionPtr)
+{
+  if (!pFactsModifications)
+    return true;
+
+  if (pFactsModifications->forAllFactsUntilTrue(
+        [&](const Fact& pFact)
+  {
+    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFact);
+  }))
+  {
+    return false;
+  }
+
+  if (pFactsModifications->forAllNotFactsUntilTrue(
+        [&](const Fact& pFact)
+  {
+    return !pFactConditionPtr || !pFactConditionPtr->containsNotFact(pFact);
+  }))
+  {
+    return false;
+  }
+
+  if (pFactsModifications->forAllExpUntilTrue(
+        [&](const Expression& pExpression)
+  {
+    return !pFactConditionPtr || !pFactConditionPtr->containsExpression(pExpression);
+  }))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+}
+
 
 Domain::Domain(const std::map<ActionId, Action>& pActions)
 {
@@ -14,8 +59,8 @@ Domain::Domain(const std::map<ActionId, Action>& pActions)
 void Domain::addAction(const ActionId& pActionId,
                        const Action& pAction)
 {
-  if ((pAction.effect.factsModifications.isIncludedIn(pAction.precondition) &&
-       pAction.effect.potentialFactsModifications.isIncludedIn(pAction.precondition)) ||
+  if ((_isIncludedIn(pAction.effect.factsModifications, pAction.precondition) &&
+       _isIncludedIn(pAction.effect.potentialFactsModifications, pAction.precondition)) ||
       pAction.effect.empty() ||
       _actions.count(pActionId) > 0)
     return;

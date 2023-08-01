@@ -104,31 +104,26 @@ Problem::Problem(const Problem& pOther)
 
 
 void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerResult,
-                               const SetOfFacts& pEffect,
+                               const std::unique_ptr<FactModification>& pEffect,
                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                                const std::vector<Goal>* pGoalsToAddInCurrentPriority)
 {
   historical.notifyActionDone(pOnStepOfPlannerResult.actionInstance.actionId);
-  WhatChanged whatChanged;
-  if (pOnStepOfPlannerResult.actionInstance.parameters.empty())
-  {
-    _modifyFacts(whatChanged, pEffect, pNow);
-  }
-  else
-  {
-    cp::SetOfFacts effect;
-    effect.notFacts = pEffect.notFacts;
-    effect.exps = pEffect.exps;
-    for (auto& currFact : pEffect.facts)
-    {
-      auto fact = currFact;
-      fact.fillParameters(pOnStepOfPlannerResult.actionInstance.parameters);
-      effect.facts.insert(std::move(fact));
-    }
-    _modifyFacts(whatChanged, effect, pNow);
-  }
 
+  WhatChanged whatChanged;
+  if (pEffect)
+  {
+    if (pOnStepOfPlannerResult.actionInstance.parameters.empty())
+    {
+      _modifyFacts(whatChanged, pEffect, pNow);
+    }
+    else
+    {
+      auto effect = pEffect->clone(&pOnStepOfPlannerResult.actionInstance.parameters);
+      _modifyFacts(whatChanged, effect, pNow);
+    }
+  }
 
   // Remove current goal if it was one step towards
   int currentPriority = _getCurrentPriority();
@@ -353,27 +348,38 @@ void Problem::_clearAccessibleAndRemovableFacts()
   _removableFacts.clear();
 }
 
-bool Problem::modifyFacts(const SetOfFacts& pSetOfFacts,
+bool Problem::modifyFacts(const std::unique_ptr<FactModification>& pFactModification,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
-  _modifyFacts(whatChanged, pSetOfFacts, pNow);
+  _modifyFacts(whatChanged, pFactModification, pNow);
   _notifyWhatChanged(whatChanged, pNow);
   return whatChanged.hasFactsModifications();
 }
 
 
 void Problem::_modifyFacts(WhatChanged& pWhatChanged,
-                           const SetOfFacts& pSetOfFacts,
+                           const std::unique_ptr<FactModification>& pFactModification,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  _addFacts(pWhatChanged, pSetOfFacts.facts, pNow);
-  _removeFacts(pWhatChanged, pSetOfFacts.notFacts, pNow);
-  for (auto& currExp : pSetOfFacts.exps)
+  if (!pFactModification)
+    return;
+
+  std::list<Fact> factsToAdd;
+  std::list<Fact> factsToRemove;
+  pFactModification->forAll(
+        [&](const FactOptional& pFactOptional)
   {
-    if (currExp.elts.size() >= 2)
+    if (pFactOptional.isFactNegated)
+      factsToRemove.emplace_back(pFactOptional.fact);
+    else
+      factsToAdd.emplace_back(pFactOptional.fact);
+  },
+  [&](const Expression& pExpression)
+{
+    if (pExpression.elts.size() >= 2)
     {
-      auto it = currExp.elts.begin();
+      auto it = pExpression.elts.begin();
       if (it->type == ExpressionElementType::OPERATOR)
       {
         auto op = it->value;
@@ -402,7 +408,11 @@ void Problem::_modifyFacts(WhatChanged& pWhatChanged,
         }
       }
     }
-  }
+}
+        );
+
+  _addFacts(pWhatChanged, factsToAdd, pNow);
+  _removeFacts(pWhatChanged, factsToRemove, pNow);
 }
 
 void Problem::setFacts(const std::set<Fact>& pFacts,
@@ -510,7 +520,7 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
     {
       auto& inference = itInference->second;
       std::vector<std::string> parameters;
-      _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify,
+      _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify->clone(nullptr),
                                         parameters, pDomain);
     }
   }

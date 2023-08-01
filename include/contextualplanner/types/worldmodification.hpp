@@ -3,8 +3,10 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <vector>
 #include "../util/api.hpp"
+#include <contextualplanner/types/factmodification.hpp>
 #include <contextualplanner/types/goal.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
 
@@ -26,33 +28,36 @@ struct CONTEXTUALPLANNER_API WorldModification
   }
 
   /**
-   * @brief Construct a world modification.
-   * @param[in] pFacts Facts to add in the world.
-   * @param[in] pNotFacts Facts to remove in the world.
-   */
-  WorldModification(const std::initializer_list<Fact>& pFacts,
-                    const std::initializer_list<Fact>& pNotFacts = {})
-    : factsModifications(pFacts, pNotFacts),
-      potentialFactsModifications(),
-      goalsToAdd(),
-      goalsToAddInCurrentPriority()
-  {
-  }
-
-  /**
    * @brief Construct a world modification from the set of facts.
    * @param pSetOfFacts Set of facts to add in the world modification.
    */
-  WorldModification(const SetOfFacts& pSetOfFacts)
-    : factsModifications(pSetOfFacts),
-      potentialFactsModifications(),
+  WorldModification(std::unique_ptr<cp::FactModification> pFactsModifications,
+                    std::unique_ptr<cp::FactModification> pPotentialFactsModifications = std::unique_ptr<cp::FactModification>())
+    : factsModifications(pFactsModifications ? std::move(pFactsModifications): std::unique_ptr<cp::FactModification>()),
+      potentialFactsModifications(pPotentialFactsModifications ? std::move(pPotentialFactsModifications) : std::unique_ptr<cp::FactModification>()),
       goalsToAdd(),
       goalsToAddInCurrentPriority()
   {
   }
 
+  WorldModification(const WorldModification& pOther)
+    : factsModifications(pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>()),
+      potentialFactsModifications(pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>()),
+      goalsToAdd(pOther.goalsToAdd),
+      goalsToAddInCurrentPriority(pOther.goalsToAddInCurrentPriority)
+  {
+  }
+
+  void operator=(const WorldModification& pOther)
+  {
+    factsModifications = pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>();
+    potentialFactsModifications = pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>();
+    goalsToAdd = pOther.goalsToAdd;
+    goalsToAddInCurrentPriority = pOther.goalsToAddInCurrentPriority;
+  }
+
   /// Is the world modification empty.
-  bool empty() const { return factsModifications.empty() && potentialFactsModifications.empty() && goalsToAdd.empty() && goalsToAddInCurrentPriority.empty(); }
+  bool empty() const { return !factsModifications && !potentialFactsModifications && goalsToAdd.empty() && goalsToAddInCurrentPriority.empty(); }
 
   /// Check equality with another world modification.
   bool operator==(const WorldModification& pOther) const
@@ -103,9 +108,9 @@ struct CONTEXTUALPLANNER_API WorldModification
   bool forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback) const;
 
   /// Fact modifications declared and that will be applied to the world.
-  cp::SetOfFacts factsModifications;
+  std::unique_ptr<cp::FactModification> factsModifications;
   /// Fact modifications declared but that will not be applied to the world.
-  cp::SetOfFacts potentialFactsModifications;
+  std::unique_ptr<cp::FactModification> potentialFactsModifications;
   /// Goal priorities to goals to add in the world.
   std::map<int, std::vector<cp::Goal>> goalsToAdd;
   /// Goals to add in current priority in the world.
@@ -119,8 +124,8 @@ struct CONTEXTUALPLANNER_API WorldModification
 
 inline bool WorldModification::hasFact(const cp::Fact& pFact) const
 {
-  if (factsModifications.hasFact(pFact) ||
-      potentialFactsModifications.hasFact(pFact))
+  if ((factsModifications && factsModifications->hasFact(pFact)) ||
+      (potentialFactsModifications && potentialFactsModifications->hasFact(pFact)))
     return true;
   for (const auto& currGoalWithPriority : goalsToAdd)
     for (const auto& currGoal : currGoalWithPriority.second)
@@ -134,8 +139,10 @@ inline bool WorldModification::hasFact(const cp::Fact& pFact) const
 
 inline void WorldModification::add(const WorldModification& pOther)
 {
-  factsModifications.add(pOther.factsModifications);
-  potentialFactsModifications.add(pOther.potentialFactsModifications);
+  if (factsModifications && pOther.factsModifications)
+    factsModifications = FactModification::merge(*factsModifications, *pOther.factsModifications);
+  if (potentialFactsModifications && pOther.potentialFactsModifications)
+    potentialFactsModifications = FactModification::merge(*potentialFactsModifications, *pOther.potentialFactsModifications);
   goalsToAdd.insert(pOther.goalsToAdd.begin(), pOther.goalsToAdd.end());
   goalsToAddInCurrentPriority.insert(goalsToAddInCurrentPriority.end(), pOther.goalsToAddInCurrentPriority.begin(), pOther.goalsToAddInCurrentPriority.end());
 }
@@ -143,8 +150,10 @@ inline void WorldModification::add(const WorldModification& pOther)
 inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
                                            const cp::Fact& pNewFact)
 {
-  factsModifications.replaceFact(pOldFact, pNewFact);
-  potentialFactsModifications.replaceFact(pOldFact, pNewFact);
+  if (factsModifications)
+    factsModifications->replaceFact(pOldFact, pNewFact);
+  if (potentialFactsModifications)
+    potentialFactsModifications->replaceFact(pOldFact, pNewFact);
   for (auto& currGoalWithPriority : goalsToAdd)
     for (auto& currGoal : currGoalWithPriority.second)
       if (currGoal.factOptional().fact == pOldFact)
@@ -156,39 +165,35 @@ inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
 
 inline void WorldModification::forAllFacts(const std::function<void(const cp::Fact&)>& pCallback) const
 {
-  for (auto& currFact : factsModifications.facts)
-    pCallback(currFact);
-  for (auto& currFact : potentialFactsModifications.facts)
-    pCallback(currFact);
+  if (factsModifications)
+    factsModifications->forAllFacts(pCallback);
+  if (potentialFactsModifications)
+    potentialFactsModifications->forAllFacts(pCallback);
 }
 
 inline bool WorldModification::forAllFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback) const
 {
-  for (auto& currFact : factsModifications.facts)
-    if (pCallback(currFact))
-      return true;
-  for (auto& currFact : potentialFactsModifications.facts)
-    if (pCallback(currFact))
-      return true;
+  if (factsModifications && factsModifications->forAllFactsUntilTrue(pCallback))
+    return true;
+  if (potentialFactsModifications && potentialFactsModifications->forAllFactsUntilTrue(pCallback))
+    return true;
   return false;
 }
 
 inline void WorldModification::forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback) const
 {
-  for (auto& currFact : factsModifications.notFacts)
-    pCallback(currFact);
-  for (auto& currFact : potentialFactsModifications.notFacts)
-    pCallback(currFact);
+  if (factsModifications)
+    factsModifications->forAllNotFacts(pCallback);
+  if (potentialFactsModifications)
+    potentialFactsModifications->forAllNotFacts(pCallback);
 }
 
 inline bool WorldModification::forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback) const
 {
-  for (auto& currFact : factsModifications.notFacts)
-    if (pCallback(currFact))
-      return true;
-  for (auto& currFact : potentialFactsModifications.notFacts)
-    if (pCallback(currFact))
-      return true;
+  if (factsModifications && factsModifications->forAllNotFactsUntilTrue(pCallback))
+    return true;
+  if (potentialFactsModifications && potentialFactsModifications->forAllNotFactsUntilTrue(pCallback))
+    return true;
   return false;
 }
 

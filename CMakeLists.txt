@@ -11,6 +11,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/expression.hpp
     include/contextualplanner/types/fact.hpp
     include/contextualplanner/types/factcondition.hpp
+    include/contextualplanner/types/factmodification.hpp
     include/contextualplanner/types/factoptional.hpp
     include/contextualplanner/types/goal.hpp
     include/contextualplanner/types/historical.hpp
@@ -38,6 +39,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/expression.cpp
     src/types/fact.cpp
     src/types/factcondition.cpp
+    src/types/factmodification.cpp
     src/types/factoptional.cpp
     src/types/goal.cpp
     src/types/historical.cpp
