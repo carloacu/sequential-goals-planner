@@ -1,5 +1,4 @@
 #include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
@@ -199,38 +198,6 @@ void _test_goalToStr()
   assert_eq<std::string>("imply(condition, goal_name)", cp::Goal("imply(condition, goal_name)").toStr());
   assert_eq<std::string>("persist(imply(condition, goal_name))", cp::Goal("persist(imply(condition, goal_name))").toStr());
   assert_eq<std::string>("oneStepTowards(goal_name)", cp::Goal("oneStepTowards(goal_name)").toStr());
-}
-
-void _test_setOfFactsFromStr()
-{
-  {
-    cp::SetOfFacts sOfFacts = cp::SetOfFacts::fromStr("a,b", ',');
-    assert(sOfFacts.facts.count(cp::Fact("a")) == 1);
-    assert(sOfFacts.facts.count(cp::Fact("b")) == 1);
-  }
-  const std::vector<char> spearators = {',', '&'};
-  for (auto currSeparator : spearators)
-  {
-    std::string currSeparatorStr(1, currSeparator);
-    cp::SetOfFacts sOfFacts = cp::SetOfFacts::fromStr(" a" + currSeparatorStr + " !b=ok " + currSeparatorStr + " c(r)=t " + currSeparatorStr + " d(!b=ok, c(r)=t)=val " + currSeparatorStr + " e ", currSeparator);
-    assert(sOfFacts.facts.count(cp::Fact("a")) == 1);
-    cp::FactOptional bFact("b");
-    bFact.isFactNegated = true;
-    bFact.fact.name = "b";
-    bFact.fact.value = "ok";
-    assert(sOfFacts.notFacts.count(bFact.fact) == 1);
-    cp::FactOptional cFact("c");
-    cFact.fact.parameters.emplace_back(cp::FactOptional("r"));
-    cFact.fact.value = "t";
-    assert(sOfFacts.facts.count(cFact.fact) == 1);
-    cp::FactOptional dFact("d");
-    dFact.fact.parameters.emplace_back(bFact);
-    dFact.fact.parameters.emplace_back(cFact);
-    dFact.fact.value = "val";
-    assert(sOfFacts.facts.count(dFact.fact) == 1);
-    assert(sOfFacts.facts.count(cp::Fact("e")) == 1);
-    assert(sOfFacts.facts.count(cp::Fact("f")) == 0);
-  }
 }
 
 
@@ -770,17 +737,6 @@ void _checkActionHasAFact()
   assert_false(action.hasFact(_fact_g));
 }
 
-void _checkReplacefactInAnExpression()
-{
-  char sep = '\n';
-  auto setOfFacts = cp::SetOfFacts::fromStr("++${var-name}", sep);
-  setOfFacts.replaceFact(cp::Fact::fromStr("var-name"), cp::Fact::fromStr("var-new-name"));
-  assert_eq<std::string>("++${var-new-name}", setOfFacts.toStr("\n"));
-  setOfFacts = cp::SetOfFacts::fromStr("${var-name-to-check}=10", sep);
-  setOfFacts.replaceFact(cp::Fact::fromStr("var-name-to-check"), cp::Fact::fromStr("var-name-to-check-new"));
-  assert_eq<std::string>("${var-name-to-check-new}=10", setOfFacts.toStr("\n"));
-}
-
 void _checkActionReplacefact()
 {
   cp::WorldModification effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
@@ -1072,7 +1028,6 @@ void _dontLinkActionWithPreferredInContext()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  auto removeLearntBehavior = cp::SetOfFacts::fromStr("!" + _fact_robotLearntABehavior, ',');
   actions.emplace(_action_askQuestion1, cp::Action({},
                                                    cp::FactModification::fromStr(_fact_userSatisfied),
                                                    cp::FactCondition::fromStr(_fact_checkedIn)));
@@ -1850,7 +1805,6 @@ int main(int argc, char *argv[])
   planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();
   _test_goalToStr();
-  _test_setOfFactsFromStr();
   _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0();
   _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal();
   _noPreconditionGoalImmediatlyReached();
@@ -1876,7 +1830,6 @@ int main(int argc, char *argv[])
   _checkNotInAPrecondition();
   _checkClearGoalsWhenItsAlreadySatisfied();
   _checkActionHasAFact();
-  _checkReplacefactInAnExpression();
   _checkActionReplacefact();
   _testIncrementOfVariables();
   _precoditionEqualEffect();
