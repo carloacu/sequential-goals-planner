@@ -243,14 +243,6 @@ bool FactModificationNode::forAllExpUntilTrue(const std::function<bool (const Ex
 }
 
 
-bool FactModificationNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                      const std::function<bool (const Expression&)>& pExpCallback,
-                                      const Problem& pProblem) const
-{
-  return true;
-}
-
-
 
 std::unique_ptr<FactModification> FactModificationNode::clone(const std::map<std::string, std::string>* pParametersPtr) const
 {
