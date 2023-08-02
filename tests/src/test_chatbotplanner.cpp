@@ -1793,6 +1793,20 @@ void _actionNavigationAndGrabObjectWithParameters()
 }
 
 
+void _setFactModification()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action navAction({}, cp::FactModification::fromStr("set(location(me), location(object))"));
+  actions.emplace(_action_navigate, navAction);
+
+  cp::Problem problem;
+  problem.addFact(cp::Fact("location(me)=corridor"), now);
+  problem.addFact(cp::Fact("location(object)=kitchen"), now);
+  _setGoalsForAPriority(problem, {cp::Goal("location(me)=kitchen")});
+  assert_eq(_action_navigate, _solveStr(problem, actions));
+}
+
 }
 
 
@@ -1868,6 +1882,7 @@ int main(int argc, char *argv[])
   _factValueModification();
   _removeGoaWhenAnActionFinishesByAddingNewGoals();
   _actionNavigationAndGrabObjectWithParameters();
+  _setFactModification();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

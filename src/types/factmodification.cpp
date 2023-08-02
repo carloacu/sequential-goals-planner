@@ -68,7 +68,16 @@ std::unique_ptr<FactModification> FactModification::fromStr(const std::string& p
     if (!currOptFact.fact.parameters.empty() ||
         (currOptFact.fact.name[0] != '+' && currOptFact.fact.name[0] != '$'))
     {
-      if (currOptFact.fact.name == "forAll" &&
+      if (currOptFact.fact.name == "set" &&
+          currOptFact.fact.parameters.size() == 2 &&
+          currOptFact.fact.value.empty())
+      {
+        factModifications.emplace_back(std::make_unique<FactModificationNode>(
+                                      FactModificationNodeType::SET,
+                                      std::make_unique<FactModificationFact>(currOptFact.fact.parameters[0]),
+                                    std::make_unique<FactModificationFact>(currOptFact.fact.parameters[1])));
+      }
+      else if (currOptFact.fact.name == "forAll" &&
           currOptFact.fact.parameters.size() == 2 &&
           currOptFact.fact.value.empty())
       {
@@ -181,46 +190,99 @@ void FactModificationNode::replaceFact(const cp::Fact& pOldFact,
 
 
 void FactModificationNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                                  const std::function<void (const Expression&)>& pExpCallback) const
+                                  const std::function<void (const Expression&)>& pExpCallback,
+                                  const Problem& pProblem) const
 {
-  if (leftOperand)
-    leftOperand->forAll(pFactCallback, pExpCallback);
-  if (rightOperand)
-    rightOperand->forAll(pFactCallback, pExpCallback);
+  if (nodeType == FactModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->forAll(pFactCallback, pExpCallback, pProblem);
+    if (rightOperand)
+      rightOperand->forAll(pFactCallback, pExpCallback, pProblem);
+  }
+  else if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    auto* rightFactPtr = rightOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional.fact;
+      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      return pFactCallback(FactOptional(factToCheck));
+    }
+  }
 }
 
-void FactModificationNode::forAllFacts(const std::function<void (const Fact&)>& pFactCallback) const
+void FactModificationNode::forAllFacts(const std::function<void (const Fact&)>& pFactCallback,
+                                       const Problem& pProblem) const
 {
-  if (leftOperand)
-    leftOperand->forAllFacts(pFactCallback);
-  if (rightOperand)
-    rightOperand->forAllFacts(pFactCallback);
+  if (nodeType == FactModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->forAllFacts(pFactCallback, pProblem);
+    if (rightOperand)
+      rightOperand->forAllFacts(pFactCallback, pProblem);
+  }
+  else if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    auto* rightFactPtr = rightOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional.fact;
+      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      return pFactCallback(factToCheck);
+    }
+  }
 }
 
-bool FactModificationNode::forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback) const
+bool FactModificationNode::forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
+                                                const Problem& pProblem) const
 {
-  return (leftOperand && leftOperand->forAllFactsUntilTrue(pFactCallback)) ||
-      (rightOperand && rightOperand->forAllFactsUntilTrue(pFactCallback));
+  if (nodeType == FactModificationNodeType::AND)
+    return (leftOperand && leftOperand->forAllFactsUntilTrue(pFactCallback, pProblem)) ||
+        (rightOperand && rightOperand->forAllFactsUntilTrue(pFactCallback, pProblem));
+
+  if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    auto* rightFactPtr = rightOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional.fact;
+      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      return pFactCallback(factToCheck);
+    }
+  }
+
+  return false;
 }
 
 void FactModificationNode::forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback) const
 {
-  if (leftOperand)
-    leftOperand->forAllNotFacts(pFactCallback);
-  if (rightOperand)
-    rightOperand->forAllNotFacts(pFactCallback);
+  if (nodeType == FactModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->forAllNotFacts(pFactCallback);
+    if (rightOperand)
+      rightOperand->forAllNotFacts(pFactCallback);
+  }
 }
 
 bool FactModificationNode::forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback) const
 {
-  return (leftOperand && leftOperand->forAllNotFactsUntilTrue(pFactCallback)) ||
-      (rightOperand && rightOperand->forAllNotFactsUntilTrue(pFactCallback));
+  if (nodeType == FactModificationNodeType::AND)
+    return (leftOperand && leftOperand->forAllNotFactsUntilTrue(pFactCallback)) ||
+        (rightOperand && rightOperand->forAllNotFactsUntilTrue(pFactCallback));
+  return false;
 }
 
 bool FactModificationNode::forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const
 {
-  return (leftOperand && leftOperand->forAllExpUntilTrue(pExpCallback)) ||
-      (rightOperand && rightOperand->forAllExpUntilTrue(pExpCallback));
+  if (nodeType == FactModificationNodeType::AND)
+    return (leftOperand && leftOperand->forAllExpUntilTrue(pExpCallback)) ||
+        (rightOperand && rightOperand->forAllExpUntilTrue(pExpCallback));
+  return false;
 }
 
 
@@ -258,13 +320,13 @@ void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
     factOptional.fact = pNewFact;
 }
 
-void FactModificationFact::forAllFacts(const std::function<void (const Fact&)>& pFactCallback) const
+void FactModificationFact::forAllFacts(const std::function<void (const Fact&)>& pFactCallback, const Problem&) const
 {
   if (!factOptional.isFactNegated)
     pFactCallback(factOptional.fact);
 }
 
-bool FactModificationFact::forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback) const
+bool FactModificationFact::forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback, const Problem&) const
 {
   if (!factOptional.isFactNegated)
     return pFactCallback(factOptional.fact);

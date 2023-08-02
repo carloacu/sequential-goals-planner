@@ -50,7 +50,8 @@ void _getTheFactsToAddFromAWorldModification(std::set<Fact>& pNewFacts,
                                              const WorldModification& pWorldModification,
                                              const std::vector<std::string>& pParameters,
                                              const std::set<Fact>& pFacts1,
-                                             const std::set<Fact>& pFacts2)
+                                             const std::set<Fact>& pFacts2,
+                                             const Problem& pProblem)
 {
   pWorldModification.forAllFacts([&](const cp::Fact& pFact) {
     if (pFacts1.count(pFact) == 0 &&
@@ -62,7 +63,7 @@ void _getTheFactsToAddFromAWorldModification(std::set<Fact>& pNewFacts,
       else
         pNewFacts.insert(std::move(factToInsert));
     }
-  });
+  }, pProblem);
 }
 
 void _getTheFactsToRemoveFromAWorldModification(std::set<Fact>& pFactsToRemove,
@@ -408,8 +409,7 @@ void Problem::_modifyFacts(WhatChanged& pWhatChanged,
         }
       }
     }
-}
-        );
+}, *this);
 
   _addFacts(pWhatChanged, factsToAdd, pNow);
   _removeFacts(pWhatChanged, factsToRemove, pNow);
@@ -536,7 +536,7 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
     std::set<Fact> accessibleFactsToAdd;
     std::vector<Fact> accessibleFactsToAddWithAnyValues;
     _getTheFactsToAddFromAWorldModification(accessibleFactsToAdd, accessibleFactsToAddWithAnyValues,
-                                            pEffect, pParameters, _facts, _accessibleFacts);
+                                            pEffect, pParameters, _facts, _accessibleFacts, *this);
     std::set<Fact> removableFactsToAdd;
     _getTheFactsToRemoveFromAWorldModification(removableFactsToAdd, pEffect, _facts, _removableFacts);
     if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())

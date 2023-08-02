@@ -1,10 +1,12 @@
 #include <contextualplanner/types/domain.hpp>
-
+#include <contextualplanner/types/problem.hpp>
 
 namespace cp
 {
 namespace
 {
+Problem _emptyProblem;
+
 /**
  * @brief Check if this object is totally included in another SetOfFacts object.
  * @param pOther The other SetOfFacts to check.
@@ -20,7 +22,7 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
         [&](const Fact& pFact)
   {
     return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFact);
-  }))
+  }, _emptyProblem))
   {
     return false;
   }

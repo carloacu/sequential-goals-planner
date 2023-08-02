@@ -84,14 +84,16 @@ struct CONTEXTUALPLANNER_API WorldModification
    * @brief Iterate over all the facts.
    * @param pCallback Callback called for each fact.
    */
-  void forAllFacts(const std::function<void(const cp::Fact&)>& pCallback) const;
+  void forAllFacts(const std::function<void(const cp::Fact&)>& pCallback,
+                   const Problem& pProblem) const;
 
   /**
    * @brief Iterate over all the facts until one callback returns true.
    * @param pCallback Callback called for each fact until one returns true.
    * @return True if one callback returned true, false otherwise.
    */
-  bool forAllFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback) const;
+  bool forAllFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
+                            const Problem& pProblem) const;
 
   /**
    * @brief Iterate over all the facts that should be removed.
@@ -162,19 +164,21 @@ inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
       currGoal.factOptional().fact = pNewFact;
 }
 
-inline void WorldModification::forAllFacts(const std::function<void(const cp::Fact&)>& pCallback) const
+inline void WorldModification::forAllFacts(const std::function<void(const cp::Fact&)>& pCallback,
+                                           const Problem& pProblem) const
 {
   if (factsModifications)
-    factsModifications->forAllFacts(pCallback);
+    factsModifications->forAllFacts(pCallback, pProblem);
   if (potentialFactsModifications)
-    potentialFactsModifications->forAllFacts(pCallback);
+    potentialFactsModifications->forAllFacts(pCallback, pProblem);
 }
 
-inline bool WorldModification::forAllFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback) const
+inline bool WorldModification::forAllFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
+                                                    const Problem& pProblem) const
 {
-  if (factsModifications && factsModifications->forAllFactsUntilTrue(pCallback))
+  if (factsModifications && factsModifications->forAllFactsUntilTrue(pCallback, pProblem))
     return true;
-  if (potentialFactsModifications && potentialFactsModifications->forAllFactsUntilTrue(pCallback))
+  if (potentialFactsModifications && potentialFactsModifications->forAllFactsUntilTrue(pCallback, pProblem))
     return true;
   return false;
 }

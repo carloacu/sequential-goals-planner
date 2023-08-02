@@ -252,7 +252,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
               [&](const Fact& pFact)
         {
           return optionalFactGoal.fact.isInFact(pFact, false, &pParameters);
-        }))
+        }, pProblem))
     {
       return true;
     }
@@ -261,7 +261,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
               [&](const Fact& pFact)
         {
           return optionalFactGoal.fact.isInFact(pFact, false, &pParameters);
-        }))
+        }, pProblem))
     {
       return true;
     }
@@ -312,7 +312,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
       }
     }
     return false;
-  });
+  }, pProblem);
   if (subRes)
     return true;
 
