@@ -159,7 +159,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
             }
             return true;
           },
-          [](const Expression&) { return true; }, pProblem);
+          [](const Expression&) { return true; }, pProblem, parametersToValue);
 
           if (!currParentParam.second.empty())
             break;
@@ -360,8 +360,8 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       auto& action = itAction->second;
       FactsAlreadyChecked factsAlreadyChecked;
       auto newPotRes = PotentialNextAction(currAction, action);
-      if (pProblem.isConditionTrue(action.precondition, {}, &newPotRes.parameters) &&
-          _lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadyChecked))
+      if (_lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadyChecked) &&
+          pProblem.isConditionTrue(action.precondition, {}, &newPotRes.parameters))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))
         {

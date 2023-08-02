@@ -35,6 +35,28 @@ std::unique_ptr<FactCondition> _merge(std::list<std::unique_ptr<FactCondition>>&
                                              _merge(pFactconditions));
 }
 
+std::string _getValue(const Fact& pFact,
+                      const Problem& pProblem,
+                      const std::map<std::string, std::string>* pParametersPtr)
+{
+  if (pParametersPtr == nullptr || pParametersPtr->empty())
+  {
+    return pProblem.getFactValue(pFact);
+  }
+
+  auto factToExtractValue = pFact;
+  for (auto& currParam : *pParametersPtr)
+  {
+    auto oldFact = cp::Fact::fromStr(currParam.first);
+    auto newFact = cp::Fact::fromStr(currParam.second);
+    if (factToExtractValue == oldFact)
+      factToExtractValue = newFact;
+    else
+      factToExtractValue.replaceFactInParameters(oldFact, newFact);
+  }
+  return pProblem.getFactValue(factToExtractValue);
+}
+
 }
 
 
@@ -196,13 +218,14 @@ void FactConditionNode::forAll(const std::function<void (const FactOptional&)>& 
 
 bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                                    const std::function<bool (const Expression&)>& pExpCallback,
-                                   const Problem& pProblem) const
+                                   const Problem& pProblem,
+                                   const std::map<std::string, std::string>& pParameters) const
 {
   if (nodeType == FactConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pExpCallback, pProblem))
+    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pExpCallback, pProblem, pParameters))
       return false;
-    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pExpCallback, pProblem))
+    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pExpCallback, pProblem, pParameters))
       return false;
   }
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -212,7 +235,7 @@ bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      factToCheck.value = _getValue(rightFactPtr->factOptional.fact, pProblem, &pParameters);
       return pFactCallback(FactOptional(factToCheck));
     }
   }
@@ -246,7 +269,7 @@ bool FactConditionNode::isTrue(const Problem& pProblem,
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      factToCheck.value = _getValue(rightFactPtr->factOptional.fact, pProblem, pParametersPtr);
       if (factToCheck.isPunctual())
         return pPunctualFacts.count(factToCheck) != 0;
       return factToCheck.isInFacts(pProblem._facts, true, pParametersPtr);
