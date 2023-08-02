@@ -337,6 +337,17 @@ bool Fact::isInFact(
   return false;
 }
 
+void Fact::replaceFactInParameters(const cp::Fact& pOldFact,
+                                   const Fact& pNewFact)
+{
+  for (auto& currParameter : parameters)
+  {
+    if (currParameter.fact == pOldFact)
+      currParameter.fact = pNewFact;
+    else
+      currParameter.fact.replaceFactInParameters(pOldFact, pNewFact);
+  }
+}
 
 
 void Fact::splitFacts(

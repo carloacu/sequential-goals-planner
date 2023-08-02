@@ -146,6 +146,10 @@ struct CONTEXTUALPLANNER_API Problem
 
   std::string getFactValue(const Fact& pFact) const;
 
+  void forAllInstruction(const std::string& pParameterName,
+                         const Fact& pFact,
+                         std::set<Fact>& pParameterValues) const;
+
   /// Facts of the world.
   const std::set<Fact>& facts() const { return _facts; }
   /// Fact names to facts in the world.

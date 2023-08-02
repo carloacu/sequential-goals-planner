@@ -99,14 +99,16 @@ struct CONTEXTUALPLANNER_API WorldModification
    * @brief Iterate over all the facts that should be removed.
    * @param pCallback Callback called for each fact that should be removed.
    */
-  void forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback) const;
+  void forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback,
+                      const Problem& pProblem) const;
 
   /**
    * @brief Iterate over all the facts that should be removed until one callback returns true.
    * @param pCallback Callback called for each fact that should be removed until one returns true.
    * @return True if one callback returned true, false otherwise.
    */
-  bool forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback) const;
+  bool forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
+                               const Problem& pProblem) const;
 
   /// Fact modifications declared and that will be applied to the world.
   std::unique_ptr<cp::FactModification> factsModifications;
@@ -183,19 +185,21 @@ inline bool WorldModification::forAllFactsUntilTrue(const std::function<bool(con
   return false;
 }
 
-inline void WorldModification::forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback) const
+inline void WorldModification::forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback,
+                                              const Problem& pProblem) const
 {
   if (factsModifications)
-    factsModifications->forAllNotFacts(pCallback);
+    factsModifications->forAllNotFacts(pCallback, pProblem);
   if (potentialFactsModifications)
-    potentialFactsModifications->forAllNotFacts(pCallback);
+    potentialFactsModifications->forAllNotFacts(pCallback, pProblem);
 }
 
-inline bool WorldModification::forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback) const
+inline bool WorldModification::forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
+                                                       const Problem& pProblem) const
 {
-  if (factsModifications && factsModifications->forAllNotFactsUntilTrue(pCallback))
+  if (factsModifications && factsModifications->forAllNotFactsUntilTrue(pCallback, pProblem))
     return true;
-  if (potentialFactsModifications && potentialFactsModifications->forAllNotFactsUntilTrue(pCallback))
+  if (potentialFactsModifications && potentialFactsModifications->forAllNotFactsUntilTrue(pCallback, pProblem))
     return true;
   return false;
 }

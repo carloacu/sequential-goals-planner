@@ -69,13 +69,14 @@ void _getTheFactsToAddFromAWorldModification(std::set<Fact>& pNewFacts,
 void _getTheFactsToRemoveFromAWorldModification(std::set<Fact>& pFactsToRemove,
                                                 const WorldModification& pWorldModification,
                                                 const std::set<Fact>& pFacts1,
-                                                const std::set<Fact>& pFacts2)
+                                                const std::set<Fact>& pFacts2,
+                                                const Problem& pProblem)
 {
   pWorldModification.forAllNotFacts([&](const cp::Fact& pNotFact) {
     if (pFacts1.count(pNotFact) > 0 &&
         pFacts2.count(pNotFact) == 0)
       pFactsToRemove.insert(pNotFact);
-  });
+  }, pProblem);
 }
 
 }
@@ -474,6 +475,39 @@ std::string Problem::getFactValue(const cp::Fact& pFact) const
 }
 
 
+void Problem::forAllInstruction(const std::string& pParameterName,
+                                const Fact& pFact,
+                                std::set<Fact>& pParameterValues) const
+{
+  auto itFact = _factNamesToFacts.find(pFact.name);
+  if (itFact != _factNamesToFacts.end())
+  {
+    for (auto& currFact : itFact->second)
+    {
+      if (currFact.parameters.size() == pFact.parameters.size())
+      {
+        std::set<Fact> potentialNewValues;
+        bool doesItMatch = true;
+        for (auto i = 0; i < pFact.parameters.size(); ++i)
+        {
+          if (pFact.parameters[i] == pParameterName)
+          {
+            potentialNewValues.insert(currFact.parameters[i].fact);
+            continue;
+          }
+          if (pFact.parameters[i] == currFact.parameters[i])
+            continue;
+          doesItMatch = false;
+          break;
+        }
+        if (doesItMatch)
+          pParameterValues.insert(potentialNewValues.begin(), potentialNewValues.end());
+      }
+    }
+  }
+}
+
+
 void Problem::fillAccessibleFacts(const Domain& pDomain)
 {
   if (!_needToAddAccessibleFacts)
@@ -538,7 +572,7 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
     _getTheFactsToAddFromAWorldModification(accessibleFactsToAdd, accessibleFactsToAddWithAnyValues,
                                             pEffect, pParameters, _facts, _accessibleFacts, *this);
     std::set<Fact> removableFactsToAdd;
-    _getTheFactsToRemoveFromAWorldModification(removableFactsToAdd, pEffect, _facts, _removableFacts);
+    _getTheFactsToRemoveFromAWorldModification(removableFactsToAdd, pEffect, _facts, _removableFacts, *this);
     if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
     {
       _accessibleFacts.insert(accessibleFactsToAdd.begin(), accessibleFactsToAdd.end());

@@ -1807,6 +1807,26 @@ void _setFactModification()
   assert_eq(_action_navigate, _solveStr(problem, actions));
 }
 
+
+void _forAllFactModification()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action navAction({}, cp::FactModification::fromStr("forAll(obj, grab(me, obj), set(location(obj), location(me))"));
+  actions.emplace(action1, navAction);
+
+  cp::Problem problem;
+  problem.addFact(cp::Fact("location(me)=corridor"), now);
+  problem.addFact(cp::Fact("location(object1)=kitchen"), now);
+  problem.addFact(cp::Fact("grab(me, object1)"), now);
+  problem.addFact(cp::Fact("grab(me, object2)"), now);
+
+  _setGoalsForAPriority(problem, {cp::Goal("location(object2)=corridor")});
+  assert_eq(action1, _solveStr(problem, actions));
+}
+
+
 }
 
 
@@ -1883,6 +1903,7 @@ int main(int argc, char *argv[])
   _removeGoaWhenAnActionFinishesByAddingNewGoals();
   _actionNavigationAndGrabObjectWithParameters();
   _setFactModification();
+  _forAllFactModification();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

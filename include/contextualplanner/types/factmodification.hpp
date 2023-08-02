@@ -26,6 +26,7 @@ struct CONTEXTUALPLANNER_API FactModification
 
   virtual bool hasFact(const cp::Fact& pFact) const = 0;
   virtual bool canModifySomethingInTheWorld() const = 0;
+  virtual bool isDynamic() const = 0;
 
   virtual void replaceFact(const cp::Fact& pOldFact,
                            const Fact& pNewFact) = 0;
@@ -36,8 +37,10 @@ struct CONTEXTUALPLANNER_API FactModification
                            const Problem& pProblem) const = 0;
   virtual bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
                                     const Problem& pProblem) const = 0;
-  virtual void forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback) const = 0;
-  virtual bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback) const = 0;
+  virtual void forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback,
+                              const Problem& pProblem) const = 0;
+  virtual bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
+                                       const Problem& pProblem) const = 0;
   virtual bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const = 0;
 
   virtual std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const = 0;
@@ -63,10 +66,12 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
 {
   FactModificationNode(FactModificationNodeType pNodeType,
                        std::unique_ptr<FactModification> pLeftOperand,
-                       std::unique_ptr<FactModification> pRightOperand);
+                       std::unique_ptr<FactModification> pRightOperand,
+                       const std::string& pParameterName = "");
 
   bool hasFact(const Fact& pFact) const override;
   bool canModifySomethingInTheWorld() const override;
+  bool isDynamic() const override;
 
   void replaceFact(const Fact& pOldFact,
                    const Fact& pNewFact) override;
@@ -77,8 +82,10 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
                    const Problem& pProblem) const override;
   bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
                             const Problem& pProblem) const override;
-  void forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback) const override;
-  bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback) const override;
+  void forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback,
+                      const Problem& pProblem) const override;
+  bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
+                               const Problem& pProblem) const override;
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override;
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
@@ -87,6 +94,11 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   FactModificationNodeType nodeType;
   std::unique_ptr<FactModification> leftOperand;
   std::unique_ptr<FactModification> rightOperand;
+  std::string parameterName;
+
+private:
+  void _forAllInstruction(const std::function<void (const FactModification&)>& pCallback,
+                          const Problem& pProblem) const;
 };
 
 struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
@@ -95,6 +107,7 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
 
   bool hasFact(const cp::Fact& pFact) const override;
   bool canModifySomethingInTheWorld() const override;
+  bool isDynamic() const override { return false; }
 
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
@@ -105,8 +118,10 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
                    const Problem& pProblem) const override;
   bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
                             const Problem& pProblem) const override;
-  void forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback) const override;
-  bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback) const override;
+  void forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback,
+                      const Problem& pProblem) const override;
+  bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
+                               const Problem& pProblem) const override;
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>&) const override { return false; }
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
@@ -121,6 +136,7 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
 
   bool hasFact(const cp::Fact& pFact) const override;
   bool canModifySomethingInTheWorld() const override { return true; }
+  bool isDynamic() const override { return false; }
 
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
@@ -131,8 +147,10 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
                    const Problem&) const override {}
   bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>&,
                             const Problem&) const override { return false; }
-  void forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback) const override {}
-  bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback) const override { return false; }
+  void forAllNotFacts(const std::function<void (const Fact&)>&,
+                      const Problem&) const override {}
+  bool forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>&,
+                               const Problem&) const override { return false; }
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return pExpCallback(expression); }
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;

@@ -5,7 +5,7 @@ namespace cp
 {
 namespace
 {
-Problem _emptyProblem;
+const Problem _emptyProblem;
 
 /**
  * @brief Check if this object is totally included in another SetOfFacts object.
@@ -17,6 +17,8 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
 {
   if (!pFactsModifications)
     return true;
+  if (pFactsModifications->isDynamic())
+    return false;
 
   if (pFactsModifications->forAllFactsUntilTrue(
         [&](const Fact& pFact)
@@ -31,7 +33,7 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
         [&](const Fact& pFact)
   {
     return !pFactConditionPtr || !pFactConditionPtr->containsNotFact(pFact);
-  }))
+  }, _emptyProblem))
   {
     return false;
   }
