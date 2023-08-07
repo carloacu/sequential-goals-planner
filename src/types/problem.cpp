@@ -435,31 +435,14 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
 
 bool Problem::canFactBecomeTrue(const Fact& pFact) const
 {
-  if (_facts.count(pFact) == 0 &&
-      _accessibleFacts.count(pFact) == 0)
-  {
-    bool reableFactFound = false;
-    for (const auto& currAccessibleFact : _accessibleFactsWithAnyValues)
-    {
-      if (pFact.areEqualExceptAnyValues(currAccessibleFact))
-      {
-        reableFactFound = true;
-        break;
-      }
-    }
-    if (!reableFactFound)
-      return false;
-  }
-  return true;
-}
+  if (_facts.count(pFact) > 0 ||
+      _accessibleFacts.count(pFact) > 0)
+    return true;
 
-bool Problem::isConditionTrue(const std::unique_ptr<FactCondition>& pFactConditionPtr,
-                              const std::set<Fact>& pPunctualFacts,
-                              std::map<std::string, std::string>* pParametersPtr) const
-{
-  if (pFactConditionPtr)
-    return pFactConditionPtr->isTrue(*this, pPunctualFacts, pParametersPtr);
-  return true;
+  for (const auto& currAccessibleFact : _accessibleFactsWithAnyValues)
+    if (pFact.areEqualExceptAnyValues(currAccessibleFact))
+      return true;
+  return false;
 }
 
 std::string Problem::getFactValue(const cp::Fact& pFact) const

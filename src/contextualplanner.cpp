@@ -366,7 +366,7 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       FactsAlreadyChecked factsAlreadyChecked;
       auto newPotRes = PotentialNextAction(currAction, action);
       if (_lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pDomain, factsAlreadyChecked) &&
-          pProblem.isConditionTrue(action.precondition, {}, &newPotRes.parameters))
+          (!action.precondition || action.precondition->isTrue(pProblem, {}, &newPotRes.parameters)))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))
         {

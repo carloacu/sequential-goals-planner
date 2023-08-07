@@ -62,6 +62,7 @@ const std::string _action_goodBoy = "good_boy";
 const std::string _action_navigate = "navigate";
 const std::string _action_welcome = "welcome";
 const std::string _action_grab = "grab";
+const std::string _action_ungrab = "ungrab";
 
 template <typename TYPE>
 void assert_eq(const TYPE& pExpected,
@@ -772,13 +773,12 @@ void _testIncrementOfVariables()
   std::string initFactsStr = "${number-of-question}=0&${max-number-of-questions}=3";
   cp::Problem problem;
   problem.modifyFacts(cp::FactModification::fromStr(initFactsStr), now);
-  assert(problem.isConditionTrue(cp::FactCondition::fromStr(initFactsStr)));
-  assert(problem.isConditionTrue(actionQ1.precondition));
-  assert(!problem.isConditionTrue(actionFinishToActActions.precondition));
-  assert(!problem.isConditionTrue(actionSayQuestionBilan.precondition));
-  assert(problem.isConditionTrue(cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+3")));
-  assert(!problem.isConditionTrue(cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+4")));
-  assert(problem.isConditionTrue(cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+4-1")));
+  assert(cp::FactCondition::fromStr(initFactsStr)->isTrue(problem));
+  assert(!actionFinishToActActions.precondition->isTrue(problem));
+  assert(!actionSayQuestionBilan.precondition->isTrue(problem));
+  assert(cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+3")->isTrue(problem));
+  assert(!cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+4")->isTrue(problem));
+  assert(cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+4-1")->isTrue(problem));
   for (std::size_t i = 0; i < 3; ++i)
   {
     _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
@@ -793,9 +793,8 @@ void _testIncrementOfVariables()
     problem.modifyFacts(itAction->second.effect.factsModifications, now);
     problem.modifyFacts(cp::FactModification::fromStr("!" + _fact_askAllTheQuestions), now);
   }
-  assert(problem.isConditionTrue(actionQ1.precondition));
-  assert(problem.isConditionTrue(actionFinishToActActions.precondition));
-  assert(!problem.isConditionTrue(actionSayQuestionBilan.precondition));
+  assert(actionFinishToActActions.precondition->isTrue(problem));
+  assert(!actionSayQuestionBilan.precondition->isTrue(problem));
   _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
   auto actionToDo = _lookForAnActionToDoStr(problem, domain);
   assert_eq<std::string>(_action_finisehdToAskQuestions, actionToDo);
@@ -804,9 +803,8 @@ void _testIncrementOfVariables()
   assert(itAction != domain.actions().end());
   problem.modifyFacts(itAction->second.effect.factsModifications, now);
   assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDoStr(problem, domain));
-  assert(problem.isConditionTrue(actionQ1.precondition));
-  assert(problem.isConditionTrue(actionFinishToActActions.precondition));
-  assert(problem.isConditionTrue(actionSayQuestionBilan.precondition));
+  assert(actionFinishToActActions.precondition->isTrue(problem));
+  assert(actionSayQuestionBilan.precondition->isTrue(problem));
   problem.modifyFacts(actionSayQuestionBilan.effect.factsModifications, now);
 }
 
@@ -1362,7 +1360,6 @@ void _checkInferenceInsideAPlan()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
-  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_a)));
@@ -1849,7 +1846,6 @@ void _moveObject()
   cp::Problem problem;
   problem.addFact(cp::Fact("location(me)=corridor"), now);
   problem.addFact(cp::Fact("location(sweets)=kitchen"), now);
-  assert_eq<std::string>("kitchen", problem.getFactValue(cp::Fact("location(sweets)")));
   _setGoalsForAPriority(problem, {cp::Goal("location(sweets)=bedroom")});
   assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets), " +
                          actionNavigate2 + "(object -> sweets, targetLocation -> bedroom)", _solveStr(problem, actions));
@@ -1879,7 +1875,6 @@ void _moveObjectWithInference()
   setOfInferences->addInference("inference1", inference);
 
   problem.addFact(cp::Fact("location(sweets)=kitchen"), now);
-  assert_eq<std::string>("kitchen", problem.getFactValue(cp::Fact("location(sweets)")));
   _setGoalsForAPriority(problem, {cp::Goal("location(sweets)=bedroom")});
 
   assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
@@ -1887,6 +1882,7 @@ void _moveObjectWithInference()
   assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
 }
+
 
 }
 

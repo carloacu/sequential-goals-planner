@@ -134,17 +134,6 @@ struct CONTEXTUALPLANNER_API Problem
    */
   bool canFactBecomeTrue(const Fact& pFact) const;
 
-  /**
-   * @brief Are the facts contained in the problem.
-   * @param[in] pSetOfFacts Facts to check.
-   * @param[in] pPunctualFacts Punctual facts currently true.
-   * @param[oui] pParametersPtr Parameters that the facts have in the problem.
-   * @return True if all the fact are contained in the problem, false otherwise.
-   */
-  bool isConditionTrue(const std::unique_ptr<FactCondition>& pFactConditionPtr,
-                       const std::set<Fact>& pPunctualFacts = {},
-                       std::map<std::string, std::string>* pParametersPtr = nullptr) const;
-
   std::string getFactValue(const Fact& pFact) const;
 
   void forAllInstruction(const std::string& pParameterName,

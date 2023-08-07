@@ -38,8 +38,8 @@ struct CONTEXTUALPLANNER_API FactCondition
                           const std::map<std::string, std::string>& pParameters) const = 0;
   virtual bool canBeTrue() const = 0;
   virtual bool isTrue(const Problem& pProblem,
-                      const std::set<Fact>& pPunctualFacts,
-                      std::map<std::string, std::string>* pParametersPtr) const = 0;
+                      const std::set<Fact>& pPunctualFacts = {},
+                      std::map<std::string, std::string>* pParametersPtr = nullptr) const = 0;
   virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
 
   virtual std::unique_ptr<FactCondition> clone() const = 0;
