@@ -21,7 +21,8 @@ struct CONTEXTUALPLANNER_API Inference
             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
 
   Inference(const Inference& pInference)
-    : condition(pInference.condition ? pInference.condition->clone() : std::unique_ptr<FactCondition>()),
+    : parameters(pInference.parameters),
+      condition(pInference.condition ? pInference.condition->clone() : std::unique_ptr<FactCondition>()),
       factsToModify(pInference.factsToModify ? pInference.factsToModify->clone(nullptr) : std::unique_ptr<FactModification>()),
       goalsToAdd(pInference.goalsToAdd),
       isReachable(pInference.isReachable)
@@ -30,6 +31,8 @@ struct CONTEXTUALPLANNER_API Inference
     assert(factsToModify || !goalsToAdd.empty());
   }
 
+  /// Parameter names of this inference.
+  std::vector<std::string> parameters;
   /**
    * Condition to apply the facts and goals modification.
    * The condition is true if the condition is a sub set of a corresponding world state.

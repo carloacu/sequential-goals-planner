@@ -168,7 +168,16 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
         }
       }
       if (actionIsAPossibleFollowUp)
+      {
+        if (!pParentParameters.empty())
+        {
+          // The new fact with parameters should not already be in the world
+          auto factWithParamFilled = pFact;
+          factWithParamFilled.fillParameters(parametersToValue);
+          return pProblem.facts().count(factWithParamFilled) == 0;
+        }
         return true;
+      }
     }
   }
   return false;
@@ -222,9 +231,8 @@ bool _lookForAPossibleExistingOrNotFactFromInferences(
       if (itInference != pInferences.end())
       {
         auto& inference = itInference->second;
-        std::vector<std::string> parameters;
         if (inference.factsToModify &&
-            _lookForAPossibleDeduction(parameters, inference.condition, inference.factsToModify->clone(nullptr),
+            _lookForAPossibleDeduction(inference.parameters, inference.condition, inference.factsToModify->clone(nullptr),
                                        pFact, pParentParameters, pGoal, pProblem, pDomain, pFactsAlreadychecked))
           return true;
       }
