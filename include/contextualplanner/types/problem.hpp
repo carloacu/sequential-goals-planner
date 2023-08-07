@@ -7,6 +7,7 @@
 #include "../util/api.hpp"
 #include <contextualplanner/types/historical.hpp>
 #include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/factsalreadychecked.hpp>
 #include <contextualplanner/types/goal.hpp>
 #include <contextualplanner/types/inference.hpp>
 #include <contextualplanner/util/observableunsafe.hpp>
@@ -432,7 +433,8 @@ private:
    * @param pDomain Domain containing all the possible actions.
    */
   void _feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
-                                           const Domain& pDomain);
+                                            const Domain& pDomain,
+                                            FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**
    * @brief Feed accessible facts from a set of inferences.
@@ -442,7 +444,8 @@ private:
    */
   void _feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
                                                const std::map<InferenceId, Inference>& pAllInferences,
-                                               const Domain& pDomain);
+                                               const Domain& pDomain,
+                                               FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**
    * @brief Feed accessible facts from a condition and an effect.
@@ -454,7 +457,8 @@ private:
   void _feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
                                         const WorldModification& pEffect,
                                         const std::vector<std::string>& pParameters,
-                                        const Domain& pDomain);
+                                        const Domain& pDomain,
+                                         FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**
    * @brief Feed accessible facts from a fact.
@@ -462,7 +466,8 @@ private:
    * @param pDomain Domain containing all the possible actions.
    */
   void _feedAccessibleFactsFromFact(const Fact& pFact,
-                                   const Domain& pDomain);
+                                    const Domain& pDomain,
+                                    FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**
    * @brief Feed accessible facts from a negated fact.
@@ -470,7 +475,8 @@ private:
    * @param pDomain Domain containing all the possible actions.
    */
   void _feedAccessibleFactsFromNotFact(const Fact& pFact,
-                                      const Domain& pDomain);
+                                       const Domain& pDomain,
+                                       FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**
    * @brief Modify some facts in the world.

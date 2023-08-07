@@ -103,18 +103,20 @@ std::string Fact::tryToExtractParameterValueFromExemple(
     return "";
 
   std::string res;
-  if (value != pOther.value)
-  {
-    if (value == pParameterValue)
-      res = pOther.value;
-    else
-      return "";
-  }
+  if (value == pParameterValue)
+    res = pOther.value;
+   else if (value != pOther.value)
+    return "";
 
   auto itParam = parameters.begin();
   auto itOtherParam = pOther.parameters.begin();
   while (itParam != parameters.end())
   {
+    if (itParam->fact.name == pParameterValue)
+      res = itOtherParam->fact.name;
+    else if (itParam->fact.name != itOtherParam->fact.name)
+      return "";
+
     auto subRes = itParam->fact.tryToExtractParameterValueFromExemple(pParameterValue, itOtherParam->fact);
     if (subRes != "")
       return subRes;

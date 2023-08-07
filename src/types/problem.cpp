@@ -512,22 +512,26 @@ void Problem::fillAccessibleFacts(const Domain& pDomain)
 {
   if (!_needToAddAccessibleFacts)
     return;
+  FactsAlreadyChecked factsAlreadychecked;
   for (const auto& currFact : _facts)
   {
     if (_accessibleFacts.count(currFact) == 0)
     {
       auto itPrecToActions = pDomain.preconditionToActions().find(currFact.name);
       if (itPrecToActions != pDomain.preconditionToActions().end())
-        _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
+        _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain,
+                                             factsAlreadychecked);
     }
   }
-  _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain);
+  _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain,
+                                       factsAlreadychecked);
   _needToAddAccessibleFacts = false;
 }
 
 
 void Problem::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
-                                                  const Domain& pDomain)
+                                                   const Domain& pDomain,
+                                                   FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto& actions = pDomain.actions();
   for (const auto& currAction : pActions)
@@ -537,7 +541,7 @@ void Problem::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pAc
     {
       auto& action = itAction->second;
       _feedAccessibleFactsFromDeduction(action.precondition, action.effect,
-                                       action.parameters, pDomain);
+                                       action.parameters, pDomain, pFactsAlreadychecked);
     }
   }
 }
@@ -545,7 +549,8 @@ void Problem::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pAc
 
 void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
                                                       const std::map<InferenceId, Inference>& pAllInferences,
-                                                      const Domain& pDomain)
+                                                      const Domain& pDomain,
+                                                      FactsAlreadyChecked& pFactsAlreadychecked)
 {
   for (const auto& currInference : pInferences)
   {
@@ -555,7 +560,7 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
       auto& inference = itInference->second;
       std::vector<std::string> parameters;
       _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify->clone(nullptr),
-                                        parameters, pDomain);
+                                        parameters, pDomain, pFactsAlreadychecked);
     }
   }
 }
@@ -563,7 +568,8 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
 void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
                                                 const WorldModification& pEffect,
                                                 const std::vector<std::string>& pParameters,
-                                                const Domain& pDomain)
+                                                const Domain& pDomain,
+                                                FactsAlreadyChecked& pFactsAlreadychecked)
 {
   if (!pCondition || pCondition->canBecomeTrue(*this))
   {
@@ -579,20 +585,26 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
       _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
       _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
       for (const auto& currNewFact : accessibleFactsToAdd)
-        _feedAccessibleFactsFromFact(currNewFact, pDomain);
+        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
+      for (const auto& currNewFact : accessibleFactsToAddWithAnyValues)
+        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
       for (const auto& currNewFact : removableFactsToAdd)
-        _feedAccessibleFactsFromNotFact(currNewFact, pDomain);
+        _feedAccessibleFactsFromNotFact(currNewFact, pDomain, pFactsAlreadychecked);
     }
   }
 }
 
 
 void Problem::_feedAccessibleFactsFromFact(const Fact& pFact,
-                                           const Domain& pDomain)
+                                           const Domain& pDomain,
+                                           FactsAlreadyChecked& pFactsAlreadychecked)
 {
+  if (!pFactsAlreadychecked.factsToAdd.insert(pFact).second)
+    return;
+
   auto itPrecToActions = pDomain.preconditionToActions().find(pFact.name);
   if (itPrecToActions != pDomain.preconditionToActions().end())
-    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
+    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked);
 
   for (auto& currSetOfInferences : _setOfInferences)
   {
@@ -600,21 +612,25 @@ void Problem::_feedAccessibleFactsFromFact(const Fact& pFact,
     auto& conditionToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
     auto itCondToReachableInferences = conditionToReachableInferences.find(pFact.name);
     if (itCondToReachableInferences != conditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain);
+      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
     auto& conditionToUnreachableInferences = currSetOfInferences.second->unreachableInferenceLinks().conditionToInferences;
     auto itCondToUnreachableInferences = conditionToUnreachableInferences.find(pFact.name);
     if (itCondToUnreachableInferences != conditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain);
+      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 
 
 void Problem::_feedAccessibleFactsFromNotFact(const Fact& pFact,
-                                              const Domain& pDomain)
+                                              const Domain& pDomain,
+                                              FactsAlreadyChecked& pFactsAlreadychecked)
 {
+  if (!pFactsAlreadychecked.factsToRemove.insert(pFact).second)
+    return;
+
   auto itPrecToActions = pDomain.notPreconditionToActions().find(pFact.name);
   if (itPrecToActions != pDomain.notPreconditionToActions().end())
-    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain);
+    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked);
 
   for (auto& currSetOfInferences : _setOfInferences)
   {
@@ -622,11 +638,11 @@ void Problem::_feedAccessibleFactsFromNotFact(const Fact& pFact,
     auto& notConditionToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
     auto itCondToReachableInferences = notConditionToReachableInferences.find(pFact.name);
     if (itCondToReachableInferences != notConditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain);
+      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
     auto& notConditionToUnreachableInferences = currSetOfInferences.second->unreachableInferenceLinks().notConditionToInferences;
     auto itCondToUnreachableInferences = notConditionToUnreachableInferences.find(pFact.name);
     if (itCondToUnreachableInferences != notConditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain);
+      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 

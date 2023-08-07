@@ -13,6 +13,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/factcondition.hpp
     include/contextualplanner/types/factmodification.hpp
     include/contextualplanner/types/factoptional.hpp
+    include/contextualplanner/types/factsalreadychecked.hpp
     include/contextualplanner/types/goal.hpp
     include/contextualplanner/types/historical.hpp
     include/contextualplanner/types/inference.hpp

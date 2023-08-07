@@ -1826,6 +1826,35 @@ void _actionNavigationAndGrabObjectWithParameters()
   assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
 }
 
+void _moveObject()
+{
+  const std::string actionNavigate2 = "actionNavigate2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action navAction({}, cp::FactModification::fromStr("location(me)=targetLocation"));
+  navAction.parameters.emplace_back("targetLocation");
+  actions.emplace(_action_navigate, navAction);
+
+  cp::Action navAction2(cp::FactCondition::fromStr("grab(me, object)"),
+                        cp::FactModification::fromStr("location(me)=targetLocation & location(object)=targetLocation"));
+  navAction2.parameters.emplace_back("targetLocation");
+  navAction2.parameters.emplace_back("object");
+  actions.emplace(actionNavigate2, navAction2);
+
+  cp::Action grabAction(cp::FactCondition::fromStr("equals(location(me), location(object))"),
+                        cp::FactModification::fromStr("grab(me, object)"));
+  grabAction.parameters.emplace_back("object");
+  actions.emplace(_action_grab, grabAction);
+
+  cp::Problem problem;
+  problem.addFact(cp::Fact("location(me)=corridor"), now);
+  problem.addFact(cp::Fact("location(sweets)=kitchen"), now);
+  assert_eq<std::string>("kitchen", problem.getFactValue(cp::Fact("location(sweets)")));
+  _setGoalsForAPriority(problem, {cp::Goal("location(sweets)=bedroom")});
+  assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets), " +
+                         actionNavigate2 + "(object -> sweets, targetLocation -> bedroom)", _solveStr(problem, actions));
+}
+
 }
 
 
@@ -1903,6 +1932,7 @@ int main(int argc, char *argv[])
   _setFactModification();
   _forAllFactModification();
   _actionNavigationAndGrabObjectWithParameters();
+  _moveObject();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

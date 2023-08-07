@@ -1,5 +1,6 @@
 #include <contextualplanner/contextualplanner.hpp>
 #include <algorithm>
+#include <contextualplanner/types/factsalreadychecked.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 
 namespace cp
@@ -7,14 +8,6 @@ namespace cp
 
 namespace
 {
-
-
-struct FactsAlreadyChecked
-{
-  std::set<Fact> factsToAdd;
-  std::set<Fact> factsToRemove;
-};
-
 
 struct PotentialNextAction
 {
@@ -154,6 +147,10 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
             if (!pFactOptional.isFactNegated)
             {
               currParentParam.second = pFact.tryToExtractParameterValueFromExemple(currParentParam.first, pFactOptional.fact);
+              // Maybe the extracted parameter is also a parameter so we replace by it's value
+              auto itParam = parametersToValue.find(currParentParam.second);
+              if (itParam != parametersToValue.end())
+                currParentParam.second = itParam->second;
               if (!currParentParam.second.empty())
                 return false;
             }
