@@ -125,7 +125,7 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
               const std::function<void (const Expression&)>&) const override { pFactCallback(factOptional); }
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const std::function<bool (const Expression&)>&,
-                  const Problem& pProblem,
+                  const Problem&,
                   const std::map<std::string, std::string>&) const override { return pFactCallback(factOptional); }
   bool canBeTrue() const override { return factOptional.isFactNegated || !factOptional.fact.isUnreachable(); }
   bool isTrue(const Problem& pProblem,
@@ -162,7 +162,7 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
               const std::function<void (const Expression&)>& pExpCallback) const override { pExpCallback(expression); }
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
                   const std::function<bool (const Expression&)>& pExpCallback,
-                  const Problem& pProblem,
+                  const Problem&,
                   const std::map<std::string, std::string>&) const override { return pExpCallback(expression); }
   bool canBeTrue() const override { return true; }
   bool isTrue(const Problem& pProblem,

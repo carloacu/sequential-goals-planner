@@ -446,8 +446,8 @@ void FactConditionExpression::replaceFact(const cp::Fact& pOldFact,
 }
 
 bool FactConditionExpression::isTrue(const Problem& pProblem,
-                                     const std::set<Fact>& pPunctualFacts,
-                                     std::map<std::string, std::string>* pParametersPtr) const
+                                     const std::set<Fact>&,
+                                     std::map<std::string, std::string>*) const
 {
   return expression.isValid(pProblem.variablesToValue());
 }

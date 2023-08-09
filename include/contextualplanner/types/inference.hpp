@@ -45,7 +45,7 @@ struct CONTEXTUALPLANNER_API Inference
   /**
    * If the inference is considered as reachable if this 2 conditions are satisfied:
    * * The inference has other stuff to modify than just adding or removing unreachable facts (that will not modify the world state anyway).
-   * * The condition can be satisfied. For example if the condition need an unreachable fact to be true the condition will never be satisfied.
+   * * The condition can be satisfied. For example if the condition needs an unreachable fact to be true the condition will never be satisfied.
    *
    * An inference not reachable, will never be applied but it can be usefull to motivate to do actions toward a goal.
    */
