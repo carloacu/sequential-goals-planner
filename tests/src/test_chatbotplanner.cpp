@@ -930,6 +930,7 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 
 void _actionWithParametersInsideThePath()
 {
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   cp::Action navigateAction({},
                             cp::FactModification::fromStr("place=target"));
@@ -941,9 +942,12 @@ void _actionWithParametersInsideThePath()
                              cp::FactModification::fromStr("welcomePeople")));
 
   cp::Problem problem;
+  problem.addFact(cp::Fact::fromStr("place=kitchen"), now);
   _setGoalsForAPriority(problem, {cp::Goal("welcomePeople")});
   assert_eq<std::string>(_action_navigate + "(target -> entrance)" + _sep +
                          _action_welcome, _solveStr(problem, actions));
+  assert_true(problem.hasFact(cp::Fact::fromStr("place=entrance")));
+  assert_false(problem.hasFact(cp::Fact::fromStr("place=kitchen")));
 }
 
 
@@ -1851,7 +1855,8 @@ void _moveObject()
                          actionNavigate2 + "(object -> sweets, targetLocation -> bedroom)", _solveStr(problem, actions));
 }
 
-void _moveObjectWithInference()
+
+void _moveAndUngrabObject()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
@@ -1863,8 +1868,13 @@ void _moveObjectWithInference()
                         cp::FactModification::fromStr("grab(me, object)"));
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
-  cp::Domain domain(std::move(actions));
 
+  cp::Action ungrabAction(cp::FactCondition::fromStr("equals(location(me), location(object))"),
+                          cp::FactModification::fromStr("!grab(me, object)"));
+  ungrabAction.parameters.emplace_back("object");
+  actions.emplace(_action_ungrab, ungrabAction);
+
+  cp::Domain domain(std::move(actions));
   cp::Problem problem;
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi", setOfInferences);
@@ -1875,13 +1885,16 @@ void _moveObjectWithInference()
   setOfInferences->addInference("inference1", inference);
 
   problem.addFact(cp::Fact("location(sweets)=kitchen"), now);
-  _setGoalsForAPriority(problem, {cp::Goal("location(sweets)=bedroom")});
+  _setGoalsForAPriority(problem, {cp::Goal("location(sweets)=bedroom & !grab(me, sweets)")});
 
   assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_false(problem.hasFact(cp::Fact::fromStr("location(sweets)=kitchen")));
 }
+
 
 
 }
@@ -1962,7 +1975,7 @@ int main(int argc, char *argv[])
   _forAllFactModification();
   _actionNavigationAndGrabObjectWithParameters();
   _moveObject();
-  _moveObjectWithInference();
+  _moveAndUngrabObject();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

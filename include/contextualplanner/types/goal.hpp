@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <chrono>
+#include "factcondition.hpp"
 #include "factoptional.hpp"
 #include "../util/api.hpp"
 
@@ -65,10 +66,10 @@ struct CONTEXTUALPLANNER_API Goal
   const FactOptional* conditionFactOptionalPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
 
   /// Get a const reference of the optional fact contained in this goal.
-  const FactOptional& factOptional() const { return _factOptional; }
+  const FactCondition& factCondition() const { return *_factCondition; }
 
   /// Get a reference of the optional fact contained in this goal.
-  FactOptional& factOptional() { return _factOptional; }
+  FactCondition& factCondition() { return *_factCondition; }
 
   /// Get the group identifier of this goal. It can be empty if the goal does not belong to a group.
   const std::string& getGoalGroupId() const { return _goalGroupId; }
@@ -88,7 +89,7 @@ struct CONTEXTUALPLANNER_API Goal
 
 private:
   /// Fact that can be negated that is contained in this goal.
-  FactOptional _factOptional;
+  std::unique_ptr<FactCondition> _factCondition;
   /**
    * The maximum time that we allow for this goal to be inactive in second.<br/>
    * A negative value means that the time is infinite.<br/>

@@ -132,10 +132,10 @@ inline bool WorldModification::hasFact(const cp::Fact& pFact) const
     return true;
   for (const auto& currGoalWithPriority : goalsToAdd)
     for (const auto& currGoal : currGoalWithPriority.second)
-      if (currGoal.factOptional().fact == pFact)
+      if (currGoal.factCondition().hasFact(pFact))
         return true;
   for (const auto& currGoal : goalsToAddInCurrentPriority)
-    if (currGoal.factOptional().fact == pFact)
+    if (currGoal.factCondition().hasFact(pFact))
       return true;
   return false;
 }
@@ -159,11 +159,9 @@ inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
     potentialFactsModifications->replaceFact(pOldFact, pNewFact);
   for (auto& currGoalWithPriority : goalsToAdd)
     for (auto& currGoal : currGoalWithPriority.second)
-      if (currGoal.factOptional().fact == pOldFact)
-        currGoal.factOptional().fact = pNewFact;
+      currGoal.factCondition().replaceFact(pOldFact, pNewFact);
   for (auto& currGoal : goalsToAddInCurrentPriority)
-    if (currGoal.factOptional().fact == pOldFact)
-      currGoal.factOptional().fact = pNewFact;
+    currGoal.factCondition().replaceFact(pOldFact, pNewFact);
 }
 
 inline void WorldModification::forAllFacts(const std::function<void(const cp::Fact&)>& pCallback,

@@ -523,8 +523,8 @@ void Problem::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pAc
     if (itAction != actions.end())
     {
       auto& action = itAction->second;
-      _feedAccessibleFactsFromDeduction(action.precondition, action.effect,
-                                       action.parameters, pDomain, pFactsAlreadychecked);
+      _feedAccessibleFactsFromDeduction(action.precondition, action.effect, action.parameters,
+                                        pDomain, pFactsAlreadychecked);
     }
   }
 }
@@ -870,7 +870,7 @@ bool Problem::isGoalSatisfied(const Goal& pGoal) const
 {
   auto* condFactOptPtr = pGoal.conditionFactOptionalPtr();
   return (condFactOptPtr != nullptr && !isOptionalFactSatisfied(*condFactOptPtr)) ||
-      isOptionalFactSatisfied(pGoal.factOptional());
+      pGoal.factCondition().isTrue(*this);
 }
 
 std::map<int, std::vector<Goal>> Problem::getNotSatisfiedGoals() const
@@ -947,9 +947,24 @@ bool Problem::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApp
       if (itInference != pInferences.end())
       {
         auto& currInference = itInference->second;
-        if (!currInference.condition || currInference.condition->isTrue(*this, pWhatChanged.punctualFacts, nullptr))
+
+        std::map<std::string, std::string> parametersToValue;
+        for (const auto& currParam : currInference.parameters)
+          parametersToValue[currParam];
+        if (!currInference.condition || currInference.condition->isTrue(*this, pWhatChanged.punctualFacts, &parametersToValue))
         {
-          _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
+          if (currInference.factsToModify)
+          {
+            if (!parametersToValue.empty())
+            {
+              auto factsToModify = currInference.factsToModify->clone(&parametersToValue);
+              _modifyFacts(pWhatChanged, factsToModify, pNow);
+            }
+            else
+            {
+              _modifyFacts(pWhatChanged, currInference.factsToModify, pNow);
+            }
+          }
           _addGoals(pWhatChanged, currInference.goalsToAdd, pNow);
           somethingChanged = true;
         }
@@ -964,29 +979,6 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
 {
   if (pWhatChanged.somethingChanged())
   {
-    // Remove same facts than the new facts but that have another value
-    for (auto& currAddedFact : pWhatChanged.addedFacts)
-    {
-      auto it = _factNamesToFacts.find(currAddedFact.name);
-      if (it != _factNamesToFacts.end())
-      {
-        for (auto itExistingFact = it->second.begin(); itExistingFact != it->second.end(); )
-        {
-          auto& currExistingFact = *itExistingFact;
-          if (currAddedFact.parameters == currExistingFact.parameters &&
-              currAddedFact.value != currExistingFact.value)
-          {
-            ++itExistingFact;
-            _removeFacts(pWhatChanged, std::vector<cp::Fact>{currExistingFact}, pNow);
-            continue;
-          }
-          ++itExistingFact;
-        }
-        if (_factNamesToFacts.empty())
-          _factNamesToFacts.erase(it);
-      }
-    }
-
     // manage the inferences
     std::map<SetOfInferencesId, std::set<InferenceId>> soiToInferencesAlreadyApplied;
     bool needAnotherLoop = true;
@@ -1026,6 +1018,29 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
         if (pWhatChanged.variablesToValue &&
             _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, reachableInferencesWithWithAnExpressionInCondition, inferences, pNow))
           needAnotherLoop = true;
+      }
+    }
+
+    // Remove same facts than the new facts but that have another value
+    for (auto& currAddedFact : pWhatChanged.addedFacts)
+    {
+      auto it = _factNamesToFacts.find(currAddedFact.name);
+      if (it != _factNamesToFacts.end())
+      {
+        for (auto itExistingFact = it->second.begin(); itExistingFact != it->second.end(); )
+        {
+          auto& currExistingFact = *itExistingFact;
+          if (currAddedFact.parameters == currExistingFact.parameters &&
+              currAddedFact.value != currExistingFact.value)
+          {
+            ++itExistingFact;
+            _removeFacts(pWhatChanged, std::vector<cp::Fact>{currExistingFact}, pNow);
+            continue;
+          }
+          ++itExistingFact;
+        }
+        if (_factNamesToFacts.empty())
+          _factNamesToFacts.erase(it);
       }
     }
 

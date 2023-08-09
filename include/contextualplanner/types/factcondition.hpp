@@ -11,7 +11,9 @@
 namespace cp
 {
 struct Problem;
+struct FactConditionNode;
 struct FactConditionFact;
+struct FactConditionExpression;
 
 enum class FactConditionType
 {
@@ -41,13 +43,23 @@ struct CONTEXTUALPLANNER_API FactCondition
                       const std::set<Fact>& pPunctualFacts = {},
                       std::map<std::string, std::string>* pParametersPtr = nullptr) const = 0;
   virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
+  virtual bool operator==(const FactCondition& pOther) const = 0;
 
   virtual std::unique_ptr<FactCondition> clone() const = 0;
-  virtual const FactConditionFact* fcFactPtr() const = 0;
 
-  FactConditionType type;
+  virtual const FactConditionNode* fcNodePtr() const = 0;
+  virtual FactConditionNode* fcNodePtr() = 0;
+
+  virtual const FactConditionFact* fcFactPtr() const = 0;
+  virtual FactConditionFact* fcFactPtr() = 0;
+
+  virtual const FactConditionExpression* fcExpPtr() const = 0;
+  virtual FactConditionExpression* fcExpPtr() = 0;
 
   static std::unique_ptr<FactCondition> fromStr(const std::string& pStr);
+  virtual std::string toStr() const = 0;
+
+  FactConditionType type;
 };
 
 
@@ -81,9 +93,18 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
               const std::set<Fact>& pPunctualFacts,
               std::map<std::string, std::string>* pParametersPtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
+  bool operator==(const FactCondition& pOther) const override;
 
   std::unique_ptr<FactCondition> clone() const override;
+
+  const FactConditionNode* fcNodePtr() const  { return this; }
+  FactConditionNode* fcNodePtr()  { return this; }
   const FactConditionFact* fcFactPtr() const override { return nullptr; }
+  FactConditionFact* fcFactPtr() override { return nullptr; }
+  const FactConditionExpression* fcExpPtr() const override { return nullptr; }
+  FactConditionExpression* fcExpPtr() override { return nullptr; }
+
+  std::string toStr() const override;
 
   FactConditionNodeType nodeType;
   std::unique_ptr<FactCondition> leftOperand;
@@ -111,9 +132,18 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
               const std::set<Fact>& pPunctualFacts,
               std::map<std::string, std::string>* pParametersPtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
+  bool operator==(const FactCondition& pOther) const override;
+
+  const FactConditionNode* fcNodePtr() const  { return nullptr; }
+  FactConditionNode* fcNodePtr()  { return nullptr; }
+  const FactConditionFact* fcFactPtr() const override { return this; }
+  FactConditionFact* fcFactPtr() override { return this; }
+  const FactConditionExpression* fcExpPtr() const override { return nullptr; }
+  FactConditionExpression* fcExpPtr() override { return nullptr; }
 
   std::unique_ptr<FactCondition> clone() const override;
-  const FactConditionFact* fcFactPtr() const override { return this; }
+
+  std::string toStr() const override { return factOptional.toStr(); }
 
   FactOptional factOptional;
 };
@@ -139,9 +169,18 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
               const std::set<Fact>& pPunctualFacts,
               std::map<std::string, std::string>* pParametersPtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
+  bool operator==(const FactCondition& pOther) const override;
 
   std::unique_ptr<FactCondition> clone() const override;
+
+  std::string toStr() const override { return "<an_expression>"; }
+
+  const FactConditionNode* fcNodePtr() const  { return nullptr; }
+  FactConditionNode* fcNodePtr()  { return nullptr; }
   const FactConditionFact* fcFactPtr() const override { return nullptr; }
+  FactConditionFact* fcFactPtr() override { return nullptr; }
+  const FactConditionExpression* fcExpPtr() const override { return this; }
+  FactConditionExpression* fcExpPtr() override { return this; }
 
   Expression expression;
 };
