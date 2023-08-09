@@ -1869,8 +1869,7 @@ void _moveAndUngrabObject()
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
 
-  cp::Action ungrabAction(cp::FactCondition::fromStr("equals(location(me), location(object))"),
-                          cp::FactModification::fromStr("!grab(me, object)"));
+  cp::Action ungrabAction({}, cp::FactModification::fromStr("!grab(me, object)"));
   ungrabAction.parameters.emplace_back("object");
   actions.emplace(_action_ungrab, ungrabAction);
 
