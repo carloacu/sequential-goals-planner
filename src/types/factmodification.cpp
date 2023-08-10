@@ -18,7 +18,8 @@ const std::map<std::string, ExpressionOperator> _strToBeginOfTextOperators
 {{"++", ExpressionOperator::PLUSPLUS}};
 const std::map<char, ExpressionOperator> _charToOperators
 {{'=', ExpressionOperator::EQUAL}, {'+', ExpressionOperator::PLUS}, {'+', ExpressionOperator::MINUS}};
-
+const std::string _setFunctionName = "set";
+const std::string _forAllFunctionName = "forAll";
 
 
 std::unique_ptr<FactModification> _merge(std::list<std::unique_ptr<FactModification>>& pFactModifications)
@@ -41,7 +42,7 @@ std::unique_ptr<FactModification> _factOptToFactModification(const FactOptional&
   if (!pFactOptional.fact.parameters.empty() ||
       (pFactOptional.fact.name[0] != '+' && pFactOptional.fact.name[0] != '$'))
   {
-    if (pFactOptional.fact.name == "set" &&
+    if (pFactOptional.fact.name == _setFunctionName &&
         pFactOptional.fact.parameters.size() == 2 &&
         pFactOptional.fact.value.empty())
     {
@@ -51,7 +52,7 @@ std::unique_ptr<FactModification> _factOptToFactModification(const FactOptional&
           std::make_unique<FactModificationFact>(pFactOptional.fact.parameters[1]));
     }
 
-    if (pFactOptional.fact.name == "forAll" &&
+    if (pFactOptional.fact.name == _forAllFunctionName &&
         pFactOptional.fact.parameters.size() == 3 &&
         pFactOptional.fact.value.empty())
     {
@@ -413,6 +414,28 @@ std::unique_ptr<FactModification> FactModificationNode::clone(const std::map<std
         parameterName);
 }
 
+std::string FactModificationNode::toStr() const
+{
+  std::string leftOperandStr;
+  if (leftOperand)
+    leftOperandStr = leftOperand->toStr();
+  std::string rightOperandStr;
+  if (rightOperand)
+    rightOperandStr = rightOperand->toStr();
+
+  switch (nodeType)
+  {
+  case FactModificationNodeType::AND:
+    return leftOperandStr + " & " + rightOperandStr;
+  case FactModificationNodeType::SET:
+    return _setFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  case FactModificationNodeType::FOR_ALL:
+    return _forAllFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  }
+  return "";
+}
+
+
 
 FactModificationFact::FactModificationFact(const FactOptional& pFactOptional)
  : FactModification(FactModificationType::FACT),
@@ -476,7 +499,6 @@ std::unique_ptr<FactModification> FactModificationFact::clone(const std::map<std
     res->factOptional.fact.fillParameters(*pParametersPtr);
   return res;
 }
-
 
 
 FactModificationExpression::FactModificationExpression(const Expression& pExpression)

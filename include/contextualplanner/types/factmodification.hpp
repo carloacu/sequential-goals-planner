@@ -49,6 +49,8 @@ struct CONTEXTUALPLANNER_API FactModification
   FactModificationType type;
 
   static std::unique_ptr<FactModification> fromStr(const std::string& pStr);
+  virtual std::string toStr() const = 0;
+
   static std::unique_ptr<FactModification> merge(const FactModification& pFactModification1,
                                                  const FactModification& pFactModification2);
 };
@@ -91,6 +93,8 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   const FactModificationFact* fcFactPtr() const override { return nullptr; }
 
+  std::string toStr() const override;
+
   FactModificationNodeType nodeType;
   std::unique_ptr<FactModification> leftOperand;
   std::unique_ptr<FactModification> rightOperand;
@@ -127,6 +131,8 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   const FactModificationFact* fcFactPtr() const override { return this; }
 
+  std::string toStr() const override { return factOptional.toStr(); }
+
   FactOptional factOptional;
 };
 
@@ -155,6 +161,8 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   const FactModificationFact* fcFactPtr() const override { return nullptr; }
+
+  std::string toStr() const override { return "<an_expression>"; }
 
   Expression expression;
 };

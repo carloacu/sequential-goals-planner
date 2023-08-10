@@ -201,6 +201,11 @@ void _test_goalToStr()
   assert_eq<std::string>("oneStepTowards(goal_name)", cp::Goal("oneStepTowards(goal_name)").toStr());
 }
 
+void _test_factModificationToStr()
+{
+  assert_eq<std::string>("location(me)=target", cp::FactModification::fromStr("location(me)=target")->toStr());
+  assert_eq<std::string>("location(me)=target & grab(sweets)", cp::FactModification::fromStr("location(me)=target & grab(sweets)")->toStr());
+}
 
 void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
 {
@@ -1908,6 +1913,7 @@ int main(int argc, char *argv[])
   planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();
   _test_goalToStr();
+  _test_factModificationToStr();
   _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0();
   _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal();
   _noPreconditionGoalImmediatlyReached();
