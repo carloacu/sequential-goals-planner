@@ -142,10 +142,20 @@ inline bool WorldModification::hasFact(const cp::Fact& pFact) const
 
 inline void WorldModification::add(const WorldModification& pOther)
 {
-  if (factsModifications && pOther.factsModifications)
-    factsModifications = FactModification::merge(*factsModifications, *pOther.factsModifications);
-  if (potentialFactsModifications && pOther.potentialFactsModifications)
-    potentialFactsModifications = FactModification::merge(*potentialFactsModifications, *pOther.potentialFactsModifications);
+  if (pOther.factsModifications)
+  {
+    if (factsModifications)
+      factsModifications = FactModification::merge(*factsModifications, *pOther.factsModifications);
+    else
+      factsModifications = pOther.factsModifications->clone(nullptr);
+  }
+  if (pOther.potentialFactsModifications)
+  {
+    if (potentialFactsModifications)
+      potentialFactsModifications = FactModification::merge(*potentialFactsModifications, *pOther.potentialFactsModifications);
+    else
+      potentialFactsModifications = pOther.potentialFactsModifications->clone(nullptr);
+  }
   goalsToAdd.insert(pOther.goalsToAdd.begin(), pOther.goalsToAdd.end());
   goalsToAddInCurrentPriority.insert(goalsToAddInCurrentPriority.end(), pOther.goalsToAddInCurrentPriority.begin(), pOther.goalsToAddInCurrentPriority.end());
 }
