@@ -26,7 +26,8 @@ struct CONTEXTUALPLANNER_API Goal
        const std::string& pGoalGroupId = "");
 
   /// Construct a goal from another goal.
-  Goal(const Goal& pOther);
+  Goal(const Goal& pOther,
+       const std::map<std::string, std::string>* pParametersPtr = nullptr);
 
   /// Set content from another goal.
   void operator=(const Goal& pOther);
