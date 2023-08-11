@@ -322,12 +322,12 @@ bool FactConditionNode::operator==(const FactCondition& pOther) const
 }
 
 
-std::unique_ptr<FactCondition> FactConditionNode::clone() const
+std::unique_ptr<FactCondition> FactConditionNode::clone(const std::map<std::string, std::string>* pParametersPtr) const
 {
   return std::make_unique<FactConditionNode>(
         nodeType,
-        leftOperand ? leftOperand->clone() : std::unique_ptr<FactCondition>(),
-        rightOperand ? rightOperand->clone() : std::unique_ptr<FactCondition>());
+        leftOperand ? leftOperand->clone(pParametersPtr) : std::unique_ptr<FactCondition>(),
+        rightOperand ? rightOperand->clone(pParametersPtr) : std::unique_ptr<FactCondition>());
 }
 
 std::string FactConditionNode::toStr() const
@@ -411,11 +411,13 @@ bool FactConditionFact::operator==(const FactCondition& pOther) const
       factOptional == otherFactPtr->factOptional;
 }
 
-std::unique_ptr<FactCondition> FactConditionFact::clone() const
+std::unique_ptr<FactCondition> FactConditionFact::clone(const std::map<std::string, std::string>* pParametersPtr) const
 {
-  return std::make_unique<FactConditionFact>(factOptional);
+  auto res = std::make_unique<FactConditionFact>(factOptional);
+  if (pParametersPtr != nullptr)
+    res->factOptional.fact.fillParameters(*pParametersPtr);
+  return res;
 }
-
 
 
 FactConditionExpression::FactConditionExpression(const Expression& pExpression)
@@ -464,7 +466,7 @@ bool FactConditionExpression::operator==(const FactCondition& pOther) const
       expression == otherExpPtr->expression;
 }
 
-std::unique_ptr<FactCondition> FactConditionExpression::clone() const
+std::unique_ptr<FactCondition> FactConditionExpression::clone(const std::map<std::string, std::string>*) const
 {
   return std::make_unique<FactConditionExpression>(expression);
 }
