@@ -289,13 +289,14 @@ bool FactConditionNode::isTrue(const Problem& pProblem,
   return true;
 }
 
-bool FactConditionNode::canBecomeTrue(const Problem& pProblem) const
+bool FactConditionNode::canBecomeTrue(const Problem& pProblem,
+                                      const std::vector<std::string>& pParameters) const
 {
   if (nodeType == FactConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->canBecomeTrue(pProblem))
+    if (leftOperand && !leftOperand->canBecomeTrue(pProblem, pParameters))
       return false;
-    if (rightOperand && !rightOperand->canBecomeTrue(pProblem))
+    if (rightOperand && !rightOperand->canBecomeTrue(pProblem, pParameters))
       return false;
   }
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -386,19 +387,56 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
   if (factOptional.fact.isPunctual() && !factOptional.isFactNegated)
     return pPunctualFacts.count(factOptional.fact) != 0;
 
+  if (factOptional.isFactNegated)
+  {
+    if (factOptional.fact.value == Fact::anyValue)
+    {
+      auto itFacts = pProblem._factNamesToFacts.find(factOptional.fact.name);
+      if (itFacts != pProblem._factNamesToFacts.end())
+      {
+        auto factToCompare = factOptional.fact;
+        if (pParametersPtr != nullptr)
+          factToCompare.fillParameters(*pParametersPtr);
+        for (auto& currFact : itFacts->second)
+        {
+          if (currFact.areEqualExceptAnyValues(factToCompare))
+            return false;
+        }
+      }
+    }
+  }
+
   bool res = factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr);
   if (factOptional.isFactNegated)
     return !res;
   return res;
 }
 
-bool FactConditionFact::canBecomeTrue(const Problem& pProblem) const
+bool FactConditionFact::canBecomeTrue(const Problem& pProblem,
+                                      const std::vector<std::string>& pParameters) const
 {
   if (factOptional.isFactNegated)
   {
-    if (pProblem._facts.count(factOptional.fact) > 0 &&
-        pProblem._removableFacts.count(factOptional.fact) == 0)
-      return false;
+    if (pProblem._removableFacts.count(factOptional.fact) == 0)
+    {
+      if (factOptional.fact.value == Fact::anyValue)
+      {
+        auto itFacts = pProblem._factNamesToFacts.find(factOptional.fact.name);
+        if (itFacts != pProblem._factNamesToFacts.end())
+        {
+          auto factToCompare = factOptional.fact;
+          factToCompare.replaceParametersByAny(pParameters);
+          for (auto& currFact : itFacts->second)
+          {
+            if (currFact.areEqualExceptAnyValues(factToCompare))
+              return false;
+          }
+        }
+      }
+
+      if (pProblem._facts.count(factOptional.fact) > 0)
+        return false;
+    }
     return true;
   }
   return pProblem.canFactBecomeTrue(factOptional.fact);
@@ -454,7 +492,8 @@ bool FactConditionExpression::isTrue(const Problem& pProblem,
   return expression.isValid(pProblem.variablesToValue());
 }
 
-bool FactConditionExpression::canBecomeTrue(const Problem& pProblem) const
+bool FactConditionExpression::canBecomeTrue(const Problem& pProblem,
+                                            const std::vector<std::string>&) const
 {
   return expression.isValid(pProblem.variablesToValue());
 }

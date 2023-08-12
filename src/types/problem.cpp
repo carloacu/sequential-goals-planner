@@ -554,7 +554,7 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
                                                 const Domain& pDomain,
                                                 FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (!pCondition || pCondition->canBecomeTrue(*this))
+  if (!pCondition || pCondition->canBecomeTrue(*this, pParameters))
   {
     std::set<Fact> accessibleFactsToAdd;
     std::vector<Fact> accessibleFactsToAddWithAnyValues;
@@ -974,6 +974,7 @@ bool Problem::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApp
   return somethingChanged;
 }
 
+
 void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
@@ -985,6 +986,7 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
     while (needAnotherLoop)
     {
       needAnotherLoop = false;
+      _removeFactWithAnotherValue(pWhatChanged, pNow);
       for (auto& currSetOfInferences : _setOfInferences)
       {
         auto& inferences = currSetOfInferences.second->inferences();
@@ -1021,29 +1023,6 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       }
     }
 
-    // Remove same facts than the new facts but that have another value
-    for (auto& currAddedFact : pWhatChanged.addedFacts)
-    {
-      auto it = _factNamesToFacts.find(currAddedFact.name);
-      if (it != _factNamesToFacts.end())
-      {
-        for (auto itExistingFact = it->second.begin(); itExistingFact != it->second.end(); )
-        {
-          auto& currExistingFact = *itExistingFact;
-          if (currAddedFact.parameters == currExistingFact.parameters &&
-              currAddedFact.value != currExistingFact.value)
-          {
-            ++itExistingFact;
-            _removeFacts(pWhatChanged, std::vector<cp::Fact>{currExistingFact}, pNow);
-            continue;
-          }
-          ++itExistingFact;
-        }
-        if (_factNamesToFacts.empty())
-          _factNamesToFacts.erase(it);
-      }
-    }
-
     if (!pWhatChanged.punctualFacts.empty())
       onPunctualFacts(pWhatChanged.punctualFacts);
     if (!pWhatChanged.addedFacts.empty())
@@ -1059,6 +1038,31 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
   }
 }
 
-
+// Remove same facts than the new facts but that have another value
+void Problem::_removeFactWithAnotherValue(WhatChanged& pWhatChanged,
+                                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  for (auto& currAddedFact : pWhatChanged.addedFacts)
+  {
+    auto it = _factNamesToFacts.find(currAddedFact.name);
+    if (it != _factNamesToFacts.end())
+    {
+      for (auto itExistingFact = it->second.begin(); itExistingFact != it->second.end(); )
+      {
+        auto& currExistingFact = *itExistingFact;
+        if (currAddedFact.parameters == currExistingFact.parameters &&
+            currAddedFact.value != currExistingFact.value)
+        {
+          ++itExistingFact;
+          _removeFacts(pWhatChanged, std::vector<cp::Fact>{currExistingFact}, pNow);
+          continue;
+        }
+        ++itExistingFact;
+      }
+      if (_factNamesToFacts.empty())
+        _factNamesToFacts.erase(it);
+    }
+  }
+}
 
 } // !cp
