@@ -82,7 +82,7 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther) const
     return false;
 
   auto itParam = parameters.begin();
-  auto itOtherParam = parameters.begin();
+  auto itOtherParam = pOther.parameters.begin();
   while (itParam != parameters.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact)

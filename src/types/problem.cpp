@@ -554,7 +554,7 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
                                                 const Domain& pDomain,
                                                 FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (!pCondition || pCondition->canBecomeTrue(*this, pParameters))
+  if (!pCondition || pCondition->canBecomeTrue(*this))
   {
     std::set<Fact> accessibleFactsToAdd;
     std::vector<Fact> accessibleFactsToAddWithAnyValues;

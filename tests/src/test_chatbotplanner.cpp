@@ -2003,6 +2003,8 @@ void _completeMovingObjectScenario()
   assert_eq(_action_navigate + "(targetPlace -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(bottle)=entrance & !grab(me)=bottle")});
+  assert_eq(actionWhereIsObject + "(aLocation -> entrance, object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
 }
 
 

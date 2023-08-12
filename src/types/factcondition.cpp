@@ -289,14 +289,13 @@ bool FactConditionNode::isTrue(const Problem& pProblem,
   return true;
 }
 
-bool FactConditionNode::canBecomeTrue(const Problem& pProblem,
-                                      const std::vector<std::string>& pParameters) const
+bool FactConditionNode::canBecomeTrue(const Problem& pProblem) const
 {
   if (nodeType == FactConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->canBecomeTrue(pProblem, pParameters))
+    if (leftOperand && !leftOperand->canBecomeTrue(pProblem))
       return false;
-    if (rightOperand && !rightOperand->canBecomeTrue(pProblem, pParameters))
+    if (rightOperand && !rightOperand->canBecomeTrue(pProblem))
       return false;
   }
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -402,6 +401,7 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
           if (currFact.areEqualExceptAnyValues(factToCompare))
             return false;
         }
+        return true;
       }
     }
   }
@@ -412,28 +412,14 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
   return res;
 }
 
-bool FactConditionFact::canBecomeTrue(const Problem& pProblem,
-                                      const std::vector<std::string>& pParameters) const
+bool FactConditionFact::canBecomeTrue(const Problem& pProblem) const
 {
   if (factOptional.isFactNegated)
   {
     if (pProblem._removableFacts.count(factOptional.fact) == 0)
     {
       if (factOptional.fact.value == Fact::anyValue)
-      {
-        auto itFacts = pProblem._factNamesToFacts.find(factOptional.fact.name);
-        if (itFacts != pProblem._factNamesToFacts.end())
-        {
-          auto factToCompare = factOptional.fact;
-          factToCompare.replaceParametersByAny(pParameters);
-          for (auto& currFact : itFacts->second)
-          {
-            if (currFact.areEqualExceptAnyValues(factToCompare))
-              return false;
-          }
-        }
-      }
-
+        return true;
       if (pProblem._facts.count(factOptional.fact) > 0)
         return false;
     }
@@ -492,8 +478,7 @@ bool FactConditionExpression::isTrue(const Problem& pProblem,
   return expression.isValid(pProblem.variablesToValue());
 }
 
-bool FactConditionExpression::canBecomeTrue(const Problem& pProblem,
-                                            const std::vector<std::string>&) const
+bool FactConditionExpression::canBecomeTrue(const Problem& pProblem) const
 {
   return expression.isValid(pProblem.variablesToValue());
 }

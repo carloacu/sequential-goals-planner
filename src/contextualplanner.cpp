@@ -137,7 +137,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
                                 const Domain& pDomain,
                                 FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (!pCondition || pCondition->canBecomeTrue(pProblem, pParameters))
+  if (!pCondition || pCondition->canBecomeTrue(pProblem))
   {
     std::map<std::string, std::string> parametersToValue;
     for (const auto& currParam : pParameters)
