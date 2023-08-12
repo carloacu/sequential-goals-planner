@@ -1954,6 +1954,59 @@ void _failToMoveAnUnknownObject()
 }
 
 
+void _completeMovingObjectScenario()
+{
+  const std::string actionWhereIsObject = "actionWhereIsObject";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action navAction(cp::FactCondition::fromStr("!lost(me) & !pathIsBlocked"),
+                       cp::FactModification::fromStr("locationOfRobot(me)=targetPlace"));
+  navAction.parameters.emplace_back("targetPlace");
+  actions.emplace(_action_navigate, navAction);
+
+  cp::Action grabAction(cp::FactCondition::fromStr("equals(locationOfRobot(me), locationOfObject(object))"),
+                        cp::FactModification::fromStr("grab(me)=object"));
+  grabAction.parameters.emplace_back("object");
+  actions.emplace(_action_grab, grabAction);
+
+  cp::Action ungrabAction({}, cp::FactModification::fromStr("!grab(me)=object"));
+  ungrabAction.parameters.emplace_back("object");
+  actions.emplace(_action_ungrab, ungrabAction);
+
+  cp::Action whereIsObjectAction(cp::FactCondition::fromStr("!locationOfObject(object)=*"),
+                                 cp::FactModification::fromStr("locationOfObject(object)=aLocation"));
+  whereIsObjectAction.parameters.emplace_back("object");
+  whereIsObjectAction.parameters.emplace_back("aLocation");
+  actions.emplace(actionWhereIsObject, whereIsObjectAction);
+
+
+
+
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  auto setOfInferences = std::make_shared<cp::SetOfInferences>();
+  problem.addSetOfInferences("soi", setOfInferences);
+  cp::Inference inference(cp::FactCondition::fromStr("locationOfRobot(me)=location & grab(me)=object"),
+                          cp::FactModification::fromStr("locationOfObject(object)=location"));
+  inference.parameters.emplace_back("object");
+  inference.parameters.emplace_back("location");
+  setOfInferences->addInference("inference1", inference);
+
+
+  _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets")});
+
+  assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  problem.addFact(cp::Fact("locationOfObject(sweets)=kitchen"), now);
+  _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets")});
+  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(_action_navigate + "(targetPlace -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+}
+
+
+
 }
 
 
@@ -2036,6 +2089,7 @@ int main(int argc, char *argv[])
   _moveObject();
   _moveAndUngrabObject();
   _failToMoveAnUnknownObject();
+  _completeMovingObjectScenario();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

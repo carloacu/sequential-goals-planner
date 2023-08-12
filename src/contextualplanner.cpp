@@ -14,7 +14,8 @@ struct PotentialNextAction
   PotentialNextAction()
     : actionId(""),
       actionPtr(nullptr),
-      parameters()
+      parameters(),
+      satisfyObjective(false)
   {
   }
   PotentialNextAction(const ActionId& pActionId,
@@ -23,6 +24,7 @@ struct PotentialNextAction
   ActionId actionId;
   const Action* actionPtr;
   std::map<std::string, std::string> parameters;
+  bool satisfyObjective;
 
   bool isMoreImportantThan(const PotentialNextAction& pOther,
                            const Problem& pProblem,
@@ -34,7 +36,8 @@ PotentialNextAction::PotentialNextAction(const ActionId& pActionId,
                                          const Action& pAction)
   : actionId(pActionId),
     actionPtr(&pAction),
-    parameters()
+    parameters(),
+    satisfyObjective(false)
 {
   for (const auto& currParam : pAction.parameters)
     parameters[currParam];
@@ -80,6 +83,9 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
   if (pOther.actionPtr == nullptr)
     return true;
 
+  if (satisfyObjective != pOther.satisfyObjective)
+    return satisfyObjective;
+
   auto nbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(actionId);
   auto otherNbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(pOther.actionId);
   if (nbOfTimesAlreadyDone != otherNbOfTimesAlreadyDone)
@@ -110,7 +116,8 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 }
 
 
-bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
+bool _lookForAPossibleEffect(bool& pSatisfyObjective,
+                             std::map<std::string, std::string>& pParameters,
                              const WorldModification& pEffectToCheck,
                              const Goal &pGoal,
                              const Problem& pProblem,
@@ -135,7 +142,8 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
     std::map<std::string, std::string> parametersToValue;
     for (const auto& currParam : pParameters)
       parametersToValue[currParam];
-    if (_lookForAPossibleEffect(parametersToValue, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
+    bool satisfyObjective = false;
+    if (_lookForAPossibleEffect(satisfyObjective, parametersToValue, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
                                 pDomain, pFactsAlreadychecked))
     {
       bool actionIsAPossibleFollowUp = true;
@@ -249,7 +257,8 @@ bool _lookForAPossibleExistingOrNotFactFromInferences(
 }
 
 
-bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
+bool _lookForAPossibleEffect(bool& pSatisfyObjective,
+                             std::map<std::string, std::string>& pParameters,
                              const WorldModification& pEffectToCheck,
                              const Goal& pGoal,
                              const Problem& pProblem,
@@ -266,6 +275,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
           return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
         }, pProblem))
     {
+      pSatisfyObjective = true;
       return true;
     }
     if (pEffectToCheck.potentialFactsModifications &&
@@ -275,6 +285,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
           return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
         }, pProblem))
     {
+      pSatisfyObjective = true;
       return true;
     }
   }
@@ -287,6 +298,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
           return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
         }, pProblem))
     {
+      pSatisfyObjective = true;
       return true;
     }
     if (pEffectToCheck.potentialFactsModifications &&
@@ -296,6 +308,7 @@ bool _lookForAPossibleEffect(std::map<std::string, std::string>& pParameters,
           return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
         }, pProblem))
     {
+      pSatisfyObjective = true;
       return true;
     }
   }
@@ -379,8 +392,8 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       auto& action = itAction->second;
       FactsAlreadyChecked factsAlreadyChecked;
       auto newPotRes = PotentialNextAction(currAction, action);
-      if (_lookForAPossibleEffect(newPotRes.parameters, action.effect, pGoal, pProblem, pFactOptionalToSatisfy,
-                                  pDomain, factsAlreadyChecked) &&
+      if (_lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, action.effect, pGoal,
+                                  pProblem, pFactOptionalToSatisfy, pDomain, factsAlreadyChecked) &&
           (!action.precondition || action.precondition->isTrue(pProblem, {}, &newPotRes.parameters)))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))
