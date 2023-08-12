@@ -176,7 +176,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
         {
           // The new fact with parameters should not already be in the world
           auto factWithParamFilled = pFact;
-          factWithParamFilled.fillParameters(parametersToValue);
+          factWithParamFilled.fillParameters(pParentParameters);
           return pProblem.facts().count(factWithParamFilled) == 0;
         }
         return true;
