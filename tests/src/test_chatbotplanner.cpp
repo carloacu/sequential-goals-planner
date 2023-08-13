@@ -2007,6 +2007,56 @@ void _completeMovingObjectScenario()
   assert_eq(actionWhereIsObject + "(aLocation -> entrance, object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
 }
 
+void _inferenceWithANegatedFactWithParameter()
+{
+  const std::string actionUngrabLeftHand = "actionUngrabLeftHand";
+  const std::string actionUngrabRightHand = "actionUngrabRightHand";
+  const std::string actionUngrabBothHands = "actionUngrabBothHands";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action ungrabLeftAction(cp::FactCondition::fromStr("!hasTwoHandles(object)"),
+                              cp::FactModification::fromStr("!grabLeftHand(me)=object"));
+  ungrabLeftAction.parameters.emplace_back("object");
+  actions.emplace(actionUngrabLeftHand, ungrabLeftAction);
+
+  cp::Action ungrabRightAction(cp::FactCondition::fromStr("!hasTwoHandles(object)"),
+                               cp::FactModification::fromStr("!grabRightHand(me)=object"));
+  ungrabRightAction.parameters.emplace_back("object");
+  actions.emplace(actionUngrabRightHand, ungrabRightAction);
+
+  cp::Action ungrabBothAction(cp::FactCondition::fromStr("hasTwoHandles(object)"),
+                              cp::FactModification::fromStr("!grabLeftHand(me)=object && !grabRightHand(me)=object"));
+  ungrabBothAction.parameters.emplace_back("object");
+  actions.emplace(actionUngrabBothHands, ungrabBothAction);
+
+
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  auto setOfInferences = std::make_shared<cp::SetOfInferences>();
+  problem.addSetOfInferences("soi", setOfInferences);
+
+  cp::Inference inference2(cp::FactCondition::fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"),
+                           cp::FactModification::fromStr("!grab(me, object)"));
+  inference2.parameters.emplace_back("object");
+  setOfInferences->addInference("inference1", inference2);
+
+
+  problem.addFact(cp::Fact("hasTwoHandles(sweets)"), now);
+  problem.addFact(cp::Fact("grabLeftHand(me)=sweets"), now);
+  problem.addFact(cp::Fact("grabRightHand(me)=sweets"), now);
+  problem.addFact(cp::Fact("grab(me, sweets)"), now);
+  _setGoalsForAPriority(problem, {cp::Goal("!grab(me, sweets)")});
+
+  assert_eq(actionUngrabBothHands + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+
+  problem.addFact(cp::Fact("grabLeftHand(me)=bottle"), now);
+  problem.addFact(cp::Fact("grab(me, bottle)"), now);
+  _setGoalsForAPriority(problem, {cp::Goal("!grab(me, bottle)")});
+  assert_eq(actionUngrabLeftHand + "(object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+}
 
 
 }
@@ -2092,6 +2142,7 @@ int main(int argc, char *argv[])
   _moveAndUngrabObject();
   _failToMoveAnUnknownObject();
   _completeMovingObjectScenario();
+  _inferenceWithANegatedFactWithParameter();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
