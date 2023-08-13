@@ -2050,6 +2050,7 @@ void _inferenceWithANegatedFactWithParameter()
 
   assert_eq(actionUngrabBothHands + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_false(problem.hasFact(cp::Fact::fromStr("grab(me, sweets)")));
 
   problem.addFact(cp::Fact("grabLeftHand(me)=bottle"), now);
   problem.addFact(cp::Fact("grab(me, bottle)"), now);

@@ -264,13 +264,14 @@ bool FactConditionNode::canBeTrue() const
 
 bool FactConditionNode::isTrue(const Problem& pProblem,
                                const std::set<Fact>& pPunctualFacts,
+                               const std::set<Fact>& pRemovedFacts,
                                std::map<std::string, std::string>* pParametersPtr) const
 {
   if (nodeType == FactConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pParametersPtr))
+    if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr))
       return false;
-    if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pParametersPtr))
+    if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr))
       return false;
   }
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -381,6 +382,7 @@ void FactConditionFact::replaceFact(const cp::Fact& pOldFact,
 
 bool FactConditionFact::isTrue(const Problem& pProblem,
                                const std::set<Fact>& pPunctualFacts,
+                               const std::set<Fact>& pRemovedFacts,
                                std::map<std::string, std::string>* pParametersPtr) const
 {
   if (factOptional.fact.isPunctual() && !factOptional.isFactNegated)
@@ -388,6 +390,10 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
 
   if (factOptional.isFactNegated)
   {
+    bool res = factOptional.fact.isInFacts(pRemovedFacts, true, pParametersPtr);
+    if (res)
+      return true;
+
     if (factOptional.fact.value == Fact::anyValue)
     {
       auto itFacts = pProblem._factNamesToFacts.find(factOptional.fact.name);
@@ -472,6 +478,7 @@ void FactConditionExpression::replaceFact(const cp::Fact& pOldFact,
 }
 
 bool FactConditionExpression::isTrue(const Problem& pProblem,
+                                     const std::set<Fact>&,
                                      const std::set<Fact>&,
                                      std::map<std::string, std::string>*) const
 {

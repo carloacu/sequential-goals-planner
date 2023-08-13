@@ -41,6 +41,7 @@ struct CONTEXTUALPLANNER_API FactCondition
   virtual bool canBeTrue() const = 0;
   virtual bool isTrue(const Problem& pProblem,
                       const std::set<Fact>& pPunctualFacts = {},
+                      const std::set<Fact>& pRemovedFacts = {},
                       std::map<std::string, std::string>* pParametersPtr = nullptr) const = 0;
   virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
   virtual bool operator==(const FactCondition& pOther) const = 0;
@@ -91,6 +92,7 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   bool canBeTrue() const override;
   bool isTrue(const Problem& pProblem,
               const std::set<Fact>& pPunctualFacts,
+              const std::set<Fact>& pRemovedFacts,
               std::map<std::string, std::string>* pParametersPtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
@@ -130,6 +132,7 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   bool canBeTrue() const override { return factOptional.isFactNegated || !factOptional.fact.isUnreachable(); }
   bool isTrue(const Problem& pProblem,
               const std::set<Fact>& pPunctualFacts,
+              const std::set<Fact>& pRemovedFacts,
               std::map<std::string, std::string>* pParametersPtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
@@ -167,6 +170,7 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
   bool canBeTrue() const override { return true; }
   bool isTrue(const Problem& pProblem,
               const std::set<Fact>& pPunctualFacts,
+              const std::set<Fact>& pRemovedFacts,
               std::map<std::string, std::string>* pParametersPtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;

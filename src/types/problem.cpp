@@ -951,7 +951,8 @@ bool Problem::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApp
         std::map<std::string, std::string> parametersToValue;
         for (const auto& currParam : currInference.parameters)
           parametersToValue[currParam];
-        if (!currInference.condition || currInference.condition->isTrue(*this, pWhatChanged.punctualFacts, &parametersToValue))
+        if (!currInference.condition || currInference.condition->isTrue(*this, pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
+                                                                        &parametersToValue))
         {
           if (currInference.factsToModify)
           {
