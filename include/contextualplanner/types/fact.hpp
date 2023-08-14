@@ -120,12 +120,15 @@ struct CONTEXTUALPLANNER_API Fact
    */
   bool isInFacts(const std::set<Fact>& pFacts,
                  bool pParametersAreForTheFact,
-                 std::map<std::string, std::string>* pParametersPtr = nullptr) const;
+                 std::map<std::string, std::string>* pParametersPtr = nullptr,
+                 bool pCanModifyParameters = true,
+                 bool* pTriedToMidfyParametersPtr = nullptr) const;
 
-  bool isInFact(
-      const Fact& pFact,
-      bool pParametersAreForTheFact,
-      std::map<std::string, std::string>* pParametersPtr) const;
+  bool isInFact(const Fact& pFact,
+                bool pParametersAreForTheFact,
+                std::map<std::string, std::string>* pParametersPtr,
+                bool pCanModifyParameters = true,
+                bool* pTriedToMidfyParametersPtr = nullptr) const;
 
   void replaceFactInParameters(const cp::Fact& pOldFact,
                                const Fact& pNewFact);

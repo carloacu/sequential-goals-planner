@@ -261,10 +261,13 @@ bool Fact::replaceParametersByAny(const std::vector<std::string>& pParameters)
 bool Fact::isInFacts(
     const std::set<Fact>& pFacts,
     bool pParametersAreForTheFact,
-    std::map<std::string, std::string>* pParametersPtr) const
+    std::map<std::string, std::string>* pParametersPtr,
+    bool pCanModifyParameters,
+    bool* pTriedToMidfyParametersPtr) const
 {
   for (const auto& currFact : pFacts)
-    if (isInFact(currFact, pParametersAreForTheFact, pParametersPtr))
+    if (isInFact(currFact, pParametersAreForTheFact, pParametersPtr,
+                 pCanModifyParameters, pTriedToMidfyParametersPtr))
       return true;
   return false;
 }
@@ -273,7 +276,9 @@ bool Fact::isInFacts(
 bool Fact::isInFact(
     const Fact& pFact,
     bool pParametersAreForTheFact,
-    std::map<std::string, std::string>* pParametersPtr) const
+    std::map<std::string, std::string>* pParametersPtr,
+    bool pCanModifyParameters,
+    bool* pTriedToMidfyParametersPtr) const
 {
   if (pFact.name != name ||
       pFact.parameters.size() != parameters.size())
@@ -290,15 +295,12 @@ bool Fact::isInFact(
     if (itParam != parameters.end())
     {
       if (!itParam->second.empty())
-      {
-        if (itParam->second == pValueToLookFor)
-          return true;
-      }
-      else
-      {
+        return itParam->second == pValueToLookFor;
+      if (pCanModifyParameters)
         parameters[pFactValue] = pValueToLookFor;
-        return true;
-      }
+      else if (pTriedToMidfyParametersPtr != nullptr)
+        *pTriedToMidfyParametersPtr = true;
+      return true;
     }
     return false;
   };

@@ -2057,6 +2057,14 @@ void _inferenceWithANegatedFactWithParameter()
   _setGoalsForAPriority(problem, {cp::Goal("!grab(me, bottle)")});
   assert_eq(actionUngrabLeftHand + "(object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+
+  problem.addFact(cp::Fact("grabLeftHand(me)=bottle"), now);
+  problem.addFact(cp::Fact("grab(me, bottle)"), now);
+  problem.addFact(cp::Fact("grabRightHand(me)=glass"), now);
+  problem.addFact(cp::Fact("grab(me, glass)"), now);
+  _setGoalsForAPriority(problem, {cp::Goal("!grab(me, glass)")});
+  assert_eq(actionUngrabRightHand + "(object -> glass)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_false(problem.hasFact(cp::Fact::fromStr("grab(me, glass)")));
 }
 
 

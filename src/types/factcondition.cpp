@@ -265,13 +265,30 @@ bool FactConditionNode::canBeTrue() const
 bool FactConditionNode::isTrue(const Problem& pProblem,
                                const std::set<Fact>& pPunctualFacts,
                                const std::set<Fact>& pRemovedFacts,
-                               std::map<std::string, std::string>* pParametersPtr) const
+                               std::map<std::string, std::string>* pParametersPtr,
+                               bool* pCanBecomeTruePtr) const
 {
   if (nodeType == FactConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr))
+    bool canBecomeTrue = false;
+    if (pCanBecomeTruePtr == nullptr)
+      pCanBecomeTruePtr = &canBecomeTrue;
+
+    if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+    {
+      // Sometimes for negation of fact with parameter we need to check in the inverse order
+      if (pCanBecomeTruePtr != nullptr && *pCanBecomeTruePtr)
+      {
+        if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+          return false;
+
+        if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+          return false;
+        return true;
+      }
       return false;
-    if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr))
+    }
+    if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
       return false;
   }
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -383,7 +400,8 @@ void FactConditionFact::replaceFact(const cp::Fact& pOldFact,
 bool FactConditionFact::isTrue(const Problem& pProblem,
                                const std::set<Fact>& pPunctualFacts,
                                const std::set<Fact>& pRemovedFacts,
-                               std::map<std::string, std::string>* pParametersPtr) const
+                               std::map<std::string, std::string>* pParametersPtr,
+                               bool* pCanBecomeTruePtr) const
 {
   if (factOptional.fact.isPunctual() && !factOptional.isFactNegated)
     return pPunctualFacts.count(factOptional.fact) != 0;
@@ -410,12 +428,18 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
         return true;
       }
     }
+
+    bool triedToMidfyParameters = false;
+    if (factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr, false, &triedToMidfyParameters))
+    {
+      if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
+        *pCanBecomeTruePtr = true;
+      return false;
+    }
+    return true;
   }
 
-  bool res = factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr);
-  if (factOptional.isFactNegated)
-    return !res;
-  return res;
+  return factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr);
 }
 
 bool FactConditionFact::canBecomeTrue(const Problem& pProblem) const
@@ -480,7 +504,8 @@ void FactConditionExpression::replaceFact(const cp::Fact& pOldFact,
 bool FactConditionExpression::isTrue(const Problem& pProblem,
                                      const std::set<Fact>&,
                                      const std::set<Fact>&,
-                                     std::map<std::string, std::string>*) const
+                                     std::map<std::string, std::string>*,
+                                     bool*) const
 {
   return expression.isValid(pProblem.variablesToValue());
 }
