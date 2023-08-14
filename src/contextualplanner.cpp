@@ -185,7 +185,9 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
             return pProblem.facts().count(factWithParamFilled) > 0;
           return pProblem.facts().count(factWithParamFilled) == 0;
         }
-        return true;
+        if (pIsFactNegated)
+          return pProblem.facts().count(pFact) > 0;
+        return pProblem.facts().count(pFact) == 0;
       }
     }
   }
@@ -316,8 +318,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   auto& setOfInferences = pProblem.getSetOfInferences();
   auto& preconditionToActions = pDomain.preconditionToActions();
   bool subRes = pEffectToCheck.forAllFactsUntilTrue([&](const cp::Fact& pFact) {
-    if (pProblem.facts().count(pFact) == 0 &&
-        pFactsAlreadychecked.factsToAdd.insert(pFact).second)
+    if (pFactsAlreadychecked.factsToAdd.insert(pFact).second)
     {
       if (_lookForAPossibleExistingOrNotFactFromActions(pFact, false, pParameters, preconditionToActions, pGoal,
                                                         pProblem, pFactOptionalToSatisfy,
