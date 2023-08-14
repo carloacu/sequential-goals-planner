@@ -44,6 +44,7 @@ struct CONTEXTUALPLANNER_API FactModification
   virtual bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const = 0;
 
   virtual std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const = 0;
+  virtual std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
   virtual const FactModificationFact* fcFactPtr() const = 0;
 
   FactModificationType type;
@@ -91,6 +92,7 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override;
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
+  std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return nullptr; }
 
   std::string toStr() const override;
@@ -129,6 +131,7 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>&) const override { return false; }
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
+  std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return this; }
 
   std::string toStr() const override { return factOptional.toStr(); }
@@ -160,6 +163,7 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return pExpCallback(expression); }
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
+  std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return nullptr; }
 
   std::string toStr() const override { return "<an_expression>"; }

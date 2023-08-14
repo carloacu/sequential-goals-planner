@@ -15,7 +15,7 @@ struct CONTEXTUALPLANNER_API ActionInstance
 {
   /// Construct ActionInstance.
   ActionInstance(const std::string& pActionId,
-                 const std::map<std::string, std::string>& pParameters);
+                 const std::map<std::string, std::set<std::string>>& pParameters);
 
 
   /**
@@ -27,7 +27,7 @@ struct CONTEXTUALPLANNER_API ActionInstance
   /// Identifer of the action.
   std::string actionId;
   /// Action parameter values.
-  std::map<std::string, std::string> parameters;
+  std::map<std::string, std::set<std::string>> parameters;
 };
 
 
@@ -36,7 +36,7 @@ struct CONTEXTUALPLANNER_API OneStepOfPlannerResult
 {
   /// Construct OneStepOfPlannerResult.
   OneStepOfPlannerResult(const std::string& pActionId,
-                         const std::map<std::string, std::string>& pParameters,
+                         const std::map<std::string, std::set<std::string>>& pParameters,
                          const cp::Goal& pFromGoal,
                          int pFromGoalPriority);
 

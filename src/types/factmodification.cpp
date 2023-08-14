@@ -414,6 +414,16 @@ std::unique_ptr<FactModification> FactModificationNode::clone(const std::map<std
         parameterName);
 }
 
+
+std::unique_ptr<FactModification> FactModificationNode::cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const
+{
+  return std::make_unique<FactModificationNode>(
+        nodeType,
+        leftOperand ? leftOperand->cloneParamSet(pParameters) : std::unique_ptr<FactModification>(),
+        rightOperand ? rightOperand->cloneParamSet(pParameters) : std::unique_ptr<FactModification>(),
+        parameterName);
+}
+
 std::string FactModificationNode::toStr() const
 {
   std::string leftOperandStr;
@@ -501,6 +511,13 @@ std::unique_ptr<FactModification> FactModificationFact::clone(const std::map<std
 }
 
 
+std::unique_ptr<FactModification> FactModificationFact::cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const
+{
+  auto res = std::make_unique<FactModificationFact>(factOptional);
+  res->factOptional.fact.fillParameters(pParameters);
+  return res;
+}
+
 FactModificationExpression::FactModificationExpression(const Expression& pExpression)
  : FactModification(FactModificationType::EXPRESSION),
    expression(pExpression)
@@ -523,10 +540,14 @@ void FactModificationExpression::replaceFact(const cp::Fact& pOldFact,
       currElt.value = pNewFact.toStr();
 }
 
-std::unique_ptr<FactModification> FactModificationExpression::clone(const std::map<std::string, std::string>* pParametersPtr) const
+std::unique_ptr<FactModification> FactModificationExpression::clone(const std::map<std::string, std::string>*) const
 {
   return std::make_unique<FactModificationExpression>(expression);
 }
 
+std::unique_ptr<FactModification> FactModificationExpression::cloneParamSet(const std::map<std::string, std::set<std::string>>&) const
+{
+  return std::make_unique<FactModificationExpression>(expression);
+}
 
 } // !cp

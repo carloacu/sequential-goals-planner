@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <contextualplanner/types/factsalreadychecked.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -23,7 +24,7 @@ struct PotentialNextAction
 
   ActionId actionId;
   const Action* actionPtr;
-  std::map<std::string, std::string> parameters;
+  std::map<std::string, std::set<std::string>> parameters;
   bool satisfyObjective;
 
   bool isMoreImportantThan(const PotentialNextAction& pOther,
@@ -117,7 +118,7 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 
 
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
-                             std::map<std::string, std::string>& pParameters,
+                             std::map<std::string, std::set<std::string>>& pParameters,
                              const WorldModification& pEffectToCheck,
                              const Goal &pGoal,
                              const Problem& pProblem,
@@ -131,7 +132,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
                                 const WorldModification& pEffect,
                                 const Fact& pFact,
                                 bool pIsFactNegated,
-                                std::map<std::string, std::string>& pParentParameters,
+                                std::map<std::string, std::set<std::string>>& pParentParameters,
                                 const Goal& pGoal,
                                 const Problem& pProblem,
                                 const FactOptional& pFactOptionalToSatisfy,
@@ -140,11 +141,11 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
 {
   if (!pCondition || pCondition->canBecomeTrue(pProblem))
   {
-    std::map<std::string, std::string> parametersToValue;
+    std::map<std::string, std::set<std::string>> parametersToValues;
     for (const auto& currParam : pParameters)
-      parametersToValue[currParam];
+      parametersToValues[currParam];
     bool satisfyObjective = false;
-    if (_lookForAPossibleEffect(satisfyObjective, parametersToValue, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
+    if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
                                 pDomain, pFactsAlreadychecked))
     {
       bool actionIsAPossibleFollowUp = true;
@@ -156,14 +157,18 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
           pCondition->untilFalse(
                 [&](const FactOptional& pFactOptional)
           {
-            currParentParam.second = pFact.tryToExtractParameterValueFromExemple(currParentParam.first, pFactOptional.fact);
+            auto parentParamValue = pFact.tryToExtractParameterValueFromExemple(currParentParam.first, pFactOptional.fact);
+            if (parentParamValue.empty())
+              return true;
             // Maybe the extracted parameter is also a parameter so we replace by it's value
-            auto itParam = parametersToValue.find(currParentParam.second);
-            if (itParam != parametersToValue.end())
+            auto itParam = parametersToValues.find(parentParamValue);
+            if (itParam != parametersToValues.end())
               currParentParam.second = itParam->second;
+            else
+              currParentParam.second.insert(parentParamValue);
             return currParentParam.second.empty();
           },
-          [](const Expression&) { return true; }, pProblem, parametersToValue);
+          [](const Expression&) { return true; }, pProblem, parametersToValues);
 
           if (!currParentParam.second.empty())
             break;
@@ -197,7 +202,7 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
 bool _lookForAPossibleExistingOrNotFactFromActions(
     const Fact& pFact,
     bool pIsFactNegated,
-    std::map<std::string, std::string>& pParentParameters,
+    std::map<std::string, std::set<std::string>>& pParentParameters,
     const std::map<std::string, std::set<ActionId>>& pPreconditionToActions,
     const Goal& pGoal,
     const Problem& pProblem,
@@ -229,7 +234,7 @@ bool _lookForAPossibleExistingOrNotFactFromActions(
 bool _lookForAPossibleExistingOrNotFactFromInferences(
     const Fact& pFact,
     bool pIsFactNegated,
-    std::map<std::string, std::string>& pParentParameters,
+    std::map<std::string, std::set<std::string>>& pParentParameters,
     const std::map<std::string, std::set<InferenceId>>& pConditionToInferences,
     const std::map<InferenceId, Inference>& pInferences,
     const Goal& pGoal,
@@ -260,7 +265,7 @@ bool _lookForAPossibleExistingOrNotFactFromInferences(
 
 
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
-                             std::map<std::string, std::string>& pParameters,
+                             std::map<std::string, std::set<std::string>>& pParameters,
                              const WorldModification& pEffectToCheck,
                              const Goal& pGoal,
                              const Problem& pProblem,
@@ -274,7 +279,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
         pEffectToCheck.factsModifications->forAllFactsUntilTrue(
               [&](const Fact& pFact)
         {
-          return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
+          std::map<std::string, std::set<std::string>> newParameters;
+          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
+          applyNewParams(pParameters, newParameters);
+          return res;
         }, pProblem))
     {
       pSatisfyObjective = true;
@@ -284,7 +292,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
         pEffectToCheck.potentialFactsModifications->forAllFactsUntilTrue(
               [&](const Fact& pFact)
         {
-          return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
+          std::map<std::string, std::set<std::string>> newParameters;
+          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
+          applyNewParams(pParameters, newParameters);
+          return res;
         }, pProblem))
     {
       pSatisfyObjective = true;
@@ -297,7 +308,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
         pEffectToCheck.factsModifications->forAllNotFactsUntilTrue(
               [&](const Fact& pFact)
         {
-          return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
+          std::map<std::string, std::set<std::string>> newParameters;
+          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
+          applyNewParams(pParameters, newParameters);
+          return res;
         }, pProblem))
     {
       pSatisfyObjective = true;
@@ -307,7 +321,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
         pEffectToCheck.potentialFactsModifications->forAllNotFactsUntilTrue(
               [&](const Fact& pFact)
         {
-          return pFactOptionalToSatisfy.fact.isInFact(pFact, false, &pParameters);
+          std::map<std::string, std::set<std::string>> newParameters;
+          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
+          applyNewParams(pParameters, newParameters);
+          return res;
         }, pProblem))
     {
       pSatisfyObjective = true;
@@ -414,7 +431,7 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
 
 
 ActionId _nextStepOfTheProblemForAGoal(
-    std::map<std::string, std::string>& pParameters,
+    std::map<std::string, std::set<std::string>>& pParameters,
     const Goal& pGoal,
     const Problem& pProblem,
     const FactOptional& pFactOptionalToSatisfy,
@@ -474,7 +491,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
 
     if (factOptionalToSatisfyPtr != nullptr)
     {
-      std::map<std::string, std::string> parameters;
+      std::map<std::string, std::set<std::string>> parameters;
       auto actionId =
           _nextStepOfTheProblemForAGoal(parameters, pGoal,
                                         pProblem, *factOptionalToSatisfyPtr, pDomain, pGlobalHistorical);

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <assert.h>
 #include "test_arithmeticevaluator.hpp"
+#include "test_util.hpp"
 #include "docexamples/test_planningDummyExample.hpp"
 #include "docexamples/test_planningExampleWithAPreconditionSolve.hpp"
 
@@ -2088,8 +2089,6 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
-
-
   problem.addFact(cp::Fact(_fact_c), now);
   problem.addFact(cp::Fact(_fact_d), now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
@@ -2101,6 +2100,34 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 }
 
 
+
+void _useTwoTimesAnInference()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  actions.emplace(action1, cp::Action({},
+                                      cp::FactModification::fromStr(_fact_a)));
+
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  auto setOfInferences = std::make_shared<cp::SetOfInferences>();
+  problem.addSetOfInferences("soi", setOfInferences);
+
+  cp::Inference inference2(cp::FactCondition::fromStr(_fact_a + " & " + _fact_b + "(object)"),
+                           cp::FactModification::fromStr(_fact_c + "(object)"));
+  inference2.parameters.emplace_back("object");
+  setOfInferences->addInference("inference1", inference2);
+
+  problem.addFact(cp::Fact(_fact_b + "(obj1)"), now);
+  problem.addFact(cp::Fact(_fact_b + "(obj2)"), now);
+  problem.addFact(cp::Fact(_fact_a), now);
+  assert_true(problem.hasFact(cp::Fact::fromStr(_fact_c + "(obj1)")));
+  assert_true(problem.hasFact(cp::Fact::fromStr(_fact_c + "(obj2)")));
+}
+
+
 }
 
 
@@ -2109,6 +2136,7 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 int main(int argc, char *argv[])
 {
   test_arithmeticEvaluator();
+  test_unfoldMapWithSet();
   planningDummyExample();
   planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();
@@ -2186,6 +2214,7 @@ int main(int argc, char *argv[])
   _completeMovingObjectScenario();
   _inferenceWithANegatedFactWithParameter();
   _actionWithANegatedFactNotTriggeredIfNotNecessary();
+  _useTwoTimesAnInference();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

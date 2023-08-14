@@ -150,7 +150,28 @@ void Fact::fillParameters(
   }
 }
 
+void Fact::fillParameters(
+    const std::map<std::string, std::set<std::string>>& pParameters)
+{
+  auto itValueParam = pParameters.find(value);
+  if (itValueParam != pParameters.end() && !itValueParam->second.empty())
+    value = *itValueParam->second.begin();
 
+  for (auto& currParam : parameters)
+  {
+    auto& currFactParam = currParam.fact;
+    if (currFactParam.value.empty() && currFactParam.parameters.empty())
+    {
+      auto itValueParam = pParameters.find(currFactParam.name);
+      if (itValueParam != pParameters.end() && !itValueParam->second.empty())
+        currFactParam.name = *itValueParam->second.begin();
+    }
+    else
+    {
+      currFactParam.fillParameters(pParameters);
+    }
+  }
+}
 
 std::string Fact::toStr() const
 {
@@ -258,25 +279,26 @@ bool Fact::replaceParametersByAny(const std::vector<std::string>& pParameters)
 }
 
 
-bool Fact::isInFacts(
-    const std::set<Fact>& pFacts,
+bool Fact::isInFacts(const std::set<Fact>& pFacts,
     bool pParametersAreForTheFact,
-    std::map<std::string, std::string>* pParametersPtr,
+    std::map<std::string, std::set<std::string>>& pNewParameters,
+    const std::map<std::string, std::set<std::string>>* pParametersPtr,
     bool pCanModifyParameters,
     bool* pTriedToMidfyParametersPtr) const
 {
+  bool res = false;
   for (const auto& currFact : pFacts)
-    if (isInFact(currFact, pParametersAreForTheFact, pParametersPtr,
+    if (isInFact(currFact, pParametersAreForTheFact, pNewParameters, pParametersPtr,
                  pCanModifyParameters, pTriedToMidfyParametersPtr))
-      return true;
-  return false;
+      res = true;
+  return res;
 }
 
 
-bool Fact::isInFact(
-    const Fact& pFact,
+bool Fact::isInFact(const Fact& pFact,
     bool pParametersAreForTheFact,
-    std::map<std::string, std::string>* pParametersPtr,
+    std::map<std::string, std::set<std::string>>& pNewParameters,
+    const std::map<std::string, std::set<std::string>>* pParametersPtr,
     bool pCanModifyParameters,
     bool* pTriedToMidfyParametersPtr) const
 {
@@ -287,20 +309,20 @@ bool Fact::isInFact(
   auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
     if (pFactValue == pValueToLookFor)
       return true;
-    if (pParametersPtr == nullptr || pParametersPtr->empty())
-      return false;
-    auto& parameters = *pParametersPtr;
 
-    auto itParam = parameters.find(pFactValue);
-    if (itParam != parameters.end())
+    if (pParametersPtr != nullptr)
     {
-      if (!itParam->second.empty())
-        return itParam->second == pValueToLookFor;
-      if (pCanModifyParameters)
-        parameters[pFactValue] = pValueToLookFor;
-      else if (pTriedToMidfyParametersPtr != nullptr)
-        *pTriedToMidfyParametersPtr = true;
-      return true;
+      auto itParam = pParametersPtr->find(pFactValue);
+      if (itParam != pParametersPtr->end())
+      {
+        if (!itParam->second.empty())
+          return itParam->second.count(pValueToLookFor) > 0;
+        if (pCanModifyParameters)
+          pNewParameters[pFactValue].insert(pValueToLookFor);
+        else if (pTriedToMidfyParametersPtr != nullptr)
+          *pTriedToMidfyParametersPtr = true;
+        return true;
+      }
     }
     return false;
   };

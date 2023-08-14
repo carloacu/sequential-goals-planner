@@ -1,5 +1,6 @@
 #include <contextualplanner/types/factcondition.hpp>
 #include <contextualplanner/types/problem.hpp>
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -35,26 +36,65 @@ std::unique_ptr<FactCondition> _merge(std::list<std::unique_ptr<FactCondition>>&
                                              _merge(pFactconditions));
 }
 
-std::string _getValue(const Fact& pFact,
-                      const Problem& pProblem,
-                      const std::map<std::string, std::string>* pParametersPtr)
+bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
+                        bool pUntilValue,
+                        const Fact& pFact,
+                        const Problem& pProblem,
+                        const std::map<std::string, std::set<std::string>>* pParametersPtr)
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    return pProblem.getFactValue(pFact);
+    return pValueCallback(pProblem.getFactValue(pFact));
   }
 
-  auto factToExtractValue = pFact;
-  for (auto& currParam : *pParametersPtr)
+  std::list<std::map<std::string, std::string>> paramPossibilities;
+  unfoldMapWithSet(paramPossibilities, *pParametersPtr);
+  for (auto& currParamPoss : paramPossibilities)
   {
-    auto oldFact = cp::Fact::fromStr(currParam.first);
-    auto newFact = cp::Fact::fromStr(currParam.second);
-    if (factToExtractValue == oldFact)
-      factToExtractValue = newFact;
-    else
-      factToExtractValue.replaceFactInParameters(oldFact, newFact);
+    auto factToExtractValue = pFact;
+    for (auto& currParam : currParamPoss)
+    {
+      auto oldFact = cp::Fact::fromStr(currParam.first);
+      auto newFact = cp::Fact::fromStr(currParam.second);
+      if (factToExtractValue == oldFact)
+        factToExtractValue = newFact;
+      else
+        factToExtractValue.replaceFactInParameters(oldFact, newFact);
+    }
+    if (pValueCallback(pProblem.getFactValue(factToExtractValue)) == pUntilValue)
+      return pUntilValue;
   }
-  return pProblem.getFactValue(factToExtractValue);
+  return !pUntilValue;
+}
+
+
+void _forEach(const std::function<void (const std::string&)>& pValueCallback,
+              const Fact& pFact,
+              const Problem& pProblem,
+              const std::map<std::string, std::set<std::string>>* pParametersPtr)
+{
+  if (pParametersPtr == nullptr || pParametersPtr->empty())
+  {
+    pValueCallback(pProblem.getFactValue(pFact));
+    return;
+  }
+
+  std::list<std::map<std::string, std::string>> paramPossibilities;
+  unfoldMapWithSet(paramPossibilities, *pParametersPtr);
+  for (auto& currParamPoss : paramPossibilities)
+  {
+    auto factToExtractValue = pFact;
+    for (auto& currParam : currParamPoss)
+    {
+      auto oldFact = cp::Fact::fromStr(currParam.first);
+      auto newFact = cp::Fact::fromStr(currParam.second);
+      if (factToExtractValue == oldFact)
+        factToExtractValue = newFact;
+      else
+        factToExtractValue.replaceFactInParameters(oldFact, newFact);
+    }
+    pValueCallback(pProblem.getFactValue(factToExtractValue));
+  }
 }
 
 bool _areEqual(
@@ -230,7 +270,7 @@ void FactConditionNode::forAll(const std::function<void (const FactOptional&)>& 
 bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                                    const std::function<bool (const Expression&)>& pExpCallback,
                                    const Problem& pProblem,
-                                   const std::map<std::string, std::string>& pParameters) const
+                                   const std::map<std::string, std::set<std::string>>& pParameters) const
 {
   if (nodeType == FactConditionNodeType::AND)
   {
@@ -245,9 +285,13 @@ bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&
     auto* rightFactPtr = rightOperand->fcFactPtr();
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
-      auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = _getValue(rightFactPtr->factOptional.fact, pProblem, &pParameters);
-      return pFactCallback(FactOptional(factToCheck));
+      return _forEachValueUntil(
+            [&](const std::string& pValue)
+      {
+        auto factToCheck = leftFactPtr->factOptional.fact;
+        factToCheck.value = pValue;
+        return pFactCallback(FactOptional(factToCheck));
+      }, false, rightFactPtr->factOptional.fact, pProblem, &pParameters);
     }
   }
   return true;
@@ -262,10 +306,13 @@ bool FactConditionNode::canBeTrue() const
   return true;
 }
 
+
+
+
 bool FactConditionNode::isTrue(const Problem& pProblem,
                                const std::set<Fact>& pPunctualFacts,
                                const std::set<Fact>& pRemovedFacts,
-                               std::map<std::string, std::string>* pParametersPtr,
+                               std::map<std::string, std::set<std::string>>* pParametersPtr,
                                bool* pCanBecomeTruePtr) const
 {
   if (nodeType == FactConditionNodeType::AND)
@@ -297,11 +344,22 @@ bool FactConditionNode::isTrue(const Problem& pProblem,
     auto* rightFactPtr = rightOperand->fcFactPtr();
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
-      auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = _getValue(rightFactPtr->factOptional.fact, pProblem, pParametersPtr);
-      if (factToCheck.isPunctual())
-        return pPunctualFacts.count(factToCheck) != 0;
-      return factToCheck.isInFacts(pProblem._facts, true, pParametersPtr);
+      bool res = false;
+      std::map<std::string, std::set<std::string>> newParameters;
+      _forEach(
+            [&](const std::string& pValue)
+      {
+         auto factToCheck = leftFactPtr->factOptional.fact;
+        factToCheck.value = pValue;
+        if (factToCheck.isPunctual())
+          res = pPunctualFacts.count(factToCheck) != 0 || res;
+        else
+          res = factToCheck.isInFacts(pProblem._facts, true, newParameters, pParametersPtr) || res;
+      }, rightFactPtr->factOptional.fact, pProblem, pParametersPtr);
+
+      if (pParametersPtr != nullptr)
+        applyNewParams(*pParametersPtr, newParameters);
+      return res;
     }
   }
   return true;
@@ -400,37 +458,60 @@ void FactConditionFact::replaceFact(const cp::Fact& pOldFact,
 bool FactConditionFact::isTrue(const Problem& pProblem,
                                const std::set<Fact>& pPunctualFacts,
                                const std::set<Fact>& pRemovedFacts,
-                               std::map<std::string, std::string>* pParametersPtr,
+                               std::map<std::string, std::set<std::string>>* pParametersPtr,
                                bool* pCanBecomeTruePtr) const
 {
   if (factOptional.fact.isPunctual() && !factOptional.isFactNegated)
     return pPunctualFacts.count(factOptional.fact) != 0;
 
+  std::map<std::string, std::set<std::string>> newParameters;
   if (factOptional.isFactNegated)
   {
-    bool res = factOptional.fact.isInFacts(pRemovedFacts, true, pParametersPtr);
+    bool res = factOptional.fact.isInFacts(pRemovedFacts, true, newParameters, pParametersPtr);
     if (res)
+    {
+      if (pParametersPtr != nullptr)
+        applyNewParams(*pParametersPtr, newParameters);
       return true;
+    }
 
     if (factOptional.fact.value == Fact::anyValue)
     {
       auto itFacts = pProblem._factNamesToFacts.find(factOptional.fact.name);
       if (itFacts != pProblem._factNamesToFacts.end())
       {
-        auto factToCompare = factOptional.fact;
         if (pParametersPtr != nullptr)
-          factToCompare.fillParameters(*pParametersPtr);
-        for (auto& currFact : itFacts->second)
         {
-          if (currFact.areEqualExceptAnyValues(factToCompare))
-            return false;
+          std::list<std::map<std::string, std::string>> paramPossibilities;
+          unfoldMapWithSet(paramPossibilities, (*pParametersPtr));
+
+          for (auto& currParamPoss : paramPossibilities)
+          {
+            auto factToCompare = factOptional.fact;
+            factToCompare.fillParameters(currParamPoss);
+            bool nothingEqual = true;
+            for (auto& currFact : itFacts->second)
+            {
+              if (currFact.areEqualExceptAnyValues(factToCompare))
+              {
+                nothingEqual = false;
+                break;
+              }
+            }
+            return nothingEqual;
+          }
+          return false;
         }
+
+        for (auto& currFact : itFacts->second)
+          if (currFact.areEqualExceptAnyValues(factOptional.fact))
+            return false;
         return true;
       }
     }
 
     bool triedToMidfyParameters = false;
-    if (factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr, false, &triedToMidfyParameters))
+    if (factOptional.fact.isInFacts(pProblem._facts, true, newParameters, pParametersPtr, false, &triedToMidfyParameters))
     {
       if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
         *pCanBecomeTruePtr = true;
@@ -439,7 +520,10 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
     return true;
   }
 
-  return factOptional.fact.isInFacts(pProblem._facts, true, pParametersPtr);
+  auto res = factOptional.fact.isInFacts(pProblem._facts, true, newParameters, pParametersPtr);
+  if (pParametersPtr != nullptr)
+    applyNewParams(*pParametersPtr, newParameters);
+  return res;
 }
 
 bool FactConditionFact::canBecomeTrue(const Problem& pProblem) const
@@ -504,7 +588,7 @@ void FactConditionExpression::replaceFact(const cp::Fact& pOldFact,
 bool FactConditionExpression::isTrue(const Problem& pProblem,
                                      const std::set<Fact>&,
                                      const std::set<Fact>&,
-                                     std::map<std::string, std::string>*,
+                                     std::map<std::string, std::set<std::string>>*,
                                      bool*) const
 {
   return expression.isValid(pProblem.variablesToValue());

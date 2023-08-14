@@ -79,6 +79,10 @@ struct CONTEXTUALPLANNER_API Fact
   void fillParameters(
       const std::map<std::string, std::string>& pParameters);
 
+  void fillParameters(
+      const std::map<std::string, std::set<std::string>>& pParameters);
+
+
   /// Serialize this fact to a string.
   std::string toStr() const;
 
@@ -120,13 +124,15 @@ struct CONTEXTUALPLANNER_API Fact
    */
   bool isInFacts(const std::set<Fact>& pFacts,
                  bool pParametersAreForTheFact,
-                 std::map<std::string, std::string>* pParametersPtr = nullptr,
+                 std::map<std::string, std::set<std::string>>& pNewParameters,
+                 const std::map<std::string, std::set<std::string>>* pParametersPtr,
                  bool pCanModifyParameters = true,
                  bool* pTriedToMidfyParametersPtr = nullptr) const;
 
   bool isInFact(const Fact& pFact,
                 bool pParametersAreForTheFact,
-                std::map<std::string, std::string>* pParametersPtr,
+                std::map<std::string, std::set<std::string>>& pNewParameters,
+                const std::map<std::string, std::set<std::string>>* pParametersPtr,
                 bool pCanModifyParameters = true,
                 bool* pTriedToMidfyParametersPtr = nullptr) const;
 

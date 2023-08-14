@@ -4,9 +4,8 @@
 namespace cp
 {
 
-ActionInstance::ActionInstance(
-    const std::string& pActionId,
-    const std::map<std::string, std::string>& pParameters)
+ActionInstance::ActionInstance(const std::string& pActionId,
+    const std::map<std::string, std::set<std::string>>& pParameters)
   : actionId(pActionId),
     parameters(pParameters)
 {
@@ -25,7 +24,9 @@ std::string ActionInstance::toStr() const
         firstIeration = false;
       else
         res += ", ";
-      res += currParam.first + " -> " + currParam.second;
+      res += currParam.first + " -> ";
+      if (!currParam.second.empty())
+        res += *currParam.second.begin();
     }
     res += ")";
   }
@@ -33,9 +34,8 @@ std::string ActionInstance::toStr() const
 }
 
 
-OneStepOfPlannerResult::OneStepOfPlannerResult(
-    const std::string& pActionId,
-    const std::map<std::string, std::string>& pParameters,
+OneStepOfPlannerResult::OneStepOfPlannerResult(const std::string& pActionId,
+    const std::map<std::string, std::set<std::string>>& pParameters,
     const cp::Goal& pFromGoal,
     int pFromGoalPriority)
   : actionInstance(pActionId, pParameters),

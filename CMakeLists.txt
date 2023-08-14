@@ -29,6 +29,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/util/print.hpp
     include/contextualplanner/util/observableunsafe.hpp
     include/contextualplanner/util/replacevariables.hpp
+    include/contextualplanner/util/util.hpp
     include/contextualplanner/contextualplanner.hpp
 )
 
@@ -51,6 +52,7 @@ set(CHATBOTPLANNER_SRCS
     src/util/arithmeticevaluator.cpp
     src/util/print.cpp
     src/util/replacevariables.cpp
+    src/util/util.cpp
     src/contextualplanner.cpp
 )
 

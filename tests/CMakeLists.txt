@@ -19,6 +19,8 @@ add_executable(
   src/docexamples/test_planningDummyExample.cpp
   src/docexamples/test_planningExampleWithAPreconditionSolve.hpp
   src/docexamples/test_planningExampleWithAPreconditionSolve.cpp
+  src/test_util.hpp
+  src/test_util.cpp
 )
 
 

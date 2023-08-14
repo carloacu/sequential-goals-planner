@@ -37,12 +37,12 @@ struct CONTEXTUALPLANNER_API FactCondition
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                           const std::function<bool (const Expression&)>& pExpCallback,
                           const Problem& pProblem,
-                          const std::map<std::string, std::string>& pParameters) const = 0;
+                          const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
   virtual bool canBeTrue() const = 0;
   virtual bool isTrue(const Problem& pProblem,
                       const std::set<Fact>& pPunctualFacts = {},
                       const std::set<Fact>& pRemovedFacts = {},
-                      std::map<std::string, std::string>* pParametersPtr = nullptr,
+                      std::map<std::string, std::set<std::string>>* pParametersPtr = nullptr,
                       bool* pCanBecomeTruePtr = nullptr) const = 0;
   virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
   virtual bool operator==(const FactCondition& pOther) const = 0;
@@ -89,12 +89,12 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const std::function<bool (const Expression&)>& pExpCallback,
                   const Problem& pProblem,
-                  const std::map<std::string, std::string>& pParameters) const override;
+                  const std::map<std::string, std::set<std::string>>& pParameters) const override;
   bool canBeTrue() const override;
   bool isTrue(const Problem& pProblem,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
-              std::map<std::string, std::string>* pParametersPtr,
+              std::map<std::string, std::set<std::string>>* pParametersPtr,
               bool* pCanBecomeTruePtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
@@ -130,12 +130,12 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const std::function<bool (const Expression&)>&,
                   const Problem&,
-                  const std::map<std::string, std::string>&) const override { return pFactCallback(factOptional); }
+                  const std::map<std::string, std::set<std::string>>&) const override { return pFactCallback(factOptional); }
   bool canBeTrue() const override { return factOptional.isFactNegated || !factOptional.fact.isUnreachable(); }
   bool isTrue(const Problem& pProblem,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
-              std::map<std::string, std::string>* pParametersPtr,
+              std::map<std::string, std::set<std::string>>* pParametersPtr,
               bool* pCanBecomeTruePtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
@@ -169,12 +169,12 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
                   const std::function<bool (const Expression&)>& pExpCallback,
                   const Problem&,
-                  const std::map<std::string, std::string>&) const override { return pExpCallback(expression); }
+                  const std::map<std::string, std::set<std::string>>&) const override { return pExpCallback(expression); }
   bool canBeTrue() const override { return true; }
   bool isTrue(const Problem& pProblem,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
-              std::map<std::string, std::string>* pParametersPtr,
+              std::map<std::string, std::set<std::string>>* pParametersPtr,
               bool* pCanBecomeTruePtr) const override;
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;

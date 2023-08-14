@@ -4,6 +4,7 @@
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/onestepofplannerresult.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -122,7 +123,7 @@ void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerRes
     }
     else
     {
-      auto effect = pEffect->clone(&pOnStepOfPlannerResult.actionInstance.parameters);
+      auto effect = pEffect->cloneParamSet(pOnStepOfPlannerResult.actionInstance.parameters);
       _modifyFacts(whatChanged, effect, pNow);
     }
   }
@@ -948,18 +949,23 @@ bool Problem::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApp
       {
         auto& currInference = itInference->second;
 
-        std::map<std::string, std::string> parametersToValue;
+        std::map<std::string, std::set<std::string>> parametersToValues;
         for (const auto& currParam : currInference.parameters)
-          parametersToValue[currParam];
+          parametersToValues[currParam];
         if (!currInference.condition || currInference.condition->isTrue(*this, pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
-                                                                        &parametersToValue))
+                                                                        &parametersToValues))
         {
           if (currInference.factsToModify)
           {
-            if (!parametersToValue.empty())
+            if (!parametersToValues.empty())
             {
-              auto factsToModify = currInference.factsToModify->clone(&parametersToValue);
-              _modifyFacts(pWhatChanged, factsToModify, pNow);
+              std::list<std::map<std::string, std::string>> parametersToValuePoss;
+              unfoldMapWithSet(parametersToValuePoss, parametersToValues);
+              for (const auto& currParamsPoss : parametersToValuePoss)
+              {
+                auto factsToModify = currInference.factsToModify->clone(&currParamsPoss);
+                _modifyFacts(pWhatChanged, factsToModify, pNow);
+              }
             }
             else
             {
