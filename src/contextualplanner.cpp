@@ -68,8 +68,6 @@ void _getPrecoditionStatistics(std::size_t& nbOfPreconditionsSatisfied,
     }
   };
 
-  if (pAction.precondition)
-    pAction.precondition->forAll(onFact, [](const Expression&) {});
   if (pAction.preferInContext)
     pAction.preferInContext->forAll(onFact, [](const Expression&) {});
 }

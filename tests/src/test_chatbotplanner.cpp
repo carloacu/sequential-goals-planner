@@ -501,16 +501,18 @@ void _impossibleGoal()
 }
 
 
-void _privigelizeTheActionsThatHaveManyPreconditions()
+void _privigelizeTheActionsThatHaveManyPreferedInContext()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
   actions.emplace(_action_checkInWithQrCode, cp::Action(cp::FactCondition::fromStr(_fact_hasQrCode),
-                                                        cp::FactModification::fromStr(_fact_checkedIn)));
+                                                        cp::FactModification::fromStr(_fact_checkedIn),
+                                                        cp::FactCondition::fromStr(_fact_hasQrCode)));
   actions.emplace(_action_checkInWithPassword, cp::Action(cp::FactCondition::fromStr(_fact_hasCheckInPasword),
-                                                          cp::FactModification::fromStr(_fact_checkedIn)));
+                                                          cp::FactModification::fromStr(_fact_checkedIn),
+                                                          cp::FactCondition::fromStr(_fact_hasCheckInPasword)));
   actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
@@ -684,13 +686,14 @@ void _takeHistoricalIntoAccount()
 }
 
 
-void _goDoTheActionThatHaveTheMostPrerequisitValidated()
+void _goDoTheActionThatHaveTheMostPreferInContextValidated()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_advertise, cp::Action({}, cp::FactModification::fromStr(_fact_advertised)));
   actions.emplace(_action_checkIn, cp::Action(cp::FactCondition::fromStr(_fact_is_close),
-                                              cp::FactModification::fromStr(_fact_checkedIn)));
+                                              cp::FactModification::fromStr(_fact_checkedIn),
+                                              cp::FactCondition::fromStr(_fact_is_close)));
   actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_advertised + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
@@ -2174,13 +2177,13 @@ int main(int argc, char *argv[])
   _2Goals();
   _2UnrelatedGoals();
   _impossibleGoal();
-  _privigelizeTheActionsThatHaveManyPreconditions();
+  _privigelizeTheActionsThatHaveManyPreferedInContext();
   _preconditionThatCannotBeSolved();
   _preferInContext();
   _preferWhenPreconditionAreCloserToTheRealFacts();
   _avoidToDo2TimesTheSameActionIfPossble();
   _takeHistoricalIntoAccount();
-  _goDoTheActionThatHaveTheMostPrerequisitValidated();
+  _goDoTheActionThatHaveTheMostPreferInContextValidated();
   _checkNotInAPrecondition();
   _checkClearGoalsWhenItsAlreadySatisfied();
   _checkActionHasAFact();
