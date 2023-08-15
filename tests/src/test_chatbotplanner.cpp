@@ -2093,7 +2093,6 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
   problem.addFact(cp::Fact(_fact_d), now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
 
-
   assert_eq(action3, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
@@ -2103,14 +2102,8 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 
 void _useTwoTimesAnInference()
 {
-  const std::string action1 = "action1";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
-  std::map<std::string, cp::Action> actions;
 
-  actions.emplace(action1, cp::Action({},
-                                      cp::FactModification::fromStr(_fact_a)));
-
-  cp::Domain domain(std::move(actions));
   cp::Problem problem;
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi", setOfInferences);
@@ -2126,6 +2119,30 @@ void _useTwoTimesAnInference()
   assert_true(problem.hasFact(cp::Fact::fromStr(_fact_c + "(obj1)")));
   assert_true(problem.hasFact(cp::Fact::fromStr(_fact_c + "(obj2)")));
 }
+
+
+void _linkWithAnyValueInCondition()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  actions.emplace(action1, cp::Action(cp::FactCondition::fromStr("!" + _fact_a + "=*"),
+                                      cp::FactModification::fromStr(_fact_b)));
+  cp::Action act2({}, cp::FactModification::fromStr("!" + _fact_a + "=aVal"));
+  act2.parameters.emplace_back("aVal");
+  actions.emplace(action2, act2);
+
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  problem.addFact(cp::Fact(_fact_a + "=toto"), now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+  assert_eq(action2 + "(aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+}
+
 
 
 }
@@ -2215,6 +2232,7 @@ int main(int argc, char *argv[])
   _inferenceWithANegatedFactWithParameter();
   _actionWithANegatedFactNotTriggeredIfNotNecessary();
   _useTwoTimesAnInference();
+  _linkWithAnyValueInCondition();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

@@ -179,21 +179,9 @@ bool _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
           }
         }
       }
+      // Check that the new fact pattern is not already satisfied
       if (actionIsAPossibleFollowUp)
-      {
-        if (!pParentParameters.empty())
-        {
-          // The new fact with parameters should not already be in the world
-          auto factWithParamFilled = pFact;
-          factWithParamFilled.fillParameters(pParentParameters);
-          if (pIsFactNegated)
-            return pProblem.facts().count(factWithParamFilled) > 0;
-          return pProblem.facts().count(factWithParamFilled) == 0;
-        }
-        if (pIsFactNegated)
-          return pProblem.facts().count(pFact) > 0;
-        return pProblem.facts().count(pFact) == 0;
-      }
+        return !pProblem.isFactPatternSatisfied(pFact, pIsFactNegated, {}, {}, &pParentParameters, nullptr);
     }
   }
   return false;

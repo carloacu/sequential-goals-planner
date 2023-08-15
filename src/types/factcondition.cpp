@@ -461,69 +461,9 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
                                std::map<std::string, std::set<std::string>>* pParametersPtr,
                                bool* pCanBecomeTruePtr) const
 {
-  if (factOptional.fact.isPunctual() && !factOptional.isFactNegated)
-    return pPunctualFacts.count(factOptional.fact) != 0;
-
-  std::map<std::string, std::set<std::string>> newParameters;
-  if (factOptional.isFactNegated)
-  {
-    bool res = factOptional.fact.isInFacts(pRemovedFacts, true, newParameters, pParametersPtr);
-    if (res)
-    {
-      if (pParametersPtr != nullptr)
-        applyNewParams(*pParametersPtr, newParameters);
-      return true;
-    }
-
-    if (factOptional.fact.value == Fact::anyValue)
-    {
-      auto itFacts = pProblem._factNamesToFacts.find(factOptional.fact.name);
-      if (itFacts != pProblem._factNamesToFacts.end())
-      {
-        if (pParametersPtr != nullptr)
-        {
-          std::list<std::map<std::string, std::string>> paramPossibilities;
-          unfoldMapWithSet(paramPossibilities, (*pParametersPtr));
-
-          for (auto& currParamPoss : paramPossibilities)
-          {
-            auto factToCompare = factOptional.fact;
-            factToCompare.fillParameters(currParamPoss);
-            bool nothingEqual = true;
-            for (auto& currFact : itFacts->second)
-            {
-              if (currFact.areEqualExceptAnyValues(factToCompare))
-              {
-                nothingEqual = false;
-                break;
-              }
-            }
-            return nothingEqual;
-          }
-          return false;
-        }
-
-        for (auto& currFact : itFacts->second)
-          if (currFact.areEqualExceptAnyValues(factOptional.fact))
-            return false;
-        return true;
-      }
-    }
-
-    bool triedToMidfyParameters = false;
-    if (factOptional.fact.isInFacts(pProblem._facts, true, newParameters, pParametersPtr, false, &triedToMidfyParameters))
-    {
-      if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
-        *pCanBecomeTruePtr = true;
-      return false;
-    }
-    return true;
-  }
-
-  auto res = factOptional.fact.isInFacts(pProblem._facts, true, newParameters, pParametersPtr);
-  if (pParametersPtr != nullptr)
-    applyNewParams(*pParametersPtr, newParameters);
-  return res;
+  return pProblem.isFactPatternSatisfied(factOptional.fact, factOptional.isFactNegated,
+                                  pPunctualFacts, pRemovedFacts,
+                                  pParametersPtr, pCanBecomeTruePtr);
 }
 
 bool FactConditionFact::canBecomeTrue(const Problem& pProblem) const

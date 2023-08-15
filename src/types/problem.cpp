@@ -874,6 +874,88 @@ bool Problem::isGoalSatisfied(const Goal& pGoal) const
       pGoal.factCondition().isTrue(*this);
 }
 
+bool Problem::isFactPatternSatisfied(const Fact& pFact,
+                              bool pIsFactNegated,
+                              const std::set<Fact>& pPunctualFacts,
+                              const std::set<Fact>& pRemovedFacts,
+                              std::map<std::string, std::set<std::string>>* pParametersPtr,
+                              bool* pCanBecomeTruePtr) const
+{
+  if (pFact.isPunctual() && !pIsFactNegated)
+    return pPunctualFacts.count(pFact) != 0;
+
+  std::map<std::string, std::set<std::string>> newParameters;
+  if (pIsFactNegated)
+  {
+    bool res = pFact.isInFacts(pRemovedFacts, true, newParameters, pParametersPtr);
+    if (res)
+    {
+      if (pParametersPtr != nullptr)
+        applyNewParams(*pParametersPtr, newParameters);
+      return true;
+    }
+
+    auto itFacts = _factNamesToFacts.find(pFact.name);
+    if (itFacts != _factNamesToFacts.end())
+    {
+      if (pParametersPtr != nullptr)
+      {
+        std::list<std::map<std::string, std::string>> paramPossibilities;
+        unfoldMapWithSet(paramPossibilities, (*pParametersPtr));
+
+        bool hasAnyValueAsValue = pFact.value == Fact::anyValue;
+        for (auto& currParamPoss : paramPossibilities)
+        {
+          auto factToCompare = pFact;
+          factToCompare.fillParameters(currParamPoss);
+          if (factToCompare.value == Fact::anyValue)
+          {
+            hasAnyValueAsValue = true;
+            for (auto& currFact : itFacts->second)
+            {
+              if (currFact.areEqualExceptAnyValues(factToCompare))
+              {
+                if (pFact.value != Fact::anyValue)
+                {
+                  std::map<std::string, std::set<std::string>> newParameters =
+                  {{pFact.value, {currFact.value}}};
+                  applyNewParams(*pParametersPtr, newParameters);
+                }
+                return false;
+              }
+            }
+            return true;
+          }
+        }
+        if (hasAnyValueAsValue)
+          return false;
+      }
+
+      if (pFact.value == Fact::anyValue)
+      {
+        for (auto& currFact : itFacts->second)
+          if (currFact.areEqualExceptAnyValues(pFact))
+            return false;
+        return true;
+      }
+    }
+
+    bool triedToMidfyParameters = false;
+    if (pFact.isInFacts(_facts, true, newParameters, pParametersPtr, false, &triedToMidfyParameters))
+    {
+      if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
+        *pCanBecomeTruePtr = true;
+      return false;
+    }
+    return true;
+  }
+
+  auto res = pFact.isInFacts(_facts, true, newParameters, pParametersPtr);
+  if (pParametersPtr != nullptr)
+    applyNewParams(*pParametersPtr, newParameters);
+  return res;
+}
+
 std::map<int, std::vector<Goal>> Problem::getNotSatisfiedGoals() const
 {
   std::map<int, std::vector<Goal>> res;
