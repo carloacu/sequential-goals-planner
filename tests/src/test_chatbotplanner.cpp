@@ -641,8 +641,7 @@ void _avoidToDo2TimesTheSameActionIfPossble()
   actions.emplace(_action_greet, cp::Action({},
                                             cp::FactModification::fromStr(_fact_greeted + "&" + _fact_presented)));
   actions.emplace(_action_presentation, cp::Action({},
-                                                   cp::FactModification::fromStr(_fact_presented),
-                                                   cp::FactCondition::fromStr(_fact_beginOfConversation)));
+                                                   cp::FactModification::fromStr(_fact_presented)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
   actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_presented + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));

@@ -87,11 +87,6 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
   if (satisfyObjective != pOther.satisfyObjective)
     return satisfyObjective;
 
-  auto nbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(actionId);
-  auto otherNbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(pOther.actionId);
-  if (nbOfTimesAlreadyDone != otherNbOfTimesAlreadyDone)
-    return nbOfTimesAlreadyDone < otherNbOfTimesAlreadyDone;
-
   auto& action = *actionPtr;
   std::size_t nbOfPreconditionsSatisfied = 0;
   std::size_t nbOfPreconditionsNotSatisfied = 0;
@@ -104,6 +99,11 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
     return nbOfPreconditionsSatisfied > otherNbOfPreconditionsSatisfied;
   if (nbOfPreconditionsNotSatisfied != otherNbOfPreconditionsNotSatisfied)
     return nbOfPreconditionsNotSatisfied < otherNbOfPreconditionsNotSatisfied;
+
+  auto nbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(actionId);
+  auto otherNbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(pOther.actionId);
+  if (nbOfTimesAlreadyDone != otherNbOfTimesAlreadyDone)
+    return nbOfTimesAlreadyDone < otherNbOfTimesAlreadyDone;
 
   if (pGlobalHistorical != nullptr)
   {
