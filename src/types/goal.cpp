@@ -68,14 +68,15 @@ Goal::Goal(const std::string& pStr,
 }
 
 Goal::Goal(const Goal& pOther,
-           const std::map<std::string, std::string>* pParametersPtr)
+           const std::map<std::string, std::string>* pParametersPtr,
+           const std::string* pGoalGroupIdPtr)
   : _factCondition(pOther._factCondition->clone(pParametersPtr)),
     _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),
     _inactiveSince(pOther._inactiveSince ? std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince) : std::unique_ptr<std::chrono::steady_clock::time_point>()),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
     _oneStepTowards(pOther._oneStepTowards),
     _conditionFactPtr(pOther._conditionFactPtr ? std::make_unique<FactOptional>(*pOther._conditionFactPtr, pParametersPtr) : std::unique_ptr<FactOptional>()),
-    _goalGroupId(pOther._goalGroupId)
+    _goalGroupId(pGoalGroupIdPtr != nullptr ? *pGoalGroupIdPtr : pOther._goalGroupId)
 {
 }
 
