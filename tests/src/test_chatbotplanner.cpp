@@ -197,6 +197,7 @@ void _test_createEmptyGoal()
 
 void _test_goalToStr()
 {
+  assert_eq<std::string>("persist(a & b)", cp::Goal("persist(a & b)").toStr());
   assert_eq<std::string>("imply(condition, goal_name)", cp::Goal("imply(condition, goal_name)").toStr());
   assert_eq<std::string>("persist(imply(condition, goal_name))", cp::Goal("persist(imply(condition, goal_name))").toStr());
   assert_eq<std::string>("oneStepTowards(goal_name)", cp::Goal("oneStepTowards(goal_name)").toStr());

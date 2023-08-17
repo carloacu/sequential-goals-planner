@@ -7,12 +7,16 @@ namespace cp
 const std::string Goal::persistFunctionName = "persist";
 const std::string Goal::implyFunctionName = "imply";
 const std::string Goal::oneStepTowardsFunctionName = "oneStepTowards";
-
+namespace
+{
+const std::string _persistPrefix = Goal::persistFunctionName + "(";
+const std::size_t _persistPrefixSize = _persistPrefix.size();
+}
 
 Goal::Goal(const std::string& pStr,
            int pMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
-  : _factCondition(FactCondition::fromStr(pStr)),
+  : _factCondition(),
     _maxTimeToKeepInactive(pMaxTimeToKeepInactive),
     _inactiveSince(),
     _isPersistentIfSkipped(false),
@@ -20,22 +24,25 @@ Goal::Goal(const std::string& pStr,
     _conditionFactPtr(),
     _goalGroupId(pGoalGroupId)
 {
+  if (pStr.size() > _persistPrefixSize &&
+      pStr.compare(0, _persistPrefixSize, _persistPrefix) == 0 &&
+      pStr[pStr.size() - 1] == ')')
+  {
+    _isPersistentIfSkipped = true;
+    auto subStr = pStr.substr(_persistPrefixSize, pStr.size() - _persistPrefixSize - 1);
+    _factCondition = FactCondition::fromStr(subStr);
+  }
+  else
+  {
+    _factCondition = FactCondition::fromStr(pStr);
+  }
+
   assert(_factCondition);
   if (!_factCondition)
     return;
   auto* factPtr = _factCondition->fcFactPtr();
   if (factPtr != nullptr)
   {
-    if (factPtr->factOptional.fact.name == persistFunctionName &&
-        factPtr->factOptional.fact.parameters.size() == 1 &&
-        factPtr->factOptional.fact.value.empty())
-    {
-      _isPersistentIfSkipped = true;
-      // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
-      auto factFirstParameters = std::move(factPtr->factOptional.fact.parameters.front());
-      factPtr->factOptional = std::move(factFirstParameters);
-    }
-
     if (factPtr->factOptional.fact.name == oneStepTowardsFunctionName &&
         factPtr->factOptional.fact.parameters.size() == 1 &&
         factPtr->factOptional.fact.value.empty())
