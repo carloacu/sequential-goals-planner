@@ -255,8 +255,9 @@ struct CONTEXTUALPLANNER_API Problem
    * @brief Remove some goals.
    * @param pGoalGroupId Group identifier of the goals to remove.
    * @param pNow Current time.
+   * @return True if at least one goal is removed, false otherwise.
    */
-  void removeGoals(const std::string& pGoalGroupId,
+  bool removeGoals(const std::string& pGoalGroupId,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**

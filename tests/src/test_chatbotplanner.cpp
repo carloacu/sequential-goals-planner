@@ -309,8 +309,9 @@ void _removeSomeGoals()
   problem.pushFrontGoal(cp::Goal(_fact_greeted, -1, goalGroupId), {});
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq<std::size_t>(0, goalsRemoved.size());
-  problem.removeGoals(goalGroupId, {});
+  assert_true(problem.removeGoals(goalGroupId, {}));
   assert_eq<std::size_t>(2, goalsRemoved.size());
+  assert_false(problem.removeGoals(goalGroupId, {}));
   assert_eq(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
   problem.clearGoals({});

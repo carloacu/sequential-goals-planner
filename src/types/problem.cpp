@@ -827,7 +827,7 @@ void Problem::clearGoals(const std::unique_ptr<std::chrono::steady_clock::time_p
 }
 
 
-void Problem::removeGoals(const std::string& pGoalGroupId,
+bool Problem::removeGoals(const std::string& pGoalGroupId,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
@@ -855,7 +855,9 @@ void Problem::removeGoals(const std::string& pGoalGroupId,
   {
     _removeNoStackableGoals(whatChanged, pNow);
     _notifyWhatChanged(whatChanged, pNow);
+    return true;
   }
+  return false;
 }
 
 
