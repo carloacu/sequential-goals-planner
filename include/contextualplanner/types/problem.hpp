@@ -303,7 +303,7 @@ struct CONTEXTUALPLANNER_API Problem
    * If the identifier is already used, the addition will not be done.
    */
   void addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
-                          const std::shared_ptr<const SetOfInferences>& pSetOfInferences) { _setOfInferences.emplace(pSetOfInferencesId, pSetOfInferences); }
+                          const std::shared_ptr<const SetOfInferences>& pSetOfInferences);
 
   /**
    * @brief Remove a set of inferences.
@@ -313,6 +313,8 @@ struct CONTEXTUALPLANNER_API Problem
    * No exception will be raised.
    */
   void removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId);
+
+  void clearInferences();
 
   /// Get the set of inferences.
   const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& getSetOfInferences() const { return _setOfInferences; }

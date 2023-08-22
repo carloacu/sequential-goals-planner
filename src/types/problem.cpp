@@ -968,13 +968,27 @@ std::map<int, std::vector<Goal>> Problem::getNotSatisfiedGoals() const
   return res;
 }
 
+void Problem::addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
+                                 const std::shared_ptr<const SetOfInferences>& pSetOfInferences)
+{
+  _setOfInferences.emplace(pSetOfInferencesId, pSetOfInferences);
+  _clearAccessibleAndRemovableFacts();
+}
 
 void Problem::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
 {
   auto it = _setOfInferences.find(pSetOfInferencesId);
   if (it != _setOfInferences.end())
     _setOfInferences.erase(it);
+  _clearAccessibleAndRemovableFacts();
 }
+
+void Problem::clearInferences()
+{
+  _setOfInferences.clear();
+  _clearAccessibleAndRemovableFacts();
+}
+
 
 void Problem::_removeNoStackableGoals(WhatChanged& pWhatChanged,
                                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
