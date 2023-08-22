@@ -2160,6 +2160,21 @@ void _linkWithAnyValueInCondition()
 }
 
 
+void _removeAFactWithAnyValue()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_a + " & !" + _fact_b + "=*")));
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  problem.addFact(cp::Fact(_fact_b + "=toto"), now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_a)});
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_false(problem.hasFact(_fact_b + "=toto"));
+}
+
+
 
 }
 
@@ -2249,6 +2264,7 @@ int main(int argc, char *argv[])
   _actionWithANegatedFactNotTriggeredIfNotNecessary();
   _useTwoTimesAnInference();
   _linkWithAnyValueInCondition();
+  _removeAFactWithAnyValue();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

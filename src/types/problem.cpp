@@ -322,7 +322,27 @@ void Problem::_removeFacts(WhatChanged& pWhatChanged,
   {
     auto it = _facts.find(currFact);
     if (it == _facts.end())
-      continue;
+    {
+      // If the fact is not found, we try to find the fact with another value
+      if (currFact.value == Fact::anyValue)
+      {
+        auto itFromFactName = _factNamesToFacts.find(currFact.name);
+        if (itFromFactName != _factNamesToFacts.end())
+        {
+          for (auto& currFactFromName : itFromFactName->second)
+          {
+            if (currFactFromName.areEqualExceptAnyValues(currFact))
+            {
+              it = _facts.find(currFactFromName);
+              if (it != _facts.end())
+                break;
+            }
+          }
+        }
+      }
+      if (it == _facts.end())
+        continue;
+    }
     pWhatChanged.removedFacts.insert(currFact);
     _facts.erase(it);
     {
