@@ -1486,7 +1486,7 @@ void _testQuiz()
   cp::WorldModification questionEffect(cp::FactModification::fromStr("add(numberOfQuestion, 1)"));
   questionEffect.potentialFactsModifications = cp::FactModification::fromStr(_fact_askAllTheQuestions);
   const cp::Action actionQ1({}, questionEffect);
-  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStrWithExps(_fact_askAllTheQuestions),
+  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStr(_fact_askAllTheQuestions),
                                           cp::FactModification::fromStr(_fact_finishToAskQuestions));
   actions.emplace(_action_askQuestion1, actionQ1);
   actions.emplace(_action_askQuestion2, cp::Action({}, questionEffect));
