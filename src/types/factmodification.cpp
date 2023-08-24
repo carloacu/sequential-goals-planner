@@ -354,40 +354,6 @@ void FactModificationNode::forAllFacts(const std::function<void (const Fact&)>& 
   }
 }
 
-bool FactModificationNode::forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
-                                                const Problem& pProblem) const
-{
-  if (nodeType == FactModificationNodeType::AND)
-    return (leftOperand && leftOperand->forAllFactsUntilTrue(pFactCallback, pProblem)) ||
-        (rightOperand && rightOperand->forAllFactsUntilTrue(pFactCallback, pProblem));
-
-  if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
-  {
-    auto* leftFactPtr = leftOperand->fcFactPtr();
-    auto* rightFactPtr = rightOperand->fcFactPtr();
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
-    {
-      auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
-      return pFactCallback(factToCheck);
-    }
-  }
-
-  if (nodeType == FactModificationNodeType::FOR_ALL)
-  {
-    bool res = false;
-    _forAllInstruction(
-          [&](const FactModification& pFactModification)
-    {
-      if (!res)
-        res = pFactModification.forAllFactsUntilTrue(pFactCallback, pProblem);
-    }, pProblem);
-    return res;
-  }
-
-  return false;
-}
-
 void FactModificationNode::forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback,
                                           const Problem& pProblem) const
 {
@@ -408,27 +374,6 @@ void FactModificationNode::forAllNotFacts(const std::function<void (const Fact&)
   }
 }
 
-bool FactModificationNode::forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
-                                                   const Problem& pProblem) const
-{
-  if (nodeType == FactModificationNodeType::AND)
-    return (leftOperand && leftOperand->forAllNotFactsUntilTrue(pFactCallback, pProblem)) ||
-        (rightOperand && rightOperand->forAllNotFactsUntilTrue(pFactCallback, pProblem));
-
-  if (nodeType == FactModificationNodeType::FOR_ALL)
-  {
-    bool res = false;
-    _forAllInstruction(
-          [&](const FactModification& pFactModification)
-    {
-      if (!res)
-        res = pFactModification.forAllNotFactsUntilTrue(pFactCallback, pProblem);
-    }, pProblem);
-    return res;
-  }
-
-  return false;
-}
 
 bool FactModificationNode::forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const
 {
@@ -519,26 +464,11 @@ void FactModificationFact::forAllFacts(const std::function<void (const Fact&)>& 
     pFactCallback(factOptional.fact);
 }
 
-bool FactModificationFact::forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback, const Problem&) const
-{
-  if (!factOptional.isFactNegated)
-    return pFactCallback(factOptional.fact);
-  return false;
-}
-
 void FactModificationFact::forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback,
                                           const Problem& pProblem) const
 {
   if (factOptional.isFactNegated)
     pFactCallback(factOptional.fact);
-}
-
-bool FactModificationFact::forAllNotFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
-                                                   const Problem& pProblem) const
-{
-  if (factOptional.isFactNegated)
-    return pFactCallback(factOptional.fact);
-  return false;
 }
 
 

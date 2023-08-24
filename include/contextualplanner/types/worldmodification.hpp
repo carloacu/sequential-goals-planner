@@ -80,6 +80,11 @@ struct CONTEXTUALPLANNER_API WorldModification
   void replaceFact(const cp::Fact& pOldFact,
                    const cp::Fact& pNewFact);
 
+  /**
+   * @brief Iterate over all the optinal facts until one callback returns true.
+   * @param pCallback Callback called for each optional fact until one returns true.
+   * @return True if one callback returned true, false otherwise.
+   */
   bool forAllFactsOptUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
                                const Problem& pProblem) const;
   /**
@@ -90,27 +95,12 @@ struct CONTEXTUALPLANNER_API WorldModification
                    const Problem& pProblem) const;
 
   /**
-   * @brief Iterate over all the facts until one callback returns true.
-   * @param pCallback Callback called for each fact until one returns true.
-   * @return True if one callback returned true, false otherwise.
-   */
-  bool forAllFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
-                            const Problem& pProblem) const;
-
-  /**
    * @brief Iterate over all the facts that should be removed.
    * @param pCallback Callback called for each fact that should be removed.
    */
   void forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback,
                       const Problem& pProblem) const;
 
-  /**
-   * @brief Iterate over all the facts that should be removed until one callback returns true.
-   * @param pCallback Callback called for each fact that should be removed until one returns true.
-   * @return True if one callback returned true, false otherwise.
-   */
-  bool forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
-                               const Problem& pProblem) const;
 
   /// Fact modifications declared and that will be applied to the world.
   std::unique_ptr<cp::FactModification> factsModifications;
@@ -195,16 +185,6 @@ inline void WorldModification::forAllFacts(const std::function<void(const cp::Fa
     potentialFactsModifications->forAllFacts(pCallback, pProblem);
 }
 
-inline bool WorldModification::forAllFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
-                                                    const Problem& pProblem) const
-{
-  if (factsModifications && factsModifications->forAllFactsUntilTrue(pCallback, pProblem))
-    return true;
-  if (potentialFactsModifications && potentialFactsModifications->forAllFactsUntilTrue(pCallback, pProblem))
-    return true;
-  return false;
-}
-
 inline void WorldModification::forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback,
                                               const Problem& pProblem) const
 {
@@ -214,15 +194,6 @@ inline void WorldModification::forAllNotFacts(const std::function<void(const cp:
     potentialFactsModifications->forAllNotFacts(pCallback, pProblem);
 }
 
-inline bool WorldModification::forAllNotFactsUntilTrue(const std::function<bool(const cp::Fact&)>& pCallback,
-                                                       const Problem& pProblem) const
-{
-  if (factsModifications && factsModifications->forAllNotFactsUntilTrue(pCallback, pProblem))
-    return true;
-  if (potentialFactsModifications && potentialFactsModifications->forAllNotFactsUntilTrue(pCallback, pProblem))
-    return true;
-  return false;
-}
 
 
 } // !cp
