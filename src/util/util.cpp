@@ -1,4 +1,5 @@
 #include <contextualplanner/util/util.hpp>
+#include <sstream>
 
 namespace cp
 {
@@ -59,6 +60,20 @@ void applyNewParams(
     pParameters[currNewParam.first] = std::move(currNewParam.second);
 }
 
+
+
+std::string add(
+    const std::string& pNb1Str,
+    int pNb2)
+{
+  try {
+    int nb1 = lexical_cast<int>(pNb1Str);
+    std::stringstream ss;
+    ss << nb1 + pNb2;
+    return ss.str();
+  }  catch (...) {}
+  return pNb1Str;
+}
 
 
 }

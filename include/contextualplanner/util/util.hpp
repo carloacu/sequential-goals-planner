@@ -21,6 +21,26 @@ void applyNewParams(
     std::map<std::string, std::set<std::string>>& pNewParameters);
 
 
+std::string add(
+    const std::string& pNb1Str,
+    int pNb2);
+
+
+template <typename T>
+T lexical_cast(const std::string& pStr)
+{
+  bool firstChar = true;
+  for (const auto& currChar : pStr)
+  {
+    if ((currChar < '0' || currChar > '9') &&
+        !(firstChar && currChar == '-'))
+      throw std::runtime_error("bad lexical cast: source type value could not be interpreted as target");
+    firstChar = false;
+  }
+  return atoi(pStr.c_str());
+}
+
+
 }
 
 #endif // INCLUDE_CONTEXTUALPLANNER_UTIL_UTIL_HPP

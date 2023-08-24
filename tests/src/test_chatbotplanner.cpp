@@ -1483,7 +1483,7 @@ void _testQuiz()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::WorldModification questionEffect(cp::FactModification::fromStrWithExps("&++${number-of-question}"));
+  cp::WorldModification questionEffect(cp::FactModification::fromStr("add(numberOfQuestion, 1)"));
   questionEffect.potentialFactsModifications = cp::FactModification::fromStr(_fact_askAllTheQuestions);
   const cp::Action actionQ1({}, questionEffect);
   const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStrWithExps(_fact_askAllTheQuestions),
@@ -1494,11 +1494,11 @@ void _testQuiz()
   cp::Domain domain(std::move(actions));
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
-  const cp::Inference inferenceFinishToActActions(cp::FactCondition::fromStrWithExps("${number-of-question}=${max-number-of-questions}"),
+  const cp::Inference inferenceFinishToActActions(cp::FactCondition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
                                                   cp::FactModification::fromStr(_fact_askAllTheQuestions));
   setOfInferences->addInference(_action_finisehdToAskQuestions, inferenceFinishToActActions);
 
-  auto initFacts = cp::FactModification::fromStrWithExps("${number-of-question}=0&${max-number-of-questions}=3");
+  auto initFacts = cp::FactModification::fromStr("numberOfQuestion=0 & maxNumberOfQuestions=3");
 
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);

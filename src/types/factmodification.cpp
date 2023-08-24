@@ -1,6 +1,8 @@
 #include <contextualplanner/types/factmodification.hpp>
+#include <sstream>
 #include <contextualplanner/types/problem.hpp>
 #include "expressionParsed.hpp"
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -21,6 +23,7 @@ const std::map<char, ExpressionOperator> _charToOperators
 {{'=', ExpressionOperator::EQUAL}, {'+', ExpressionOperator::PLUS}, {'+', ExpressionOperator::MINUS}};
 const std::string _setFunctionName = "set";
 const std::string _forAllFunctionName = "forAll";
+const std::string _addFunctionName = "add";
 
 
 std::unique_ptr<FactModification> _merge(std::list<std::unique_ptr<FactModification>>& pFactModifications)
@@ -98,6 +101,24 @@ std::unique_ptr<FactModification> _expressionParsedToFactModification(const Expr
                                                  std::make_unique<FactModificationFact>(secondArg.toFact()),
                                                  _expressionParsedToFactModification(thridArg),
                                                  firstArg.name);
+  }
+  else if (pExpressionParsed.name == _addFunctionName &&
+      pExpressionParsed.arguments.size() == 2)
+  {
+    auto itArg = pExpressionParsed.arguments.begin();
+    auto& firstArg = *itArg;
+    ++itArg;
+    auto& secondArg = *itArg;
+    std::unique_ptr<FactModification> rightOpPtr;
+    try {
+      rightOpPtr = std::make_unique<FactModificationNumber>(lexical_cast<int>(secondArg.name));
+    }  catch (...) {}
+    if (!rightOpPtr)
+      rightOpPtr = _expressionParsedToFactModification(secondArg);
+
+    res = std::make_unique<FactModificationNode>(FactModificationNodeType::ADD,
+                                                 _expressionParsedToFactModification(firstArg),
+                                                 std::move(rightOpPtr));
   }
   else
   {
@@ -262,13 +283,17 @@ bool FactModificationNode::canModifySomethingInTheWorld() const
   if (nodeType == FactModificationNodeType::FOR_ALL)
     return rightOperand && rightOperand->canModifySomethingInTheWorld();
 
+  if (nodeType == FactModificationNodeType::ADD)
+    return true;
+
   return false;
 }
 
 bool FactModificationNode::isDynamic() const
 {
   if (nodeType == FactModificationNodeType::SET ||
-      nodeType == FactModificationNodeType::FOR_ALL)
+      nodeType == FactModificationNodeType::FOR_ALL ||
+      nodeType == FactModificationNodeType::ADD)
     return true;
   return (leftOperand && leftOperand->isDynamic()) ||
       (rightOperand && rightOperand->isDynamic());
@@ -325,9 +350,9 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
     auto* rightFactPtr = rightOperand->fcFactPtr();
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
-      auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
-      return pFactCallback(FactOptional(factToCheck));
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      return pFactCallback(factToCheck);
     }
   }
   else if (nodeType == FactModificationNodeType::FOR_ALL)
@@ -337,6 +362,20 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
     {
       pFactModification.forAll(pFactCallback, pExpCallback, pProblem);
     }, pProblem);
+  }
+  else if (nodeType == FactModificationNodeType::ADD && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    if (leftFactPtr != nullptr)
+    {
+      auto* rightNumberPtr = rightOperand->fcNumberPtr();
+      if (rightNumberPtr != nullptr)
+      {
+        auto factToCheck = leftFactPtr->factOptional;
+        factToCheck.fact.value = add(pProblem.getFactValue(leftFactPtr->factOptional.fact), rightNumberPtr->nb);
+        return pFactCallback(factToCheck);
+      }
+    }
   }
 }
 
@@ -372,6 +411,21 @@ bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (con
     return res;
   }
 
+  if (nodeType == FactModificationNodeType::ADD && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    if (leftFactPtr != nullptr)
+    {
+      auto* rightNumberPtr = rightOperand->fcNumberPtr();
+      if (rightNumberPtr != nullptr)
+      {
+        auto factToCheck = leftFactPtr->factOptional;
+        factToCheck.fact.value = add(pProblem.getFactValue(leftFactPtr->factOptional.fact), rightNumberPtr->nb);
+        return pFactCallback(factToCheck);
+      }
+    }
+  }
+
   return false;
 }
 
@@ -391,9 +445,9 @@ void FactModificationNode::forAllFacts(const std::function<void (const FactOptio
     auto* rightFactPtr = rightOperand->fcFactPtr();
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
-      auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
-      return pFactCallback(factToCheck);
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      pFactCallback(factToCheck);
     }
   }
   else if (nodeType == FactModificationNodeType::FOR_ALL)
@@ -403,6 +457,20 @@ void FactModificationNode::forAllFacts(const std::function<void (const FactOptio
     {
       pFactModification.forAllFacts(pFactCallback, pProblem);
     }, pProblem);
+  }
+  else if (nodeType == FactModificationNodeType::ADD && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    if (leftFactPtr != nullptr)
+    {
+      auto* rightNumberPtr = rightOperand->fcNumberPtr();
+      if (rightNumberPtr != nullptr)
+      {
+        auto factToCheck = leftFactPtr->factOptional;
+        factToCheck.fact.value = add(pProblem.getFactValue(leftFactPtr->factOptional.fact), rightNumberPtr->nb);
+        pFactCallback(factToCheck);
+      }
+    }
   }
 }
 
@@ -454,6 +522,8 @@ std::string FactModificationNode::toStr() const
     return _setFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
   case FactModificationNodeType::FOR_ALL:
     return _forAllFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  case FactModificationNodeType::ADD:
+    return _addFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
   }
   return "";
 }
@@ -544,5 +614,31 @@ std::unique_ptr<FactModification> FactModificationExpression::cloneParamSet(cons
 {
   return std::make_unique<FactModificationExpression>(expression);
 }
+
+
+
+FactModificationNumber::FactModificationNumber(int pNb)
+ : FactModification(FactModificationType::NUMBER),
+   nb(pNb)
+{
+}
+
+std::unique_ptr<FactModification> FactModificationNumber::clone(const std::map<std::string, std::string>*) const
+{
+  return std::make_unique<FactModificationNumber>(nb);
+}
+
+std::unique_ptr<FactModification> FactModificationNumber::cloneParamSet(const std::map<std::string, std::set<std::string>>&) const
+{
+  return std::make_unique<FactModificationNumber>(nb);
+}
+
+std::string FactModificationNumber::toStr() const
+{
+  std::stringstream ss;
+  ss << nb;
+  return ss.str();
+}
+
 
 } // !cp

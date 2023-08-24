@@ -12,12 +12,14 @@ namespace cp
 {
 struct Problem;
 struct FactModificationFact;
+struct FactModificationNumber;
 
 enum class FactModificationType
 {
   NODE,
   FACT,
-  EXPRESSION
+  EXPRESSION,
+  NUMBER
 };
 
 struct CONTEXTUALPLANNER_API FactModification
@@ -42,6 +44,7 @@ struct CONTEXTUALPLANNER_API FactModification
   virtual std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const = 0;
   virtual std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
   virtual const FactModificationFact* fcFactPtr() const = 0;
+  virtual const FactModificationNumber* fcNumberPtr() const = 0;
 
   FactModificationType type;
 
@@ -58,7 +61,8 @@ enum class FactModificationNodeType
 {
   AND,
   SET,
-  FOR_ALL
+  FOR_ALL,
+  ADD
 };
 
 
@@ -87,6 +91,7 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return nullptr; }
+  const FactModificationNumber* fcNumberPtr() const override { return nullptr; }
 
   std::string toStr() const override;
 
@@ -122,6 +127,7 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return this; }
+  const FactModificationNumber* fcNumberPtr() const override { return nullptr; }
 
   std::string toStr() const override { return factOptional.toStr(); }
 
@@ -150,12 +156,41 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return nullptr; }
+  const FactModificationNumber* fcNumberPtr() const override { return nullptr; }
 
   std::string toStr() const override { return "<an_expression>"; }
 
   Expression expression;
 };
 
+
+struct CONTEXTUALPLANNER_API FactModificationNumber : public FactModification
+{
+  FactModificationNumber(int pNb);
+
+  bool hasFact(const cp::Fact& pFact) const override { return false; }
+  bool canModifySomethingInTheWorld() const override { return false; }
+  bool isDynamic() const override { return false; }
+
+  void replaceFact(const cp::Fact& pOldFact,
+                   const Fact& pNewFact) override {}
+  void forAll(const std::function<void (const FactOptional&)>&,
+              const std::function<void (const Expression&)>&,
+              const Problem&) const override {}
+  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>&,
+                               const Problem&) const override { return false; }
+  void forAllFacts(const std::function<void (const FactOptional&)>&,
+                   const Problem&) const override {}
+  bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return false; }
+
+  std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
+  std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
+  const FactModificationFact* fcFactPtr() const override { return nullptr; }
+  const FactModificationNumber* fcNumberPtr() const override { return this; }
+
+  std::string toStr() const override;
+  int nb;
+};
 
 } // !cp
 

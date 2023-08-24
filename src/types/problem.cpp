@@ -14,20 +14,6 @@ const int Problem::defaultPriority = 10;
 namespace
 {
 
-template <typename T>
-T _lexical_cast(const std::string& pStr)
-{
-  bool firstChar = true;
-  for (const auto& currChar : pStr)
-  {
-    if ((currChar < '0' || currChar > '9') &&
-        !(firstChar && currChar == '-'))
-      throw std::runtime_error("bad lexical cast: source type value could not be interpreted as target");
-    firstChar = false;
-  }
-  return atoi(pStr.c_str());
-}
-
 void _incrementStr(std::string& pStr)
 {
   if (pStr.empty())
@@ -39,7 +25,7 @@ void _incrementStr(std::string& pStr)
     try
     {
       std::stringstream ss;
-      ss << _lexical_cast<int>(pStr) + 1;
+      ss << lexical_cast<int>(pStr) + 1;
       pStr = ss.str();
     }
     catch (...) {}
