@@ -30,7 +30,6 @@ struct CONTEXTUALPLANNER_API FactCondition
   virtual bool containsFactOpt(const FactOptional& pFactOptional,
                                const std::map<std::string, std::set<std::string>>& pFactParameters,
                                const std::vector<std::string>& pThisFactParameters) const = 0;
-  virtual bool containsNotFact(const Fact& pFact) const = 0;
   virtual bool containsExpression(const Expression& pExpression) const = 0;
   virtual void replaceFact(const cp::Fact& pOldFact,
                            const Fact& pNewFact) = 0;
@@ -84,7 +83,6 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
                        const std::vector<std::string>& pThisFactParameters) const override;
-  bool containsNotFact(const Fact& pFact) const override;
   bool containsExpression(const Expression& pExpression) const override;
   void replaceFact(const Fact& pOldFact,
                    const Fact& pNewFact) override;
@@ -127,7 +125,6 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
                        const std::vector<std::string>& pThisFactParameters) const override;
-  bool containsNotFact(const Fact& pFact) const override;
   bool containsExpression(const Expression&) const override { return false; }
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
@@ -168,7 +165,6 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
   bool containsFactOpt(const FactOptional&,
                        const std::map<std::string, std::set<std::string>>&,
                        const std::vector<std::string>&) const override { return false; }
-  bool containsNotFact(const Fact& pFact) const override  { return false; }
   bool containsExpression(const Expression& pExpression) const override;
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;

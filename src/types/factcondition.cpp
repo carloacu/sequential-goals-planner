@@ -237,12 +237,6 @@ bool FactConditionNode::containsFactOpt(const FactOptional& pFactOptional,
       (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pThisFactParameters));
 }
 
-bool FactConditionNode::containsNotFact(const Fact& pFact) const
-{
-  return (leftOperand && leftOperand->containsNotFact(pFact)) ||
-      (rightOperand && rightOperand->containsNotFact(pFact));
-}
-
 bool FactConditionNode::containsExpression(const Expression& pExpression) const
 {
   return (leftOperand && leftOperand->containsExpression(pExpression)) ||
@@ -447,11 +441,6 @@ bool FactConditionFact::containsFactOpt(const FactOptional& pFactOptional,
   if (pFactOptional.isFactNegated == factOptional.isFactNegated)
     return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, &pThisFactParameters);
   return false;
-}
-
-bool FactConditionFact::containsNotFact(const Fact& pFact) const
-{
-  return factOptional.isFactNegated && factOptional.fact == pFact;
 }
 
 void FactConditionFact::replaceFact(const cp::Fact& pOldFact,
