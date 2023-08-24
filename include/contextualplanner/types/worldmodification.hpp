@@ -80,6 +80,8 @@ struct CONTEXTUALPLANNER_API WorldModification
   void replaceFact(const cp::Fact& pOldFact,
                    const cp::Fact& pNewFact);
 
+  bool forAllFactsOptUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
+                               const Problem& pProblem) const;
   /**
    * @brief Iterate over all the facts.
    * @param pCallback Callback called for each fact.
@@ -172,6 +174,16 @@ inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
       currGoal.factCondition().replaceFact(pOldFact, pNewFact);
   for (auto& currGoal : goalsToAddInCurrentPriority)
     currGoal.factCondition().replaceFact(pOldFact, pNewFact);
+}
+
+inline bool WorldModification::forAllFactsOptUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
+                                                       const Problem& pProblem) const
+{
+  if (factsModifications && factsModifications->forAllFactsOptUntilTrue(pCallback, pProblem))
+    return true;
+  if (potentialFactsModifications && potentialFactsModifications->forAllFactsOptUntilTrue(pCallback, pProblem))
+    return true;
+  return false;
 }
 
 inline void WorldModification::forAllFacts(const std::function<void(const cp::Fact&)>& pCallback,

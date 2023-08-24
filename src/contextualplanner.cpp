@@ -147,8 +147,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
                                           const std::unique_ptr<FactCondition>& pCondition,
                                           const WorldModification& pEffect,
-                                          const Fact& pFact,
-                                          bool pIsFactNegated,
+                                          const FactOptional& pFactOptional,
                                           std::map<std::string, std::set<std::string>>& pParentParameters,
                                           const Goal& pGoal,
                                           const Problem& pProblem,
@@ -157,7 +156,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
                                           FactsAlreadyChecked& pFactsAlreadychecked)
 {
   if (!pCondition ||
-      (pCondition->containsFact(pFact, pIsFactNegated, pParentParameters, pParameters) &&
+      (pCondition->containsFact(pFactOptional.fact, pFactOptional.isFactNegated, pParentParameters, pParameters) &&
        pCondition->canBecomeTrue(pProblem)))
   {
     std::map<std::string, std::set<std::string>> parametersToValues;
@@ -174,9 +173,9 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
         if (currParentParam.second.empty())
         {
           pCondition->untilFalse(
-                [&](const FactOptional& pFactOptional)
+                [&](const FactOptional& pConditionFactOptional)
           {
-            auto parentParamValue = pFact.tryToExtractParameterValueFromExemple(currParentParam.first, pFactOptional.fact);
+            auto parentParamValue = pFactOptional.fact.tryToExtractParameterValueFromExemple(currParentParam.first, pConditionFactOptional.fact);
             if (parentParamValue.empty())
               return true;
             // Maybe the extracted parameter is also a parameter so we replace by it's value
@@ -201,7 +200,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
       // Check that the new fact pattern is not already satisfied
       if (actionIsAPossibleFollowUp)
       {
-        if (!pProblem.isFactPatternSatisfied(pFact, pIsFactNegated, {}, {}, &pParentParameters, nullptr))
+        if (!pProblem.isFactPatternSatisfied(pFactOptional.fact, pFactOptional.isFactNegated, {}, {}, &pParentParameters, nullptr))
           return PossibleEffect::SATISFIED;
         return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
       }
@@ -211,8 +210,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
 }
 
 PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
-    const Fact& pFact,
-    bool pIsFactNegated,
+    const FactOptional& pFactOptional,
     std::map<std::string, std::set<std::string>>& pParentParameters,
     const std::map<std::string, std::set<ActionId>>& pPreconditionToActions,
     const Goal& pGoal,
@@ -222,7 +220,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto res = PossibleEffect::NOT_SATISFIED;
-  auto it = pPreconditionToActions.find(pFact.name);
+  auto it = pPreconditionToActions.find(pFactOptional.fact.name);
   if (it != pPreconditionToActions.end())
   {
     auto& actions = pDomain.actions();
@@ -233,7 +231,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
       {
         auto& action = itAction->second;
         res = _merge(_lookForAPossibleDeduction(action.parameters, action.precondition, action.effect,
-                                                pFact, pIsFactNegated, pParentParameters, pGoal, pProblem, pFactOptionalToSatisfy,
+                                                pFactOptional, pParentParameters, pGoal, pProblem, pFactOptionalToSatisfy,
                                                 pDomain, pFactsAlreadychecked), res);
         if (res == PossibleEffect::SATISFIED)
           return res;
@@ -245,8 +243,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
 
 
 PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
-    const Fact& pFact,
-    bool pIsFactNegated,
+    const FactOptional& pFactOptional,
     std::map<std::string, std::set<std::string>>& pParentParameters,
     const std::map<std::string, std::set<InferenceId>>& pConditionToInferences,
     const std::map<InferenceId, Inference>& pInferences,
@@ -257,7 +254,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto res = PossibleEffect::NOT_SATISFIED;
-  auto it = pConditionToInferences.find(pFact.name);
+  auto it = pConditionToInferences.find(pFactOptional.fact.name);
   if (it != pConditionToInferences.end())
   {
     for (const auto& currInferenceId : it->second)
@@ -269,7 +266,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
         if (inference.factsToModify)
         {
           res = _merge(_lookForAPossibleDeduction(inference.parameters, inference.condition, inference.factsToModify->clone(nullptr),
-                                                  pFact, pIsFactNegated, pParentParameters, pGoal, pProblem, pFactOptionalToSatisfy,
+                                                  pFactOptional, pParentParameters, pGoal, pProblem, pFactOptionalToSatisfy,
                                                   pDomain, pFactsAlreadychecked), res);
           if (res == PossibleEffect::SATISFIED)
             return res;
@@ -314,75 +311,52 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   }
 
   auto& setOfInferences = pProblem.getSetOfInferences();
-  auto& preconditionToActions = pDomain.preconditionToActions();
-  bool subRes = pEffectToCheck.forAllFactsUntilTrue([&](const cp::Fact& pFact) {
+  return pEffectToCheck.forAllFactsOptUntilTrue([&](const cp::FactOptional& pFactOptional) {
     // Condition only for optimization
-    if (pParameters.empty() && pProblem.facts().count(pFact) > 0)
-      return false;
-
-    if (pFactsAlreadychecked.factsToAdd.count(pFact) == 0)
+    if (pParameters.empty())
     {
-      FactsAlreadyChecked subFactsAlreadychecked = pFactsAlreadychecked;
-      subFactsAlreadychecked.factsToAdd.insert(pFact);
-      PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pFact, false, pParameters, preconditionToActions, pGoal,
-                                                                           pProblem, pFactOptionalToSatisfy,
-                                                                           pDomain, subFactsAlreadychecked);
-      if (possibleEffect != PossibleEffect::SATISFIED)
+      if (!pFactOptional.isFactNegated)
       {
-        for (auto& currSetOfInferences : setOfInferences)
-        {
-          auto& inferences = currSetOfInferences.second->inferences();
-          auto& conditionToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFact, false, pParameters, conditionToReachableInferences, inferences,
-                                                                                   pGoal, pProblem, pFactOptionalToSatisfy,
-                                                                                   pDomain, subFactsAlreadychecked), possibleEffect);
-          if (possibleEffect == PossibleEffect::SATISFIED)
-            break;
-          auto& conditionToUnreachableInferences = currSetOfInferences.second->unreachableInferenceLinks().conditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFact, false, pParameters, conditionToUnreachableInferences, inferences,
-                                                                                   pGoal, pProblem, pFactOptionalToSatisfy,
-                                                                                   pDomain, subFactsAlreadychecked), possibleEffect);
-          if (possibleEffect == PossibleEffect::SATISFIED)
-            break;
-        }
+        if (pProblem.facts().count(pFactOptional.fact) > 0)
+          return false;
       }
-
-      if (possibleEffect != PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD)
-        pFactsAlreadychecked.swap(subFactsAlreadychecked);
-      return possibleEffect == PossibleEffect::SATISFIED;
+      else
+      {
+        if (pProblem.facts().count(pFactOptional.fact) == 0)
+           return false;
+      }
     }
-    return false;
-  }, pProblem);
-  if (subRes)
-    return true;
 
-  auto& notPreconditionToActions = pDomain.notPreconditionToActions();
-  return pEffectToCheck.forAllNotFactsUntilTrue([&](const cp::Fact& pFact) {
-    // Condition only for optimization
-    if (pParameters.empty() && pProblem.facts().count(pFact) == 0)
-       return false;
-
-    if (pFactsAlreadychecked.factsToRemove.count(pFact) == 0)
+    if ((!pFactOptional.isFactNegated && pFactsAlreadychecked.factsToAdd.count(pFactOptional.fact) == 0) ||
+        (pFactOptional.isFactNegated && pFactsAlreadychecked.factsToRemove.count(pFactOptional.fact) == 0))
     {
       FactsAlreadyChecked subFactsAlreadychecked = pFactsAlreadychecked;
-      subFactsAlreadychecked.factsToRemove.insert(pFact);
-      PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pFact, true, pParameters, notPreconditionToActions, pGoal,
+      if (!pFactOptional.isFactNegated)
+        subFactsAlreadychecked.factsToAdd.insert(pFactOptional.fact);
+      else
+        subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
+
+      auto& preconditionToActions = !pFactOptional.isFactNegated ? pDomain.preconditionToActions() : pDomain.notPreconditionToActions();
+      PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pFactOptional, pParameters, preconditionToActions, pGoal,
                                                                                     pProblem, pFactOptionalToSatisfy,
                                                                                     pDomain, subFactsAlreadychecked);
-
       if (possibleEffect != PossibleEffect::SATISFIED)
       {
         for (auto& currSetOfInferences : setOfInferences)
         {
           auto& inferences = currSetOfInferences.second->inferences();
-          auto& notConditionToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFact, true, pParameters, notConditionToReachableInferences, inferences,
+          auto& conditionToReachableInferences = !pFactOptional.isFactNegated ?
+                currSetOfInferences.second->reachableInferenceLinks().conditionToInferences :
+                currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
+          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, conditionToReachableInferences, inferences,
                                                                                    pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
           if (possibleEffect == PossibleEffect::SATISFIED)
             break;
-          auto& notConditionToUnreachableInferences = currSetOfInferences.second->unreachableInferenceLinks().notConditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFact, true, pParameters, notConditionToUnreachableInferences, inferences,
+          auto& conditionToUnreachableInferences = !pFactOptional.isFactNegated ?
+                currSetOfInferences.second->unreachableInferenceLinks().conditionToInferences :
+                currSetOfInferences.second->unreachableInferenceLinks().notConditionToInferences;
+          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, conditionToUnreachableInferences, inferences,
                                                                                    pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
           if (possibleEffect == PossibleEffect::SATISFIED)
