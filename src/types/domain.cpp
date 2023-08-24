@@ -25,9 +25,9 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
   if (pFactsModifications->forAllFactsOptUntilTrue(
         [&](const FactOptional& pFactOptional)
   {
-    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFactOptional.fact, pFactOptional.isFactNegated,
-                                                                  _emptyParametersWithValues,
-                                                                  _emptyParameters);
+    return !pFactConditionPtr || !pFactConditionPtr->containsFactOpt(pFactOptional,
+                                                                     _emptyParametersWithValues,
+                                                                     _emptyParameters);
   }, _emptyProblem))
   {
     return false;

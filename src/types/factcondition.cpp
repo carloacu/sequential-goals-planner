@@ -229,13 +229,12 @@ bool FactConditionNode::hasFact(const Fact& pFact) const
 }
 
 
-bool FactConditionNode::containsFact(const Fact& pFact,
-                                     bool pIsFactNegated,
-                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
-                                     const std::vector<std::string>& pThisFactParameters) const
+bool FactConditionNode::containsFactOpt(const FactOptional& pFactOptional,
+                                        const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                        const std::vector<std::string>& pThisFactParameters) const
 {
-  return (leftOperand && leftOperand->containsFact(pFact, pIsFactNegated, pFactParameters, pThisFactParameters)) ||
-      (rightOperand && rightOperand->containsFact(pFact, pIsFactNegated, pFactParameters, pThisFactParameters));
+  return (leftOperand && leftOperand->containsFactOpt(pFactOptional, pFactParameters, pThisFactParameters)) ||
+      (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pThisFactParameters));
 }
 
 bool FactConditionNode::containsNotFact(const Fact& pFact) const
@@ -441,13 +440,12 @@ bool FactConditionFact::hasFact(const cp::Fact& pFact) const
   return factOptional.fact == pFact;
 }
 
-bool FactConditionFact::containsFact(const Fact& pFact,
-                                     bool pIsFactNegated,
-                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
-                                     const std::vector<std::string>& pThisFactParameters) const
+bool FactConditionFact::containsFactOpt(const FactOptional& pFactOptional,
+                                        const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                        const std::vector<std::string>& pThisFactParameters) const
 {
-  if (pIsFactNegated == factOptional.isFactNegated)
-    return factOptional.fact.areEqualExceptAnyValues(pFact, &pFactParameters, &pThisFactParameters);
+  if (pFactOptional.isFactNegated == factOptional.isFactNegated)
+    return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, &pThisFactParameters);
   return false;
 }
 

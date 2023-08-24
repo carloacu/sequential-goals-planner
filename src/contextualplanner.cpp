@@ -156,7 +156,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
                                           FactsAlreadyChecked& pFactsAlreadychecked)
 {
   if (!pCondition ||
-      (pCondition->containsFact(pFactOptional.fact, pFactOptional.isFactNegated, pParentParameters, pParameters) &&
+      (pCondition->containsFactOpt(pFactOptional, pParentParameters, pParameters) &&
        pCondition->canBecomeTrue(pProblem)))
   {
     std::map<std::string, std::set<std::string>> parametersToValues;
