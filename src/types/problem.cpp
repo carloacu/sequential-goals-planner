@@ -909,14 +909,12 @@ bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
         std::list<std::map<std::string, std::string>> paramPossibilities;
         unfoldMapWithSet(paramPossibilities, (*pParametersPtr));
 
-        bool hasAnyValueAsValue = pFactOptional.fact.value == Fact::anyValue;
         for (auto& currParamPoss : paramPossibilities)
         {
           auto factToCompare = pFactOptional.fact;
           factToCompare.fillParameters(currParamPoss);
           if (factToCompare.value == Fact::anyValue)
           {
-            hasAnyValueAsValue = true;
             for (auto& currFact : itFacts->second)
             {
               if (currFact.areEqualExceptAnyValues(factToCompare))
@@ -933,7 +931,7 @@ bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
             return true;
           }
         }
-        if (hasAnyValueAsValue)
+        if (pFactOptional.fact.value == Fact::anyValue)
           return false;
       }
 
