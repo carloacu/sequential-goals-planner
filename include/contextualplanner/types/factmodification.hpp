@@ -33,6 +33,8 @@ struct CONTEXTUALPLANNER_API FactModification
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                       const std::function<void (const Expression&)>& pExpCallback,
                       const Problem& pProblem) const = 0;
+  virtual bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                                       const Problem& pProblem) const = 0;
   virtual void forAllFacts(const std::function<void (const Fact&)>& pFactCallback,
                            const Problem& pProblem) const = 0;
   virtual bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
@@ -81,6 +83,8 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const std::function<void (const Expression&)>& pExpCallback,
               const Problem& pProblem) const override;
+  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                               const Problem& pProblem) const override;
   void forAllFacts(const std::function<void (const Fact&)>& pFactCallback,
                    const Problem& pProblem) const override;
   bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
@@ -120,6 +124,8 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const std::function<void (const Expression&)>&,
               const Problem&) const override { pFactCallback(factOptional); }
+  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                               const Problem& pProblem) const override;
   void forAllFacts(const std::function<void (const Fact&)>& pFactCallback,
                    const Problem& pProblem) const override;
   bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>& pFactCallback,
@@ -152,6 +158,8 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
   void forAll(const std::function<void (const FactOptional&)>&,
               const std::function<void (const Expression&)>& pExpCallback,
               const Problem&) const override { pExpCallback(expression); }
+  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>&,
+                               const Problem&) const override { return false; }
   void forAllFacts(const std::function<void (const Fact&)>&,
                    const Problem&) const override {}
   bool forAllFactsUntilTrue(const std::function<bool (const Fact&)>&,

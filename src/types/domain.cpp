@@ -22,21 +22,10 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
   if (pFactsModifications->isDynamic())
     return false;
 
-  if (pFactsModifications->forAllFactsUntilTrue(
-        [&](const Fact& pFact)
+  if (pFactsModifications->forAllFactsOptUntilTrue(
+        [&](const FactOptional& pFactOptional)
   {
-    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFact, false,
-                                                                  _emptyParametersWithValues,
-                                                                  _emptyParameters);
-  }, _emptyProblem))
-  {
-    return false;
-  }
-
-  if (pFactsModifications->forAllNotFactsUntilTrue(
-        [&](const Fact& pFact)
-  {
-    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFact, true,
+    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFactOptional.fact, pFactOptional.isFactNegated,
                                                                   _emptyParametersWithValues,
                                                                   _emptyParameters);
   }, _emptyProblem))

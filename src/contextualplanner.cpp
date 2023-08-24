@@ -290,63 +290,27 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              const Domain& pDomain,
                              FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (!pFactOptionalToSatisfy.isFactNegated)
+  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional)
   {
-    if (pEffectToCheck.factsModifications &&
-        pEffectToCheck.factsModifications->forAllFactsUntilTrue(
-              [&](const Fact& pFact)
-        {
-          std::map<std::string, std::set<std::string>> newParameters;
-          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
-          applyNewParams(pParameters, newParameters);
-          return res;
-        }, pProblem))
-    {
-      pSatisfyObjective = true;
-      return true;
-    }
-    if (pEffectToCheck.potentialFactsModifications &&
-        pEffectToCheck.potentialFactsModifications->forAllFactsUntilTrue(
-              [&](const Fact& pFact)
-        {
-          std::map<std::string, std::set<std::string>> newParameters;
-          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
-          applyNewParams(pParameters, newParameters);
-          return res;
-        }, pProblem))
-    {
-      pSatisfyObjective = true;
-      return true;
-    }
+    if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
+      return false;
+    std::map<std::string, std::set<std::string>> newParameters;
+    bool res = pFactOptionalToSatisfy.fact.isInFact(pFactOptional.fact, false, newParameters, &pParameters);
+    applyNewParams(pParameters, newParameters);
+    return res;
+  };
+
+  if (pEffectToCheck.factsModifications &&
+      pEffectToCheck.factsModifications->forAllFactsOptUntilTrue(doesSatisfyObjective, pProblem))
+  {
+    pSatisfyObjective = true;
+    return true;
   }
-  else
+  if (pEffectToCheck.potentialFactsModifications &&
+      pEffectToCheck.potentialFactsModifications->forAllFactsOptUntilTrue(doesSatisfyObjective, pProblem))
   {
-    if (pEffectToCheck.factsModifications &&
-        pEffectToCheck.factsModifications->forAllNotFactsUntilTrue(
-              [&](const Fact& pFact)
-        {
-          std::map<std::string, std::set<std::string>> newParameters;
-          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
-          applyNewParams(pParameters, newParameters);
-          return res;
-        }, pProblem))
-    {
-      pSatisfyObjective = true;
-      return true;
-    }
-    if (pEffectToCheck.potentialFactsModifications &&
-        pEffectToCheck.potentialFactsModifications->forAllNotFactsUntilTrue(
-              [&](const Fact& pFact)
-        {
-          std::map<std::string, std::set<std::string>> newParameters;
-          bool res = pFactOptionalToSatisfy.fact.isInFact(pFact, false, newParameters, &pParameters);
-          applyNewParams(pParameters, newParameters);
-          return res;
-        }, pProblem))
-    {
-      pSatisfyObjective = true;
-      return true;
-    }
+    pSatisfyObjective = true;
+    return true;
   }
 
   auto& setOfInferences = pProblem.getSetOfInferences();

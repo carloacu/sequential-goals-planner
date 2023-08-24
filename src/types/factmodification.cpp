@@ -288,6 +288,41 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
   }
 }
 
+
+bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                                                   const Problem& pProblem) const
+{
+  if (nodeType == FactModificationNodeType::AND)
+    return (leftOperand && leftOperand->forAllFactsOptUntilTrue(pFactCallback, pProblem)) ||
+        (rightOperand && rightOperand->forAllFactsOptUntilTrue(pFactCallback, pProblem));
+
+  if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    auto* rightFactPtr = rightOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      return pFactCallback(factToCheck);
+    }
+  }
+
+  if (nodeType == FactModificationNodeType::FOR_ALL)
+  {
+    bool res = false;
+    _forAllInstruction(
+          [&](const FactModification& pFactModification)
+    {
+      if (!res)
+        res = pFactModification.forAllFactsOptUntilTrue(pFactCallback, pProblem);
+    }, pProblem);
+    return res;
+  }
+
+  return false;
+}
+
 void FactModificationNode::forAllFacts(const std::function<void (const Fact&)>& pFactCallback,
                                        const Problem& pProblem) const
 {
@@ -471,6 +506,11 @@ void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
     factOptional.fact = pNewFact;
   else
     factOptional.fact.replaceFactInParameters(pOldFact, pNewFact);
+}
+
+bool FactModificationFact::forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const Problem&) const
+{
+  return pFactCallback(factOptional);
 }
 
 void FactModificationFact::forAllFacts(const std::function<void (const Fact&)>& pFactCallback, const Problem&) const
