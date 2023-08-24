@@ -205,12 +205,15 @@ void _test_goalToStr()
 
 void _test_factConditionParameters()
 {
+  assert_false(cp::FactCondition::fromStr("").operator bool());
+
   std::map<std::string, std::string> parameters = {{"target", "kitchen"}, {"object", "chair"}};
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::FactCondition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
 }
 
 void _test_factModificationToStr()
 {
+  assert_false(cp::FactModification::fromStr("").operator bool());
   assert_eq<std::string>("location(me)=target", cp::FactModification::fromStr("location(me)=target")->toStr());
   assert_eq<std::string>("location(me)=target & grab(sweets)", cp::FactModification::fromStr("location(me)=target & grab(sweets)")->toStr());
 }

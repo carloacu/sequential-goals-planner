@@ -246,6 +246,8 @@ std::unique_ptr<FactCondition> FactCondition::fromStrWithExps(const std::string&
 
 std::unique_ptr<FactCondition> FactCondition::fromStr(const std::string& pStr)
 {
+  if (pStr.empty())
+    return {};
   std::size_t pos = 0;
   auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
   return _expressionParsedToFactCondition(expressionParsed);

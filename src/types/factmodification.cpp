@@ -232,6 +232,8 @@ std::unique_ptr<FactModification> FactModification::fromStrWithExps(const std::s
 
 std::unique_ptr<FactModification> FactModification::fromStr(const std::string& pStr)
 {
+  if (pStr.empty())
+    return {};
   std::size_t pos = 0;
   auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
   return _expressionParsedToFactModification(expressionParsed);
