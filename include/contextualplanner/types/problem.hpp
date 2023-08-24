@@ -274,8 +274,7 @@ struct CONTEXTUALPLANNER_API Problem
    */
   bool isGoalSatisfied(const Goal& pGoal) const;
 
-  bool isFactPatternSatisfied(const Fact& pFact,
-                              bool pIsFactNegated,
+  bool isFactPatternSatisfied(const FactOptional &pFactOptional,
                               const std::set<Fact>& pPunctualFacts,
                               const std::set<Fact>& pRemovedFacts,
                               std::map<std::string, std::set<std::string>>* pParametersPtr,

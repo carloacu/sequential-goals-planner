@@ -456,9 +456,7 @@ bool FactConditionFact::isTrue(const Problem& pProblem,
                                std::map<std::string, std::set<std::string>>* pParametersPtr,
                                bool* pCanBecomeTruePtr) const
 {
-  return pProblem.isFactPatternSatisfied(factOptional.fact, factOptional.isFactNegated,
-                                  pPunctualFacts, pRemovedFacts,
-                                  pParametersPtr, pCanBecomeTruePtr);
+  return pProblem.isFactPatternSatisfied(factOptional, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr);
 }
 
 bool FactConditionFact::canBecomeTrue(const Problem& pProblem) const

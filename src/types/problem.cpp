@@ -881,20 +881,19 @@ bool Problem::isGoalSatisfied(const Goal& pGoal) const
       pGoal.factCondition().isTrue(*this);
 }
 
-bool Problem::isFactPatternSatisfied(const Fact& pFact,
-                              bool pIsFactNegated,
-                              const std::set<Fact>& pPunctualFacts,
-                              const std::set<Fact>& pRemovedFacts,
-                              std::map<std::string, std::set<std::string>>* pParametersPtr,
-                              bool* pCanBecomeTruePtr) const
+bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
+                                     const std::set<Fact>& pPunctualFacts,
+                                     const std::set<Fact>& pRemovedFacts,
+                                     std::map<std::string, std::set<std::string>>* pParametersPtr,
+                                     bool* pCanBecomeTruePtr) const
 {
-  if (pFact.isPunctual() && !pIsFactNegated)
-    return pPunctualFacts.count(pFact) != 0;
+  if (pFactOptional.fact.isPunctual() && !pFactOptional.isFactNegated)
+    return pPunctualFacts.count(pFactOptional.fact) != 0;
 
   std::map<std::string, std::set<std::string>> newParameters;
-  if (pIsFactNegated)
+  if (pFactOptional.isFactNegated)
   {
-    bool res = pFact.isInFacts(pRemovedFacts, true, newParameters, pParametersPtr);
+    bool res = pFactOptional.fact.isInFacts(pRemovedFacts, true, newParameters, pParametersPtr);
     if (res)
     {
       if (pParametersPtr != nullptr)
@@ -902,7 +901,7 @@ bool Problem::isFactPatternSatisfied(const Fact& pFact,
       return true;
     }
 
-    auto itFacts = _factNamesToFacts.find(pFact.name);
+    auto itFacts = _factNamesToFacts.find(pFactOptional.fact.name);
     if (itFacts != _factNamesToFacts.end())
     {
       if (pParametersPtr != nullptr)
@@ -910,10 +909,10 @@ bool Problem::isFactPatternSatisfied(const Fact& pFact,
         std::list<std::map<std::string, std::string>> paramPossibilities;
         unfoldMapWithSet(paramPossibilities, (*pParametersPtr));
 
-        bool hasAnyValueAsValue = pFact.value == Fact::anyValue;
+        bool hasAnyValueAsValue = pFactOptional.fact.value == Fact::anyValue;
         for (auto& currParamPoss : paramPossibilities)
         {
-          auto factToCompare = pFact;
+          auto factToCompare = pFactOptional.fact;
           factToCompare.fillParameters(currParamPoss);
           if (factToCompare.value == Fact::anyValue)
           {
@@ -922,10 +921,10 @@ bool Problem::isFactPatternSatisfied(const Fact& pFact,
             {
               if (currFact.areEqualExceptAnyValues(factToCompare))
               {
-                if (pFact.value != Fact::anyValue)
+                if (pFactOptional.fact.value != Fact::anyValue)
                 {
                   std::map<std::string, std::set<std::string>> newParameters =
-                  {{pFact.value, {currFact.value}}};
+                  {{pFactOptional.fact.value, {currFact.value}}};
                   applyNewParams(*pParametersPtr, newParameters);
                 }
                 return false;
@@ -938,17 +937,17 @@ bool Problem::isFactPatternSatisfied(const Fact& pFact,
           return false;
       }
 
-      if (pFact.value == Fact::anyValue)
+      if (pFactOptional.fact.value == Fact::anyValue)
       {
         for (auto& currFact : itFacts->second)
-          if (currFact.areEqualExceptAnyValues(pFact))
+          if (currFact.areEqualExceptAnyValues(pFactOptional.fact))
             return false;
         return true;
       }
     }
 
     bool triedToMidfyParameters = false;
-    if (pFact.isInFacts(_facts, true, newParameters, pParametersPtr, false, &triedToMidfyParameters))
+    if (pFactOptional.fact.isInFacts(_facts, true, newParameters, pParametersPtr, false, &triedToMidfyParameters))
     {
       if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
         *pCanBecomeTruePtr = true;
@@ -957,7 +956,7 @@ bool Problem::isFactPatternSatisfied(const Fact& pFact,
     return true;
   }
 
-  auto res = pFact.isInFacts(_facts, true, newParameters, pParametersPtr);
+  auto res = pFactOptional.fact.isInFacts(_facts, true, newParameters, pParametersPtr);
   if (pParametersPtr != nullptr)
     applyNewParams(*pParametersPtr, newParameters);
   return res;

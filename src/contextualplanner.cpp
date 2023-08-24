@@ -200,7 +200,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
       // Check that the new fact pattern is not already satisfied
       if (actionIsAPossibleFollowUp)
       {
-        if (!pProblem.isFactPatternSatisfied(pFactOptional.fact, pFactOptional.isFactNegated, {}, {}, &pParentParameters, nullptr))
+        if (!pProblem.isFactPatternSatisfied(pFactOptional, {}, {}, &pParentParameters, nullptr))
           return PossibleEffect::SATISFIED;
         return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
       }
