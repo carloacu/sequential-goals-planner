@@ -775,26 +775,26 @@ void _testIncrementOfVariables()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  const cp::Action actionQ1({}, cp::FactModification::fromStr(_fact_askAllTheQuestions + "&++${number-of-question}"));
-  const cp::Action actionFinishToActActions(cp::FactCondition::fromStr("${number-of-question}=${max-number-of-questions}"),
+  const cp::Action actionQ1({}, cp::FactModification::fromStrWithExps(_fact_askAllTheQuestions + "&++${number-of-question}"));
+  const cp::Action actionFinishToActActions(cp::FactCondition::fromStrWithExps("${number-of-question}=${max-number-of-questions}"),
                                             cp::FactModification::fromStr(_fact_askAllTheQuestions));
-  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStr(_fact_askAllTheQuestions),
+  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStrWithExps(_fact_askAllTheQuestions),
                                           cp::FactModification::fromStr(_fact_finishToAskQuestions));
   actions.emplace(_action_askQuestion1, actionQ1);
-  actions.emplace(_action_askQuestion2, cp::Action({}, cp::FactModification::fromStr(_fact_askAllTheQuestions + "&++${number-of-question}")));
+  actions.emplace(_action_askQuestion2, cp::Action({}, cp::FactModification::fromStrWithExps(_fact_askAllTheQuestions + "&++${number-of-question}")));
   actions.emplace(_action_finisehdToAskQuestions, actionFinishToActActions);
   actions.emplace(_action_sayQuestionBilan, actionSayQuestionBilan);
   cp::Domain domain(std::move(actions));
 
   std::string initFactsStr = "${number-of-question}=0&${max-number-of-questions}=3";
   cp::Problem problem;
-  problem.modifyFacts(cp::FactModification::fromStr(initFactsStr), now);
-  assert(cp::FactCondition::fromStr(initFactsStr)->isTrue(problem));
+  problem.modifyFacts(cp::FactModification::fromStrWithExps(initFactsStr), now);
+  assert(cp::FactCondition::fromStrWithExps(initFactsStr)->isTrue(problem));
   assert(!actionFinishToActActions.precondition->isTrue(problem));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem));
-  assert(cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+3")->isTrue(problem));
-  assert(!cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+4")->isTrue(problem));
-  assert(cp::FactCondition::fromStr("${max-number-of-questions}=${number-of-question}+4-1")->isTrue(problem));
+  assert(cp::FactCondition::fromStrWithExps("${max-number-of-questions}=${number-of-question}+3")->isTrue(problem));
+  assert(!cp::FactCondition::fromStrWithExps("${max-number-of-questions}=${number-of-question}+4")->isTrue(problem));
+  assert(cp::FactCondition::fromStrWithExps("${max-number-of-questions}=${number-of-question}+4-1")->isTrue(problem));
   for (std::size_t i = 0; i < 3; ++i)
   {
     _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
@@ -1434,7 +1434,7 @@ void _checkInferenceThatAddAGoal()
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);
-  _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_g + ", " + _fact_d)});
+  _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_g + ", " + _fact_d + ")")});
   setOfInferences->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_a),
                                                             cp::FactModification::fromStr(_fact_b),
                                                             {{cp::Problem::defaultPriority, {_fact_e}}}));
@@ -1483,10 +1483,10 @@ void _testQuiz()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::WorldModification questionEffect(cp::FactModification::fromStr("&++${number-of-question}"));
+  cp::WorldModification questionEffect(cp::FactModification::fromStrWithExps("&++${number-of-question}"));
   questionEffect.potentialFactsModifications = cp::FactModification::fromStr(_fact_askAllTheQuestions);
   const cp::Action actionQ1({}, questionEffect);
-  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStr(_fact_askAllTheQuestions),
+  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStrWithExps(_fact_askAllTheQuestions),
                                           cp::FactModification::fromStr(_fact_finishToAskQuestions));
   actions.emplace(_action_askQuestion1, actionQ1);
   actions.emplace(_action_askQuestion2, cp::Action({}, questionEffect));
@@ -1494,11 +1494,11 @@ void _testQuiz()
   cp::Domain domain(std::move(actions));
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
-  const cp::Inference inferenceFinishToActActions(cp::FactCondition::fromStr("${number-of-question}=${max-number-of-questions}"),
+  const cp::Inference inferenceFinishToActActions(cp::FactCondition::fromStrWithExps("${number-of-question}=${max-number-of-questions}"),
                                                   cp::FactModification::fromStr(_fact_askAllTheQuestions));
   setOfInferences->addInference(_action_finisehdToAskQuestions, inferenceFinishToActActions);
 
-  auto initFacts = cp::FactModification::fromStr("${number-of-question}=0&${max-number-of-questions}=3");
+  auto initFacts = cp::FactModification::fromStrWithExps("${number-of-question}=0&${max-number-of-questions}=3");
 
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);
@@ -1682,7 +1682,7 @@ void _oneStepTowards()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  problem.setGoals({{11, {cp::Goal("persist(imply(" + _fact_a + ", " + _fact_b + ")", 0)}},
+  problem.setGoals({{11, {cp::Goal("persist(imply(" + _fact_a + ", " + _fact_b + "))", 0)}},
                     {10, {cp::Goal("oneStepTowards(" + _fact_greeted + ")", 0)}},
                     {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, {});
   problem.removeFirstGoalsThatAreAlreadySatisfied(now);
@@ -1741,7 +1741,7 @@ void _factValueModification()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  problem.setGoals({{10, {cp::Goal("persist(imply(" + _fact_a + "=a, " + "!" + _fact_b + ")", 0)}}}, {});
+  problem.setGoals({{10, {cp::Goal("persist(imply(" + _fact_a + "=a, " + "!" + _fact_b + "))", 0)}}}, {});
 
   problem.addFact(_fact_b, now);
   assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain, now));
@@ -1806,7 +1806,7 @@ void _forAllFactModification()
   const std::string action1 = "action1";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, cp::FactModification::fromStr("forAll(obj, grab(me, obj), set(location(obj), location(me))"));
+  cp::Action navAction({}, cp::FactModification::fromStr("forAll(obj, grab(me, obj), set(location(obj), location(me)))"));
   actions.emplace(action1, navAction);
 
   cp::Problem problem;
@@ -2041,7 +2041,7 @@ void _inferenceWithANegatedFactWithParameter()
   actions.emplace(actionUngrabRightHand, ungrabRightAction);
 
   cp::Action ungrabBothAction(cp::FactCondition::fromStr("hasTwoHandles(object)"),
-                              cp::FactModification::fromStr("!grabLeftHand(me)=object && !grabRightHand(me)=object"));
+                              cp::FactModification::fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"));
   ungrabBothAction.parameters.emplace_back("object");
   actions.emplace(actionUngrabBothHands, ungrabBothAction);
 

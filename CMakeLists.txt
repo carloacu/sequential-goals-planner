@@ -38,6 +38,8 @@ set(CHATBOTPLANNER_SRCS
     src/types/action.cpp
     src/types/domain.cpp
     src/types/expression.cpp
+    src/types/expressionParsed.hpp
+    src/types/expressionParsed.cpp
     src/types/fact.cpp
     src/types/factcondition.cpp
     src/types/factmodification.cpp

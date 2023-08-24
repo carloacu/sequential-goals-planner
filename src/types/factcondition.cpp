@@ -1,6 +1,7 @@
 #include <contextualplanner/types/factcondition.hpp>
 #include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/util/util.hpp>
+#include "expressionParsed.hpp"
 
 namespace cp
 {
@@ -108,6 +109,37 @@ bool _areEqual(
   return false;
 }
 
+
+std::unique_ptr<FactCondition> _expressionParsedToFactCondition(const ExpressionParsed& pExpressionParsed)
+{
+  std::unique_ptr<FactCondition> res;
+
+  if (pExpressionParsed.name == _equalsFunctionName &&
+      pExpressionParsed.arguments.size() == 2)
+  {
+    res = std::make_unique<FactConditionNode>(FactConditionNodeType::EQUALITY,
+                                              _expressionParsedToFactCondition(pExpressionParsed.arguments.front()),
+                                              _expressionParsedToFactCondition(*(++pExpressionParsed.arguments.begin())));
+  }
+  else
+  {
+    res = std::make_unique<FactConditionFact>(pExpressionParsed.toFact());
+  }
+
+  if (pExpressionParsed.followingExpression)
+  {
+    if (pExpressionParsed.separatorToFollowingExp == '&')
+    {
+      res = std::make_unique<FactConditionNode>(FactConditionNodeType::AND,
+                                                std::move(res),
+                                                _expressionParsedToFactCondition(*pExpressionParsed.followingExpression));
+    }
+  }
+
+  return res;
+}
+
+
 }
 
 
@@ -117,7 +149,7 @@ FactCondition::FactCondition(FactConditionType pType)
 }
 
 
-std::unique_ptr<FactCondition> FactCondition::fromStr(const std::string& pStr)
+std::unique_ptr<FactCondition> FactCondition::fromStrWithExps(const std::string& pStr)
 {
   std::vector<FactOptional> vect;
   Fact::splitFactOptional(vect, pStr, '&');
@@ -211,6 +243,13 @@ std::unique_ptr<FactCondition> FactCondition::fromStr(const std::string& pStr)
   return _merge(factconditions);
 }
 
+
+std::unique_ptr<FactCondition> FactCondition::fromStr(const std::string& pStr)
+{
+  std::size_t pos = 0;
+  auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
+  return _expressionParsedToFactCondition(expressionParsed);
+}
 
 FactConditionNode::FactConditionNode(FactConditionNodeType pNodeType,
                                      std::unique_ptr<FactCondition> pLeftOperand,

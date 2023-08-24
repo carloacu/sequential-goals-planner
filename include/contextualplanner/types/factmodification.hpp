@@ -45,6 +45,7 @@ struct CONTEXTUALPLANNER_API FactModification
 
   FactModificationType type;
 
+  static std::unique_ptr<FactModification> fromStrWithExps(const std::string& pStr);
   static std::unique_ptr<FactModification> fromStr(const std::string& pStr);
   virtual std::string toStr() const = 0;
 

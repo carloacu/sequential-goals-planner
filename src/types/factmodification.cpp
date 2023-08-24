@@ -1,5 +1,6 @@
 #include <contextualplanner/types/factmodification.hpp>
 #include <contextualplanner/types/problem.hpp>
+#include "expressionParsed.hpp"
 
 namespace cp
 {
@@ -72,6 +73,50 @@ std::unique_ptr<FactModification> _factOptToFactModification(const FactOptional&
   return {};
 }
 
+
+std::unique_ptr<FactModification> _expressionParsedToFactModification(const ExpressionParsed& pExpressionParsed)
+{
+  std::unique_ptr<FactModification> res;
+
+  if (pExpressionParsed.name == _setFunctionName &&
+      pExpressionParsed.arguments.size() == 2)
+  {
+    res = std::make_unique<FactModificationNode>(FactModificationNodeType::SET,
+                                              _expressionParsedToFactModification(pExpressionParsed.arguments.front()),
+                                              _expressionParsedToFactModification(*(++pExpressionParsed.arguments.begin())));
+  }
+  else if (pExpressionParsed.name == _forAllFunctionName &&
+      pExpressionParsed.arguments.size() == 3)
+  {
+    auto itArg = pExpressionParsed.arguments.begin();
+    auto& firstArg = *itArg;
+    ++itArg;
+    auto& secondArg = *itArg;
+    ++itArg;
+    auto& thridArg = *itArg;
+    res = std::make_unique<FactModificationNode>(FactModificationNodeType::FOR_ALL,
+                                                 std::make_unique<FactModificationFact>(secondArg.toFact()),
+                                                 _expressionParsedToFactModification(thridArg),
+                                                 firstArg.name);
+  }
+  else
+  {
+    res = std::make_unique<FactModificationFact>(pExpressionParsed.toFact());
+  }
+
+  if (pExpressionParsed.followingExpression)
+  {
+    if (pExpressionParsed.separatorToFollowingExp == '&')
+    {
+      res = std::make_unique<FactModificationNode>(FactModificationNodeType::AND,
+                                                std::move(res),
+                                                _expressionParsedToFactModification(*pExpressionParsed.followingExpression));
+    }
+  }
+
+  return res;
+}
+
 }
 
 
@@ -81,7 +126,7 @@ FactModification::FactModification(FactModificationType pType)
 }
 
 
-std::unique_ptr<FactModification> FactModification::fromStr(const std::string& pStr)
+std::unique_ptr<FactModification> FactModification::fromStrWithExps(const std::string& pStr)
 {
   std::vector<FactOptional> vect;
   Fact::splitFactOptional(vect, pStr, '&');
@@ -163,6 +208,13 @@ std::unique_ptr<FactModification> FactModification::fromStr(const std::string& p
   return _merge(factModifications);
 }
 
+
+std::unique_ptr<FactModification> FactModification::fromStr(const std::string& pStr)
+{
+  std::size_t pos = 0;
+  auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
+  return _expressionParsedToFactModification(expressionParsed);
+}
 
 std::unique_ptr<FactModification> FactModification::merge(const FactModification& pFactModification1,
                                                           const FactModification& pFactModification2)

@@ -59,7 +59,9 @@ struct CONTEXTUALPLANNER_API FactCondition
   virtual const FactConditionExpression* fcExpPtr() const = 0;
   virtual FactConditionExpression* fcExpPtr() = 0;
 
+  static std::unique_ptr<FactCondition> fromStrWithExps(const std::string& pStr);
   static std::unique_ptr<FactCondition> fromStr(const std::string& pStr);
+
   virtual std::string toStr() const = 0;
 
   FactConditionType type;
