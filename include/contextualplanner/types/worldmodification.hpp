@@ -91,15 +91,8 @@ struct CONTEXTUALPLANNER_API WorldModification
    * @brief Iterate over all the facts.
    * @param pCallback Callback called for each fact.
    */
-  void forAllFacts(const std::function<void(const cp::Fact&)>& pCallback,
+  void forAllFacts(const std::function<void(const cp::FactOptional&)>& pCallback,
                    const Problem& pProblem) const;
-
-  /**
-   * @brief Iterate over all the facts that should be removed.
-   * @param pCallback Callback called for each fact that should be removed.
-   */
-  void forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback,
-                      const Problem& pProblem) const;
 
 
   /// Fact modifications declared and that will be applied to the world.
@@ -176,22 +169,13 @@ inline bool WorldModification::forAllFactsOptUntilTrue(const std::function<bool(
   return false;
 }
 
-inline void WorldModification::forAllFacts(const std::function<void(const cp::Fact&)>& pCallback,
+inline void WorldModification::forAllFacts(const std::function<void(const cp::FactOptional&)>& pCallback,
                                            const Problem& pProblem) const
 {
   if (factsModifications)
     factsModifications->forAllFacts(pCallback, pProblem);
   if (potentialFactsModifications)
     potentialFactsModifications->forAllFacts(pCallback, pProblem);
-}
-
-inline void WorldModification::forAllNotFacts(const std::function<void(const cp::Fact&)>& pCallback,
-                                              const Problem& pProblem) const
-{
-  if (factsModifications)
-    factsModifications->forAllNotFacts(pCallback, pProblem);
-  if (potentialFactsModifications)
-    potentialFactsModifications->forAllNotFacts(pCallback, pProblem);
 }
 
 

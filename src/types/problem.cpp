@@ -46,40 +46,6 @@ void _incrementStr(std::string& pStr)
   }
 }
 
-void _getTheFactsToAddFromAWorldModification(std::set<Fact>& pNewFacts,
-                                             std::vector<Fact>& pNewFactsWithAnyValues,
-                                             const WorldModification& pWorldModification,
-                                             const std::vector<std::string>& pParameters,
-                                             const std::set<Fact>& pFacts1,
-                                             const std::set<Fact>& pFacts2,
-                                             const Problem& pProblem)
-{
-  pWorldModification.forAllFacts([&](const cp::Fact& pFact) {
-    if (pFacts1.count(pFact) == 0 &&
-        pFacts2.count(pFact) == 0)
-    {
-      auto factToInsert = pFact;
-      if (factToInsert.replaceParametersByAny(pParameters))
-        pNewFactsWithAnyValues.push_back(std::move(factToInsert));
-      else
-        pNewFacts.insert(std::move(factToInsert));
-    }
-  }, pProblem);
-}
-
-void _getTheFactsToRemoveFromAWorldModification(std::set<Fact>& pFactsToRemove,
-                                                const WorldModification& pWorldModification,
-                                                const std::set<Fact>& pFacts1,
-                                                const std::set<Fact>& pFacts2,
-                                                const Problem& pProblem)
-{
-  pWorldModification.forAllNotFacts([&](const cp::Fact& pNotFact) {
-    if (pFacts1.count(pNotFact) > 0 &&
-        pFacts2.count(pNotFact) == 0)
-      pFactsToRemove.insert(pNotFact);
-  }, pProblem);
-}
-
 }
 
 
@@ -579,10 +545,29 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
   {
     std::set<Fact> accessibleFactsToAdd;
     std::vector<Fact> accessibleFactsToAddWithAnyValues;
-    _getTheFactsToAddFromAWorldModification(accessibleFactsToAdd, accessibleFactsToAddWithAnyValues,
-                                            pEffect, pParameters, _facts, _accessibleFacts, *this);
     std::set<Fact> removableFactsToAdd;
-    _getTheFactsToRemoveFromAWorldModification(removableFactsToAdd, pEffect, _facts, _removableFacts, *this);
+
+    pEffect.forAllFacts([&](const cp::FactOptional& pFactOpt) {
+      if (!pFactOpt.isFactNegated)
+      {
+        if (_facts.count(pFactOpt.fact) == 0 &&
+            _accessibleFacts.count(pFactOpt.fact) == 0)
+        {
+          auto factToInsert = pFactOpt.fact;
+          if (factToInsert.replaceParametersByAny(pParameters))
+            accessibleFactsToAddWithAnyValues.push_back(std::move(factToInsert));
+          else
+            accessibleFactsToAdd.insert(std::move(factToInsert));
+        }
+      }
+      else
+      {
+        if (_facts.count(pFactOpt.fact) > 0 &&
+            _removableFacts.count(pFactOpt.fact) == 0)
+          removableFactsToAdd.insert(pFactOpt.fact);
+      }
+    }, *this);
+
     if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
     {
       _accessibleFacts.insert(accessibleFactsToAdd.begin(), accessibleFactsToAdd.end());

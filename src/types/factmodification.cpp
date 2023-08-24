@@ -323,7 +323,7 @@ bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (con
   return false;
 }
 
-void FactModificationNode::forAllFacts(const std::function<void (const Fact&)>& pFactCallback,
+void FactModificationNode::forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                                        const Problem& pProblem) const
 {
   if (nodeType == FactModificationNodeType::AND)
@@ -354,25 +354,6 @@ void FactModificationNode::forAllFacts(const std::function<void (const Fact&)>& 
   }
 }
 
-void FactModificationNode::forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback,
-                                          const Problem& pProblem) const
-{
-  if (nodeType == FactModificationNodeType::AND)
-  {
-    if (leftOperand)
-      leftOperand->forAllNotFacts(pFactCallback, pProblem);
-    if (rightOperand)
-      rightOperand->forAllNotFacts(pFactCallback, pProblem);
-  }
-  else if (nodeType == FactModificationNodeType::FOR_ALL)
-  {
-    _forAllInstruction(
-          [&](const FactModification& pFactModification)
-    {
-      pFactModification.forAllNotFacts(pFactCallback, pProblem);
-    }, pProblem);
-  }
-}
 
 
 bool FactModificationNode::forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const
@@ -458,17 +439,9 @@ bool FactModificationFact::forAllFactsOptUntilTrue(const std::function<bool (con
   return pFactCallback(factOptional);
 }
 
-void FactModificationFact::forAllFacts(const std::function<void (const Fact&)>& pFactCallback, const Problem&) const
+void FactModificationFact::forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback, const Problem&) const
 {
-  if (!factOptional.isFactNegated)
-    pFactCallback(factOptional.fact);
-}
-
-void FactModificationFact::forAllNotFacts(const std::function<void (const Fact&)>& pFactCallback,
-                                          const Problem& pProblem) const
-{
-  if (factOptional.isFactNegated)
-    pFactCallback(factOptional.fact);
+  pFactCallback(factOptional);
 }
 
 
