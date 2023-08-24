@@ -27,7 +27,10 @@ struct CONTEXTUALPLANNER_API FactCondition
   FactCondition(FactConditionType pType);
 
   virtual bool hasFact(const cp::Fact& pFact) const = 0;
-  virtual bool containsFact(const Fact& pFact) const = 0;
+  virtual bool containsFact(const Fact& pFact,
+                            bool pIsFactNegated,
+                            const std::map<std::string, std::set<std::string>>& pFactParameters,
+                            const std::vector<std::string>& pThisFactParameters) const = 0;
   virtual bool containsNotFact(const Fact& pFact) const = 0;
   virtual bool containsExpression(const Expression& pExpression) const = 0;
   virtual void replaceFact(const cp::Fact& pOldFact,
@@ -79,7 +82,10 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
                     std::unique_ptr<FactCondition> pRightOperand);
 
   bool hasFact(const Fact& pFact) const override;
-  bool containsFact(const Fact& pFact) const override;
+  bool containsFact(const Fact& pFact,
+                    bool pIsFactNegated,
+                    const std::map<std::string, std::set<std::string>>& pFactParameters,
+                    const std::vector<std::string>& pThisFactParameters) const override;
   bool containsNotFact(const Fact& pFact) const override;
   bool containsExpression(const Expression& pExpression) const override;
   void replaceFact(const Fact& pOldFact,
@@ -101,8 +107,8 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
 
   std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 
-  const FactConditionNode* fcNodePtr() const  { return this; }
-  FactConditionNode* fcNodePtr()  { return this; }
+  const FactConditionNode* fcNodePtr() const override { return this; }
+  FactConditionNode* fcNodePtr() override { return this; }
   const FactConditionFact* fcFactPtr() const override { return nullptr; }
   FactConditionFact* fcFactPtr() override { return nullptr; }
   const FactConditionExpression* fcExpPtr() const override { return nullptr; }
@@ -120,7 +126,10 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   FactConditionFact(const FactOptional& pFactOptional);
 
   bool hasFact(const cp::Fact& pFact) const override;
-  bool containsFact(const Fact& pFact) const override;
+  bool containsFact(const Fact& pFact,
+                    bool pIsFactNegated,
+                    const std::map<std::string, std::set<std::string>>& pFactParameters,
+                    const std::vector<std::string>& pThisFactParameters) const override;
   bool containsNotFact(const Fact& pFact) const override;
   bool containsExpression(const Expression&) const override { return false; }
   void replaceFact(const cp::Fact& pOldFact,
@@ -140,8 +149,8 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
 
-  const FactConditionNode* fcNodePtr() const  { return nullptr; }
-  FactConditionNode* fcNodePtr()  { return nullptr; }
+  const FactConditionNode* fcNodePtr() const override { return nullptr; }
+  FactConditionNode* fcNodePtr() override { return nullptr; }
   const FactConditionFact* fcFactPtr() const override { return this; }
   FactConditionFact* fcFactPtr() override { return this; }
   const FactConditionExpression* fcExpPtr() const override { return nullptr; }
@@ -159,7 +168,10 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
   FactConditionExpression(const Expression& pExpression);
 
   bool hasFact(const cp::Fact& pFact) const override;
-  bool containsFact(const Fact& pFact) const override { return false; }
+  bool containsFact(const Fact&,
+                    bool,
+                    const std::map<std::string, std::set<std::string>>&,
+                    const std::vector<std::string>&) const override { return false; }
   bool containsNotFact(const Fact& pFact) const override  { return false; }
   bool containsExpression(const Expression& pExpression) const override;
   void replaceFact(const cp::Fact& pOldFact,
@@ -183,8 +195,8 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
 
   std::string toStr() const override { return "<an_expression>"; }
 
-  const FactConditionNode* fcNodePtr() const  { return nullptr; }
-  FactConditionNode* fcNodePtr()  { return nullptr; }
+  const FactConditionNode* fcNodePtr() const override { return nullptr; }
+  FactConditionNode* fcNodePtr() override { return nullptr; }
   const FactConditionFact* fcFactPtr() const override { return nullptr; }
   FactConditionFact* fcFactPtr() override { return nullptr; }
   const FactConditionExpression* fcExpPtr() const override { return this; }

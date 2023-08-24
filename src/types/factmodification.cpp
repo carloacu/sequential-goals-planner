@@ -39,31 +39,31 @@ std::unique_ptr<FactModification> _merge(std::list<std::unique_ptr<FactModificat
 
 std::unique_ptr<FactModification> _factOptToFactModification(const FactOptional& pFactOptional)
 {
-  if (!pFactOptional.fact.parameters.empty() ||
+  if (!pFactOptional.fact.arguments.empty() ||
       (pFactOptional.fact.name[0] != '+' && pFactOptional.fact.name[0] != '$'))
   {
     if (pFactOptional.fact.name == _setFunctionName &&
-        pFactOptional.fact.parameters.size() == 2 &&
+        pFactOptional.fact.arguments.size() == 2 &&
         pFactOptional.fact.value.empty())
     {
       return std::make_unique<FactModificationNode>(
             FactModificationNodeType::SET,
-            std::make_unique<FactModificationFact>(pFactOptional.fact.parameters[0]),
-          std::make_unique<FactModificationFact>(pFactOptional.fact.parameters[1]));
+            std::make_unique<FactModificationFact>(pFactOptional.fact.arguments[0]),
+          std::make_unique<FactModificationFact>(pFactOptional.fact.arguments[1]));
     }
 
     if (pFactOptional.fact.name == _forAllFunctionName &&
-        pFactOptional.fact.parameters.size() == 3 &&
+        pFactOptional.fact.arguments.size() == 3 &&
         pFactOptional.fact.value.empty())
     {
-      auto forAllEffect = _factOptToFactModification(pFactOptional.fact.parameters[2]);
+      auto forAllEffect = _factOptToFactModification(pFactOptional.fact.arguments[2]);
       if (forAllEffect)
       {
         return std::make_unique<FactModificationNode>(
               FactModificationNodeType::FOR_ALL,
-              std::make_unique<FactModificationFact>(pFactOptional.fact.parameters[1]),
+              std::make_unique<FactModificationFact>(pFactOptional.fact.arguments[1]),
             std::move(forAllEffect),
-            pFactOptional.fact.parameters[0].fact.toStr());
+            pFactOptional.fact.arguments[0].fact.toStr());
       }
     }
 

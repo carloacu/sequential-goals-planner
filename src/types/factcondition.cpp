@@ -138,17 +138,17 @@ std::unique_ptr<FactCondition> FactCondition::fromStr(const std::string& pStr)
       }
     };
 
-    if (!currOptFact.fact.parameters.empty() ||
+    if (!currOptFact.fact.arguments.empty() ||
         currOptFact.fact.name[0] != '$')
     {
       if (currOptFact.fact.name == _equalsFunctionName &&
-          currOptFact.fact.parameters.size() == 2 &&
+          currOptFact.fact.arguments.size() == 2 &&
           currOptFact.fact.value.empty())
       {
         factconditions.emplace_back(std::make_unique<FactConditionNode>(
                                       FactConditionNodeType::EQUALITY,
-                                      std::make_unique<FactConditionFact>(currOptFact.fact.parameters[0]),
-                                    std::make_unique<FactConditionFact>(currOptFact.fact.parameters[1])));
+                                      std::make_unique<FactConditionFact>(currOptFact.fact.arguments[0]),
+                                    std::make_unique<FactConditionFact>(currOptFact.fact.arguments[1])));
       }
       else
       {
@@ -229,10 +229,13 @@ bool FactConditionNode::hasFact(const Fact& pFact) const
 }
 
 
-bool FactConditionNode::containsFact(const Fact& pFact) const
+bool FactConditionNode::containsFact(const Fact& pFact,
+                                     bool pIsFactNegated,
+                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                     const std::vector<std::string>& pThisFactParameters) const
 {
-  return (leftOperand && leftOperand->containsFact(pFact)) ||
-      (rightOperand && rightOperand->containsFact(pFact));
+  return (leftOperand && leftOperand->containsFact(pFact, pIsFactNegated, pFactParameters, pThisFactParameters)) ||
+      (rightOperand && rightOperand->containsFact(pFact, pIsFactNegated, pFactParameters, pThisFactParameters));
 }
 
 bool FactConditionNode::containsNotFact(const Fact& pFact) const
@@ -438,9 +441,14 @@ bool FactConditionFact::hasFact(const cp::Fact& pFact) const
   return factOptional.fact == pFact;
 }
 
-bool FactConditionFact::containsFact(const Fact& pFact) const
+bool FactConditionFact::containsFact(const Fact& pFact,
+                                     bool pIsFactNegated,
+                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                     const std::vector<std::string>& pThisFactParameters) const
 {
-  return !factOptional.isFactNegated && factOptional.fact == pFact;
+  if (pIsFactNegated == factOptional.isFactNegated)
+    return factOptional.fact.areEqualExceptAnyValues(pFact, &pFactParameters, &pThisFactParameters);
+  return false;
 }
 
 bool FactConditionFact::containsNotFact(const Fact& pFact) const

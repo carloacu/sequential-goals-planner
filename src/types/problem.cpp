@@ -472,7 +472,7 @@ std::string Problem::getFactValue(const cp::Fact& pFact) const
   if (itFact != _factNamesToFacts.end())
   {
     for (auto& currFact : itFact->second)
-      if (currFact.parameters == pFact.parameters)
+      if (currFact.arguments == pFact.arguments)
         return currFact.value;
   }
   return "";
@@ -488,18 +488,18 @@ void Problem::forAllInstruction(const std::string& pParameterName,
   {
     for (auto& currFact : itFact->second)
     {
-      if (currFact.parameters.size() == pFact.parameters.size())
+      if (currFact.arguments.size() == pFact.arguments.size())
       {
         std::set<Fact> potentialNewValues;
         bool doesItMatch = true;
-        for (auto i = 0; i < pFact.parameters.size(); ++i)
+        for (auto i = 0; i < pFact.arguments.size(); ++i)
         {
-          if (pFact.parameters[i] == pParameterName)
+          if (pFact.arguments[i] == pParameterName)
           {
-            potentialNewValues.insert(currFact.parameters[i].fact);
+            potentialNewValues.insert(currFact.arguments[i].fact);
             continue;
           }
-          if (pFact.parameters[i] == currFact.parameters[i])
+          if (pFact.arguments[i] == currFact.arguments[i])
             continue;
           doesItMatch = false;
           break;
@@ -1175,7 +1175,7 @@ void Problem::_removeFactWithAnotherValue(WhatChanged& pWhatChanged,
       for (auto itExistingFact = it->second.begin(); itExistingFact != it->second.end(); )
       {
         auto& currExistingFact = *itExistingFact;
-        if (currAddedFact.parameters == currExistingFact.parameters &&
+        if (currAddedFact.arguments == currExistingFact.arguments &&
             currAddedFact.value != currExistingFact.value)
         {
           ++itExistingFact;

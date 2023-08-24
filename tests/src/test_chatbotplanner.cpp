@@ -1737,7 +1737,6 @@ void _factValueModification()
   const std::string action1 = "action1";
 
   std::map<cp::ActionId, cp::Action> actions;
-  cp::WorldModification actionWordModification;
   actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr("!" + _fact_b)));
   cp::Domain domain(std::move(actions));
 
@@ -1760,7 +1759,6 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
   const std::string action2 = "action2";
 
   std::map<cp::ActionId, cp::Action> actions;
-  cp::WorldModification actionWordModification;
   cp::WorldModification wm(cp::FactModification::fromStr(_fact_a));
   wm.goalsToAddInCurrentPriority.push_back(cp::Goal(_fact_b, 0));
   actions.emplace(action1, cp::Action({}, wm));
@@ -2176,6 +2174,33 @@ void _removeAFactWithAnyValue()
 
 
 
+void _notDeducePathIfTheParametersOfAFactAreDifferents()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+
+  std::map<cp::ActionId, cp::Action> actions;
+  actions.emplace(action1, cp::Action({},
+                                      cp::FactModification::fromStr(_fact_a + "(1)"),
+                                      cp::FactCondition::fromStr(_fact_c)));
+  actions.emplace(action2, cp::Action(cp::FactCondition::fromStr(_fact_a + "(2)"),
+                                      cp::FactModification::fromStr(_fact_b)));
+  actions.emplace(action3, cp::Action(cp::FactCondition::fromStr(_fact_b),
+                                      cp::FactModification::fromStr(_fact_d)));
+  cp::Domain domain(std::move(actions));
+
+  cp::Problem problem;
+  problem.addFact(cp::Fact(_fact_a + "(2)"), now);
+  problem.addFact(cp::Fact(_fact_c), now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
+
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+}
+
+
+
 }
 
 
@@ -2265,6 +2290,7 @@ int main(int argc, char *argv[])
   _useTwoTimesAnInference();
   _linkWithAnyValueInCondition();
   _removeAFactWithAnyValue();
+  _notDeducePathIfTheParametersOfAFactAreDifferents();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

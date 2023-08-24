@@ -44,22 +44,22 @@ Goal::Goal(const std::string& pStr,
   if (factPtr != nullptr)
   {
     if (factPtr->factOptional.fact.name == oneStepTowardsFunctionName &&
-        factPtr->factOptional.fact.parameters.size() == 1 &&
+        factPtr->factOptional.fact.arguments.size() == 1 &&
         factPtr->factOptional.fact.value.empty())
     {
       _oneStepTowards = true;
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
-      auto factFirstParameters = std::move(factPtr->factOptional.fact.parameters.front());
+      auto factFirstParameters = std::move(factPtr->factOptional.fact.arguments.front());
       factPtr->factOptional = std::move(factFirstParameters);
     }
 
     if (factPtr->factOptional.fact.name == implyFunctionName &&
-        factPtr->factOptional.fact.parameters.size() == 2 &&
+        factPtr->factOptional.fact.arguments.size() == 2 &&
         factPtr->factOptional.fact.value.empty())
     {
-      _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.parameters[0]);
+      _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.arguments[0]);
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
-      auto factSecondParameters = std::move(factPtr->factOptional.fact.parameters[1]);
+      auto factSecondParameters = std::move(factPtr->factOptional.fact.arguments[1]);
       factPtr->factOptional = std::move(factSecondParameters);
     }
 

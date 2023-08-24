@@ -60,7 +60,9 @@ struct CONTEXTUALPLANNER_API Fact
    * @param pOther Other fact to compare.
    * @return True if the 2 facts match, false otherwise.
    */
-  bool areEqualExceptAnyValues(const Fact& pOther) const;
+  bool areEqualExceptAnyValues(const Fact& pOther,
+                               const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr = nullptr,
+                               const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr = nullptr) const;
 
   /**
    * @brief Extract a value of another fact from a parameter value of this fact.
@@ -152,7 +154,7 @@ struct CONTEXTUALPLANNER_API Fact
   /// Name of the fact.
   std::string name;
   /// Parameters of the fact.
-  std::vector<FactOptional> parameters;
+  std::vector<FactOptional> arguments;
   /// Value of the fact.
   std::string value;
 

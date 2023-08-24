@@ -5,7 +5,9 @@ namespace cp
 {
 namespace
 {
-const Problem _emptyProblem;
+static const Problem _emptyProblem;
+static const std::map<std::string, std::set<std::string>> _emptyParametersWithValues;
+static const std::vector<std::string> _emptyParameters;
 
 /**
  * @brief Check if this object is totally included in another SetOfFacts object.
@@ -23,7 +25,9 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
   if (pFactsModifications->forAllFactsUntilTrue(
         [&](const Fact& pFact)
   {
-    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFact);
+    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFact, false,
+                                                                  _emptyParametersWithValues,
+                                                                  _emptyParameters);
   }, _emptyProblem))
   {
     return false;
@@ -32,7 +36,9 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
   if (pFactsModifications->forAllNotFactsUntilTrue(
         [&](const Fact& pFact)
   {
-    return !pFactConditionPtr || !pFactConditionPtr->containsNotFact(pFact);
+    return !pFactConditionPtr || !pFactConditionPtr->containsFact(pFact, true,
+                                                                  _emptyParametersWithValues,
+                                                                  _emptyParameters);
   }, _emptyProblem))
   {
     return false;

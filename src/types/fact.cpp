@@ -1,4 +1,5 @@
 #include <contextualplanner/types/fact.hpp>
+#include <algorithm>
 #include <memory>
 #include <assert.h>
 #include <contextualplanner/types/factoptional.hpp>
@@ -21,6 +22,25 @@ void _parametersToStr(std::string& pStr,
     pStr += param.toStr();
   }
 }
+
+bool _isInside(const std::string& pStr,
+               const std::vector<std::string>* pEltsPtr)
+{
+  if (pEltsPtr == nullptr)
+    return false;
+  auto lastElt = pEltsPtr->end();
+  return std::find(pEltsPtr->begin(), lastElt, pStr) != lastElt;
+}
+
+bool _isInside(const std::string& pStr,
+               const std::map<std::string, std::set<std::string>>* pEltsPtr)
+{
+  if (pEltsPtr == nullptr)
+    return false;
+  return pEltsPtr->count(pStr) > 0;
+}
+
+
 }
 
 const std::string Fact::anyValue = "*";
@@ -34,7 +54,7 @@ Fact::Fact(const std::string& pStr,
            std::size_t pBeginPos,
            std::size_t* pResPos)
   : name(),
-    parameters(),
+    arguments(),
     value()
 {
   auto resPos = fillFactFromStr(pStr, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
@@ -53,15 +73,15 @@ bool Fact::operator<(const Fact& pOther) const
   if (value != pOther.value)
     return value < pOther.value;
   std::string paramStr;
-  _parametersToStr(paramStr, parameters);
+  _parametersToStr(paramStr, arguments);
   std::string otherParamStr;
-  _parametersToStr(otherParamStr, pOther.parameters);
+  _parametersToStr(otherParamStr, pOther.arguments);
   return paramStr < otherParamStr;
 }
 
 bool Fact::operator==(const Fact& pOther) const
 {
-  return name == pOther.name && value == pOther.value && parameters == pOther.parameters;
+  return name == pOther.name && value == pOther.value && arguments == pOther.arguments;
 }
 
 bool Fact::isPunctual() const
@@ -74,18 +94,23 @@ bool Fact::isUnreachable() const
   return name.compare(0, unreachablePrefix.size(), unreachablePrefix) == 0;
 }
 
-bool Fact::areEqualExceptAnyValues(const Fact& pOther) const
+bool Fact::areEqualExceptAnyValues(const Fact& pOther,
+                                   const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr,
+                                   const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr) const
 {
   if (!(name == pOther.name &&
-        (value == pOther.value || value == anyValue || pOther.value == anyValue) &&
-        parameters.size() == pOther.parameters.size()))
+        (value == pOther.value || value == anyValue || pOther.value == anyValue ||
+         _isInside(value, pThisArgumentsToConsiderAsAnyValuePtr) || _isInside(pOther.value, pOtherFactArgumentsToConsiderAsAnyValuePtr)) &&
+        arguments.size() == pOther.arguments.size()))
     return false;
 
-  auto itParam = parameters.begin();
-  auto itOtherParam = pOther.parameters.begin();
-  while (itParam != parameters.end())
+  auto itParam = arguments.begin();
+  auto itOtherParam = pOther.arguments.begin();
+  while (itParam != arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact)
+    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
+        !(!itParam->fact.arguments.empty() && itParam->fact.value != "" && _isInside(itParam->fact.name, pThisArgumentsToConsiderAsAnyValuePtr)) &&
+        !(!itOtherParam->fact.arguments.empty() && itOtherParam->fact.value != "" && _isInside(itOtherParam->fact.name, pOtherFactArgumentsToConsiderAsAnyValuePtr)))
       return false;
     ++itParam;
     ++itOtherParam;
@@ -99,7 +124,7 @@ std::string Fact::tryToExtractParameterValueFromExemple(
     const Fact& pOther) const
 {
   if (name != pOther.name ||
-      parameters.size() != pOther.parameters.size())
+      arguments.size() != pOther.arguments.size())
     return "";
 
   std::string res;
@@ -108,9 +133,9 @@ std::string Fact::tryToExtractParameterValueFromExemple(
    else if (value != pOther.value)
     return "";
 
-  auto itParam = parameters.begin();
-  auto itOtherParam = pOther.parameters.begin();
-  while (itParam != parameters.end())
+  auto itParam = arguments.begin();
+  auto itOtherParam = pOther.arguments.begin();
+  while (itParam != arguments.end())
   {
     if (itParam->fact.name == pParameterValue)
       res = itOtherParam->fact.name;
@@ -134,10 +159,10 @@ void Fact::fillParameters(
   if (itValueParam != pParameters.end())
     value = itValueParam->second;
 
-  for (auto& currParam : parameters)
+  for (auto& currParam : arguments)
   {
     auto& currFactParam = currParam.fact;
-    if (currFactParam.value.empty() && currFactParam.parameters.empty())
+    if (currFactParam.value.empty() && currFactParam.arguments.empty())
     {
       auto itValueParam = pParameters.find(currFactParam.name);
       if (itValueParam != pParameters.end())
@@ -157,10 +182,10 @@ void Fact::fillParameters(
   if (itValueParam != pParameters.end() && !itValueParam->second.empty())
     value = *itValueParam->second.begin();
 
-  for (auto& currParam : parameters)
+  for (auto& currParam : arguments)
   {
     auto& currFactParam = currParam.fact;
-    if (currFactParam.value.empty() && currFactParam.parameters.empty())
+    if (currFactParam.value.empty() && currFactParam.arguments.empty())
     {
       auto itValueParam = pParameters.find(currFactParam.name);
       if (itValueParam != pParameters.end() && !itValueParam->second.empty())
@@ -176,10 +201,10 @@ void Fact::fillParameters(
 std::string Fact::toStr() const
 {
   std::string res = name;
-  if (!parameters.empty())
+  if (!arguments.empty())
   {
     res += "(";
-    _parametersToStr(res, parameters);
+    _parametersToStr(res, arguments);
     res += ")";
   }
   if (!value.empty())
@@ -232,7 +257,7 @@ std::size_t Fact::fillFactFromStr(
         if (name.empty())
           name = pStr.substr(beginPos, pos - beginPos);
         ++pos;
-        parameters.emplace_back(pStr, &separatorOfParameters, pos, &pos);
+        arguments.emplace_back(pStr, &separatorOfParameters, pos, &pos);
         beginPos = pos;
         continue;
       }
@@ -261,7 +286,7 @@ bool Fact::replaceParametersByAny(const std::vector<std::string>& pParameters)
   bool res = false;
   for (const auto& currParam : pParameters)
   {
-    for (auto& currFactParam : parameters)
+    for (auto& currFactParam : arguments)
     {
       if (currFactParam == currParam)
       {
@@ -303,7 +328,7 @@ bool Fact::isInFact(const Fact& pFact,
     bool* pTriedToMidfyParametersPtr) const
 {
   if (pFact.name != name ||
-      pFact.parameters.size() != parameters.size())
+      pFact.arguments.size() != arguments.size())
     return false;
 
   auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
@@ -329,15 +354,15 @@ bool Fact::isInFact(const Fact& pFact,
 
   {
     bool doesParametersMatches = true;
-    auto itFactParameters = pFact.parameters.begin();
-    auto itLookForParameters = parameters.begin();
-    while (itFactParameters != pFact.parameters.end())
+    auto itFactParameters = pFact.arguments.begin();
+    auto itLookForParameters = arguments.begin();
+    while (itFactParameters != pFact.arguments.end())
     {
       if (*itFactParameters != *itLookForParameters)
       {
-        if (!itFactParameters->fact.parameters.empty() ||
+        if (!itFactParameters->fact.arguments.empty() ||
             !itFactParameters->fact.value.empty() ||
-            !itLookForParameters->fact.parameters.empty() ||
+            !itLookForParameters->fact.arguments.empty() ||
             !itLookForParameters->fact.value.empty() ||
             (!pParametersAreForTheFact && !doesItMatch(itFactParameters->fact.name, itLookForParameters->fact.name)) ||
             (pParametersAreForTheFact && !doesItMatch(itLookForParameters->fact.name, itFactParameters->fact.name)))
@@ -366,7 +391,7 @@ bool Fact::isInFact(const Fact& pFact,
 void Fact::replaceFactInParameters(const cp::Fact& pOldFact,
                                    const Fact& pNewFact)
 {
-  for (auto& currParameter : parameters)
+  for (auto& currParameter : arguments)
   {
     if (currParameter.fact == pOldFact)
       currParameter.fact = pNewFact;
