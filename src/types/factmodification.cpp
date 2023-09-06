@@ -127,12 +127,12 @@ std::unique_ptr<FactModification> _expressionParsedToFactModification(const Expr
 
   if (pExpressionParsed.followingExpression)
   {
-    if (pExpressionParsed.separatorToFollowingExp == '&')
-    {
-      res = std::make_unique<FactModificationNode>(FactModificationNodeType::AND,
-                                                std::move(res),
-                                                _expressionParsedToFactModification(*pExpressionParsed.followingExpression));
-    }
+    auto nodeType = FactModificationNodeType::AND;
+    if (pExpressionParsed.separatorToFollowingExp == '+')
+      nodeType = FactModificationNodeType::PLUS;
+    res = std::make_unique<FactModificationNode>(nodeType,
+                                                 std::move(res),
+                                                 _expressionParsedToFactModification(*pExpressionParsed.followingExpression));
   }
 
   return res;
@@ -526,6 +526,8 @@ std::string FactModificationNode::toStr() const
     return _forAllFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
   case FactModificationNodeType::ADD:
     return _addFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  case FactModificationNodeType::PLUS:
+    return leftOperandStr + " + " + rightOperandStr;
   }
   return "";
 }

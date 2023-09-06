@@ -62,7 +62,8 @@ enum class FactModificationNodeType
   AND,
   SET,
   FOR_ALL,
-  ADD
+  ADD,
+  PLUS
 };
 
 
