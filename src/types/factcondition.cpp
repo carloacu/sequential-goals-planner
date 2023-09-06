@@ -8,35 +8,8 @@ namespace cp
 {
 namespace
 {
-enum class ExpressionOperator
-{
-  PLUSPLUS,
-  PLUS,
-  MINUS,
-  EQUAL,
-  NOT
-};
-
-const std::map<std::string, ExpressionOperator> _strToBeginOfTextOperators
-{{"++", ExpressionOperator::PLUSPLUS}};
-const std::map<char, ExpressionOperator> _charToOperators
-{{'=', ExpressionOperator::EQUAL}, {'+', ExpressionOperator::PLUS}, {'+', ExpressionOperator::MINUS}};
 const std::string _equalsFunctionName = "equals";
 
-
-std::unique_ptr<FactCondition> _merge(std::list<std::unique_ptr<FactCondition>>& pFactconditions)
-{
-  if (pFactconditions.empty())
-    return {};
-  if (pFactconditions.size() == 1)
-    return std::move(pFactconditions.front());
-
-  auto frontElt = std::move(pFactconditions.front());
-  pFactconditions.pop_front();
-  return std::make_unique<FactConditionNode>(FactConditionNodeType::AND,
-                                             std::move(frontElt),
-                                             _merge(pFactconditions));
-}
 
 bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
                         bool pUntilValue,
@@ -139,101 +112,6 @@ std::unique_ptr<FactCondition> _expressionParsedToFactCondition(const Expression
 FactCondition::FactCondition(FactConditionType pType)
  : type(pType)
 {
-}
-
-
-std::unique_ptr<FactCondition> FactCondition::fromStrWithExps(const std::string& pStr)
-{
-  std::vector<FactOptional> vect;
-  Fact::splitFactOptional(vect, pStr, '&');
-  std::list<std::unique_ptr<FactCondition>> factconditions;
-
-  for (auto& currOptFact : vect)
-  {
-    if (currOptFact.fact.name.empty())
-      continue;
-    std::string currentToken;
-    Expression exp;
-    auto fillCurrentToken = [&]
-    {
-      if (!currentToken.empty())
-      {
-        exp.elts.emplace_back(ExpressionElementType::VALUE, currentToken);
-        currentToken.clear();
-      }
-    };
-
-    if (!currOptFact.fact.arguments.empty() ||
-        currOptFact.fact.name[0] != '$')
-    {
-      if (currOptFact.fact.name == _equalsFunctionName &&
-          currOptFact.fact.arguments.size() == 2 &&
-          currOptFact.fact.value.empty())
-      {
-        factconditions.emplace_back(std::make_unique<FactConditionNode>(
-                                      FactConditionNodeType::EQUALITY,
-                                      std::make_unique<FactConditionFact>(currOptFact.fact.arguments[0]),
-                                    std::make_unique<FactConditionFact>(currOptFact.fact.arguments[1])));
-      }
-      else
-      {
-        factconditions.emplace_back(std::make_unique<FactConditionFact>(currOptFact));
-      }
-      continue;
-    }
-
-    auto currStr = currOptFact.fact.toStr();
-    for (std::size_t i = 0; i < currStr.size();)
-    {
-      bool needToContinue = false;
-      if (i == 0)
-      {
-        for (const auto& currOp : _strToBeginOfTextOperators)
-        {
-          if (currStr.compare(0, currOp.first.size(), currOp.first) == 0)
-          {
-            fillCurrentToken();
-            exp.elts.emplace_back(ExpressionElementType::OPERATOR, currOp.first);
-            i += currOp.first.size();
-            needToContinue = true;
-            break;
-          }
-        }
-      }
-      if (needToContinue)
-        continue;
-      for (const auto& charToOp : _charToOperators)
-      {
-        if (charToOp.first == currStr[i])
-        {
-          fillCurrentToken();
-          exp.elts.emplace_back(ExpressionElementType::OPERATOR, std::string(1, charToOp.first));
-          ++i;
-          needToContinue = true;
-          break;
-        }
-      }
-      if (needToContinue)
-        continue;
-      if (currStr[i] == '$' && currStr[i+1] == '{')
-      {
-        auto endOfVar = currStr.find('}', i + 2);
-        if (endOfVar != std::string::npos)
-        {
-          fillCurrentToken();
-          auto begPos = i + 2;
-          exp.elts.emplace_back(ExpressionElementType::FACT, currStr.substr(begPos, endOfVar - begPos));
-          i = endOfVar + 1;
-          continue;
-        }
-      }
-      currentToken += currStr[i++];
-    }
-    fillCurrentToken();
-    factconditions.emplace_back(std::make_unique<FactConditionExpression>(exp));
-  }
-
-  return _merge(factconditions);
 }
 
 
@@ -549,58 +427,6 @@ std::unique_ptr<FactCondition> FactConditionFact::clone(const std::map<std::stri
 }
 
 
-FactConditionExpression::FactConditionExpression(const Expression& pExpression)
- : FactCondition(FactConditionType::EXPRESSION),
-   expression(pExpression)
-{
-}
-
-bool FactConditionExpression::hasFact(const cp::Fact& pFact) const
-{
-  for (auto& currElt : expression.elts)
-    if (currElt.type == ExpressionElementType::FACT && currElt.value == pFact.toStr())
-      return true;
-  return false;
-}
-
-bool FactConditionExpression::containsExpression(const Expression& pExpression) const
-{
-  return expression == pExpression;
-}
-
-void FactConditionExpression::replaceFact(const cp::Fact& pOldFact,
-                                          const Fact& pNewFact)
-{
-  for (auto& currElt : expression.elts)
-    if (currElt.type == ExpressionElementType::FACT && currElt.value == pOldFact.toStr())
-      currElt.value = pNewFact.toStr();
-}
-
-bool FactConditionExpression::isTrue(const Problem& pProblem,
-                                     const std::set<Fact>&,
-                                     const std::set<Fact>&,
-                                     std::map<std::string, std::set<std::string>>*,
-                                     bool*) const
-{
-  return expression.isValid(pProblem.variablesToValue());
-}
-
-bool FactConditionExpression::canBecomeTrue(const Problem& pProblem) const
-{
-  return expression.isValid(pProblem.variablesToValue());
-}
-
-bool FactConditionExpression::operator==(const FactCondition& pOther) const
-{
-  auto* otherExpPtr = pOther.fcExpPtr();
-  return otherExpPtr != nullptr &&
-      expression == otherExpPtr->expression;
-}
-
-std::unique_ptr<FactCondition> FactConditionExpression::clone(const std::map<std::string, std::string>*) const
-{
-  return std::make_unique<FactConditionExpression>(expression);
-}
 
 
 FactConditionNumber::FactConditionNumber(int pNb)
