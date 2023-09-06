@@ -23,10 +23,14 @@ void applyNewParams(
 
 
 CONTEXTUALPLANNER_API
-std::string add(
+std::string plusIntOrStr(
     const std::string& pNb1Str,
     const std::string& pNb2Str);
 
+CONTEXTUALPLANNER_API
+std::string minusIntOrStr(
+    const std::string& pNb1Str,
+    const std::string& pNb2Str);
 
 template <typename T>
 T lexical_cast(const std::string& pStr)

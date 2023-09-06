@@ -62,7 +62,7 @@ void applyNewParams(
 
 
 
-std::string add(
+std::string plusIntOrStr(
     const std::string& pNb1Str,
     const std::string& pNb2Str)
 {
@@ -77,5 +77,20 @@ std::string add(
   return pNb1Str + pNb2Str;
 }
 
+
+std::string minusIntOrStr(
+    const std::string& pNb1Str,
+    const std::string& pNb2Str)
+{
+  try
+  {
+    int nb1 = lexical_cast<int>(pNb1Str);
+    int nb2 = lexical_cast<int>(pNb2Str);
+    std::stringstream ss;
+    ss << nb1 - nb2;
+    return ss.str();
+  } catch (...) {}
+  return pNb1Str + "-" + pNb2Str;
+}
 
 }

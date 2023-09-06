@@ -217,6 +217,7 @@ void _test_factModificationToStr()
   assert_eq<std::string>("location(me)=target", cp::FactModification::fromStr("location(me)=target")->toStr());
   assert_eq<std::string>("location(me)=target & grab(sweets)", cp::FactModification::fromStr("location(me)=target & grab(sweets)")->toStr());
   assert_eq<std::string>("set(a, b + 3)", cp::FactModification::fromStr("set(a, b + 3)")->toStr());
+  assert_eq<std::string>("set(a, b + 4 - 1)", cp::FactModification::fromStr("set(a, b + 4 - 1)")->toStr());
 }
 
 void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
