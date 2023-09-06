@@ -1,4 +1,5 @@
 #include "expressionParsed.hpp"
+#include <stdexcept>
 #include <contextualplanner/types/factoptional.hpp>
 
 namespace cp

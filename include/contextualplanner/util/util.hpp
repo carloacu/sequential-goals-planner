@@ -5,6 +5,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <stdexcept>
 #include <string>
 
 namespace cp
