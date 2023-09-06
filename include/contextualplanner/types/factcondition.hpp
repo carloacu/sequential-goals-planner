@@ -14,12 +14,14 @@ struct Problem;
 struct FactConditionNode;
 struct FactConditionFact;
 struct FactConditionExpression;
+struct FactConditionNumber;
 
 enum class FactConditionType
 {
   NODE,
   FACT,
-  EXPRESSION
+  EXPRESSION,
+  NUMBER
 };
 
 struct CONTEXTUALPLANNER_API FactCondition
@@ -48,6 +50,8 @@ struct CONTEXTUALPLANNER_API FactCondition
   virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
   virtual bool operator==(const FactCondition& pOther) const = 0;
 
+  virtual std::string getValue(const Problem& pProblem) const = 0;
+
   virtual std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr = nullptr) const = 0;
 
   virtual const FactConditionNode* fcNodePtr() const = 0;
@@ -58,6 +62,9 @@ struct CONTEXTUALPLANNER_API FactCondition
 
   virtual const FactConditionExpression* fcExpPtr() const = 0;
   virtual FactConditionExpression* fcExpPtr() = 0;
+
+  virtual const FactConditionNumber* fcNbPtr() const = 0;
+  virtual FactConditionNumber* fcNbPtr() = 0;
 
   static std::unique_ptr<FactCondition> fromStrWithExps(const std::string& pStr);
   static std::unique_ptr<FactCondition> fromStr(const std::string& pStr);
@@ -71,7 +78,9 @@ struct CONTEXTUALPLANNER_API FactCondition
 enum class FactConditionNodeType
 {
   EQUALITY,
-  AND
+  AND,
+  PLUS,
+  MINUS
 };
 
 
@@ -103,6 +112,8 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
 
+  std::string getValue(const Problem& pProblem) const override;
+
   std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 
   const FactConditionNode* fcNodePtr() const override { return this; }
@@ -111,6 +122,8 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   FactConditionFact* fcFactPtr() override { return nullptr; }
   const FactConditionExpression* fcExpPtr() const override { return nullptr; }
   FactConditionExpression* fcExpPtr() override { return nullptr; }
+  const FactConditionNumber* fcNbPtr() const override { return nullptr; }
+  FactConditionNumber* fcNbPtr() override { return nullptr; }
 
   std::string toStr() const override;
 
@@ -145,12 +158,16 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
 
+  std::string getValue(const Problem& pProblem) const override;
+
   const FactConditionNode* fcNodePtr() const override { return nullptr; }
   FactConditionNode* fcNodePtr() override { return nullptr; }
   const FactConditionFact* fcFactPtr() const override { return this; }
   FactConditionFact* fcFactPtr() override { return this; }
   const FactConditionExpression* fcExpPtr() const override { return nullptr; }
   FactConditionExpression* fcExpPtr() override { return nullptr; }
+  const FactConditionNumber* fcNbPtr() const override { return nullptr; }
+  FactConditionNumber* fcNbPtr() override { return nullptr; }
 
   std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 
@@ -185,6 +202,8 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
   bool canBecomeTrue(const Problem& pProblem) const override;
   bool operator==(const FactCondition& pOther) const override;
 
+  std::string getValue(const Problem&) const override { return ""; }
+
   std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 
   std::string toStr() const override { return "<an_expression>"; }
@@ -195,9 +214,57 @@ struct CONTEXTUALPLANNER_API FactConditionExpression : public FactCondition
   FactConditionFact* fcFactPtr() override { return nullptr; }
   const FactConditionExpression* fcExpPtr() const override { return this; }
   FactConditionExpression* fcExpPtr() override { return this; }
+  const FactConditionNumber* fcNbPtr() const override { return nullptr; }
+  FactConditionNumber* fcNbPtr() override { return nullptr; }
 
   Expression expression;
 };
+
+
+struct CONTEXTUALPLANNER_API FactConditionNumber : public FactCondition
+{
+  FactConditionNumber(int pNb);
+
+  bool hasFact(const cp::Fact&) const override  { return false; }
+  bool containsFactOpt(const FactOptional&,
+                       const std::map<std::string, std::set<std::string>>&,
+                       const std::vector<std::string>&) const override { return false; }
+  bool containsExpression(const Expression& pExpression) const override  { return false; }
+  void replaceFact(const cp::Fact& pOldFact,
+                   const Fact& pNewFact) override {}
+  void forAll(const std::function<void (const FactOptional&)>&,
+              const std::function<void (const Expression&)>& pExpCallback) const override {}
+  bool untilFalse(const std::function<bool (const FactOptional&)>&,
+                  const std::function<bool (const Expression&)>& pExpCallback,
+                  const Problem&,
+                  const std::map<std::string, std::set<std::string>>&) const override { return true; }
+  bool canBeTrue() const override { return true; }
+  bool isTrue(const Problem& pProblem,
+              const std::set<Fact>& pPunctualFacts,
+              const std::set<Fact>& pRemovedFacts,
+              std::map<std::string, std::set<std::string>>* pParametersPtr,
+              bool* pCanBecomeTruePtr) const override { return true; }
+  bool canBecomeTrue(const Problem& pProblem) const override  { return true; }
+  bool operator==(const FactCondition& pOther) const override;
+
+  std::string getValue(const Problem& pProblem) const override;
+
+  std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
+
+  std::string toStr() const override;
+
+  const FactConditionNode* fcNodePtr() const override { return nullptr; }
+  FactConditionNode* fcNodePtr() override { return nullptr; }
+  const FactConditionFact* fcFactPtr() const override { return nullptr; }
+  FactConditionFact* fcFactPtr() override { return nullptr; }
+  const FactConditionExpression* fcExpPtr() const override { return nullptr; }
+  FactConditionExpression* fcExpPtr() override { return nullptr; }
+  const FactConditionNumber* fcNbPtr() const override { return this; }
+  FactConditionNumber* fcNbPtr() override { return this; }
+
+  int nb;
+};
+
 
 
 } // !cp

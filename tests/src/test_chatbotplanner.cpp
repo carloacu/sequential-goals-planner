@@ -209,6 +209,7 @@ void _test_factConditionParameters()
 
   std::map<std::string, std::string> parameters = {{"target", "kitchen"}, {"object", "chair"}};
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::FactCondition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
+  assert_eq<std::string>("equals(a, b + 3)", cp::FactCondition::fromStr("equals(a, b + 3)")->toStr());
 }
 
 void _test_factModificationToStr()
@@ -780,26 +781,26 @@ void _testIncrementOfVariables()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  const cp::Action actionQ1({}, cp::FactModification::fromStrWithExps(_fact_askAllTheQuestions + "&++${number-of-question}"));
-  const cp::Action actionFinishToActActions(cp::FactCondition::fromStrWithExps("${number-of-question}=${max-number-of-questions}"),
+  const cp::Action actionQ1({}, cp::FactModification::fromStr(_fact_askAllTheQuestions + " & add(numberOfQuestion, 1)"));
+  const cp::Action actionFinishToActActions(cp::FactCondition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
                                             cp::FactModification::fromStr(_fact_askAllTheQuestions));
-  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStrWithExps(_fact_askAllTheQuestions),
+  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStr(_fact_askAllTheQuestions),
                                           cp::FactModification::fromStr(_fact_finishToAskQuestions));
   actions.emplace(_action_askQuestion1, actionQ1);
-  actions.emplace(_action_askQuestion2, cp::Action({}, cp::FactModification::fromStrWithExps(_fact_askAllTheQuestions + "&++${number-of-question}")));
+  actions.emplace(_action_askQuestion2, cp::Action({}, cp::FactModification::fromStr(_fact_askAllTheQuestions + " & add(numberOfQuestion, 1)")));
   actions.emplace(_action_finisehdToAskQuestions, actionFinishToActActions);
   actions.emplace(_action_sayQuestionBilan, actionSayQuestionBilan);
   cp::Domain domain(std::move(actions));
 
-  std::string initFactsStr = "${number-of-question}=0&${max-number-of-questions}=3";
+  std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   cp::Problem problem;
-  problem.modifyFacts(cp::FactModification::fromStrWithExps(initFactsStr), now);
-  assert(cp::FactCondition::fromStrWithExps(initFactsStr)->isTrue(problem));
+  problem.modifyFacts(cp::FactModification::fromStr(initFactsStr), now);
+  assert(cp::FactCondition::fromStr(initFactsStr)->isTrue(problem));
   assert(!actionFinishToActActions.precondition->isTrue(problem));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem));
-  assert(cp::FactCondition::fromStrWithExps("${max-number-of-questions}=${number-of-question}+3")->isTrue(problem));
-  assert(!cp::FactCondition::fromStrWithExps("${max-number-of-questions}=${number-of-question}+4")->isTrue(problem));
-  assert(cp::FactCondition::fromStrWithExps("${max-number-of-questions}=${number-of-question}+4-1")->isTrue(problem));
+  assert(cp::FactCondition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 3)")->isTrue(problem));
+  assert(!cp::FactCondition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4)")->isTrue(problem));
+  assert(cp::FactCondition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4 - 1)")->isTrue(problem));
   for (std::size_t i = 0; i < 3; ++i)
   {
     _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});

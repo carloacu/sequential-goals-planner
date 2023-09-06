@@ -1,4 +1,5 @@
 #include <contextualplanner/types/factcondition.hpp>
+#include <sstream>
 #include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/util/util.hpp>
 #include "expressionParsed.hpp"
@@ -39,30 +40,21 @@ std::unique_ptr<FactCondition> _merge(std::list<std::unique_ptr<FactCondition>>&
 
 bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
                         bool pUntilValue,
-                        const Fact& pFact,
+                        const FactCondition& pFactCondition,
                         const Problem& pProblem,
                         const std::map<std::string, std::set<std::string>>* pParametersPtr)
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    return pValueCallback(pProblem.getFactValue(pFact));
+    return pValueCallback(pFactCondition.getValue(pProblem));
   }
 
   std::list<std::map<std::string, std::string>> paramPossibilities;
   unfoldMapWithSet(paramPossibilities, *pParametersPtr);
   for (auto& currParamPoss : paramPossibilities)
   {
-    auto factToExtractValue = pFact;
-    for (auto& currParam : currParamPoss)
-    {
-      auto oldFact = cp::Fact::fromStr(currParam.first);
-      auto newFact = cp::Fact::fromStr(currParam.second);
-      if (factToExtractValue == oldFact)
-        factToExtractValue = newFact;
-      else
-        factToExtractValue.replaceFactInParameters(oldFact, newFact);
-    }
-    if (pValueCallback(pProblem.getFactValue(factToExtractValue)) == pUntilValue)
+    auto factCondToExtractValue = pFactCondition.clone(&currParamPoss);
+    if (pValueCallback(factCondToExtractValue->getValue(pProblem)) == pUntilValue)
       return pUntilValue;
   }
   return !pUntilValue;
@@ -70,13 +62,13 @@ bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCa
 
 
 void _forEach(const std::function<void (const std::string&)>& pValueCallback,
-              const Fact& pFact,
+              const FactCondition& pFactCondition,
               const Problem& pProblem,
               const std::map<std::string, std::set<std::string>>* pParametersPtr)
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    pValueCallback(pProblem.getFactValue(pFact));
+    pValueCallback(pFactCondition.getValue(pProblem));
     return;
   }
 
@@ -84,17 +76,8 @@ void _forEach(const std::function<void (const std::string&)>& pValueCallback,
   unfoldMapWithSet(paramPossibilities, *pParametersPtr);
   for (auto& currParamPoss : paramPossibilities)
   {
-    auto factToExtractValue = pFact;
-    for (auto& currParam : currParamPoss)
-    {
-      auto oldFact = cp::Fact::fromStr(currParam.first);
-      auto newFact = cp::Fact::fromStr(currParam.second);
-      if (factToExtractValue == oldFact)
-        factToExtractValue = newFact;
-      else
-        factToExtractValue.replaceFactInParameters(oldFact, newFact);
-    }
-    pValueCallback(pProblem.getFactValue(factToExtractValue));
+    auto factToExtractValue = pFactCondition.clone(&currParamPoss);
+    pValueCallback(factToExtractValue->getValue(pProblem));
   }
 }
 
@@ -123,17 +106,27 @@ std::unique_ptr<FactCondition> _expressionParsedToFactCondition(const Expression
   }
   else
   {
-    res = std::make_unique<FactConditionFact>(pExpressionParsed.toFact());
+    if (pExpressionParsed.arguments.empty() && pExpressionParsed.value == "")
+    {
+      try {
+        res = std::make_unique<FactConditionNumber>(lexical_cast<int>(pExpressionParsed.name));
+      }  catch (...) {}
+    }
+
+    if (!res)
+      res = std::make_unique<FactConditionFact>(pExpressionParsed.toFact());
   }
 
   if (pExpressionParsed.followingExpression)
   {
-    if (pExpressionParsed.separatorToFollowingExp == '&')
-    {
-      res = std::make_unique<FactConditionNode>(FactConditionNodeType::AND,
-                                                std::move(res),
-                                                _expressionParsedToFactCondition(*pExpressionParsed.followingExpression));
-    }
+    auto nodeType = FactConditionNodeType::AND;
+    if (pExpressionParsed.separatorToFollowingExp == '+')
+      nodeType = FactConditionNodeType::PLUS;
+    else if (pExpressionParsed.separatorToFollowingExp == '-')
+      nodeType = FactConditionNodeType::MINUS;
+    res = std::make_unique<FactConditionNode>(nodeType,
+                                              std::move(res),
+                                              _expressionParsedToFactCondition(*pExpressionParsed.followingExpression));
   }
 
   return res;
@@ -319,8 +312,7 @@ bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
-    auto* rightFactPtr = rightOperand->fcFactPtr();
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    if (leftFactPtr != nullptr)
     {
       return _forEachValueUntil(
             [&](const std::string& pValue)
@@ -328,7 +320,7 @@ bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&
         auto factToCheck = leftFactPtr->factOptional.fact;
         factToCheck.value = pValue;
         return pFactCallback(FactOptional(factToCheck));
-      }, false, rightFactPtr->factOptional.fact, pProblem, &pParameters);
+      }, false, *rightOperand, pProblem, &pParameters);
     }
   }
   return true;
@@ -378,8 +370,7 @@ bool FactConditionNode::isTrue(const Problem& pProblem,
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
-    auto* rightFactPtr = rightOperand->fcFactPtr();
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    if (leftFactPtr != nullptr)
     {
       bool res = false;
       std::map<std::string, std::set<std::string>> newParameters;
@@ -392,7 +383,7 @@ bool FactConditionNode::isTrue(const Problem& pProblem,
           res = pPunctualFacts.count(factToCheck) != 0 || res;
         else
           res = factToCheck.isInFacts(pProblem._facts, true, newParameters, pParametersPtr) || res;
-      }, rightFactPtr->factOptional.fact, pProblem, pParametersPtr);
+      }, *rightOperand, pProblem, pParametersPtr);
 
       if (pParametersPtr != nullptr)
         applyNewParams(*pParametersPtr, newParameters);
@@ -434,6 +425,23 @@ bool FactConditionNode::operator==(const FactCondition& pOther) const
       _areEqual(rightOperand, otherNodePtr->rightOperand);
 }
 
+std::string FactConditionNode::getValue(const Problem& pProblem) const
+{
+  if (nodeType == FactConditionNodeType::PLUS)
+  {
+    auto leftValue = leftOperand->getValue(pProblem);
+    auto rightValue = rightOperand->getValue(pProblem);
+    return plusIntOrStr(leftValue, rightValue);
+  }
+  if (nodeType == FactConditionNodeType::MINUS)
+  {
+    auto leftValue = leftOperand->getValue(pProblem);
+    auto rightValue = rightOperand->getValue(pProblem);
+    return minusIntOrStr(leftValue, rightValue);
+  }
+  return "";
+}
+
 
 std::unique_ptr<FactCondition> FactConditionNode::clone(const std::map<std::string, std::string>* pParametersPtr) const
 {
@@ -458,6 +466,10 @@ std::string FactConditionNode::toStr() const
     return leftOperandStr + " & " + rightOperandStr;
   case FactConditionNodeType::EQUALITY:
     return _equalsFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  case FactConditionNodeType::PLUS:
+    return leftOperandStr + " + " + rightOperandStr;
+  case FactConditionNodeType::MINUS:
+    return leftOperandStr + " - " + rightOperandStr;
   }
   return "";
 }
@@ -523,6 +535,11 @@ bool FactConditionFact::operator==(const FactCondition& pOther) const
       factOptional == otherFactPtr->factOptional;
 }
 
+std::string FactConditionFact::getValue(const Problem& pProblem) const
+{
+  return pProblem.getFactValue(factOptional.fact);
+}
+
 std::unique_ptr<FactCondition> FactConditionFact::clone(const std::map<std::string, std::string>* pParametersPtr) const
 {
   auto res = std::make_unique<FactConditionFact>(factOptional);
@@ -585,5 +602,35 @@ std::unique_ptr<FactCondition> FactConditionExpression::clone(const std::map<std
   return std::make_unique<FactConditionExpression>(expression);
 }
 
+
+FactConditionNumber::FactConditionNumber(int pNb)
+  : FactCondition(FactConditionType::NUMBER),
+    nb(pNb)
+{
+}
+
+bool FactConditionNumber::operator==(const FactCondition& pOther) const
+{
+  auto* otherNbPtr = pOther.fcNbPtr();
+  return otherNbPtr != nullptr &&
+      nb == otherNbPtr->nb;
+}
+
+std::string FactConditionNumber::getValue(const Problem&) const
+{
+  return toStr();
+}
+
+std::unique_ptr<FactCondition> FactConditionNumber::clone(const std::map<std::string, std::string>*) const
+{
+  return std::make_unique<FactConditionNumber>(nb);
+}
+
+std::string FactConditionNumber::toStr() const
+{
+  std::stringstream ss;
+  ss << nb;
+  return ss.str();
+}
 
 } // !cp
