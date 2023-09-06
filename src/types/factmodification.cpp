@@ -349,13 +349,13 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
   else if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
-    auto* rightFactPtr = rightOperand->fcFactPtr();
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      factToCheck.fact.value = rightOperand->getValue(pProblem);
       return pFactCallback(factToCheck);
     }
+
   }
   else if (nodeType == FactModificationNodeType::FOR_ALL)
   {
@@ -370,13 +370,9 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
     auto* leftFactPtr = leftOperand->fcFactPtr();
     if (leftFactPtr != nullptr)
     {
-      auto* rightNumberPtr = rightOperand->fcNumberPtr();
-      if (rightNumberPtr != nullptr)
-      {
-        auto factToCheck = leftFactPtr->factOptional;
-        factToCheck.fact.value = add(pProblem.getFactValue(leftFactPtr->factOptional.fact), rightNumberPtr->nb);
-        return pFactCallback(factToCheck);
-      }
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = add(leftOperand->getValue(pProblem), rightOperand->getValue(pProblem));
+      return pFactCallback(factToCheck);
     }
   }
 }
@@ -392,11 +388,10 @@ bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (con
   if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
-    auto* rightFactPtr = rightOperand->fcFactPtr();
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      factToCheck.fact.value = rightOperand->getValue(pProblem);
       return pFactCallback(factToCheck);
     }
   }
@@ -418,13 +413,9 @@ bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (con
     auto* leftFactPtr = leftOperand->fcFactPtr();
     if (leftFactPtr != nullptr)
     {
-      auto* rightNumberPtr = rightOperand->fcNumberPtr();
-      if (rightNumberPtr != nullptr)
-      {
-        auto factToCheck = leftFactPtr->factOptional;
-        factToCheck.fact.value = add(pProblem.getFactValue(leftFactPtr->factOptional.fact), rightNumberPtr->nb);
-        return pFactCallback(factToCheck);
-      }
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = add(leftOperand->getValue(pProblem), rightOperand->getValue(pProblem));
+      return pFactCallback(factToCheck);
     }
   }
 
@@ -444,11 +435,10 @@ void FactModificationNode::forAllFacts(const std::function<void (const FactOptio
   else if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
-    auto* rightFactPtr = rightOperand->fcFactPtr();
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
+    if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
+      factToCheck.fact.value = rightOperand->getValue(pProblem);
       pFactCallback(factToCheck);
     }
   }
@@ -465,13 +455,9 @@ void FactModificationNode::forAllFacts(const std::function<void (const FactOptio
     auto* leftFactPtr = leftOperand->fcFactPtr();
     if (leftFactPtr != nullptr)
     {
-      auto* rightNumberPtr = rightOperand->fcNumberPtr();
-      if (rightNumberPtr != nullptr)
-      {
-        auto factToCheck = leftFactPtr->factOptional;
-        factToCheck.fact.value = add(pProblem.getFactValue(leftFactPtr->factOptional.fact), rightNumberPtr->nb);
-        pFactCallback(factToCheck);
-      }
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = add(leftOperand->getValue(pProblem), rightOperand->getValue(pProblem));
+      pFactCallback(factToCheck);
     }
   }
 }
@@ -486,6 +472,16 @@ bool FactModificationNode::forAllExpUntilTrue(const std::function<bool (const Ex
   return false;
 }
 
+std::string FactModificationNode::getValue(const Problem& pProblem) const
+{
+  if (nodeType == FactModificationNodeType::PLUS)
+  {
+    auto leftValue = leftOperand->getValue(pProblem);
+    auto rightValue = rightOperand->getValue(pProblem);
+    return add(leftValue, rightValue);
+  }
+  return "";
+}
 
 
 std::unique_ptr<FactModification> FactModificationNode::clone(const std::map<std::string, std::string>* pParametersPtr) const
@@ -570,6 +566,10 @@ void FactModificationFact::forAllFacts(const std::function<void (const FactOptio
   pFactCallback(factOptional);
 }
 
+std::string FactModificationFact::getValue(const Problem& pProblem) const
+{
+  return pProblem.getFactValue(factOptional.fact);
+}
 
 std::unique_ptr<FactModification> FactModificationFact::clone(const std::map<std::string, std::string>* pParametersPtr) const
 {
@@ -626,6 +626,12 @@ FactModificationNumber::FactModificationNumber(int pNb)
    nb(pNb)
 {
 }
+
+std::string FactModificationNumber::getValue(const Problem&) const
+{
+  return toStr();
+}
+
 
 std::unique_ptr<FactModification> FactModificationNumber::clone(const std::map<std::string, std::string>*) const
 {

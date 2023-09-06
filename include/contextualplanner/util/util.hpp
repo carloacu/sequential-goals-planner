@@ -22,9 +22,10 @@ void applyNewParams(
     std::map<std::string, std::set<std::string>>& pNewParameters);
 
 
+CONTEXTUALPLANNER_API
 std::string add(
     const std::string& pNb1Str,
-    int pNb2);
+    const std::string& pNb2Str);
 
 
 template <typename T>

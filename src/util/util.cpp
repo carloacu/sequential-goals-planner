@@ -64,15 +64,17 @@ void applyNewParams(
 
 std::string add(
     const std::string& pNb1Str,
-    int pNb2)
+    const std::string& pNb2Str)
 {
-  try {
+  try
+  {
     int nb1 = lexical_cast<int>(pNb1Str);
+    int nb2 = lexical_cast<int>(pNb2Str);
     std::stringstream ss;
-    ss << nb1 + pNb2;
+    ss << nb1 + nb2;
     return ss.str();
-  }  catch (...) {}
-  return pNb1Str;
+  } catch (...) {}
+  return pNb1Str + pNb2Str;
 }
 
 

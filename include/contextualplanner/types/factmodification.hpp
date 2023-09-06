@@ -41,6 +41,8 @@ struct CONTEXTUALPLANNER_API FactModification
                            const Problem& pProblem) const = 0;
   virtual bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const = 0;
 
+  virtual std::string getValue(const Problem& pProblem) const = 0;
+
   virtual std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const = 0;
   virtual std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
   virtual const FactModificationFact* fcFactPtr() const = 0;
@@ -89,6 +91,8 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
                    const Problem& pProblem) const override;
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override;
 
+  std::string getValue(const Problem& pProblem) const override;
+
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return nullptr; }
@@ -125,6 +129,8 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
                    const Problem& pProblem) const override;
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>&) const override { return false; }
 
+  std::string getValue(const Problem& pProblem) const override;
+
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
   const FactModificationFact* fcFactPtr() const override { return this; }
@@ -153,6 +159,8 @@ struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModificatio
   void forAllFacts(const std::function<void (const FactOptional&)>&,
                    const Problem&) const override {}
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return pExpCallback(expression); }
+
+  std::string getValue(const Problem&) const override { return ""; }
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
@@ -183,6 +191,8 @@ struct CONTEXTUALPLANNER_API FactModificationNumber : public FactModification
   void forAllFacts(const std::function<void (const FactOptional&)>&,
                    const Problem&) const override {}
   bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return false; }
+
+  std::string getValue(const Problem& pProblem) const override;
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
