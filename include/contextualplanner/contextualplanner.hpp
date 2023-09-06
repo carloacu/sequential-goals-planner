@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CONTEXTUALPLANNER_CONTEXTUALPLANNER_HPP
 #define INCLUDE_CONTEXTUALPLANNER_CONTEXTUALPLANNER_HPP
 
+#include <list>
 #include <map>
 #include "util/api.hpp"
 #include <contextualplanner/util/alias.hpp>

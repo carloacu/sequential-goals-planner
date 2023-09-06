@@ -199,15 +199,14 @@ void FactModificationNode::_forAllInstruction(const std::function<void (const Fa
 }
 
 void FactModificationNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                                  const std::function<void (const Expression&)>& pExpCallback,
                                   const Problem& pProblem) const
 {
   if (nodeType == FactModificationNodeType::AND)
   {
     if (leftOperand)
-      leftOperand->forAll(pFactCallback, pExpCallback, pProblem);
+      leftOperand->forAll(pFactCallback, pProblem);
     if (rightOperand)
-      rightOperand->forAll(pFactCallback, pExpCallback, pProblem);
+      rightOperand->forAll(pFactCallback, pProblem);
   }
   else if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
   {
@@ -225,7 +224,7 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
     _forAllInstruction(
           [&](const FactModification& pFactModification)
     {
-      pFactModification.forAll(pFactCallback, pExpCallback, pProblem);
+      pFactModification.forAll(pFactCallback, pProblem);
     }, pProblem);
   }
   else if (nodeType == FactModificationNodeType::ADD && leftOperand && rightOperand)
@@ -325,15 +324,6 @@ void FactModificationNode::forAllFacts(const std::function<void (const FactOptio
   }
 }
 
-
-
-bool FactModificationNode::forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const
-{
-  if (nodeType == FactModificationNodeType::AND)
-    return (leftOperand && leftOperand->forAllExpUntilTrue(pExpCallback)) ||
-        (rightOperand && rightOperand->forAllExpUntilTrue(pExpCallback));
-  return false;
-}
 
 std::string FactModificationNode::getValue(const Problem& pProblem) const
 {

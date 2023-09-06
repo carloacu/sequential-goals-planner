@@ -21,10 +21,6 @@ void SetOfInferences::addInference(const InferenceId& pInferenceId,
         links.notConditionToInferences[pFactOptional.fact.name].insert(pInferenceId);
       else
         links.conditionToInferences[pFactOptional.fact.name].insert(pInferenceId);
-    },
-    [&](const Expression&) {
-      if (pInference.isReachable)
-        links.inferencesWithWithAnExpressionInCondition.insert(pInferenceId);
     }
     );
   }
@@ -48,8 +44,7 @@ void SetOfInferences::removeInference(const InferenceId& pInferenceId)
         links.notConditionToInferences[pFactOptional.fact.name].erase(pInferenceId);
       else
         links.conditionToInferences[pFactOptional.fact.name].erase(pInferenceId);
-    },
-    [](const Expression&) {}
+    }
     );
   }
   _inferences.erase(it);

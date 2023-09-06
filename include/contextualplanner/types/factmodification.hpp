@@ -4,7 +4,6 @@
 #include <functional>
 #include <memory>
 #include "../util/api.hpp"
-#include "expression.hpp"
 #include "factoptional.hpp"
 
 
@@ -32,13 +31,11 @@ struct CONTEXTUALPLANNER_API FactModification
   virtual void replaceFact(const cp::Fact& pOldFact,
                            const Fact& pNewFact) = 0;
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                      const std::function<void (const Expression&)>& pExpCallback,
                       const Problem& pProblem) const = 0;
   virtual bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                                        const Problem& pProblem) const = 0;
   virtual void forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                            const Problem& pProblem) const = 0;
-  virtual bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const = 0;
 
   virtual std::string getValue(const Problem& pProblem) const = 0;
 
@@ -82,13 +79,11 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   void replaceFact(const Fact& pOldFact,
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const std::function<void (const Expression&)>& pExpCallback,
               const Problem& pProblem) const override;
   bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const Problem& pProblem) const override;
   void forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                    const Problem& pProblem) const override;
-  bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override;
 
   std::string getValue(const Problem& pProblem) const override;
 
@@ -120,13 +115,11 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const std::function<void (const Expression&)>&,
               const Problem&) const override { pFactCallback(factOptional); }
   bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const Problem& pProblem) const override;
   void forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                    const Problem& pProblem) const override;
-  bool forAllExpUntilTrue(const std::function<bool (const Expression&)>&) const override { return false; }
 
   std::string getValue(const Problem& pProblem) const override;
 
@@ -152,13 +145,11 @@ struct CONTEXTUALPLANNER_API FactModificationNumber : public FactModification
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
-              const std::function<void (const Expression&)>&,
               const Problem&) const override {}
   bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>&,
                                const Problem&) const override { return false; }
   void forAllFacts(const std::function<void (const FactOptional&)>&,
                    const Problem&) const override {}
-  bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return false; }
 
   std::string getValue(const Problem& pProblem) const override;
 

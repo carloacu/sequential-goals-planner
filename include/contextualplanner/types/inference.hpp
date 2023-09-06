@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_INFERENCE_HPP
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_INFERENCE_HPP
 
+#include <assert.h>
 #include <functional>
 #include <map>
 #include <vector>

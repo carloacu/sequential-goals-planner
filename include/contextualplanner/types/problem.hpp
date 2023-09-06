@@ -47,8 +47,6 @@ struct CONTEXTUALPLANNER_API Problem
   // World state
   // -----------
 
-  /// Be notified when a variable to value changed.
-  cpstd::observable::ObservableUnsafe<void (const std::map<std::string, std::string>&)> onVariablesToValueChanged{};
   /// Be notified when facts changed.
   cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsChanged{};
   /// Be notified about the punctual facts.
@@ -60,13 +58,6 @@ struct CONTEXTUALPLANNER_API Problem
   /// Be notified when goals changed.
   cpstd::observable::ObservableUnsafe<void (const std::map<int, std::vector<Goal>>&)> onGoalsChanged{};
 
-  /**
-  * @brief Add variables to value.
-  * @param pVariablesToValue Variables to value to add.
-  * @param pNow Current time.
-  */
-  void addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue,
-                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
   * @brief Add a fact.
@@ -144,8 +135,6 @@ struct CONTEXTUALPLANNER_API Problem
   const std::set<Fact>& facts() const { return _facts; }
   /// Fact names to facts in the world.
   const std::map<std::string, std::set<Fact>>& factNamesToFacts() const { return _factNamesToFacts; }
-  /// Map of variables to value.
-  const std::map<std::string, std::string>& variablesToValue() const { return _variablesToValue; }
 
 
 
@@ -330,8 +319,6 @@ struct CONTEXTUALPLANNER_API Problem
 private:
   /// Map of priority to goals.
   std::map<int, std::vector<Goal>> _goals{};
-  /// Variables to value.
-  std::map<std::string, std::string> _variablesToValue{};
   /// Facts of the world.
   std::set<Fact> _facts{};
   /// Fact names to facts in the world.
@@ -358,13 +345,11 @@ private:
     std::set<Fact> addedFacts;
     /// Facts that we removed in the world.
     std::set<Fact> removedFacts;
-    /// True if variable to values changed.
-    bool variablesToValue = false;
     /// True if the goals changed.
     bool goals = false;
 
     /// Check if something changed.
-    bool somethingChanged() const { return !punctualFacts.empty() || !addedFacts.empty() || !removedFacts.empty() || variablesToValue || goals; }
+    bool somethingChanged() const { return !punctualFacts.empty() || !addedFacts.empty() || !removedFacts.empty() || goals; }
     /// Has some facts to add or to remove.
     bool hasFactsModifications() const { return !addedFacts.empty() || !removedFacts.empty(); }
   };

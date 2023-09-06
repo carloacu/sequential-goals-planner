@@ -4,7 +4,6 @@
 #include <functional>
 #include <memory>
 #include "../util/api.hpp"
-#include "expression.hpp"
 #include "factoptional.hpp"
 
 
@@ -30,13 +29,10 @@ struct CONTEXTUALPLANNER_API FactCondition
   virtual bool containsFactOpt(const FactOptional& pFactOptional,
                                const std::map<std::string, std::set<std::string>>& pFactParameters,
                                const std::vector<std::string>& pThisFactParameters) const = 0;
-  virtual bool containsExpression(const Expression& pExpression) const = 0;
   virtual void replaceFact(const cp::Fact& pOldFact,
                            const Fact& pNewFact) = 0;
-  virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                      const std::function<void (const Expression&)>& pExpCallback) const = 0;
+  virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                          const std::function<bool (const Expression&)>& pExpCallback,
                           const Problem& pProblem,
                           const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
   virtual bool canBeTrue() const = 0;
@@ -88,13 +84,10 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
                        const std::vector<std::string>& pThisFactParameters) const override;
-  bool containsExpression(const Expression& pExpression) const override;
   void replaceFact(const Fact& pOldFact,
                    const Fact& pNewFact) override;
-  void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const std::function<void (const Expression&)>& pExpCallback) const override;
+  void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const std::function<bool (const Expression&)>& pExpCallback,
                   const Problem& pProblem,
                   const std::map<std::string, std::set<std::string>>& pParameters) const override;
   bool canBeTrue() const override;
@@ -132,13 +125,10 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
                        const std::vector<std::string>& pThisFactParameters) const override;
-  bool containsExpression(const Expression&) const override { return false; }
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
-  void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const std::function<void (const Expression&)>&) const override { pFactCallback(factOptional); }
+  void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override { pFactCallback(factOptional); }
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const std::function<bool (const Expression&)>&,
                   const Problem&,
                   const std::map<std::string, std::set<std::string>>&) const override { return pFactCallback(factOptional); }
   bool canBeTrue() const override { return factOptional.isFactNegated || !factOptional.fact.isUnreachable(); }
@@ -175,13 +165,10 @@ struct CONTEXTUALPLANNER_API FactConditionNumber : public FactCondition
   bool containsFactOpt(const FactOptional&,
                        const std::map<std::string, std::set<std::string>>&,
                        const std::vector<std::string>&) const override { return false; }
-  bool containsExpression(const Expression& pExpression) const override  { return false; }
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override {}
-  void forAll(const std::function<void (const FactOptional&)>&,
-              const std::function<void (const Expression&)>& pExpCallback) const override {}
+  void forAll(const std::function<void (const FactOptional&)>&) const override {}
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
-                  const std::function<bool (const Expression&)>& pExpCallback,
                   const Problem&,
                   const std::map<std::string, std::set<std::string>>&) const override { return true; }
   bool canBeTrue() const override { return true; }

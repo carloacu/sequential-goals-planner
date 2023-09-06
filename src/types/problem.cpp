@@ -37,15 +37,13 @@ void _incrementStr(std::string& pStr)
 
 
 Problem::Problem(const Problem& pOther)
-  : onVariablesToValueChanged(),
-    onFactsChanged(),
+  : onFactsChanged(),
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
     onGoalsChanged(),
     historical(pOther.historical),
     _goals(pOther._goals),
-    _variablesToValue(pOther._variablesToValue),
     _facts(pOther._facts),
     _factNamesToFacts(pOther._factNamesToFacts),
     _accessibleFacts(pOther._accessibleFacts),
@@ -100,17 +98,6 @@ void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerRes
   _notifyWhatChanged(whatChanged, pNow);
 }
 
-
-void Problem::addVariablesToValue(const std::map<std::string, std::string>& pVariablesToValue,
-                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
-{
-  if (!pVariablesToValue.empty())
-    for (const auto& currFactToVal : pVariablesToValue)
-      _variablesToValue[currFactToVal.first] = currFactToVal.second;
-  WhatChanged whatChanged;
-  whatChanged.variablesToValue = true;
-  _notifyWhatChanged(whatChanged, pNow);
-}
 
 bool Problem::addFact(const Fact& pFact,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
@@ -349,41 +336,7 @@ void Problem::_modifyFacts(WhatChanged& pWhatChanged,
       factsToRemove.emplace_back(pFactOptional.fact);
     else
       factsToAdd.emplace_back(pFactOptional.fact);
-  },
-  [&](const Expression& pExpression)
-{
-    if (pExpression.elts.size() >= 2)
-    {
-      auto it = pExpression.elts.begin();
-      if (it->type == ExpressionElementType::OPERATOR)
-      {
-        auto op = it->value;
-        ++it;
-        if (op == "++" &&
-            it->type == ExpressionElementType::FACT)
-        {
-          _incrementStr(_variablesToValue[it->value]);
-          pWhatChanged.variablesToValue = true;
-        }
-      }
-      else if (it->type == ExpressionElementType::FACT)
-      {
-        auto factToSet = it->value;
-        ++it;
-        if (it->type == ExpressionElementType::OPERATOR)
-        {
-          auto op = it->value;
-          ++it;
-          if (op == "=" &&
-              it->type == ExpressionElementType::VALUE)
-          {
-            _variablesToValue[factToSet] = it->value;
-            pWhatChanged.variablesToValue = true;
-          }
-        }
-      }
-    }
-}, *this);
+  }, *this);
 
   _addFacts(pWhatChanged, factsToAdd, pNow);
   _removeFacts(pWhatChanged, factsToRemove, pNow);
@@ -1085,7 +1038,6 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
         auto& inferences = currSetOfInferences.second->inferences();
         auto& condToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().conditionToInferences;
         auto& notCondToReachableInferences = currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
-        auto& reachableInferencesWithWithAnExpressionInCondition = currSetOfInferences.second->reachableInferenceLinks().inferencesWithWithAnExpressionInCondition;
         auto& inferencesAlreadyApplied = soiToInferencesAlreadyApplied[currSetOfInferences.first];
 
         for (auto& currAddedFact : pWhatChanged.punctualFacts)
@@ -1109,10 +1061,6 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
               _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, it->second, inferences, pNow))
             needAnotherLoop = true;
         }
-
-        if (pWhatChanged.variablesToValue &&
-            _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, reachableInferencesWithWithAnExpressionInCondition, inferences, pNow))
-          needAnotherLoop = true;
       }
     }
 
@@ -1124,8 +1072,6 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
       onFactsRemoved(pWhatChanged.removedFacts);
     if (pWhatChanged.hasFactsModifications())
       onFactsChanged(_facts);
-    if (pWhatChanged.variablesToValue)
-      onVariablesToValueChanged(_variablesToValue);
     if (pWhatChanged.goals)
       onGoalsChanged(_goals);
   }

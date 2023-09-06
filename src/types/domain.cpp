@@ -33,15 +33,6 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
     return false;
   }
 
-  if (pFactsModifications->forAllExpUntilTrue(
-        [&](const Expression& pExpression)
-  {
-    return !pFactConditionPtr || !pFactConditionPtr->containsExpression(pExpression);
-  }))
-  {
-    return false;
-  }
-
   return true;
 }
 
@@ -80,17 +71,6 @@ void Domain::addAction(const ActionId& pActionId,
         _preconditionToActions[pFactOptional.fact.name].insert(pActionId);
         hasAddedAFact = true;
       }
-    },
-    [&](const Expression& pExpression)
-    {
-      for (auto& currElt : pExpression.elts)
-      {
-        if (currElt.type == ExpressionElementType::FACT)
-        {
-          _preconditionToActionsExps[currElt.value].insert(pActionId);
-          hasAddedAFact = true;
-        }
-      }
     }
     );
   }
@@ -116,12 +96,6 @@ void Domain::removeAction(const ActionId& pActionId)
         _notPreconditionToActions[pFactOptional.fact.name].erase(pActionId);
       else
         _preconditionToActions[pFactOptional.fact.name].erase(pActionId);
-    },
-    [&](const Expression& pExpression)
-    {
-      for (auto& currElt : pExpression.elts)
-        if (currElt.type == ExpressionElementType::FACT)
-          _preconditionToActionsExps[currElt.value].erase(pActionId);
     }
     );
   }

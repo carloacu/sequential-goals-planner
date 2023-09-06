@@ -88,7 +88,7 @@ void _getPrecoditionStatistics(std::size_t& nbOfPreconditionsSatisfied,
   };
 
   if (pAction.preferInContext)
-    pAction.preferInContext->forAll(onFact, [](const Expression&) {});
+    pAction.preferInContext->forAll(onFact);
 }
 
 
@@ -185,8 +185,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
             else
               currParentParam.second.insert(parentParamValue);
             return currParentParam.second.empty();
-          },
-          [](const Expression&) { return true; }, pProblem, parametersToValues);
+          }, pProblem, parametersToValues);
 
           if (!currParentParam.second.empty())
             break;
@@ -429,14 +428,6 @@ ActionId _nextStepOfTheProblemForAGoal(
                                                    pProblem, pFactOptionalToSatisfy,
                                                    pDomain, pGlobalHistorical);
   }
-  for (const auto& currFact : pProblem.variablesToValue())
-  {
-    auto itPrecToActions = pDomain.preconditionToActionsExps().find(currFact.first);
-    if (itPrecToActions != pDomain.preconditionToActionsExps().end())
-      _nextStepOfTheProblemForAGoalAndSetOfActions(res, itPrecToActions->second, pGoal,
-                                                   pProblem, pFactOptionalToSatisfy,
-                                                   pDomain, pGlobalHistorical);
-  }
   auto& actionsWithoutFactToAddInPrecondition = pDomain.actionsWithoutFactToAddInPrecondition();
   _nextStepOfTheProblemForAGoalAndSetOfActions(res, actionsWithoutFactToAddInPrecondition, pGoal,
                                                pProblem, pFactOptionalToSatisfy,
@@ -469,7 +460,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
         return false;
       }
       return true;
-    }, [](const Expression&) { return true; }, pProblem, {});
+    }, pProblem, {});
 
     if (factOptionalToSatisfyPtr != nullptr)
     {

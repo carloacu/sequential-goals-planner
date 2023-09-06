@@ -149,12 +149,6 @@ bool FactConditionNode::containsFactOpt(const FactOptional& pFactOptional,
       (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pThisFactParameters));
 }
 
-bool FactConditionNode::containsExpression(const Expression& pExpression) const
-{
-  return (leftOperand && leftOperand->containsExpression(pExpression)) ||
-      (rightOperand && rightOperand->containsExpression(pExpression));
-}
-
 
 void FactConditionNode::replaceFact(const cp::Fact& pOldFact,
                                     const Fact& pNewFact)
@@ -166,25 +160,23 @@ void FactConditionNode::replaceFact(const cp::Fact& pOldFact,
 }
 
 
-void FactConditionNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                               const std::function<void (const Expression&)>& pExpCallback) const
+void FactConditionNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback) const
 {
   if (leftOperand)
-    leftOperand->forAll(pFactCallback, pExpCallback);
+    leftOperand->forAll(pFactCallback);
   if (rightOperand)
-    rightOperand->forAll(pFactCallback, pExpCallback);
+    rightOperand->forAll(pFactCallback);
 }
 
 bool FactConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                   const std::function<bool (const Expression&)>& pExpCallback,
                                    const Problem& pProblem,
                                    const std::map<std::string, std::set<std::string>>& pParameters) const
 {
   if (nodeType == FactConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pExpCallback, pProblem, pParameters))
+    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pProblem, pParameters))
       return false;
-    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pExpCallback, pProblem, pParameters))
+    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pProblem, pParameters))
       return false;
   }
   else if (nodeType == FactConditionNodeType::EQUALITY && leftOperand && rightOperand)

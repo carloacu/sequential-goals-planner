@@ -43,8 +43,6 @@ struct CONTEXTUALPLANNER_API Domain
   const std::map<ActionId, Action>& actions() const { return _actions; }
   /// All preconditions to action idntifiers of this domain.
   const std::map<std::string, std::set<ActionId>>& preconditionToActions() const { return _preconditionToActions; }
-  /// All preconditions in expression to action idntifiers of this domain.
-  const std::map<std::string, std::set<ActionId>>& preconditionToActionsExps() const { return _preconditionToActionsExps; }
   /// All preconditions negationed to action idntifiers of this domain.
   const std::map<std::string, std::set<ActionId>>& notPreconditionToActions() const { return _notPreconditionToActions; }
   /// All action identifiers that does not have any fact to add in this domain.
@@ -56,8 +54,6 @@ private:
   std::map<ActionId, Action> _actions;
   /// Map of preconditions to action idntifiers.
   std::map<std::string, std::set<ActionId>> _preconditionToActions;
-  /// Map of preconditions in expression to action idntifiers.
-  std::map<std::string, std::set<ActionId>> _preconditionToActionsExps;
   /// Map of preconditions negationed to action idntifiers.
   std::map<std::string, std::set<ActionId>> _notPreconditionToActions;
   /// Set of action identifiers that does not have any fact to add.
