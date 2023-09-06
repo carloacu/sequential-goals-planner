@@ -18,7 +18,6 @@ enum class FactModificationType
 {
   NODE,
   FACT,
-  EXPRESSION,
   NUMBER
 };
 
@@ -50,7 +49,6 @@ struct CONTEXTUALPLANNER_API FactModification
 
   FactModificationType type;
 
-  static std::unique_ptr<FactModification> fromStrWithExps(const std::string& pStr);
   static std::unique_ptr<FactModification> fromStr(const std::string& pStr);
   virtual std::string toStr() const = 0;
 
@@ -140,37 +138,6 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   std::string toStr() const override { return factOptional.toStr(); }
 
   FactOptional factOptional;
-};
-
-struct CONTEXTUALPLANNER_API FactModificationExpression : public FactModification
-{
-  FactModificationExpression(const Expression& pExpression);
-
-  bool hasFact(const cp::Fact& pFact) const override;
-  bool canModifySomethingInTheWorld() const override { return true; }
-  bool isDynamic() const override { return false; }
-
-  void replaceFact(const cp::Fact& pOldFact,
-                   const Fact& pNewFact) override;
-  void forAll(const std::function<void (const FactOptional&)>&,
-              const std::function<void (const Expression&)>& pExpCallback,
-              const Problem&) const override { pExpCallback(expression); }
-  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>&,
-                               const Problem&) const override { return false; }
-  void forAllFacts(const std::function<void (const FactOptional&)>&,
-                   const Problem&) const override {}
-  bool forAllExpUntilTrue(const std::function<bool (const Expression&)>& pExpCallback) const override { return pExpCallback(expression); }
-
-  std::string getValue(const Problem&) const override { return ""; }
-
-  std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
-  std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
-  const FactModificationFact* fcFactPtr() const override { return nullptr; }
-  const FactModificationNumber* fcNumberPtr() const override { return nullptr; }
-
-  std::string toStr() const override { return "<an_expression>"; }
-
-  Expression expression;
 };
 
 

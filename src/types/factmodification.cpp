@@ -8,73 +8,9 @@ namespace cp
 {
 namespace
 {
-enum class ExpressionOperator
-{
-  PLUSPLUS,
-  PLUS,
-  MINUS,
-  EQUAL,
-  NOT
-};
-
-const std::map<std::string, ExpressionOperator> _strToBeginOfTextOperators
-{{"++", ExpressionOperator::PLUSPLUS}};
-const std::map<char, ExpressionOperator> _charToOperators
-{{'=', ExpressionOperator::EQUAL}, {'+', ExpressionOperator::PLUS}, {'+', ExpressionOperator::MINUS}};
 const std::string _setFunctionName = "set";
 const std::string _forAllFunctionName = "forAll";
 const std::string _addFunctionName = "add";
-
-
-std::unique_ptr<FactModification> _merge(std::list<std::unique_ptr<FactModification>>& pFactModifications)
-{
-  if (pFactModifications.empty())
-    return {};
-  if (pFactModifications.size() == 1)
-    return std::move(pFactModifications.front());
-
-  auto frontElt = std::move(pFactModifications.front());
-  pFactModifications.pop_front();
-  return std::make_unique<FactModificationNode>(FactModificationNodeType::AND,
-                                                std::move(frontElt),
-                                                _merge(pFactModifications));
-}
-
-
-std::unique_ptr<FactModification> _factOptToFactModification(const FactOptional& pFactOptional)
-{
-  if (!pFactOptional.fact.arguments.empty() ||
-      (pFactOptional.fact.name[0] != '+' && pFactOptional.fact.name[0] != '$'))
-  {
-    if (pFactOptional.fact.name == _setFunctionName &&
-        pFactOptional.fact.arguments.size() == 2 &&
-        pFactOptional.fact.value.empty())
-    {
-      return std::make_unique<FactModificationNode>(
-            FactModificationNodeType::SET,
-            std::make_unique<FactModificationFact>(pFactOptional.fact.arguments[0]),
-          std::make_unique<FactModificationFact>(pFactOptional.fact.arguments[1]));
-    }
-
-    if (pFactOptional.fact.name == _forAllFunctionName &&
-        pFactOptional.fact.arguments.size() == 3 &&
-        pFactOptional.fact.value.empty())
-    {
-      auto forAllEffect = _factOptToFactModification(pFactOptional.fact.arguments[2]);
-      if (forAllEffect)
-      {
-        return std::make_unique<FactModificationNode>(
-              FactModificationNodeType::FOR_ALL,
-              std::make_unique<FactModificationFact>(pFactOptional.fact.arguments[1]),
-            std::move(forAllEffect),
-            pFactOptional.fact.arguments[0].fact.toStr());
-      }
-    }
-
-    return std::make_unique<FactModificationFact>(pFactOptional);
-  }
-  return {};
-}
 
 
 std::unique_ptr<FactModification> _expressionParsedToFactModification(const ExpressionParsed& pExpressionParsed)
@@ -154,89 +90,6 @@ std::unique_ptr<FactModification> _expressionParsedToFactModification(const Expr
 FactModification::FactModification(FactModificationType pType)
  : type(pType)
 {
-}
-
-
-std::unique_ptr<FactModification> FactModification::fromStrWithExps(const std::string& pStr)
-{
-  std::vector<FactOptional> vect;
-  Fact::splitFactOptional(vect, pStr, '&');
-  std::list<std::unique_ptr<FactModification>> factModifications;
-
-  for (auto& currOptFact : vect)
-  {
-    if (currOptFact.fact.name.empty())
-      continue;
-    std::string currentToken;
-    Expression exp;
-    auto fillCurrentToken = [&]
-    {
-      if (!currentToken.empty())
-      {
-        exp.elts.emplace_back(ExpressionElementType::VALUE, currentToken);
-        currentToken.clear();
-      }
-    };
-
-    auto factModification = _factOptToFactModification(currOptFact);
-    if (factModification)
-    {
-      factModifications.emplace_back(std::move(factModification));
-      continue;
-    }
-
-    auto currStr = currOptFact.fact.toStr();
-    for (std::size_t i = 0; i < currStr.size();)
-    {
-      bool needToContinue = false;
-      if (i == 0)
-      {
-        for (const auto& currOp : _strToBeginOfTextOperators)
-        {
-          if (currStr.compare(0, currOp.first.size(), currOp.first) == 0)
-          {
-            fillCurrentToken();
-            exp.elts.emplace_back(ExpressionElementType::OPERATOR, currOp.first);
-            i += currOp.first.size();
-            needToContinue = true;
-            break;
-          }
-        }
-      }
-      if (needToContinue)
-        continue;
-      for (const auto& charToOp : _charToOperators)
-      {
-        if (charToOp.first == currStr[i])
-        {
-          fillCurrentToken();
-          exp.elts.emplace_back(ExpressionElementType::OPERATOR, std::string(1, charToOp.first));
-          ++i;
-          needToContinue = true;
-          break;
-        }
-      }
-      if (needToContinue)
-        continue;
-      if (currStr[i] == '$' && currStr[i+1] == '{')
-      {
-        auto endOfVar = currStr.find('}', i + 2);
-        if (endOfVar != std::string::npos)
-        {
-          fillCurrentToken();
-          auto begPos = i + 2;
-          exp.elts.emplace_back(ExpressionElementType::FACT, currStr.substr(begPos, endOfVar - begPos));
-          i = endOfVar + 1;
-          continue;
-        }
-      }
-      currentToken += currStr[i++];
-    }
-    fillCurrentToken();
-    factModifications.emplace_back(std::make_unique<FactModificationExpression>(exp));
-  }
-
-  return _merge(factModifications);
 }
 
 
@@ -603,38 +456,6 @@ std::unique_ptr<FactModification> FactModificationFact::cloneParamSet(const std:
   auto res = std::make_unique<FactModificationFact>(factOptional);
   res->factOptional.fact.fillParameters(pParameters);
   return res;
-}
-
-FactModificationExpression::FactModificationExpression(const Expression& pExpression)
- : FactModification(FactModificationType::EXPRESSION),
-   expression(pExpression)
-{
-}
-
-bool FactModificationExpression::hasFact(const cp::Fact& pFact) const
-{
-  for (auto& currElt : expression.elts)
-    if (currElt.type == ExpressionElementType::FACT && currElt.value == pFact.toStr())
-      return true;
-  return false;
-}
-
-void FactModificationExpression::replaceFact(const cp::Fact& pOldFact,
-                                          const Fact& pNewFact)
-{
-  for (auto& currElt : expression.elts)
-    if (currElt.type == ExpressionElementType::FACT && currElt.value == pOldFact.toStr())
-      currElt.value = pNewFact.toStr();
-}
-
-std::unique_ptr<FactModification> FactModificationExpression::clone(const std::map<std::string, std::string>*) const
-{
-  return std::make_unique<FactModificationExpression>(expression);
-}
-
-std::unique_ptr<FactModification> FactModificationExpression::cloneParamSet(const std::map<std::string, std::set<std::string>>&) const
-{
-  return std::make_unique<FactModificationExpression>(expression);
 }
 
 
