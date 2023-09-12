@@ -284,46 +284,6 @@ bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (con
   return false;
 }
 
-void FactModificationNode::forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                                       const Problem& pProblem) const
-{
-  if (nodeType == FactModificationNodeType::AND)
-  {
-    if (leftOperand)
-      leftOperand->forAllFacts(pFactCallback, pProblem);
-    if (rightOperand)
-      rightOperand->forAllFacts(pFactCallback, pProblem);
-  }
-  else if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
-  {
-    auto* leftFactPtr = leftOperand->fcFactPtr();
-    if (leftFactPtr != nullptr)
-    {
-      auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = rightOperand->getValue(pProblem);
-      pFactCallback(factToCheck);
-    }
-  }
-  else if (nodeType == FactModificationNodeType::FOR_ALL)
-  {
-    _forAllInstruction(
-          [&](const FactModification& pFactModification)
-    {
-      pFactModification.forAllFacts(pFactCallback, pProblem);
-    }, pProblem);
-  }
-  else if (nodeType == FactModificationNodeType::ADD && leftOperand && rightOperand)
-  {
-    auto* leftFactPtr = leftOperand->fcFactPtr();
-    if (leftFactPtr != nullptr)
-    {
-      auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = plusIntOrStr(leftOperand->getValue(pProblem), rightOperand->getValue(pProblem));
-      pFactCallback(factToCheck);
-    }
-  }
-}
-
 
 std::string FactModificationNode::getValue(const Problem& pProblem) const
 {
@@ -420,11 +380,6 @@ void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
 bool FactModificationFact::forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const Problem&) const
 {
   return pFactCallback(factOptional);
-}
-
-void FactModificationFact::forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback, const Problem&) const
-{
-  pFactCallback(factOptional);
 }
 
 std::string FactModificationFact::getValue(const Problem& pProblem) const

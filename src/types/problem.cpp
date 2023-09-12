@@ -486,7 +486,7 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
     std::vector<Fact> accessibleFactsToAddWithAnyValues;
     std::set<Fact> removableFactsToAdd;
 
-    pEffect.forAllFacts([&](const cp::FactOptional& pFactOpt) {
+    pEffect.forAll([&](const cp::FactOptional& pFactOpt) {
       if (!pFactOpt.isFactNegated)
       {
         if (_facts.count(pFactOpt.fact) == 0 &&

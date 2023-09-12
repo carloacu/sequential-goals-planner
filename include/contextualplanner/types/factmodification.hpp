@@ -34,8 +34,6 @@ struct CONTEXTUALPLANNER_API FactModification
                       const Problem& pProblem) const = 0;
   virtual bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                                        const Problem& pProblem) const = 0;
-  virtual void forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                           const Problem& pProblem) const = 0;
 
   virtual std::string getValue(const Problem& pProblem) const = 0;
 
@@ -82,8 +80,6 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
               const Problem& pProblem) const override;
   bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const Problem& pProblem) const override;
-  void forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                   const Problem& pProblem) const override;
 
   std::string getValue(const Problem& pProblem) const override;
 
@@ -118,8 +114,6 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
               const Problem&) const override { pFactCallback(factOptional); }
   bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const Problem& pProblem) const override;
-  void forAllFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                   const Problem& pProblem) const override;
 
   std::string getValue(const Problem& pProblem) const override;
 
@@ -148,8 +142,6 @@ struct CONTEXTUALPLANNER_API FactModificationNumber : public FactModification
               const Problem&) const override {}
   bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>&,
                                const Problem&) const override { return false; }
-  void forAllFacts(const std::function<void (const FactOptional&)>&,
-                   const Problem&) const override {}
 
   std::string getValue(const Problem& pProblem) const override;
 
