@@ -240,12 +240,12 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
 }
 
 
-bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                                   const Problem& pProblem) const
+bool FactModificationNode::forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                                           const Problem& pProblem) const
 {
   if (nodeType == FactModificationNodeType::AND)
-    return (leftOperand && leftOperand->forAllFactsOptUntilTrue(pFactCallback, pProblem)) ||
-        (rightOperand && rightOperand->forAllFactsOptUntilTrue(pFactCallback, pProblem));
+    return (leftOperand && leftOperand->forAllUntilTrue(pFactCallback, pProblem)) ||
+        (rightOperand && rightOperand->forAllUntilTrue(pFactCallback, pProblem));
 
   if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
   {
@@ -265,7 +265,7 @@ bool FactModificationNode::forAllFactsOptUntilTrue(const std::function<bool (con
           [&](const FactModification& pFactModification)
     {
       if (!res)
-        res = pFactModification.forAllFactsOptUntilTrue(pFactCallback, pProblem);
+        res = pFactModification.forAllUntilTrue(pFactCallback, pProblem);
     }, pProblem);
     return res;
   }
@@ -369,7 +369,7 @@ bool FactModificationFact::canModifySomethingInTheWorld() const
 }
 
 void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
-                                    const Fact& pNewFact)
+                                       const Fact& pNewFact)
 {
   if (factOptional.fact == pOldFact)
     factOptional.fact = pNewFact;
@@ -377,7 +377,7 @@ void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
     factOptional.fact.replaceFactInParameters(pOldFact, pNewFact);
 }
 
-bool FactModificationFact::forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const Problem&) const
+bool FactModificationFact::forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const Problem&) const
 {
   return pFactCallback(factOptional);
 }

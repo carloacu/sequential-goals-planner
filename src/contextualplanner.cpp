@@ -297,20 +297,20 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   };
 
   if (pEffectToCheck.factsModifications &&
-      pEffectToCheck.factsModifications->forAllFactsOptUntilTrue(doesSatisfyObjective, pProblem))
+      pEffectToCheck.factsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem))
   {
     pSatisfyObjective = true;
     return true;
   }
   if (pEffectToCheck.potentialFactsModifications &&
-      pEffectToCheck.potentialFactsModifications->forAllFactsOptUntilTrue(doesSatisfyObjective, pProblem))
+      pEffectToCheck.potentialFactsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem))
   {
     pSatisfyObjective = true;
     return true;
   }
 
   auto& setOfInferences = pProblem.getSetOfInferences();
-  return pEffectToCheck.forAllFactsOptUntilTrue([&](const cp::FactOptional& pFactOptional) {
+  return pEffectToCheck.forAllUntilTrue([&](const cp::FactOptional& pFactOptional) {
     // Condition only for optimization
     if (pParameters.empty())
     {

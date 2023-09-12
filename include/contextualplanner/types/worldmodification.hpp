@@ -85,8 +85,8 @@ struct CONTEXTUALPLANNER_API WorldModification
    * @param pCallback Callback called for each optional fact until one returns true.
    * @return True if one callback returned true, false otherwise.
    */
-  bool forAllFactsOptUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
-                               const Problem& pProblem) const;
+  bool forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
+                       const Problem& pProblem) const;
   /**
    * @brief Iterate over all the facts.
    * @param pCallback Callback called for each fact.
@@ -159,12 +159,12 @@ inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
     currGoal.factCondition().replaceFact(pOldFact, pNewFact);
 }
 
-inline bool WorldModification::forAllFactsOptUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
-                                                       const Problem& pProblem) const
+inline bool WorldModification::forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
+                                               const Problem& pProblem) const
 {
-  if (factsModifications && factsModifications->forAllFactsOptUntilTrue(pCallback, pProblem))
+  if (factsModifications && factsModifications->forAllUntilTrue(pCallback, pProblem))
     return true;
-  if (potentialFactsModifications && potentialFactsModifications->forAllFactsOptUntilTrue(pCallback, pProblem))
+  if (potentialFactsModifications && potentialFactsModifications->forAllUntilTrue(pCallback, pProblem))
     return true;
   return false;
 }

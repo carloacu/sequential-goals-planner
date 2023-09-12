@@ -32,8 +32,8 @@ struct CONTEXTUALPLANNER_API FactModification
                            const Fact& pNewFact) = 0;
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                       const Problem& pProblem) const = 0;
-  virtual bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                       const Problem& pProblem) const = 0;
+  virtual bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                               const Problem& pProblem) const = 0;
 
   virtual std::string getValue(const Problem& pProblem) const = 0;
 
@@ -78,8 +78,8 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const Problem& pProblem) const override;
-  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const Problem& pProblem) const override;
+  bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                       const Problem& pProblem) const override;
 
   std::string getValue(const Problem& pProblem) const override;
 
@@ -112,8 +112,8 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const Problem&) const override { pFactCallback(factOptional); }
-  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const Problem& pProblem) const override;
+  bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
+                       const Problem& pProblem) const override;
 
   std::string getValue(const Problem& pProblem) const override;
 
@@ -140,8 +140,8 @@ struct CONTEXTUALPLANNER_API FactModificationNumber : public FactModification
                    const Fact& pNewFact) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
               const Problem&) const override {}
-  bool forAllFactsOptUntilTrue(const std::function<bool (const FactOptional&)>&,
-                               const Problem&) const override { return false; }
+  bool forAllUntilTrue(const std::function<bool (const FactOptional&)>&,
+                       const Problem&) const override { return false; }
 
   std::string getValue(const Problem& pProblem) const override;
 
