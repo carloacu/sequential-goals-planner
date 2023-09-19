@@ -85,6 +85,7 @@ Here are the types providec by this library:
 Here is an example with only one action to do:
 
 ```cpp
+#include "test_planningDummyExample.hpp"
 #include <map>
 #include <memory>
 #include <assert.h>
@@ -104,7 +105,7 @@ void planningDummyExample()
 
   // Initialize the domain with an action
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, {userIsGreeted}));
+  actions.emplace(sayHi, cp::Action({}, cp::FactModification::fromStr(userIsGreeted)));
   cp::Domain domain(actions);
 
   // Initialize the problem with the goal to satisfy
@@ -112,15 +113,15 @@ void planningDummyExample()
   problem.setGoals({userIsGreeted}, now);
 
   // Look for an action to do
-  std::map<std::string, std::string> parameters;
-  auto actionToDo1 = cp::lookForAnActionToDo(parameters, problem, domain, now);
-  assert(sayHi == actionToDo1); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, now);
+  assert(oneStepOfPlannerResult1.operator bool());
+  assert(sayHi == oneStepOfPlannerResult1->actionInstance.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, actionToDo1, parameters, now);
+  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
 
   // Look for the next action to do
-  auto actionToDo3 = cp::lookForAnActionToDo(parameters, problem, domain, now);
-  assert("" == actionToDo3); // No action found
+  auto oneStepOfPlannerResult2 = cp::lookForAnActionToDo(problem, domain, now);
+  assert(!oneStepOfPlannerResult2.operator bool()); // No action found
 }
 ```
 
@@ -129,6 +130,7 @@ Here is an example with two actions to do and with the usage of preconditions:
 
 
 ```cpp
+#include "test_planningExampleWithAPreconditionSolve.hpp"
 #include <map>
 #include <memory>
 #include <assert.h>
@@ -150,8 +152,9 @@ void planningExampleWithAPreconditionSolve()
 
   // Initialize the domain with a set of actions
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, {userIsGreeted}));
-  actions.emplace(askHowICanHelp, cp::Action({userIsGreeted}, {proposedOurHelpToUser}));
+  actions.emplace(sayHi, cp::Action({}, cp::FactModification::fromStr(userIsGreeted)));
+  actions.emplace(askHowICanHelp, cp::Action(cp::FactCondition::fromStr(userIsGreeted),
+                                             cp::FactModification::fromStr(proposedOurHelpToUser)));
   cp::Domain domain(actions);
 
   // Initialize the problem with the goal to satisfy
@@ -159,20 +162,21 @@ void planningExampleWithAPreconditionSolve()
   problem.setGoals({proposedOurHelpToUser}, now);
 
   // Look for an action to do
-  std::map<std::string, std::string> parameters;
-  auto actionToDo1 = cp::lookForAnActionToDo(parameters, problem, domain, now);
-  assert(sayHi == actionToDo1); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, now);
+  assert(oneStepOfPlannerResult1.operator bool());
+  assert(sayHi == oneStepOfPlannerResult1->actionInstance.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, actionToDo1, parameters, now);
+  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
 
   // Look for the next action to do
-  auto actionToDo2 = cp::lookForAnActionToDo(parameters, problem, domain, now);
-  assert(askHowICanHelp == actionToDo2); // The action found is "ask_how_I_can_help"
+  auto oneStepOfPlannerResult2 = cp::lookForAnActionToDo(problem, domain, now);
+  assert(oneStepOfPlannerResult2.operator bool());
+  assert(askHowICanHelp == oneStepOfPlannerResult2->actionInstance.actionId); // The action found is "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, actionToDo2, parameters, now);
+  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult2, now);
 
   // Look for the next action to do
-  auto actionToDo3 = cp::lookForAnActionToDo(parameters, problem, domain, now);
-  assert("" == actionToDo3); // No action found
+  auto oneStepOfPlannerResult3 = cp::lookForAnActionToDo(problem, domain, now);
+  assert(!oneStepOfPlannerResult3.operator bool()); // No action found
 }
 ```
