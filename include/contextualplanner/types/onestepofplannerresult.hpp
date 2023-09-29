@@ -2,6 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_ONESTEPPLANNERRESULT_HPP
 
 #include <map>
+#include <memory>
 #include <string>
 #include "../util/api.hpp"
 #include <contextualplanner/types/goal.hpp>
@@ -37,13 +38,17 @@ struct CONTEXTUALPLANNER_API OneStepOfPlannerResult
   /// Construct OneStepOfPlannerResult.
   OneStepOfPlannerResult(const std::string& pActionId,
                          const std::map<std::string, std::set<std::string>>& pParameters,
-                         const cp::Goal& pFromGoal,
+                         std::unique_ptr<cp::Goal> pFromGoal,
                          int pFromGoalPriority);
+
+  OneStepOfPlannerResult(const OneStepOfPlannerResult& pOther);
+
+  void operator=(const OneStepOfPlannerResult& pOther);
 
   /// Action with his parameters.
   ActionInstance actionInstance;
   /// Goal that motivated the action.
-  cp::Goal fromGoal;
+  std::unique_ptr<cp::Goal> fromGoal;
   /// Priority of the goal that motivated the action.
   int fromGoalPriority;
 };

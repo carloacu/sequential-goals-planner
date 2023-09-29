@@ -80,9 +80,9 @@ void Problem::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerRes
 
   // Remove current goal if it was one step towards
   int currentPriority = _getCurrentPriority();
-  if (pOnStepOfPlannerResult.fromGoal.isOneStepTowards())
+  if (pOnStepOfPlannerResult.fromGoal && pOnStepOfPlannerResult.fromGoal->isOneStepTowards())
   {
-    auto isNotGoalThatHasDoneOneStepForward = [&](const Goal& pGoal, int){ return pGoal != pOnStepOfPlannerResult.fromGoal; };
+    auto isNotGoalThatHasDoneOneStepForward = [&](const Goal& pGoal, int){ return pGoal != *pOnStepOfPlannerResult.fromGoal; };
     _iterateOnGoalsAndRemoveNonPersistent(whatChanged, isNotGoalThatHasDoneOneStepForward, pNow);
   }
   else // Else remove only the first goals already satisfied

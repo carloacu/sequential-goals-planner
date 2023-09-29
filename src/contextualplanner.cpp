@@ -470,7 +470,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
                                         pProblem, *factOptionalToSatisfyPtr, pDomain, pGlobalHistorical);
       if (!actionId.empty())
       {
-        res = std::make_unique<OneStepOfPlannerResult>(actionId, parameters, pGoal, pPriority);
+        res = std::make_unique<OneStepOfPlannerResult>(actionId, parameters, pGoal.clone(), pPriority);
         pGoal.notifyActivity();
         return true;
       }

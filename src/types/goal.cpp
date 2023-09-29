@@ -103,6 +103,10 @@ bool Goal::operator==(const Goal& pOther) const
       _goalGroupId == pOther._goalGroupId;
 }
 
+std::unique_ptr<Goal> Goal::clone() const
+{
+  return std::make_unique<Goal>(*this);
+}
 
 void Goal::setInactiveSinceIfNotAlreadySet(const std::unique_ptr<std::chrono::steady_clock::time_point>& pInactiveSince)
 {

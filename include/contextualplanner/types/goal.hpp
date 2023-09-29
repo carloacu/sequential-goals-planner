@@ -38,6 +38,9 @@ struct CONTEXTUALPLANNER_API Goal
   /// Check not equality with another goal.
   bool operator!=(const Goal& pOther) const { return !operator==(pOther); }
 
+  /// Clone the goal.
+  std::unique_ptr<Goal> clone() const;
+
   /// Set start of inactive time, if not already set. (inactive = not in top of the goals stack)
   void setInactiveSinceIfNotAlreadySet(const std::unique_ptr<std::chrono::steady_clock::time_point>& pInactiveSince);
 

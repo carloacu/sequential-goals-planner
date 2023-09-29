@@ -133,7 +133,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDo(cp::Problem& pProblem,
   auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical);
   if (oneStepOfPlannerResultPtr)
     return *oneStepOfPlannerResultPtr;
-  return cp::OneStepOfPlannerResult("", {}, cp::Goal("noGoal"), 0);
+  return cp::OneStepOfPlannerResult("", {}, {}, 0);
 }
 
 cp::OneStepOfPlannerResult _lookForAnActionToDoConst(const cp::Problem& pProblem,
@@ -145,7 +145,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDoConst(const cp::Problem& pProblem
   auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(problem, pDomain, pNow, pGlobalHistorical);
   if (oneStepOfPlannerResultPtr)
     return *oneStepOfPlannerResultPtr;
-  return cp::OneStepOfPlannerResult("", {}, cp::Goal("noGoal"), 0);
+  return cp::OneStepOfPlannerResult("", {}, {}, 0);
 }
 
 std::string _lookForAnActionToDoStr(cp::Problem& pProblem,
@@ -178,7 +178,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
                                 &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
     return *res;
   }
-  return cp::OneStepOfPlannerResult("", {}, cp::Goal("noGoal"), 0);
+  return cp::OneStepOfPlannerResult("", {}, {}, 0);
 }
 
 void _setGoalsForAPriority(cp::Problem& pProblem,
@@ -274,7 +274,7 @@ void _removeGoalWhenItIsSatisfiedByAnAction()
 
   auto plannerResult = _lookForAnActionToDoThenNotify(problem, domain);
   assert_eq(_action_goodBoy, plannerResult.actionInstance.toStr());
-  assert_eq(_fact_beHappy, plannerResult.fromGoal.toStr());
+  assert_eq(_fact_beHappy, plannerResult.fromGoal->toStr());
   assert_eq(10, plannerResult.fromGoalPriority);
   assert_true(problem.goals().empty());
 }
