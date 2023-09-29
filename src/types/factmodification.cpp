@@ -12,6 +12,17 @@ const std::string _setFunctionName = "set";
 const std::string _forAllFunctionName = "forAll";
 const std::string _addFunctionName = "add";
 
+bool _areEqual(
+    const std::unique_ptr<FactModification>& pCond1,
+    const std::unique_ptr<FactModification>& pCond2)
+{
+  if (!pCond1 && !pCond2)
+    return true;
+  if (pCond1 && pCond2)
+    return *pCond1 == *pCond2;
+  return false;
+}
+
 
 std::unique_ptr<FactModification> _expressionParsedToFactModification(const ExpressionParsed& pExpressionParsed)
 {
@@ -284,6 +295,15 @@ bool FactModificationNode::forAllUntilTrue(const std::function<bool (const FactO
   return false;
 }
 
+bool FactModificationNode::operator==(const FactModification& pOther) const
+{
+  auto* otherNodePtr = pOther.fmNodePtr();
+  return otherNodePtr != nullptr &&
+      nodeType == otherNodePtr->nodeType &&
+      _areEqual(leftOperand, otherNodePtr->leftOperand) &&
+      _areEqual(rightOperand, otherNodePtr->rightOperand) &&
+      parameterName == otherNodePtr->parameterName;
+}
 
 std::string FactModificationNode::getValue(const Problem& pProblem) const
 {
@@ -382,6 +402,13 @@ bool FactModificationFact::forAllUntilTrue(const std::function<bool (const FactO
   return pFactCallback(factOptional);
 }
 
+bool FactModificationFact::operator==(const FactModification& pOther) const
+{
+  auto* otherFactPtr = pOther.fcFactPtr();
+  return otherFactPtr != nullptr &&
+      factOptional == otherFactPtr->factOptional;
+}
+
 std::string FactModificationFact::getValue(const Problem& pProblem) const
 {
   return pProblem.getFactValue(factOptional.fact);
@@ -409,6 +436,13 @@ FactModificationNumber::FactModificationNumber(int pNb)
  : FactModification(FactModificationType::NUMBER),
    nb(pNb)
 {
+}
+
+bool FactModificationNumber::operator==(const FactModification& pOther) const
+{
+  auto* otherNumberPtr = pOther.fcNumberPtr();
+  return otherNumberPtr != nullptr &&
+      nb == otherNumberPtr->nb;
 }
 
 std::string FactModificationNumber::getValue(const Problem&) const
