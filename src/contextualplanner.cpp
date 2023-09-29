@@ -101,9 +101,6 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
   if (pOther.actionPtr == nullptr)
     return true;
 
-  if (satisfyObjective != pOther.satisfyObjective)
-    return satisfyObjective;
-
   auto& action = *actionPtr;
   std::size_t nbOfPreconditionsSatisfied = 0;
   std::size_t nbOfPreconditionsNotSatisfied = 0;
