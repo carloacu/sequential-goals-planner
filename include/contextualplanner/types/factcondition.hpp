@@ -43,6 +43,7 @@ struct CONTEXTUALPLANNER_API FactCondition
                       bool* pCanBecomeTruePtr = nullptr) const = 0;
   virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
   virtual bool operator==(const FactCondition& pOther) const = 0;
+  virtual bool operator!=(const FactCondition& pOther) const { return !operator==(pOther); }
 
   virtual std::string getValue(const Problem& pProblem) const = 0;
 
