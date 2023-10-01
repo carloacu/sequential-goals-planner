@@ -68,6 +68,9 @@ struct CONTEXTUALPLANNER_API Action
   void replaceFact(const cp::Fact& pOldFact,
                    const cp::Fact& pNewFact);
 
+  std::string precondition_str() const { return precondition ? precondition->toStr() : ""; }
+  std::string preferInContext_str() const { return preferInContext ? preferInContext->toStr() : ""; }
+
   /// Parameter names of this action.
   std::vector<std::string> parameters;
   /// Set of facts that should be present in the world to be able to do this action.

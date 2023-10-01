@@ -94,6 +94,8 @@ struct CONTEXTUALPLANNER_API WorldModification
   void forAll(const std::function<void(const cp::FactOptional&)>& pCallback,
               const Problem& pProblem) const;
 
+  std::string factsModifications_str() const { return factsModifications ? factsModifications->toStr() : ""; }
+  std::string potentialFactsModifications_str() const { return potentialFactsModifications ? potentialFactsModifications->toStr() : ""; }
 
   /// Fact modifications declared and that will be applied to the world.
   std::unique_ptr<cp::FactModification> factsModifications;
