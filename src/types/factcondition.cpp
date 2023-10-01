@@ -321,14 +321,14 @@ std::unique_ptr<FactCondition> FactConditionNode::clone(const std::map<std::stri
         rightOperand ? rightOperand->clone(pParametersPtr) : std::unique_ptr<FactCondition>());
 }
 
-std::string FactConditionNode::toStr() const
+std::string FactConditionNode::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
 {
   std::string leftOperandStr;
   if (leftOperand)
-    leftOperandStr = leftOperand->toStr();
+    leftOperandStr = leftOperand->toStr(pFactWriterPtr);
   std::string rightOperandStr;
   if (rightOperand)
-    rightOperandStr = rightOperand->toStr();
+    rightOperandStr = rightOperand->toStr(pFactWriterPtr);
 
   switch (nodeType)
   {
@@ -436,7 +436,7 @@ bool FactConditionNumber::operator==(const FactCondition& pOther) const
 
 std::string FactConditionNumber::getValue(const Problem&) const
 {
-  return toStr();
+  return toStr(nullptr);
 }
 
 std::unique_ptr<FactCondition> FactConditionNumber::clone(const std::map<std::string, std::string>*) const
@@ -444,7 +444,7 @@ std::unique_ptr<FactCondition> FactConditionNumber::clone(const std::map<std::st
   return std::make_unique<FactConditionNumber>(nb);
 }
 
-std::string FactConditionNumber::toStr() const
+std::string FactConditionNumber::toStr(const std::function<std::string (const Fact&)>*) const
 {
   std::stringstream ss;
   ss << nb;

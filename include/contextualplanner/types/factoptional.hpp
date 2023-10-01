@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CONTEXTUALPLANNER_FACTOPTIONAL_HPP
 #define INCLUDE_CONTEXTUALPLANNER_FACTOPTIONAL_HPP
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <map>
@@ -49,7 +50,7 @@ struct CONTEXTUALPLANNER_API FactOptional
   bool operator!=(const FactOptional& pOther) const { return !operator==(pOther); }
 
   /// Serialize this optional fact to a string.
-  std::string toStr() const;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr) const;
 
   /// Is the fact negated.
   bool isFactNegated;

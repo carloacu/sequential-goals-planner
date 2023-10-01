@@ -43,11 +43,12 @@ bool FactOptional::operator==(const FactOptional& pOther) const
       fact == pOther.fact;
 }
 
-std::string FactOptional::toStr() const
+std::string FactOptional::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
 {
-  if (isFactNegated)
-    return "!" + fact.toStr();
-  return fact.toStr();
+  auto polarityStr = isFactNegated ? "!" : "";
+  if (pFactWriterPtr)
+    return polarityStr + (*pFactWriterPtr)(fact);
+  return polarityStr + fact.toStr();
 }
 
 

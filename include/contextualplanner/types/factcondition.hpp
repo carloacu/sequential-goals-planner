@@ -60,7 +60,7 @@ struct CONTEXTUALPLANNER_API FactCondition
 
   static std::unique_ptr<FactCondition> fromStr(const std::string& pStr);
 
-  virtual std::string toStr() const = 0;
+  virtual std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr) const = 0;
 
   FactConditionType type;
 };
@@ -111,7 +111,7 @@ struct CONTEXTUALPLANNER_API FactConditionNode : public FactCondition
   const FactConditionNumber* fcNbPtr() const override { return nullptr; }
   FactConditionNumber* fcNbPtr() override { return nullptr; }
 
-  std::string toStr() const override;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
 
   FactConditionNodeType nodeType;
   std::unique_ptr<FactCondition> leftOperand;
@@ -152,7 +152,7 @@ struct CONTEXTUALPLANNER_API FactConditionFact : public FactCondition
 
   std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 
-  std::string toStr() const override { return factOptional.toStr(); }
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override { return factOptional.toStr(pFactWriterPtr); }
 
   FactOptional factOptional;
 };
@@ -185,7 +185,7 @@ struct CONTEXTUALPLANNER_API FactConditionNumber : public FactCondition
 
   std::unique_ptr<FactCondition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 
-  std::string toStr() const override;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
 
   const FactConditionNode* fcNodePtr() const override { return nullptr; }
   FactConditionNode* fcNodePtr() override { return nullptr; }
