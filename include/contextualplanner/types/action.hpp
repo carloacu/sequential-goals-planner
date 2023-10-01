@@ -26,7 +26,8 @@ struct CONTEXTUALPLANNER_API Action
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<FactCondition>()),
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<FactCondition>()),
-      effect(pEffect)
+      effect(pEffect),
+      highImportanceOfNotRepeatingIt(false)
   {
   }
 
@@ -37,7 +38,8 @@ struct CONTEXTUALPLANNER_API Action
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<FactCondition>()),
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<FactCondition>()),
-      effect(std::move(pEffect))
+      effect(std::move(pEffect)),
+      highImportanceOfNotRepeatingIt(false)
   {
   }
 
@@ -45,7 +47,8 @@ struct CONTEXTUALPLANNER_API Action
     : parameters(pAction.parameters),
       precondition(pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<FactCondition>()),
       preferInContext(pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<FactCondition>()),
-      effect(pAction.effect)
+      effect(pAction.effect),
+      highImportanceOfNotRepeatingIt(pAction.highImportanceOfNotRepeatingIt)
   {
   }
 
@@ -55,6 +58,7 @@ struct CONTEXTUALPLANNER_API Action
     precondition = pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<FactCondition>();
     preferInContext = pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<FactCondition>();
     effect = pAction.effect;
+    highImportanceOfNotRepeatingIt = pAction.highImportanceOfNotRepeatingIt;
   }
 
   /// Check if this object contains a fact.
@@ -79,6 +83,8 @@ struct CONTEXTUALPLANNER_API Action
   std::unique_ptr<FactCondition> preferInContext;
   /// How the world will change when this action will be finished.
   WorldModification effect;
+  /// If it is important to not repeat this action.
+  bool highImportanceOfNotRepeatingIt = false;
 };
 
 

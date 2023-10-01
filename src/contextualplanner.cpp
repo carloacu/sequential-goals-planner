@@ -64,7 +64,7 @@ PotentialNextAction::PotentialNextAction(const ActionId& pActionId,
 }
 
 
-void _getPrecoditionStatistics(std::size_t& nbOfPreconditionsSatisfied,
+void _getPreferInContextStatistics(std::size_t& nbOfPreconditionsSatisfied,
                                std::size_t& nbOfPreconditionsNotSatisfied,
                                const Action& pAction,
                                const std::set<Fact>& pFacts)
@@ -98,24 +98,43 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 {
   if (actionPtr == nullptr)
     return false;
+  auto& action = *actionPtr;
   if (pOther.actionPtr == nullptr)
     return true;
-
-  auto& action = *actionPtr;
-  std::size_t nbOfPreconditionsSatisfied = 0;
-  std::size_t nbOfPreconditionsNotSatisfied = 0;
-  _getPrecoditionStatistics(nbOfPreconditionsSatisfied, nbOfPreconditionsNotSatisfied, action, pProblem.facts());
   auto& otherAction = *pOther.actionPtr;
-  std::size_t otherNbOfPreconditionsSatisfied = 0;
-  std::size_t otherNbOfPreconditionsNotSatisfied = 0;
-  _getPrecoditionStatistics(otherNbOfPreconditionsSatisfied, otherNbOfPreconditionsNotSatisfied, otherAction, pProblem.facts());
-  if (nbOfPreconditionsSatisfied != otherNbOfPreconditionsSatisfied)
-    return nbOfPreconditionsSatisfied > otherNbOfPreconditionsSatisfied;
-  if (nbOfPreconditionsNotSatisfied != otherNbOfPreconditionsNotSatisfied)
-    return nbOfPreconditionsNotSatisfied < otherNbOfPreconditionsNotSatisfied;
 
   auto nbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(actionId);
   auto otherNbOfTimesAlreadyDone = pProblem.historical.getNbOfTimeAnActionHasAlreadyBeenDone(pOther.actionId);
+
+  if (action.highImportanceOfNotRepeatingIt)
+  {
+    if (otherAction.highImportanceOfNotRepeatingIt)
+    {
+      if (nbOfTimesAlreadyDone != otherNbOfTimesAlreadyDone)
+        return nbOfTimesAlreadyDone < otherNbOfTimesAlreadyDone;
+    }
+    else if (nbOfTimesAlreadyDone > 0)
+    {
+      return false;
+    }
+  }
+  else if (otherAction.highImportanceOfNotRepeatingIt && otherNbOfTimesAlreadyDone > 0)
+  {
+    return true;
+  }
+
+  // Compare according to prefer in context
+  std::size_t nbOfPreferInContextSatisfied = 0;
+  std::size_t nbOfPreferInContextNotSatisfied = 0;
+  _getPreferInContextStatistics(nbOfPreferInContextSatisfied, nbOfPreferInContextNotSatisfied, action, pProblem.facts());
+  std::size_t otherNbOfPreconditionsSatisfied = 0;
+  std::size_t otherNbOfPreconditionsNotSatisfied = 0;
+  _getPreferInContextStatistics(otherNbOfPreconditionsSatisfied, otherNbOfPreconditionsNotSatisfied, otherAction, pProblem.facts());
+  if (nbOfPreferInContextSatisfied != otherNbOfPreconditionsSatisfied)
+    return nbOfPreferInContextSatisfied > otherNbOfPreconditionsSatisfied;
+  if (nbOfPreferInContextNotSatisfied != otherNbOfPreconditionsNotSatisfied)
+    return nbOfPreferInContextNotSatisfied < otherNbOfPreconditionsNotSatisfied;
+
   if (nbOfTimesAlreadyDone != otherNbOfTimesAlreadyDone)
     return nbOfTimesAlreadyDone < otherNbOfTimesAlreadyDone;
 
@@ -126,7 +145,6 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
     if (nbOfTimesAlreadyDone != otherNbOfTimesAlreadyDone)
       return nbOfTimesAlreadyDone < otherNbOfTimesAlreadyDone;
   }
-
   return actionId < pOther.actionId;
 }
 

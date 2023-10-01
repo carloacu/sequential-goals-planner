@@ -2207,6 +2207,41 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
 
 
 
+void _checkPreferInContext()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_a), cp::FactCondition::fromStr(_fact_b)));
+  actions.emplace(action2, cp::Action({}, cp::FactModification::fromStr(_fact_a)));
+
+  cp::Problem problem;
+  problem.addFact(_fact_b, {});
+  _setGoalsForAPriority(problem, {_fact_a});
+  assert_eq(action1, _solveStrConst(problem, actions, &problem.historical));
+  assert_eq(action1, _solveStrConst(problem, actions, &problem.historical));
+}
+
+
+void _checkPreferHighImportanceOfNotRepeatingIt()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  std::map<std::string, cp::Action> actions;
+  auto action1Obj = cp::Action({}, cp::FactModification::fromStr(_fact_a), cp::FactCondition::fromStr(_fact_b));
+  action1Obj.highImportanceOfNotRepeatingIt = true;
+  actions.emplace(action1, action1Obj);
+  auto action2Obj = cp::Action({}, cp::FactModification::fromStr(_fact_a));
+  action2Obj.highImportanceOfNotRepeatingIt = true;
+  actions.emplace(action2, action2Obj);
+
+  cp::Problem problem;
+  problem.addFact(_fact_b, {});
+  _setGoalsForAPriority(problem, {_fact_a});
+  assert_eq(action1, _solveStrConst(problem, actions, &problem.historical));
+  assert_eq(action2, _solveStrConst(problem, actions, &problem.historical));
+}
+
 }
 
 
@@ -2297,6 +2332,8 @@ int main(int argc, char *argv[])
   _linkWithAnyValueInCondition();
   _removeAFactWithAnyValue();
   _notDeducePathIfTheParametersOfAFactAreDifferents();
+  _checkPreferInContext();
+  _checkPreferHighImportanceOfNotRepeatingIt();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
