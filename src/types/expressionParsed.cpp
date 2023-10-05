@@ -110,12 +110,8 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
         ++pPos;
       }
 
-      if (res.value.empty())
-      {
-        if (beginOfValuePos == pPos)
-          throw std::runtime_error("Value of fact is missing in expression: \"" + pStr + "\"");
+      if (res.value.empty() && pPos > beginOfValuePos)
         res.value = pStr.substr(beginOfValuePos, pPos - beginOfValuePos);
-      }
     }
   }
 

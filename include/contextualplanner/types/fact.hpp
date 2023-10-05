@@ -157,6 +157,8 @@ struct CONTEXTUALPLANNER_API Fact
   std::vector<FactOptional> arguments;
   /// Value of the fact.
   std::string value;
+  /// Is the value of the fact negated.
+  bool isValueNegated;
 
   /// Constant defining the "any value" special value.
   const static std::string anyValue;
@@ -166,6 +168,14 @@ struct CONTEXTUALPLANNER_API Fact
   static std::string punctualPrefix;
   /// Prefix to detect a unreachable fact. (= fact that is neither considered punctually nor stored in the world)
   static std::string unreachablePrefix;
+
+private:
+  bool _isInFactWithoutNegationConsideration(const Fact& pFact,
+      bool pParametersAreForTheFact,
+      std::map<std::string, std::set<std::string>>& pNewParameters,
+      const std::map<std::string, std::set<std::string>>* pParametersPtr,
+      bool pCanModifyParameters,
+      bool* pTriedToMidfyParametersPtr) const;
 };
 
 } // !cp

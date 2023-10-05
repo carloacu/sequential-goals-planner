@@ -55,7 +55,8 @@ Fact::Fact(const std::string& pStr,
            std::size_t* pResPos)
   : name(),
     arguments(),
-    value()
+    value(),
+    isValueNegated(false)
 {
   auto resPos = fillFactFromStr(pStr, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
   if (pResPos != nullptr)
@@ -72,6 +73,8 @@ bool Fact::operator<(const Fact& pOther) const
     return name < pOther.name;
   if (value != pOther.value)
     return value < pOther.value;
+  if (isValueNegated != pOther.isValueNegated)
+    return isValueNegated < pOther.isValueNegated;
   std::string paramStr;
   _parametersToStr(paramStr, arguments);
   std::string otherParamStr;
@@ -81,7 +84,8 @@ bool Fact::operator<(const Fact& pOther) const
 
 bool Fact::operator==(const Fact& pOther) const
 {
-  return name == pOther.name && value == pOther.value && arguments == pOther.arguments;
+  return name == pOther.name && arguments == pOther.arguments &&
+      value == pOther.value && isValueNegated == pOther.isValueNegated;
 }
 
 bool Fact::isPunctual() const
@@ -98,7 +102,7 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
                                    const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr,
                                    const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr) const
 {
-  if (!(name == pOther.name &&
+  if (!(name == pOther.name && isValueNegated == pOther.isValueNegated &&
         (value == pOther.value || value == anyValue || pOther.value == anyValue ||
          _isInside(value, pThisArgumentsToConsiderAsAnyValuePtr) || _isInside(pOther.value, pOtherFactArgumentsToConsiderAsAnyValuePtr)) &&
         arguments.size() == pOther.arguments.size()))
@@ -124,6 +128,7 @@ std::string Fact::tryToExtractParameterValueFromExemple(
     const Fact& pOther) const
 {
   if (name != pOther.name ||
+      isValueNegated != pOther.isValueNegated ||
       arguments.size() != pOther.arguments.size())
     return "";
 
@@ -207,7 +212,9 @@ std::string Fact::toStr() const
     _parametersToStr(res, arguments);
     res += ")";
   }
-  if (!value.empty())
+  if (isValueNegated)
+    res += "!=" + value;
+  else if (!value.empty())
     res += "=" + value;
   return res;
 }
@@ -251,6 +258,14 @@ std::size_t Fact::fillFactFromStr(
     {
       if (!insideParenthesis && ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ' ' || pStr[pos] == ')'))
         break;
+      if (pStr[pos] == '!')
+      {
+        isValueNegated = true;
+        if (name.empty())
+          name = pStr.substr(beginPos, pos - beginPos);
+        ++pos;
+        continue;
+      }
       if (pStr[pos] == '(' || pStr[pos] == separatorOfParameters)
       {
         insideParenthesis = true;
@@ -331,6 +346,75 @@ bool Fact::isInFact(const Fact& pFact,
       pFact.arguments.size() != arguments.size())
     return false;
 
+  bool res = _isInFactWithoutNegationConsideration(pFact, pParametersAreForTheFact,
+                                                   pNewParameters, pParametersPtr,
+                                                   pCanModifyParameters, pTriedToMidfyParametersPtr);
+  if (pFact.isValueNegated != isValueNegated)
+    res = !res;
+  return res;
+}
+
+
+void Fact::replaceFactInParameters(const cp::Fact& pOldFact,
+                                   const Fact& pNewFact)
+{
+  for (auto& currParameter : arguments)
+  {
+    if (currParameter.fact == pOldFact)
+      currParameter.fact = pNewFact;
+    else
+      currParameter.fact.replaceFactInParameters(pOldFact, pNewFact);
+  }
+}
+
+
+void Fact::splitFacts(
+    std::vector<std::pair<bool, cp::Fact>>& pFacts,
+    const std::string& pStr,
+    char pSeparator)
+{
+  std::size_t pos = 0u;
+  bool isFactNegated = false;
+  std::unique_ptr<cp::Fact> currFact;
+  while (pos < pStr.size())
+  {
+    currFact = std::make_unique<cp::Fact>(pStr, &pSeparator, &isFactNegated, pos, &pos);
+    ++pos;
+    if (!currFact->name.empty())
+    {
+      pFacts.emplace_back(isFactNegated, std::move(*currFact));
+      isFactNegated = false;
+      currFact = std::unique_ptr<cp::Fact>();
+    }
+  }
+  if (currFact && !currFact->name.empty())
+    pFacts.emplace_back(isFactNegated, std::move(*currFact));
+}
+
+
+void Fact::splitFactOptional(
+    std::vector<cp::FactOptional>& pFactsOptional,
+    const std::string& pStr,
+    char pSeparator)
+{
+  std::size_t pos = 0u;
+  while (pos < pStr.size())
+  {
+    auto currFact = std::make_unique<cp::FactOptional>(pStr, &pSeparator, pos, &pos);
+    ++pos;
+    if (!currFact->fact.name.empty())
+      pFactsOptional.emplace_back(std::move(*currFact));
+  }
+}
+
+
+bool Fact::_isInFactWithoutNegationConsideration(const Fact& pFact,
+    bool pParametersAreForTheFact,
+    std::map<std::string, std::set<std::string>>& pNewParameters,
+    const std::map<std::string, std::set<std::string>>* pParametersPtr,
+    bool pCanModifyParameters,
+    bool* pTriedToMidfyParametersPtr) const
+{
   auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
     if (pFactValue == pValueToLookFor)
       return true;
@@ -386,58 +470,6 @@ bool Fact::isInFact(const Fact& pFact,
       return true;
   }
   return false;
-}
-
-void Fact::replaceFactInParameters(const cp::Fact& pOldFact,
-                                   const Fact& pNewFact)
-{
-  for (auto& currParameter : arguments)
-  {
-    if (currParameter.fact == pOldFact)
-      currParameter.fact = pNewFact;
-    else
-      currParameter.fact.replaceFactInParameters(pOldFact, pNewFact);
-  }
-}
-
-
-void Fact::splitFacts(
-    std::vector<std::pair<bool, cp::Fact>>& pFacts,
-    const std::string& pStr,
-    char pSeparator)
-{
-  std::size_t pos = 0u;
-  bool isFactNegated = false;
-  std::unique_ptr<cp::Fact> currFact;
-  while (pos < pStr.size())
-  {
-    currFact = std::make_unique<cp::Fact>(pStr, &pSeparator, &isFactNegated, pos, &pos);
-    ++pos;
-    if (!currFact->name.empty())
-    {
-      pFacts.emplace_back(isFactNegated, std::move(*currFact));
-      isFactNegated = false;
-      currFact = std::unique_ptr<cp::Fact>();
-    }
-  }
-  if (currFact && !currFact->name.empty())
-    pFacts.emplace_back(isFactNegated, std::move(*currFact));
-}
-
-
-void Fact::splitFactOptional(
-    std::vector<cp::FactOptional>& pFactsOptional,
-    const std::string& pStr,
-    char pSeparator)
-{
-  std::size_t pos = 0u;
-  while (pos < pStr.size())
-  {
-    auto currFact = std::make_unique<cp::FactOptional>(pStr, &pSeparator, pos, &pos);
-    ++pos;
-    if (!currFact->fact.name.empty())
-      pFactsOptional.emplace_back(std::move(*currFact));
-  }
 }
 
 } // !cp

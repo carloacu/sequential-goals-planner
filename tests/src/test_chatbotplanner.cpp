@@ -210,6 +210,9 @@ void _test_factConditionParameters()
   std::map<std::string, std::string> parameters = {{"target", "kitchen"}, {"object", "chair"}};
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::FactCondition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
   assert_eq<std::string>("equals(a, b + 3)", cp::FactCondition::fromStr("equals(a, b + 3)")->toStr());
+  assert_eq<std::string>("!a", cp::FactCondition::fromStr("!a")->toStr());
+  assert_eq<std::string>("a!=", cp::FactCondition::fromStr("a!=")->toStr());
+  assert_eq<std::string>("a!=b", cp::FactCondition::fromStr("a!=b")->toStr());
 }
 
 void _test_factModificationToStr()
@@ -220,6 +223,20 @@ void _test_factModificationToStr()
   assert_eq<std::string>("set(a, b + 3)", cp::FactModification::fromStr("set(a, b + 3)")->toStr());
   assert_eq<std::string>("set(a, b + 4 - 1)", cp::FactModification::fromStr("set(a, b + 4 - 1)")->toStr());
 }
+
+void _test_checkCondition()
+{
+  cp::Problem problem;
+  assert_false(cp::FactCondition::fromStr("a!=")->isTrue(problem));
+  problem.addFact(cp::Fact("a"), {});
+  assert_false(cp::FactCondition::fromStr("a!=")->isTrue(problem));
+  problem.addFact(cp::Fact("a=b"), {});
+  assert_true(cp::FactCondition::fromStr("a!=")->isTrue(problem));
+  problem.addFact(cp::Fact("a=c"), {});
+  assert_true(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
+  assert_false(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+}
+
 
 void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
 {
@@ -2257,6 +2274,7 @@ int main(int argc, char *argv[])
   _test_goalToStr();
   _test_factConditionParameters();
   _test_factModificationToStr();
+  _test_checkCondition();
   _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0();
   _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal();
   _noPreconditionGoalImmediatlyReached();
