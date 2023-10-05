@@ -102,24 +102,14 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
                                    const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr,
                                    const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr) const
 {
-  if (!(name == pOther.name && isValueNegated == pOther.isValueNegated &&
-        (value == pOther.value || value == anyValue || pOther.value == anyValue ||
-         _isInside(value, pThisArgumentsToConsiderAsAnyValuePtr) || _isInside(pOther.value, pOtherFactArgumentsToConsiderAsAnyValuePtr)) &&
-        arguments.size() == pOther.arguments.size()))
+  if (name != pOther.name || arguments.size() != pOther.arguments.size())
     return false;
 
-  auto itParam = arguments.begin();
-  auto itOtherParam = pOther.arguments.begin();
-  while (itParam != arguments.end())
-  {
-    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
-        !(!itParam->fact.arguments.empty() && itParam->fact.value != "" && _isInside(itParam->fact.name, pThisArgumentsToConsiderAsAnyValuePtr)) &&
-        !(!itOtherParam->fact.arguments.empty() && itOtherParam->fact.value != "" && _isInside(itOtherParam->fact.name, pOtherFactArgumentsToConsiderAsAnyValuePtr)))
-      return false;
-    ++itParam;
-    ++itOtherParam;
-  }
-  return true;
+  bool res = _areEqualExceptAnyValuesWithoutNegationConsideration(pOther, pOtherFactArgumentsToConsiderAsAnyValuePtr,
+                                                                  pThisArgumentsToConsiderAsAnyValuePtr);
+  if (isValueNegated != pOther.isValueNegated)
+    return !res;
+  return res;
 }
 
 
@@ -350,10 +340,17 @@ bool Fact::isInFact(const Fact& pFact,
                                                    pNewParameters, pParametersPtr,
                                                    pCanModifyParameters, pTriedToMidfyParametersPtr);
   if (pFact.isValueNegated != isValueNegated)
-    res = !res;
+    return !res;
   return res;
 }
 
+bool Fact::areEqualWithoutValueConsideration(const Fact& pFact) const
+{
+  if (pFact.name != name ||
+      pFact.arguments.size() != arguments.size())
+    return false;
+  return _areEqualParametersEqual(pFact);
+}
 
 void Fact::replaceFactInParameters(const cp::Fact& pOldFact,
                                    const Fact& pNewFact)
@@ -470,6 +467,46 @@ bool Fact::_isInFactWithoutNegationConsideration(const Fact& pFact,
       return true;
   }
   return false;
+}
+
+
+bool Fact::_areEqualExceptAnyValuesWithoutNegationConsideration
+(const Fact& pOther,
+ const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr,
+ const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr) const
+{
+  if (!(value == pOther.value || value == anyValue || pOther.value == anyValue ||
+        _isInside(value, pThisArgumentsToConsiderAsAnyValuePtr) || _isInside(pOther.value, pOtherFactArgumentsToConsiderAsAnyValuePtr)))
+    return false;
+
+  auto itParam = arguments.begin();
+  auto itOtherParam = pOther.arguments.begin();
+  while (itParam != arguments.end())
+  {
+    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
+        !(!itParam->fact.arguments.empty() && itParam->fact.value != "" && _isInside(itParam->fact.name, pThisArgumentsToConsiderAsAnyValuePtr)) &&
+        !(!itOtherParam->fact.arguments.empty() && itOtherParam->fact.value != "" && _isInside(itOtherParam->fact.name, pOtherFactArgumentsToConsiderAsAnyValuePtr)))
+      return false;
+    ++itParam;
+    ++itOtherParam;
+  }
+  return true;
+}
+
+
+bool Fact::_areEqualParametersEqual(const Fact& pOther) const
+{
+  auto itParam = arguments.begin();
+  auto itOtherParam = pOther.arguments.begin();
+  while (itParam != arguments.end())
+  {
+    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact)
+      return false;
+    ++itParam;
+    ++itOtherParam;
+  }
+
+  return true;
 }
 
 } // !cp

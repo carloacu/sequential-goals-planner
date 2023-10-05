@@ -32,6 +32,18 @@ void _incrementStr(std::string& pStr)
   }
 }
 
+bool _isNegatedFactCompatibleWithFacts(
+    const Fact& pNegatedFact,
+    const std::set<Fact>& pFacts)
+{
+  for (const auto& currFact : pFacts)
+    if (currFact.areEqualWithoutValueConsideration(pNegatedFact) &&
+        ((currFact.isValueNegated && currFact.value == pNegatedFact.value) ||
+         (!currFact.isValueNegated && currFact.value != pNegatedFact.value)))
+      return true;
+  return false;
+}
+
 }
 
 
@@ -391,13 +403,23 @@ void Problem::setFacts(const std::set<Fact>& pFacts,
 
 bool Problem::canFactBecomeTrue(const Fact& pFact) const
 {
-  if (_facts.count(pFact) > 0 ||
-      _accessibleFacts.count(pFact) > 0)
-    return true;
-
-  for (const auto& currAccessibleFact : _accessibleFactsWithAnyValues)
-    if (pFact.areEqualExceptAnyValues(currAccessibleFact))
+  if (!pFact.isValueNegated)
+  {
+    if (_facts.count(pFact) > 0 ||
+        _accessibleFacts.count(pFact) > 0)
       return true;
+
+    for (const auto& currAccessibleFact : _accessibleFactsWithAnyValues)
+      if (pFact.areEqualExceptAnyValues(currAccessibleFact))
+        return true;
+  }
+  else
+  {
+    if (_isNegatedFactCompatibleWithFacts(pFact, _facts))
+      return true;
+    if (_isNegatedFactCompatibleWithFacts(pFact, _accessibleFacts))
+      return true;
+  }
   return false;
 }
 

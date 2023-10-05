@@ -2241,7 +2241,6 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
 }
 
 
-
 void _checkPreferInContext()
 {
   const std::string action1 = "action1";
@@ -2276,6 +2275,30 @@ void _checkPreferHighImportanceOfNotRepeatingIt()
   assert_eq(action1, _solveStrConst(problem, actions, &problem.historical));
   assert_eq(action2, _solveStrConst(problem, actions, &problem.historical));
 }
+
+
+void _actionWithFactWithANegatedFact()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  actions.emplace(action1, cp::Action({},
+                                      cp::FactModification::fromStr(_fact_a + "=a")));
+
+  actions.emplace(action2, cp::Action(cp::FactCondition::fromStr(_fact_a + "!=b"),
+                                      cp::FactModification::fromStr(_fact_c)));
+
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
+
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+}
+
+
 
 }
 
@@ -2370,6 +2393,7 @@ int main(int argc, char *argv[])
   _notDeducePathIfTheParametersOfAFactAreDifferents();
   _checkPreferInContext();
   _checkPreferHighImportanceOfNotRepeatingIt();
+  _actionWithFactWithANegatedFact();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

@@ -138,6 +138,8 @@ struct CONTEXTUALPLANNER_API Fact
                 bool pCanModifyParameters = true,
                 bool* pTriedToMidfyParametersPtr = nullptr) const;
 
+  bool areEqualWithoutValueConsideration(const Fact& pFact) const;
+
   void replaceFactInParameters(const cp::Fact& pOldFact,
                                const Fact& pNewFact);
 
@@ -170,12 +172,20 @@ struct CONTEXTUALPLANNER_API Fact
   static std::string unreachablePrefix;
 
 private:
-  bool _isInFactWithoutNegationConsideration(const Fact& pFact,
+  bool _isInFactWithoutNegationConsideration(
+      const Fact& pFact,
       bool pParametersAreForTheFact,
       std::map<std::string, std::set<std::string>>& pNewParameters,
       const std::map<std::string, std::set<std::string>>* pParametersPtr,
       bool pCanModifyParameters,
       bool* pTriedToMidfyParametersPtr) const;
+
+  bool _areEqualExceptAnyValuesWithoutNegationConsideration(
+      const Fact& pOther,
+      const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr,
+      const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr) const;
+
+  bool _areEqualParametersEqual(const Fact& pOther) const;
 };
 
 } // !cp
