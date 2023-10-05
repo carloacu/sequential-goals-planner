@@ -2306,6 +2306,48 @@ void _actionWithFactWithANegatedFact()
 }
 
 
+void _negatedFactValueInWorldState()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  actions.emplace(action1, cp::Action(cp::FactCondition::fromStr(_fact_a + "!=b"),
+                                      cp::FactModification::fromStr(_fact_b)));
+
+  cp::Domain domain(std::move(actions));
+  {
+    cp::Problem problem;
+    _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  }
+
+  {
+    cp::Problem problem;
+    problem.addFact(_fact_a + "=b", now);
+    _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  }
+
+  {
+    cp::Problem problem;
+    problem.addFact(_fact_a + "=c", now);
+    _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+
+    assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  }
+
+  {
+    cp::Problem problem;
+    problem.addFact(_fact_a + "!=b", now);
+    _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+
+    assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  }
+}
+
 
 }
 
@@ -2401,6 +2443,7 @@ int main(int argc, char *argv[])
   _checkPreferInContext();
   _checkPreferHighImportanceOfNotRepeatingIt();
   _actionWithFactWithANegatedFact();
+  _negatedFactValueInWorldState();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
