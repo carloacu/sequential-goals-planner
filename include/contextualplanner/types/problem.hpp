@@ -505,9 +505,6 @@ private:
   void _notifyWhatChanged(WhatChanged& pWhatChanged,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  void _removeFactWithAnotherValue(WhatChanged& pWhatChanged,
-                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
-
   friend struct FactConditionNode;
   friend struct FactConditionFact;
 };

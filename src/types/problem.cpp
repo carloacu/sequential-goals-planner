@@ -238,6 +238,36 @@ void Problem::_addFacts(WhatChanged& pWhatChanged,
     }
     if (_facts.count(currFact) > 0)
       continue;
+
+    // Remove existing facts if needed
+    auto itFactNameToFacts = _factNamesToFacts.find(currFact.name);
+    if (itFactNameToFacts != _factNamesToFacts.end())
+    {
+      bool skipThisFact = false;
+      for (auto itExistingFact = itFactNameToFacts->second.begin(); itExistingFact != itFactNameToFacts->second.end(); )
+      {
+        auto& currExistingFact = *itExistingFact;
+        if (currFact.arguments == currExistingFact.arguments &&
+            ((!currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.value != currExistingFact.value) ||
+             (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.value == currExistingFact.value) ||
+             (!currFact.isValueNegated && currExistingFact.isValueNegated)))
+        {
+          ++itExistingFact;
+          _removeFacts(pWhatChanged, std::vector<cp::Fact>{currExistingFact}, pNow);
+          continue;
+        }
+
+        if (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.value != currExistingFact.value)
+        {
+          skipThisFact = true;
+          break;
+        }
+        ++itExistingFact;
+      }
+      if (skipThisFact)
+        continue;
+    }
+
     pWhatChanged.addedFacts.insert(currFact);
     _facts.insert(currFact);
     _factNamesToFacts[currFact.name].insert(currFact);
@@ -1032,7 +1062,6 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
     while (needAnotherLoop)
     {
       needAnotherLoop = false;
-      _removeFactWithAnotherValue(pWhatChanged, pNow);
       for (auto& currSetOfInferences : _setOfInferences)
       {
         auto& inferences = currSetOfInferences.second->inferences();
@@ -1077,31 +1106,5 @@ void Problem::_notifyWhatChanged(WhatChanged& pWhatChanged,
   }
 }
 
-// Remove same facts than the new facts but that have another value
-void Problem::_removeFactWithAnotherValue(WhatChanged& pWhatChanged,
-                                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
-{
-  for (auto& currAddedFact : pWhatChanged.addedFacts)
-  {
-    auto it = _factNamesToFacts.find(currAddedFact.name);
-    if (it != _factNamesToFacts.end())
-    {
-      for (auto itExistingFact = it->second.begin(); itExistingFact != it->second.end(); )
-      {
-        auto& currExistingFact = *itExistingFact;
-        if (currAddedFact.arguments == currExistingFact.arguments &&
-            currAddedFact.value != currExistingFact.value)
-        {
-          ++itExistingFact;
-          _removeFacts(pWhatChanged, std::vector<cp::Fact>{currExistingFact}, pNow);
-          continue;
-        }
-        ++itExistingFact;
-      }
-      if (_factNamesToFacts.empty())
-        _factNamesToFacts.erase(it);
-    }
-  }
-}
 
 } // !cp

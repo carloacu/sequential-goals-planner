@@ -235,6 +235,24 @@ void _test_checkCondition()
   problem.addFact(cp::Fact("a=c"), {});
   assert_true(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
   assert_false(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+  assert_eq<std::size_t>(1, problem.facts().size());
+  problem.addFact(cp::Fact("a!=c"), {});
+  assert_eq<std::size_t>(1, problem.facts().size());
+  assert_false(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
+  assert_true(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+  problem.addFact(cp::Fact("a!=b"), {});
+  assert_eq<std::size_t>(2, problem.facts().size());
+  assert_true(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
+  assert_true(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+  problem.addFact(cp::Fact("a=d"), {});
+  assert_eq<std::size_t>(1, problem.facts().size());
+  assert_true(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
+  assert_true(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+  assert_true(cp::FactCondition::fromStr("a=d")->isTrue(problem));
+  assert_false(cp::FactCondition::fromStr("a!=d")->isTrue(problem));
+  problem.addFact(cp::Fact("a!=c"), {});
+  assert_eq<std::size_t>(1, problem.facts().size());
+  assert_true(cp::FactCondition::fromStr("a=d")->isTrue(problem));
 }
 
 
