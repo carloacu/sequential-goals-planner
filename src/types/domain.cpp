@@ -49,12 +49,14 @@ Domain::Domain(const std::map<ActionId, Action>& pActions)
 void Domain::addAction(const ActionId& pActionId,
                        const Action& pAction)
 {
-  if ((_isIncludedIn(pAction.effect.factsModifications, pAction.precondition) &&
-       _isIncludedIn(pAction.effect.potentialFactsModifications, pAction.precondition)) ||
-      pAction.effect.empty() ||
-      _actions.count(pActionId) > 0)
+  if (_actions.count(pActionId) > 0 ||
+      pAction.effect.empty())
     return;
   _actions.emplace(pActionId, pAction);
+
+  if (_isIncludedIn(pAction.effect.factsModifications, pAction.precondition) &&
+      _isIncludedIn(pAction.effect.potentialFactsModifications, pAction.precondition))
+    return;
 
   bool hasAddedAFact = false;
   if (pAction.precondition)

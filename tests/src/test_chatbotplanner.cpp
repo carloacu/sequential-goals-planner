@@ -871,13 +871,29 @@ void _precoditionEqualEffect()
   actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_beHappy),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
-  assert_true(domain.actions().empty());
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_true(_lookForAnActionToDoStr(problem, domain).empty());
 }
 
+
+void _addGoalEvenForEmptyAction()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  std::map<cp::ActionId, cp::Action> actions;
+  cp::Action act1Obj({}, {});
+  act1Obj.effect.goalsToAddInCurrentPriority.push_back(cp::Goal(_fact_a));
+  actions.emplace(action1, act1Obj);
+  actions.emplace(action2, cp::Action({}, cp::FactModification::fromStr(_fact_a)));
+
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  assert_true(problem.goals().empty());
+  cp::notifyActionDone(problem, domain, cp::OneStepOfPlannerResult(action1, {}, {}, 0), {});
+  assert_false(problem.goals().empty());
+}
 
 void _circularDependencies()
 {
@@ -2393,6 +2409,7 @@ int main(int argc, char *argv[])
   _checkActionReplacefact();
   _testIncrementOfVariables();
   _precoditionEqualEffect();
+  _addGoalEvenForEmptyAction();
   _circularDependencies();
   _triggerActionThatRemoveAFact();
   _actionWithConstantValue();
