@@ -7,6 +7,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <memory>
 
 namespace cp
 {
@@ -45,6 +46,19 @@ T lexical_cast(const std::string& pStr)
   }
   return atoi(pStr.c_str());
 }
+
+
+template <typename T>
+bool areUPtrEqual(const std::unique_ptr<T>& pPtr1,
+                  const std::unique_ptr<T>& pPtr2)
+{
+  if (!pPtr1)
+    return !pPtr2.operator bool();
+  if (pPtr1 && pPtr2)
+    return *pPtr1 == *pPtr2;
+  return false;
+}
+
 
 
 }

@@ -61,6 +61,10 @@ struct CONTEXTUALPLANNER_API Action
     highImportanceOfNotRepeatingIt = pAction.highImportanceOfNotRepeatingIt;
   }
 
+  /// Check equality with another action.
+  bool operator==(const Action& pOther) const;
+  bool operator!=(const Action& pOther) const { return !operator==(pOther); }
+
   /// Check if this object contains a fact.
   bool hasFact(const cp::Fact& pFact) const;
 

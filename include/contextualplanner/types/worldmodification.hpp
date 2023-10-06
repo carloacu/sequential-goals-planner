@@ -59,9 +59,8 @@ struct CONTEXTUALPLANNER_API WorldModification
   bool empty() const { return !factsModifications && !potentialFactsModifications && goalsToAdd.empty() && goalsToAddInCurrentPriority.empty(); }
 
   /// Check equality with another world modification.
-  bool operator==(const WorldModification& pOther) const
-  { return factsModifications == pOther.factsModifications && potentialFactsModifications == pOther.potentialFactsModifications &&
-        goalsToAdd == pOther.goalsToAdd && goalsToAddInCurrentPriority == pOther.goalsToAddInCurrentPriority; }
+  bool operator==(const WorldModification& pOther) const;
+  bool operator!=(const WorldModification& pOther) const { return !operator==(pOther); }
 
   /// Check if this object contains a fact.
   bool hasFact(const cp::Fact& pFact) const;

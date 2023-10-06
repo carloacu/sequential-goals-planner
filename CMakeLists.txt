@@ -47,6 +47,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/onestepofplannerresult.cpp
     src/types/problem.cpp
     src/types/setofinferences.cpp
+    src/types/worldmodification.cpp
     src/util/trackers/goalsremovedtracker.cpp
     src/util/arithmeticevaluator.cpp
     src/util/print.cpp
