@@ -13,16 +13,16 @@ namespace cp
 struct FactOptional;
 
 
-/// Axiomatic knowledge that can be contained in the world.
+/// Axiomatic knowledge that can be contained in a world.
 struct CONTEXTUALPLANNER_API Fact
 {
   /**
    * @brief Construct a fact.
-   * @param[in] pStr Input string to parse.
-   * @param[in] pSeparatorPtr Character to indicate the end of the fact in the input string, nullptr can be set if there is only one.
+   * @param[in] pStr Fact to construct serialized in a string.
+   * @param[in] pSeparatorPtr Character to indicate the end of the fact in pStr. Nullptr can be set if there is only one fact in the string.
    * @param[out] pIsFactNegatedPtr Is the fact constructed negated or not.
-   * @param[in] pBeginPos Begin position in the input string.
-   * @param[out] pResPos Postion in the input string after the parse.
+   * @param[in] pBeginPos Begin position in pStr.
+   * @param[out] pResPos End postion of the fact in pStr after the parsing.
    */
   Fact(const std::string& pStr,
        const char* pSeparatorPtr = nullptr,
@@ -36,53 +36,65 @@ struct CONTEXTUALPLANNER_API Fact
   /// Specify an order beween facts. It alows to use this type as key of map containers.
   bool operator<(const Fact& pOther) const;
 
-  /// Check equality with another Fact.
+  /// Check equality with another fact.
   bool operator==(const Fact& pOther) const;
-  /// Check not equality with another ExpressionElement.
+  /// Check not equality with another fact.
   bool operator!=(const Fact& pOther) const { return !operator==(pOther); }
+
+  /// Check equality with another fact without considering the values.
+  bool areEqualWithoutValueConsideration(const Fact& pFact) const;
+
+  /**
+   * @brief Is equal to another Fact or if any of the 2 Facts have an "any value" that can match.
+   * @param pOther[in] Other fact to compare.
+   * @param pOtherFactArgumentsToConsiderAsAnyValuePtr[in] Arguments of the other fact to consider as "any value".
+   * @param pThisArgumentsToConsiderAsAnyValuePtr[in] Arguments of the this fact to consider as "any value".
+   * @return True if the 2 facts match, false otherwise.
+   */
+  bool areEqualExceptAnyValues(const Fact& pOther,
+                               const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr = nullptr,
+                               const std::vector<std::string>* pThisFactArgumentsToConsiderAsAnyValuePtr = nullptr) const;
 
   /**
    * @brief Is it a punctual fact.<br/>
-   * A punctual fact is a fact that is considered punctually but not stored in the world.
+   * A punctual fact is a fact that is considered punctually but never stored in the world.
    * @return True if the fact is punctual.
    */
   bool isPunctual() const;
 
   /**
    * @brief Is it an unreachable fact.<br/>
-   * An unreachable fact is a fact that is neither considered punctually nor stored in the world.
-   * @return True if the fact is punctual.
+   * An unreachable fact is a fact that is neither considered punctually nor stored in the world.<br/>
+   * But an ureachable fact is considered for planning deduction.
+   * @return True if the fact is unreachable.
    */
   bool isUnreachable() const;
 
   /**
-   * @brief Is equal to another Fact or if any of the 2 Fact has an "any value" that can match.
-   * @param pOther Other fact to compare.
-   * @return True if the 2 facts match, false otherwise.
+   * @brief Extract an argument from another instance of this fact.<br/>
+   * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).
+   * @param pArgument[in] Argument of this fact.
+   * @param pOther[in] Other Fact.
+   * @return Argument of the other fact corresponding to the pArgument of this fact.
    */
-  bool areEqualExceptAnyValues(const Fact& pOther,
-                               const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr = nullptr,
-                               const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr = nullptr) const;
-
-  /**
-   * @brief Extract a value of another fact from a parameter value of this fact.
-   * @param pParameterValue Parameter value of this fact.
-   * @param pOther Other Fact.
-   * @return Value of the other fact cooresponding to the parameter value of this fact.
-   */
-  std::string tryToExtractParameterValueFromExemple(
-      const std::string& pParameterValue,
+  std::string tryToExtractArgumentFromExample(
+      const std::string& pArgument,
       const Fact& pOther) const;
 
   /**
-   * @brief Fill the parameters.
-   * @param pParameters Parameters to fill.
+   * @brief Replace some arguments by other ones.
+   * @param pCurrentArgumentsToNewArgument[in] Map of current arguments to new argument to set.
    */
-  void fillParameters(
-      const std::map<std::string, std::string>& pParameters);
+  void replaceArguments(
+      const std::map<std::string, std::string>& pCurrentArgumentsToNewArgument);
 
-  void fillParameters(
-      const std::map<std::string, std::set<std::string>>& pParameters);
+  /**
+   * @brief Replace some arguments by other ones.
+   * @param pCurrentArgumentsToNewArgument[in] Map of current arguments to new possible arguments to set.<br/>
+   * Only the first new possible argument to set will be considered.
+   */
+  void replaceArguments(
+      const std::map<std::string, std::set<std::string>>& pCurrentArgumentsToNewArgument);
 
 
   /// Serialize this fact to a string.
@@ -99,10 +111,10 @@ struct CONTEXTUALPLANNER_API Fact
 
   /**
    * @brief Deserialize a part of a string to this fact.
-   * @param pStr String containing the part to deserialize.
-   * @param pSeparatorPtr Character to specify the end of the fact, you can put nullptr if there is only one fact in the input string.
-   * @param pBeginPos Begin index of the string for the deserialization.
-   * @param pIsFactNegatedPtr Is the fact constructed negated or not.
+   * @param pStr[in] String containing the part to deserialize.
+   * @param pSeparatorPtr[in] Character to indicate the end of the fact in pStr. Nullptr can be set if there is only one fact in the string.
+   * @param pBeginPos[in] Begin position in pStr.
+   * @param pIsFactNegatedPtr[out] Is the fact constructed negated or not.
    * @return End index of the deserialization.
    */
   std::size_t fillFactFromStr(const std::string& pStr,
@@ -111,51 +123,53 @@ struct CONTEXTUALPLANNER_API Fact
                               bool* pIsFactNegatedPtr);
 
   /**
-   * @brief Set "any value" to all of the specified parameters.
-   * @param pParameters Parameters to set "any value".
+   * @brief Set "any value" to all of the specified arguments.
+   * @param pArgumentsToReplace[in] Arguments to replace by "any value".
    * @return True if at least one "any value" has been set, false otherwise.
    */
-  bool replaceParametersByAny(const std::vector<std::string>& pParameters);
+  bool replaceSomeArgumentsByAny(const std::vector<std::string>& pArgumentsToReplace);
 
   /**
-   * @brief Is the fact present in a set of facts.
-   * @param[in] pFacts Set of facts.
-   * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the set of facts.
-   * @param[in] pParameters Parameters to get.
-   * @return True if the fact is in the facts.
+   * @brief Does the fact matches any of the other facts.
+   * @param[in] pOtherFacts Set of other facts.
+   * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the set of other facts.
+   * @param[out] pNewParametersPtr New parameter possibilities corresponding of the found match.
+   * @param[in] pParametersPtr Already known parameters.
+   * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
+   * @return True if the fact matches any of the other facts.
    */
-  bool isInFacts(const std::set<Fact>& pFacts,
-                 bool pParametersAreForTheFact,
-                 std::map<std::string, std::set<std::string>>& pNewParameters,
-                 const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                 bool pCanModifyParameters = true,
-                 bool* pTriedToMidfyParametersPtr = nullptr) const;
+  bool isInOtherFacts(const std::set<Fact>& pOtherFacts,
+                      bool pParametersAreForTheFact,
+                      std::map<std::string, std::set<std::string>>* pNewParametersPtr,
+                      const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                      bool* pTriedToModifyParametersPtr = nullptr) const;
 
-  bool isInFact(const Fact& pFact,
-                bool pParametersAreForTheFact,
-                std::map<std::string, std::set<std::string>>& pNewParameters,
-                const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                bool pCanModifyParameters = true,
-                bool* pTriedToMidfyParametersPtr = nullptr) const;
+  /**
+   * @brief Does the fact matches the other fact.
+   * @param[in] pOtherFact The other facts.
+   * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the other fact.
+   * @param[out] pNewParametersPtr New parameter possibilities corresponding of the found match.
+   * @param[in] pParametersPtr Already known parameters.
+   * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
+   * @return True if the fact matches the other fact.
+   */
+  bool isInOtherFact(const Fact& pOtherFact,
+                     bool pParametersAreForTheFact,
+                     std::map<std::string, std::set<std::string>>* pNewParametersPtr,
+                     const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                     bool* pTriedToModifyParametersPtr = nullptr) const;
 
-  bool areEqualWithoutValueConsideration(const Fact& pFact) const;
-
-  void replaceFactInParameters(const cp::Fact& pOldFact,
-                               const Fact& pNewFact);
-
-  static void splitFacts(
-      std::vector<std::pair<bool, cp::Fact>>& pFacts,
-      const std::string& pStr,
-      char pSeparator);
-
-  static void splitFactOptional(
-      std::vector<cp::FactOptional>& pFactsOptional,
-      const std::string& pStr,
-      char pSeparator);
+  /**
+   * @brief Replace, in the arguments of this fact, a fact by another fact.
+   * @param pCurrentFact Fact to search in the arguments.
+   * @param pNewFact New fact to set in place of pCurrentFact.
+   */
+  void replaceFactInArguments(const Fact& pCurrentFact,
+                              const Fact& pNewFact);
 
   /// Name of the fact.
   std::string name;
-  /// Parameters of the fact.
+  /// Arguments of the fact.
   std::vector<FactOptional> arguments;
   /// Value of the fact.
   std::string value;
@@ -168,24 +182,8 @@ struct CONTEXTUALPLANNER_API Fact
   const static FactOptional anyValueFact;
   /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)
   static std::string punctualPrefix;
-  /// Prefix to detect a unreachable fact. (= fact that is neither considered punctually nor stored in the world)
+  /// Prefix to detect a unreachable fact. (= fact that is neither considered punctually nor stored in the world but that can be used for deductions)
   static std::string unreachablePrefix;
-
-private:
-  bool _isInFactWithoutNegationConsideration(
-      const Fact& pFact,
-      bool pParametersAreForTheFact,
-      std::map<std::string, std::set<std::string>>& pNewParameters,
-      const std::map<std::string, std::set<std::string>>* pParametersPtr,
-      bool pCanModifyParameters,
-      bool* pTriedToMidfyParametersPtr) const;
-
-  bool _areEqualExceptAnyValuesWithoutNegationConsideration(
-      const Fact& pOther,
-      const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr,
-      const std::vector<std::string>* pThisArgumentsToConsiderAsAnyValuePtr) const;
-
-  bool _areEqualParametersEqual(const Fact& pOther) const;
 };
 
 } // !cp

@@ -21,6 +21,7 @@ struct CONTEXTUALPLANNER_API Inference
             std::unique_ptr<FactModification> pFactsToModify,
             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
 
+  /// Construct a copy.
   Inference(const Inference& pInference)
     : parameters(pInference.parameters),
       condition(pInference.condition ? pInference.condition->clone() : std::unique_ptr<FactCondition>()),

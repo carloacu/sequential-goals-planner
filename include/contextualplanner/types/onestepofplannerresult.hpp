@@ -41,8 +41,10 @@ struct CONTEXTUALPLANNER_API OneStepOfPlannerResult
                          std::unique_ptr<cp::Goal> pFromGoal,
                          int pFromGoalPriority);
 
+  /// Construct a copy.
   OneStepOfPlannerResult(const OneStepOfPlannerResult& pOther);
 
+  /// Copy operator.
   void operator=(const OneStepOfPlannerResult& pOther);
 
   /// Action with his parameters.

@@ -11,7 +11,7 @@
 namespace cp
 {
 
-/// Set of all the actions that the bot can do.
+/// Set of all the actions that the bot can do with accessors to optimize the search of a action.
 struct CONTEXTUALPLANNER_API Domain
 {
   /**
@@ -22,8 +22,8 @@ struct CONTEXTUALPLANNER_API Domain
 
   /**
    * @brief Add an action.
-   * @param pActionId Identifier of the action to add.
-   * @param pAction Action to add.
+   * @param pActionId[in] Identifier of the action to add.
+   * @param pAction[in] Action to add.
    *
    * If the identifier is already used, the addition will not be done.
    */
@@ -32,31 +32,31 @@ struct CONTEXTUALPLANNER_API Domain
 
   /**
    * @brief Remove an action.
-   * @param pActionId Identifier of the action to remove.
+   * @param pActionId[in] Identifier of the action to remove.
    *
-   * If the action is not found, this function will have no effect.
+   * If the action is not found, this function will have no effect.<br/>
    * No exception will be raised.
    */
   void removeAction(const ActionId& pActionId);
 
-  /// All action identifiers to action of this domain.
+  /// All action identifiers to action.
   const std::map<ActionId, Action>& actions() const { return _actions; }
-  /// All preconditions to action idntifiers of this domain.
+  /// All facts in precondition to action identifiers.
   const std::map<std::string, std::set<ActionId>>& preconditionToActions() const { return _preconditionToActions; }
-  /// All preconditions negationed to action idntifiers of this domain.
+  /// All negationed facts in precondition to action identifiers.
   const std::map<std::string, std::set<ActionId>>& notPreconditionToActions() const { return _notPreconditionToActions; }
-  /// All action identifiers that does not have any fact to add in this domain.
+  /// All action identifiers of the actions without precondtion.
   const std::set<ActionId>& actionsWithoutFactToAddInPrecondition() const { return _actionsWithoutFactToAddInPrecondition; }
 
 
 private:
   /// Map of action identifiers to action.
   std::map<ActionId, Action> _actions;
-  /// Map of preconditions to action idntifiers.
+  /// Map of facts in precondition to action identifiers.
   std::map<std::string, std::set<ActionId>> _preconditionToActions;
-  /// Map of preconditions negationed to action idntifiers.
+  /// Map of negationed facts in precondition to action identifiers.
   std::map<std::string, std::set<ActionId>> _notPreconditionToActions;
-  /// Set of action identifiers that does not have any fact to add.
+  /// Set of action identifiers of the actions without precondtion.
   std::set<ActionId> _actionsWithoutFactToAddInPrecondition;
 };
 

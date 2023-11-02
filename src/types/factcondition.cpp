@@ -252,7 +252,7 @@ bool FactConditionNode::isTrue(const Problem& pProblem,
         if (factToCheck.isPunctual())
           res = pPunctualFacts.count(factToCheck) != 0 || res;
         else
-          res = factToCheck.isInFacts(pProblem._facts, true, newParameters, pParametersPtr) || res;
+          res = factToCheck.isInOtherFacts(pProblem._facts, true, &newParameters, pParametersPtr) || res;
       }, *rightOperand, pProblem, pParametersPtr);
 
       if (pParametersPtr != nullptr)
@@ -414,7 +414,7 @@ std::unique_ptr<FactCondition> FactConditionFact::clone(const std::map<std::stri
 {
   auto res = std::make_unique<FactConditionFact>(factOptional);
   if (pParametersPtr != nullptr)
-    res->factOptional.fact.fillParameters(*pParametersPtr);
+    res->factOptional.fact.replaceArguments(*pParametersPtr);
   return res;
 }
 

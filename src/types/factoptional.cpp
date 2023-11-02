@@ -17,7 +17,7 @@ FactOptional::FactOptional(const FactOptional& pOther,
     fact(pOther.fact)
 {
   if (pParametersPtr != nullptr)
-    fact.fillParameters(*pParametersPtr);
+    fact.replaceArguments(*pParametersPtr);
 }
 
 FactOptional::FactOptional(const std::string& pStr,

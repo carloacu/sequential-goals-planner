@@ -394,7 +394,7 @@ void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
   if (factOptional.fact == pOldFact)
     factOptional.fact = pNewFact;
   else
-    factOptional.fact.replaceFactInParameters(pOldFact, pNewFact);
+    factOptional.fact.replaceFactInArguments(pOldFact, pNewFact);
 }
 
 bool FactModificationFact::forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const Problem&) const
@@ -418,7 +418,7 @@ std::unique_ptr<FactModification> FactModificationFact::clone(const std::map<std
 {
   auto res = std::make_unique<FactModificationFact>(factOptional);
   if (pParametersPtr != nullptr)
-    res->factOptional.fact.fillParameters(*pParametersPtr);
+    res->factOptional.fact.replaceArguments(*pParametersPtr);
   return res;
 }
 
@@ -426,7 +426,7 @@ std::unique_ptr<FactModification> FactModificationFact::clone(const std::map<std
 std::unique_ptr<FactModification> FactModificationFact::cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const
 {
   auto res = std::make_unique<FactModificationFact>(factOptional);
-  res->factOptional.fact.fillParameters(pParameters);
+  res->factOptional.fact.replaceArguments(pParameters);
   return res;
 }
 

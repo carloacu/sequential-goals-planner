@@ -190,7 +190,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
           pCondition->untilFalse(
                 [&](const FactOptional& pConditionFactOptional)
           {
-            auto parentParamValue = pFactOptional.fact.tryToExtractParameterValueFromExemple(currParentParam.first, pConditionFactOptional.fact);
+            auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(currParentParam.first, pConditionFactOptional.fact);
             if (parentParamValue.empty())
               return true;
             // Maybe the extracted parameter is also a parameter so we replace by it's value
@@ -306,7 +306,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
       return false;
     std::map<std::string, std::set<std::string>> newParameters;
-    bool res = pFactOptionalToSatisfy.fact.isInFact(pFactOptional.fact, false, newParameters, &pParameters);
+    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters);
     applyNewParams(pParameters, newParameters);
     return res;
   };

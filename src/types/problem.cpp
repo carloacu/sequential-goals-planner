@@ -545,7 +545,7 @@ void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondit
             _accessibleFacts.count(pFactOpt.fact) == 0)
         {
           auto factToInsert = pFactOpt.fact;
-          if (factToInsert.replaceParametersByAny(pParameters))
+          if (factToInsert.replaceSomeArgumentsByAny(pParameters))
             accessibleFactsToAddWithAnyValues.push_back(std::move(factToInsert));
           else
             accessibleFactsToAdd.insert(std::move(factToInsert));
@@ -884,7 +884,7 @@ bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
   std::map<std::string, std::set<std::string>> newParameters;
   if (pFactOptional.isFactNegated)
   {
-    bool res = pFactOptional.fact.isInFacts(pRemovedFacts, true, newParameters, pParametersPtr);
+    bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pParametersPtr);
     if (res)
     {
       if (pParametersPtr != nullptr)
@@ -903,7 +903,7 @@ bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
         for (auto& currParamPoss : paramPossibilities)
         {
           auto factToCompare = pFactOptional.fact;
-          factToCompare.fillParameters(currParamPoss);
+          factToCompare.replaceArguments(currParamPoss);
           if (factToCompare.value == Fact::anyValue)
           {
             for (auto& currFact : itFacts->second)
@@ -936,7 +936,7 @@ bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
     }
 
     bool triedToMidfyParameters = false;
-    if (pFactOptional.fact.isInFacts(_facts, true, newParameters, pParametersPtr, false, &triedToMidfyParameters))
+    if (pFactOptional.fact.isInOtherFacts(_facts, true, nullptr, pParametersPtr, &triedToMidfyParameters))
     {
       if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
         *pCanBecomeTruePtr = true;
@@ -945,7 +945,7 @@ bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
     return true;
   }
 
-  auto res = pFactOptional.fact.isInFacts(_facts, true, newParameters, pParametersPtr);
+  auto res = pFactOptional.fact.isInOtherFacts(_facts, true, &newParameters, pParametersPtr);
   if (pParametersPtr != nullptr)
     applyNewParams(*pParametersPtr, newParameters);
   return res;

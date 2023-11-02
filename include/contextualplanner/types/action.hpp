@@ -16,9 +16,9 @@ struct CONTEXTUALPLANNER_API Action
 {
   /**
    * @brief Construct an Action.
-   * @param pPreconditions Set of facts that should be present in the world to be able to do this action.
-   * @param pEffect How the world will change when this action will be finished.
-   * @param pPreferInContext Set of facts that will increase the priority of this action if they are present in the world.
+   * @param pPreconditions[in] Set of facts that should be present in the world to be able to do this action.
+   * @param pEffect[in] How the world will change when this action will finish.
+   * @param pPreferInContext[in] Set of facts that will increase the priority of this action if they are present in the world.
    */
   Action(std::unique_ptr<FactCondition> pPrecondition,
          const WorldModification& pEffect,
@@ -43,6 +43,7 @@ struct CONTEXTUALPLANNER_API Action
   {
   }
 
+  /// Copy constructor.
   Action(const Action& pAction)
     : parameters(pAction.parameters),
       precondition(pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<FactCondition>()),
@@ -52,6 +53,7 @@ struct CONTEXTUALPLANNER_API Action
   {
   }
 
+  /// Copy operator.
   void operator=(const Action& pAction)
   {
     parameters = pAction.parameters;
@@ -65,27 +67,30 @@ struct CONTEXTUALPLANNER_API Action
   bool operator==(const Action& pOther) const;
   bool operator!=(const Action& pOther) const { return !operator==(pOther); }
 
-  /// Check if this object contains a fact.
+  /// Check if this action contains a fact or the negation of the fact.
   bool hasFact(const cp::Fact& pFact) const;
 
   /**
-   * @brief Replace a fact by another inside this object.
-   * @param pOldFact Fact to replace.
-   * @param pNewFact New fact value to set.
+   * @brief Replace a fact by another inside this action.
+   * @param pOldFact[in] Current fact to replace.
+   * @param pNewFact[in] New fact to set.
    */
   void replaceFact(const cp::Fact& pOldFact,
                    const cp::Fact& pNewFact);
 
+  /// Print the precondition in string.
   std::string precondition_str() const { return precondition ? precondition->toStr() : ""; }
+
+  /// Print preferInContext in string.
   std::string preferInContext_str() const { return preferInContext ? preferInContext->toStr() : ""; }
 
-  /// Parameter names of this action.
+  /// Parameters of this action.
   std::vector<std::string> parameters;
-  /// Set of facts that should be present in the world to be able to do this action.
+  /// Condition that should be satisfied in the world to be able to do this action.
   std::unique_ptr<FactCondition> precondition;
-  /// Set of facts that will increase the priority of this action if they are present in the world.
+  /// More this condition matches the world higher the priority of this action will be.
   std::unique_ptr<FactCondition> preferInContext;
-  /// How the world will change when this action will be finished.
+  /// Modification to apply to the world when this action will finish.
   WorldModification effect;
   /// If it is important to not repeat this action.
   bool highImportanceOfNotRepeatingIt = false;
