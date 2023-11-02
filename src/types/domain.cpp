@@ -15,7 +15,7 @@ static const std::vector<std::string> _emptyParameters;
  * @return True if this object is included, false otherwise.
  */
 bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModifications,
-                   const std::unique_ptr<FactCondition>& pFactConditionPtr)
+                   const std::unique_ptr<Condition>& pConditionPtr)
 {
   if (!pFactsModifications)
     return true;
@@ -25,10 +25,10 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
   if (pFactsModifications->forAllUntilTrue(
         [&](const FactOptional& pFactOptional)
   {
-    return !pFactConditionPtr || !pFactConditionPtr->containsFactOpt(pFactOptional,
-                                                                     _emptyParametersWithValues,
-                                                                     _emptyParameters);
-  }, _emptyProblem))
+        return !pConditionPtr || !pConditionPtr->containsFactOpt(pFactOptional,
+                                                                 _emptyParametersWithValues,
+                                                                 _emptyParameters);
+}, _emptyProblem))
   {
     return false;
   }

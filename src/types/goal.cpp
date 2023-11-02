@@ -16,7 +16,7 @@ const std::size_t _persistPrefixSize = _persistPrefix.size();
 Goal::Goal(const std::string& pStr,
            int pMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
-  : _factCondition(),
+  : _objective(),
     _maxTimeToKeepInactive(pMaxTimeToKeepInactive),
     _inactiveSince(),
     _isPersistentIfSkipped(false),
@@ -30,17 +30,17 @@ Goal::Goal(const std::string& pStr,
   {
     _isPersistentIfSkipped = true;
     auto subStr = pStr.substr(_persistPrefixSize, pStr.size() - _persistPrefixSize - 1);
-    _factCondition = FactCondition::fromStr(subStr);
+    _objective = Condition::fromStr(subStr);
   }
   else
   {
-    _factCondition = FactCondition::fromStr(pStr);
+    _objective = Condition::fromStr(pStr);
   }
 
-  assert(_factCondition);
-  if (!_factCondition)
+  assert(_objective);
+  if (!_objective)
     return;
-  auto* factPtr = _factCondition->fcFactPtr();
+  auto* factPtr = _objective->fcFactPtr();
   if (factPtr != nullptr)
   {
     if (factPtr->factOptional.fact.name == oneStepTowardsFunctionName &&
@@ -70,7 +70,7 @@ Goal::Goal(const std::string& pStr,
 Goal::Goal(const Goal& pOther,
            const std::map<std::string, std::string>* pParametersPtr,
            const std::string* pGoalGroupIdPtr)
-  : _factCondition(pOther._factCondition->clone(pParametersPtr)),
+  : _objective(pOther._objective->clone(pParametersPtr)),
     _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),
     _inactiveSince(pOther._inactiveSince ? std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince) : std::unique_ptr<std::chrono::steady_clock::time_point>()),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
@@ -82,7 +82,7 @@ Goal::Goal(const Goal& pOther,
 
 void Goal::operator=(const Goal& pOther)
 {
-  _factCondition = pOther._factCondition->clone();
+  _objective = pOther._objective->clone();
   _maxTimeToKeepInactive = pOther._maxTimeToKeepInactive;
   if (pOther._inactiveSince)
     _inactiveSince = std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince);
@@ -96,7 +96,7 @@ void Goal::operator=(const Goal& pOther)
 
 bool Goal::operator==(const Goal& pOther) const
 {
-  return *_factCondition == *pOther._factCondition &&
+  return *_objective == *pOther._objective &&
       _maxTimeToKeepInactive == pOther._maxTimeToKeepInactive &&
       _isPersistentIfSkipped == pOther._isPersistentIfSkipped &&
       _oneStepTowards == pOther._oneStepTowards &&
@@ -132,7 +132,7 @@ void Goal::notifyActivity()
 
 std::string Goal::toStr() const
 {
-  auto res = _factCondition->toStr();
+  auto res = _objective->toStr();
   if (_conditionFactPtr)
     res = implyFunctionName + "(" + _conditionFactPtr->toStr() + ", " + res + ")";
   if (_oneStepTowards)

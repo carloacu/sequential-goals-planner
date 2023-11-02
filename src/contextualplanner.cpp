@@ -152,7 +152,7 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              std::map<std::string, std::set<std::string>>& pParameters,
                              const ProblemUpdate& pEffectToCheck,
-                             const Goal &pGoal,
+                             const Goal& pGoal,
                              const Problem& pProblem,
                              const FactOptional& pFactOptionalToSatisfy,
                              const Domain& pDomain,
@@ -160,7 +160,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 
 
 PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParameters,
-                                          const std::unique_ptr<FactCondition>& pCondition,
+                                          const std::unique_ptr<Condition>& pCondition,
                                           const ProblemUpdate& pEffect,
                                           const FactOptional& pFactOptional,
                                           std::map<std::string, std::set<std::string>>& pParentParameters,
@@ -466,7 +466,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
   std::unique_ptr<OneStepOfPlannerResult> res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
     const FactOptional* factOptionalToSatisfyPtr = nullptr;
-    pGoal.factCondition().untilFalse(
+    pGoal.objective().untilFalse(
           [&](const FactOptional& pFactOptional)
     {
       if (!pProblem.isOptionalFactSatisfied(pFactOptional))

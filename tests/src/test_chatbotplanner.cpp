@@ -203,16 +203,16 @@ void _test_goalToStr()
   assert_eq<std::string>("oneStepTowards(goal_name)", cp::Goal("oneStepTowards(goal_name)").toStr());
 }
 
-void _test_factConditionParameters()
+void _test_conditionParameters()
 {
-  assert_false(cp::FactCondition::fromStr("").operator bool());
+  assert_false(cp::Condition::fromStr("").operator bool());
 
   std::map<std::string, std::string> parameters = {{"target", "kitchen"}, {"object", "chair"}};
-  assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::FactCondition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
-  assert_eq<std::string>("equals(a, b + 3)", cp::FactCondition::fromStr("equals(a, b + 3)")->toStr());
-  assert_eq<std::string>("!a", cp::FactCondition::fromStr("!a")->toStr());
-  assert_eq<std::string>("a!=", cp::FactCondition::fromStr("a!=")->toStr());
-  assert_eq<std::string>("a!=b", cp::FactCondition::fromStr("a!=b")->toStr());
+  assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::Condition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
+  assert_eq<std::string>("equals(a, b + 3)", cp::Condition::fromStr("equals(a, b + 3)")->toStr());
+  assert_eq<std::string>("!a", cp::Condition::fromStr("!a")->toStr());
+  assert_eq<std::string>("a!=", cp::Condition::fromStr("a!=")->toStr());
+  assert_eq<std::string>("a!=b", cp::Condition::fromStr("a!=b")->toStr());
 }
 
 void _test_factModificationToStr()
@@ -227,32 +227,32 @@ void _test_factModificationToStr()
 void _test_checkCondition()
 {
   cp::Problem problem;
-  assert_false(cp::FactCondition::fromStr("a!=")->isTrue(problem));
+  assert_false(cp::Condition::fromStr("a!=")->isTrue(problem));
   problem.addFact(cp::Fact("a"), {});
-  assert_false(cp::FactCondition::fromStr("a!=")->isTrue(problem));
+  assert_false(cp::Condition::fromStr("a!=")->isTrue(problem));
   problem.addFact(cp::Fact("a=b"), {});
-  assert_true(cp::FactCondition::fromStr("a!=")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a!=")->isTrue(problem));
   problem.addFact(cp::Fact("a=c"), {});
-  assert_true(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
-  assert_false(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a!=b")->isTrue(problem));
+  assert_false(cp::Condition::fromStr("a!=c")->isTrue(problem));
   assert_eq<std::size_t>(1, problem.facts().size());
   problem.addFact(cp::Fact("a!=c"), {});
   assert_eq<std::size_t>(1, problem.facts().size());
-  assert_false(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
-  assert_true(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+  assert_false(cp::Condition::fromStr("a!=b")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a!=c")->isTrue(problem));
   problem.addFact(cp::Fact("a!=b"), {});
   assert_eq<std::size_t>(2, problem.facts().size());
-  assert_true(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
-  assert_true(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a!=b")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a!=c")->isTrue(problem));
   problem.addFact(cp::Fact("a=d"), {});
   assert_eq<std::size_t>(1, problem.facts().size());
-  assert_true(cp::FactCondition::fromStr("a!=b")->isTrue(problem));
-  assert_true(cp::FactCondition::fromStr("a!=c")->isTrue(problem));
-  assert_true(cp::FactCondition::fromStr("a=d")->isTrue(problem));
-  assert_false(cp::FactCondition::fromStr("a!=d")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a!=b")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a!=c")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a=d")->isTrue(problem));
+  assert_false(cp::Condition::fromStr("a!=d")->isTrue(problem));
   problem.addFact(cp::Fact("a!=c"), {});
   assert_eq<std::size_t>(1, problem.facts().size());
-  assert_true(cp::FactCondition::fromStr("a=d")->isTrue(problem));
+  assert_true(cp::Condition::fromStr("a=d")->isTrue(problem));
 }
 
 
@@ -404,11 +404,11 @@ void _notifyGoalRemovedWhenItIsImmediatlyRemoved()
 void _handlePreconditionWithNegatedFacts()
 {
   std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action(cp::FactCondition::fromStr("!" + _fact_checkedIn),
+  actions.emplace(_action_greet, cp::Action(cp::Condition::fromStr("!" + _fact_checkedIn),
                                             cp::FactModification::fromStr(_fact_greeted)));
-  actions.emplace(_action_joke, cp::Action(cp::FactCondition::fromStr("!" + _fact_checkedIn),
+  actions.emplace(_action_joke, cp::Action(cp::Condition::fromStr("!" + _fact_checkedIn),
                                            cp::FactModification::fromStr(_fact_userSatisfied)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_userSatisfied),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted + " & " + _fact_userSatisfied),
                                               cp::FactModification::fromStr(_fact_checkedIn)));
   cp::Domain domain(std::move(actions));
 
@@ -427,10 +427,10 @@ void _testWithNegatedAccessibleFacts()
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
 
   std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action(cp::FactCondition::fromStr(_fact_e + " & !" + _fact_b),
+  actions.emplace(action1, cp::Action(cp::Condition::fromStr(_fact_e + " & !" + _fact_b),
                                       cp::FactModification::fromStr("!" + _fact_c)));
   actions.emplace(action2, cp::Action({}, cp::FactModification::fromStr("!" + _fact_b)));
-  actions.emplace(action3, cp::Action(cp::FactCondition::fromStr(_fact_a + " & !" + _fact_c),
+  actions.emplace(action3, cp::Action(cp::Condition::fromStr(_fact_a + " & !" + _fact_c),
                                       cp::FactModification::fromStr(_fact_d)));
   cp::Domain domain(std::move(actions));
 
@@ -446,7 +446,7 @@ void _noPlanWithALengthOf2()
 {
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -462,9 +462,9 @@ void _noPlanWithALengthOf3()
 {
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
-  actions.emplace(_action_checkIn, cp::Action(cp::FactCondition::fromStr(_fact_greeted),
+  actions.emplace(_action_checkIn, cp::Action(cp::Condition::fromStr(_fact_greeted),
                                               cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -481,7 +481,7 @@ void _2preconditions()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -498,7 +498,7 @@ void _2Goals()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -515,7 +515,7 @@ void _2UnrelatedGoals()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -532,7 +532,7 @@ void _impossibleGoal()
 {
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -550,13 +550,13 @@ void _privigelizeTheActionsThatHaveManyPreferedInContext()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_checkInWithQrCode, cp::Action(cp::FactCondition::fromStr(_fact_hasQrCode),
+  actions.emplace(_action_checkInWithQrCode, cp::Action(cp::Condition::fromStr(_fact_hasQrCode),
                                                         cp::FactModification::fromStr(_fact_checkedIn),
-                                                        cp::FactCondition::fromStr(_fact_hasQrCode)));
-  actions.emplace(_action_checkInWithPassword, cp::Action(cp::FactCondition::fromStr(_fact_hasCheckInPasword),
+                                                        cp::Condition::fromStr(_fact_hasQrCode)));
+  actions.emplace(_action_checkInWithPassword, cp::Action(cp::Condition::fromStr(_fact_hasCheckInPasword),
                                                           cp::FactModification::fromStr(_fact_checkedIn),
-                                                          cp::FactCondition::fromStr(_fact_hasCheckInPasword)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
+                                                          cp::Condition::fromStr(_fact_hasCheckInPasword)));
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -584,11 +584,11 @@ void _preconditionThatCannotBeSolved()
 {
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
-  actions.emplace(_action_checkInWithQrCode, cp::Action(cp::FactCondition::fromStr(_fact_hasQrCode),
+  actions.emplace(_action_checkInWithQrCode, cp::Action(cp::Condition::fromStr(_fact_hasQrCode),
                                                         cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_checkInWithPassword, cp::Action(cp::FactCondition::fromStr(_fact_hasCheckInPasword),
+  actions.emplace(_action_checkInWithPassword, cp::Action(cp::Condition::fromStr(_fact_hasCheckInPasword),
                                                           cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -605,11 +605,11 @@ void _preferInContext()
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
   actions.emplace(_action_checkInWithQrCode, cp::Action({},
                                                         cp::FactModification::fromStr(_fact_checkedIn),
-                                                        cp::FactCondition::fromStr(_fact_hasQrCode)));
+                                                        cp::Condition::fromStr(_fact_hasQrCode)));
   actions.emplace(_action_checkInWithPassword, cp::Action({},
                                                           cp::FactModification::fromStr(_fact_checkedIn),
-                                                          cp::FactCondition::fromStr(_fact_hasCheckInPasword)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
+                                                          cp::Condition::fromStr(_fact_hasCheckInPasword)));
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
 
   cp::Problem problem;
@@ -646,7 +646,7 @@ void _preferInContext()
 
   actions.emplace(_action_checkInWithRealPerson, cp::Action({},
                                                             cp::FactModification::fromStr(_fact_checkedIn),
-                                                            cp::FactCondition::fromStr("!" + _fact_hasQrCode)));
+                                                            cp::Condition::fromStr("!" + _fact_hasQrCode)));
   problem.setFacts({}, now);
   assert_eq(_action_checkInWithRealPerson + _sep +
             _action_greet + _sep +
@@ -660,10 +660,10 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({},
                                             cp::FactModification::fromStr(_fact_greeted + "&" + _fact_presented),
-                                            cp::FactCondition::fromStr(_fact_beginOfConversation)));
+                                            cp::Condition::fromStr(_fact_beginOfConversation)));
   actions.emplace(_action_presentation, cp::Action({}, cp::FactModification::fromStr(_fact_presented)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_presented + "&" + _fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_presented + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
 
   cp::Problem problem;
@@ -688,7 +688,7 @@ void _avoidToDo2TimesTheSameActionIfPossble()
   actions.emplace(_action_presentation, cp::Action({},
                                                    cp::FactModification::fromStr(_fact_presented)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_presented + "&" + _fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_presented + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
 
   cp::Problem problem;
@@ -714,7 +714,7 @@ void _takeHistoricalIntoAccount()
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted + "&" + _fact_presented)));
   actions.emplace(_action_presentation, cp::Action({}, cp::FactModification::fromStr(_fact_presented)));
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_presented + "&" + _fact_checkedIn),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_presented + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
 
   cp::Problem problem;
@@ -734,10 +734,10 @@ void _goDoTheActionThatHaveTheMostPreferInContextValidated()
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_advertise, cp::Action({}, cp::FactModification::fromStr(_fact_advertised)));
-  actions.emplace(_action_checkIn, cp::Action(cp::FactCondition::fromStr(_fact_is_close),
+  actions.emplace(_action_checkIn, cp::Action(cp::Condition::fromStr(_fact_is_close),
                                               cp::FactModification::fromStr(_fact_checkedIn),
-                                              cp::FactCondition::fromStr(_fact_is_close)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_advertised + "&" + _fact_checkedIn),
+                                              cp::Condition::fromStr(_fact_is_close)));
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_advertised + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -752,7 +752,7 @@ void _checkNotInAPrecondition()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action(cp::FactCondition::fromStr("!" + _fact_checkedIn),
+  actions.emplace(_action_greet, cp::Action(cp::Condition::fromStr("!" + _fact_checkedIn),
                                             cp::FactModification::fromStr(_fact_greeted)));
   cp::Domain domain(std::move(actions));
 
@@ -783,9 +783,9 @@ void _checkActionHasAFact()
   cp::ProblemUpdate effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
   effect.potentialFactsModifications = cp::FactModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::Problem::defaultPriority] = {_fact_d};
-  const cp::Action action(cp::FactCondition::fromStr(_fact_e),
+  const cp::Action action(cp::Condition::fromStr(_fact_e),
                           effect,
-                          cp::FactCondition::fromStr(_fact_f));
+                          cp::Condition::fromStr(_fact_f));
   assert_true(action.hasFact(_fact_a));
   assert_true(action.hasFact(_fact_b));
   assert_true(action.hasFact(_fact_c));
@@ -800,9 +800,9 @@ void _checkActionReplacefact()
   cp::ProblemUpdate effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
   effect.potentialFactsModifications = cp::FactModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::Problem::defaultPriority] = {_fact_d};
-  cp::Action action(cp::FactCondition::fromStr(_fact_e),
+  cp::Action action(cp::Condition::fromStr(_fact_e),
                     effect,
-                    cp::FactCondition::fromStr(_fact_f));
+                    cp::Condition::fromStr(_fact_f));
   assert_true(action.hasFact(_fact_a));
   assert_false(action.hasFact(_fact_g));
   action.replaceFact(_fact_a, _fact_g);
@@ -817,9 +817,9 @@ void _testIncrementOfVariables()
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   const cp::Action actionQ1({}, cp::FactModification::fromStr(_fact_askAllTheQuestions + " & add(numberOfQuestion, 1)"));
-  const cp::Action actionFinishToActActions(cp::FactCondition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
+  const cp::Action actionFinishToActActions(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
                                             cp::FactModification::fromStr(_fact_askAllTheQuestions));
-  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStr(_fact_askAllTheQuestions),
+  const cp::Action actionSayQuestionBilan(cp::Condition::fromStr(_fact_askAllTheQuestions),
                                           cp::FactModification::fromStr(_fact_finishToAskQuestions));
   actions.emplace(_action_askQuestion1, actionQ1);
   actions.emplace(_action_askQuestion2, cp::Action({}, cp::FactModification::fromStr(_fact_askAllTheQuestions + " & add(numberOfQuestion, 1)")));
@@ -830,12 +830,12 @@ void _testIncrementOfVariables()
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   cp::Problem problem;
   problem.modifyFacts(cp::FactModification::fromStr(initFactsStr), now);
-  assert(cp::FactCondition::fromStr(initFactsStr)->isTrue(problem));
+  assert(cp::Condition::fromStr(initFactsStr)->isTrue(problem));
   assert(!actionFinishToActActions.precondition->isTrue(problem));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem));
-  assert(cp::FactCondition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 3)")->isTrue(problem));
-  assert(!cp::FactCondition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4)")->isTrue(problem));
-  assert(cp::FactCondition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4 - 1)")->isTrue(problem));
+  assert(cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 3)")->isTrue(problem));
+  assert(!cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4)")->isTrue(problem));
+  assert(cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4 - 1)")->isTrue(problem));
   for (std::size_t i = 0; i < 3; ++i)
   {
     _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
@@ -868,7 +868,7 @@ void _testIncrementOfVariables()
 void _precoditionEqualEffect()
 {
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr(_fact_beHappy),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_beHappy),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
 
@@ -899,11 +899,11 @@ void _circularDependencies()
 {
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, cp::FactModification::fromStr(_fact_greeted)));
-  actions.emplace(_action_checkIn, cp::Action(cp::FactCondition::fromStr(_fact_greeted),
+  actions.emplace(_action_checkIn, cp::Action(cp::Condition::fromStr(_fact_greeted),
                                               cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace("check-in-pwd", cp::Action(cp::FactCondition::fromStr(_fact_hasCheckInPasword),
+  actions.emplace("check-in-pwd", cp::Action(cp::Condition::fromStr(_fact_hasCheckInPasword),
                                              cp::FactModification::fromStr(_fact_checkedIn)));
-  actions.emplace("inverse-of-check-in-pwd", cp::Action(cp::FactCondition::fromStr(_fact_checkedIn),
+  actions.emplace("inverse-of-check-in-pwd", cp::Action(cp::Condition::fromStr(_fact_checkedIn),
                                                         cp::FactModification::fromStr(_fact_hasCheckInPasword)));
   cp::Domain domain(std::move(actions));
 
@@ -917,9 +917,9 @@ void _triggerActionThatRemoveAFact()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_joke, cp::Action(cp::FactCondition::fromStr(_fact_beSad),
+  actions.emplace(_action_joke, cp::Action(cp::Condition::fromStr(_fact_beSad),
                                            cp::FactModification::fromStr("!" + _fact_beSad)));
-  actions.emplace(_action_goodBoy, cp::Action(cp::FactCondition::fromStr("!" + _fact_beSad),
+  actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr("!" + _fact_beSad),
                                               cp::FactModification::fromStr(_fact_beHappy)));
 
   cp::Historical historical;
@@ -974,7 +974,7 @@ void _actionWithParametersInPreconditionsAndEffects()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::Action joke(cp::FactCondition::fromStr("isEngaged(human)"),
+  cp::Action joke(cp::Condition::fromStr("isEngaged(human)"),
                   cp::FactModification::fromStr("isHappy(human)"));
   joke.parameters.emplace_back("human");
   actions.emplace(_action_joke, joke);
@@ -990,7 +990,7 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::Action joke(cp::FactCondition::fromStr("isEngaged(human)"),
+  cp::Action joke(cp::Condition::fromStr("isEngaged(human)"),
                   cp::FactModification::fromStr("isHappy(human)"));
   joke.parameters.emplace_back("human");
   actions.emplace(_action_joke, joke);
@@ -1011,7 +1011,7 @@ void _actionWithParametersInsideThePath()
   actions.emplace(_action_navigate, navigateAction);
 
   actions.emplace(_action_welcome,
-                  cp::Action(cp::FactCondition::fromStr("place=entrance"),
+                  cp::Action(cp::Condition::fromStr("place=entrance"),
                              cp::FactModification::fromStr("welcomePeople")));
 
   cp::Problem problem;
@@ -1082,9 +1082,9 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_askQuestion1, cp::Action(cp::FactCondition::fromStr(_fact_engagedWithUser),
+  actions.emplace(_action_askQuestion1, cp::Action(cp::Condition::fromStr(_fact_engagedWithUser),
                                                    cp::FactModification::fromStr(_fact_userSatisfied),
-                                                   cp::FactCondition::fromStr("!" + _fact_robotLearntABehavior)));
+                                                   cp::Condition::fromStr("!" + _fact_robotLearntABehavior)));
   actions.emplace(_action_checkIn, cp::Action({},
                                               cp::FactModification::fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised)));
   cp::Domain domain(std::move(actions));
@@ -1105,8 +1105,8 @@ void _dontLinkActionWithPreferredInContext()
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_askQuestion1, cp::Action({},
                                                    cp::FactModification::fromStr(_fact_userSatisfied),
-                                                   cp::FactCondition::fromStr(_fact_checkedIn)));
-  actions.emplace(_action_checkIn, cp::Action(cp::FactCondition::fromStr(_fact_engagedWithUser),
+                                                   cp::Condition::fromStr(_fact_checkedIn)));
+  actions.emplace(_action_checkIn, cp::Action(cp::Condition::fromStr(_fact_engagedWithUser),
                                               cp::FactModification::fromStr(_fact_checkedIn)));
   cp::Domain domain(std::move(actions));
 
@@ -1357,7 +1357,7 @@ void _checkInferences()
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
   setOfInferences->addInference("inference1",
-                                cp::Inference(cp::FactCondition::fromStr(_fact_headTouched),
+                                cp::Inference(cp::Condition::fromStr(_fact_headTouched),
                                               cp::FactModification::fromStr("!" + _fact_headTouched),
                                               {{{9, {_fact_checkedIn}}}}));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
@@ -1381,7 +1381,7 @@ void _checkInferencesWithImply()
   _setGoalsForAPriority(problem, {cp::Goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))")});
   // Inference: if (_fact_headTouched) then add(_fact_userWantsToCheckedIn) and remove(_fact_headTouched)
   setOfInferences->addInference("inference1",
-                                cp::Inference(cp::FactCondition::fromStr(_fact_headTouched),
+                                cp::Inference(cp::Condition::fromStr(_fact_headTouched),
                                               cp::FactModification::fromStr(_fact_userWantsToCheckedIn + " & !" + _fact_headTouched)));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_headTouched, now);
@@ -1402,7 +1402,7 @@ void _checkInferenceWithPunctualCondition()
   problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
   // Inference: if (_fact_punctual_headTouched) then add(_fact_userWantsToCheckedIn)
-  setOfInferences->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_headTouched),
+  setOfInferences->addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_headTouched),
                                                             cp::FactModification::fromStr(_fact_userWantsToCheckedIn)));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_punctual_headTouched, now);
@@ -1422,9 +1422,9 @@ void _checkInferenceAtEndOfAPlan()
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
-  setOfInferences->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_headTouched),
+  setOfInferences->addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_headTouched),
                                                             cp::FactModification::fromStr(_fact_userWantsToCheckedIn)));
-  setOfInferences->addInference("inference2", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_checkedIn),
+  setOfInferences->addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_punctual_checkedIn),
                                                             cp::FactModification::fromStr("!" + _fact_userWantsToCheckedIn)));
   assert_eq<std::string>("", _solveStr(problem, actions, now));
   problem.addFact(_fact_punctual_headTouched, now);
@@ -1440,18 +1440,18 @@ void _checkInferenceInsideAPlan()
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_a)));
-  actions.emplace(action2, cp::Action(cp::FactCondition::fromStr(_fact_c), cp::FactModification::fromStr(_fact_d)));
+  actions.emplace(action2, cp::Action(cp::Condition::fromStr(_fact_c), cp::FactModification::fromStr(_fact_d)));
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
-  setOfInferences->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_a),
+  setOfInferences->addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_a),
                                                             cp::FactModification::fromStr(_fact_b)));
-  setOfInferences->addInference("inference2", cp::Inference(cp::FactCondition::fromStr(_fact_b + "&" + _fact_d),
+  setOfInferences->addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b + "&" + _fact_d),
                                                             cp::FactModification::fromStr(_fact_c)));
   assert_eq<std::string>("", _solveStrConst(problem, actions));
-  setOfInferences->addInference("inference3", cp::Inference(cp::FactCondition::fromStr(_fact_b),
+  setOfInferences->addInference("inference3", cp::Inference(cp::Condition::fromStr(_fact_b),
                                                             cp::FactModification::fromStr(_fact_c)));
   assert_eq(action1 + _sep + action2, _solveStrConst(problem, actions)); // check with a copy of the problem
   assert_true(!problem.hasFact(_fact_a));
@@ -1479,24 +1479,24 @@ void _checkInferenceThatAddAGoal()
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_a)));
-  actions.emplace(action2, cp::Action(cp::FactCondition::fromStr(_fact_c),
+  actions.emplace(action2, cp::Action(cp::Condition::fromStr(_fact_c),
                                       cp::FactModification::fromStr(_fact_d)));
-  actions.emplace(action3, cp::Action(cp::FactCondition::fromStr(_fact_c + "&" + _fact_f),
+  actions.emplace(action3, cp::Action(cp::Condition::fromStr(_fact_c + "&" + _fact_f),
                                       cp::FactModification::fromStr(_fact_e)));
-  actions.emplace(action4, cp::Action(cp::FactCondition::fromStr(_fact_b),
+  actions.emplace(action4, cp::Action(cp::Condition::fromStr(_fact_b),
                                       cp::FactModification::fromStr(_fact_f)));
-  actions.emplace(action5, cp::Action(cp::FactCondition::fromStr(_fact_b),
+  actions.emplace(action5, cp::Action(cp::Condition::fromStr(_fact_b),
                                       cp::FactModification::fromStr(_fact_g)));
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_g + ", " + _fact_d + ")")});
-  setOfInferences->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_a),
+  setOfInferences->addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_a),
                                                             cp::FactModification::fromStr(_fact_b),
                                                             {{cp::Problem::defaultPriority, {_fact_e}}}));
   assert_eq<std::string>("", _solveStrConst(problem, actions));
-  setOfInferences->addInference("inference2", cp::Inference(cp::FactCondition::fromStr(_fact_b),
+  setOfInferences->addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b),
                                                             cp::FactModification::fromStr(_fact_c)));
   assert_eq<std::string>("", _solveStrConst(problem, actions));
   problem.addFact(_fact_g, now);
@@ -1517,7 +1517,7 @@ void _checkThatUnReachableCannotTriggeranInference()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_a});
   problem.addSetOfInferences(soi, setOfInferences);
-  setOfInferences->addInference(inference1, cp::Inference(cp::FactCondition::fromStr(_fact_unreachable_u1),
+  setOfInferences->addInference(inference1, cp::Inference(cp::Condition::fromStr(_fact_unreachable_u1),
                                                           cp::FactModification::fromStr(_fact_a)));
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   assert_true(!problem.hasFact(_fact_unreachable_u1));
@@ -1543,7 +1543,7 @@ void _testQuiz()
   cp::ProblemUpdate questionEffect(cp::FactModification::fromStr("add(numberOfQuestion, 1)"));
   questionEffect.potentialFactsModifications = cp::FactModification::fromStr(_fact_askAllTheQuestions);
   const cp::Action actionQ1({}, questionEffect);
-  const cp::Action actionSayQuestionBilan(cp::FactCondition::fromStr(_fact_askAllTheQuestions),
+  const cp::Action actionSayQuestionBilan(cp::Condition::fromStr(_fact_askAllTheQuestions),
                                           cp::FactModification::fromStr(_fact_finishToAskQuestions));
   actions.emplace(_action_askQuestion1, actionQ1);
   actions.emplace(_action_askQuestion2, cp::Action({}, questionEffect));
@@ -1551,7 +1551,7 @@ void _testQuiz()
   cp::Domain domain(std::move(actions));
 
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
-  const cp::Inference inferenceFinishToActActions(cp::FactCondition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
+  const cp::Inference inferenceFinishToActActions(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
                                                   cp::FactModification::fromStr(_fact_askAllTheQuestions));
   setOfInferences->addInference(_action_finisehdToAskQuestions, inferenceFinishToActActions);
 
@@ -1712,11 +1712,11 @@ void _checkLinkedInferences()
   cp::Problem problem;
   problem.addSetOfInferences("soi", setOfInferences);
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
-  setOfInferences->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_p2),
+  setOfInferences->addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
                                                             cp::FactModification::fromStr(_fact_a)));
-  setOfInferences->addInference("inference2", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_p5),
+  setOfInferences->addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_punctual_p5),
                                                             cp::FactModification::fromStr(_fact_punctual_p2 + "&" + _fact_punctual_p3)));
-  setOfInferences->addInference("inference3", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_p4),
+  setOfInferences->addInference("inference3", cp::Inference(cp::Condition::fromStr(_fact_punctual_p4),
                                                             cp::FactModification::fromStr(_fact_punctual_p5 + "&" + _fact_punctual_p1)));
 
   assert_false(problem.hasFact(_fact_a));
@@ -1769,15 +1769,15 @@ void _infrenceLinksFromManyInferencesSets()
   problem.addSetOfInferences("soi", setOfInferences);
   assert_true(cp::Problem::defaultPriority >= 1);
   auto lowPriority = cp::Problem::defaultPriority - 1;
-  setOfInferences->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_p2),
+  setOfInferences->addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
                                                             {}, {{lowPriority, {"oneStepTowards(" + _fact_d + ")"}}}));
   problem.setGoals({{lowPriority, {cp::Goal("oneStepTowards(" + _fact_d + ")", 0)}}}, {});
 
   auto setOfInferences2 = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi2", setOfInferences2);
-  setOfInferences2->addInference("inference1", cp::Inference(cp::FactCondition::fromStr(_fact_punctual_p1),
+  setOfInferences2->addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_p1),
                                                              cp::FactModification::fromStr(_fact_b + "&" + _fact_punctual_p2)));
-  setOfInferences2->addInference("inference2", cp::Inference(cp::FactCondition::fromStr(_fact_b),
+  setOfInferences2->addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b),
                                                              {}, {{cp::Problem::defaultPriority, {"oneStepTowards(" + _fact_c + ")"}}}));
 
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
@@ -1885,7 +1885,7 @@ void _actionNavigationAndGrabObjectWithParameters()
   navAction.parameters.emplace_back("targetLocation");
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(cp::FactCondition::fromStr("equals(location(me), location(object))"),
+  cp::Action grabAction(cp::Condition::fromStr("equals(location(me), location(object))"),
                         cp::FactModification::fromStr("grab(me, object)"));
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
@@ -1907,13 +1907,13 @@ void _moveObject()
   navAction.parameters.emplace_back("targetLocation");
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action navAction2(cp::FactCondition::fromStr("grab(me, object)"),
+  cp::Action navAction2(cp::Condition::fromStr("grab(me, object)"),
                         cp::FactModification::fromStr("location(me)=targetLocation & location(object)=targetLocation"));
   navAction2.parameters.emplace_back("targetLocation");
   navAction2.parameters.emplace_back("object");
   actions.emplace(actionNavigate2, navAction2);
 
-  cp::Action grabAction(cp::FactCondition::fromStr("equals(location(me), location(object))"),
+  cp::Action grabAction(cp::Condition::fromStr("equals(location(me), location(object))"),
                         cp::FactModification::fromStr("grab(me, object)"));
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
@@ -1935,7 +1935,7 @@ void _moveAndUngrabObject()
   navAction.parameters.emplace_back("targetLocation");
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(cp::FactCondition::fromStr("equals(locationOfRobot(me), locationOfObj(object))"),
+  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObj(object))"),
                         cp::FactModification::fromStr("grab(me, object)"));
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
@@ -1948,7 +1948,7 @@ void _moveAndUngrabObject()
   cp::Problem problem;
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi", setOfInferences);
-  cp::Inference inference(cp::FactCondition::fromStr("locationOfRobot(me)=targetLocation & grab(me, object)"),
+  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=targetLocation & grab(me, object)"),
                           cp::FactModification::fromStr("locationOfObj(object)=targetLocation"));
   inference.parameters.emplace_back("targetLocation");
   inference.parameters.emplace_back("object");
@@ -1973,25 +1973,25 @@ void _failToMoveAnUnknownObject()
   const std::string actionRanomWalk = "actionRanomWalk";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction(cp::FactCondition::fromStr("!isLost & !charging(me)"),
+  cp::Action navAction(cp::Condition::fromStr("!isLost & !charging(me)"),
                        cp::FactModification::fromStr("locationOfRobot(me)=targetLocation"));
   navAction.parameters.emplace_back("targetLocation");
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action randomWalkAction(cp::FactCondition::fromStr("!charging(me)"),
+  cp::Action randomWalkAction(cp::Condition::fromStr("!charging(me)"),
                        cp::FactModification::fromStr("!isLost"));
   actions.emplace(actionRanomWalk, randomWalkAction);
 
   cp::Action leavePodAction({}, cp::FactModification::fromStr("!charging(me)"));
   actions.emplace(actionLeavePod, leavePodAction);
 
-  cp::Action whereIsObjectAction(cp::FactCondition::fromStr("!locationOfObj(object)=*"),
+  cp::Action whereIsObjectAction(cp::Condition::fromStr("!locationOfObj(object)=*"),
                                  cp::FactModification::fromStr("locationOfObj(object)=aLocation"));
   whereIsObjectAction.parameters.emplace_back("object");
   whereIsObjectAction.parameters.emplace_back("aLocation");
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
-  cp::Action grabAction(cp::FactCondition::fromStr("equals(locationOfRobot(me), locationOfObj(object))"),
+  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObj(object))"),
                         cp::FactModification::fromStr("grab(me, object)"));
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
@@ -2004,7 +2004,7 @@ void _failToMoveAnUnknownObject()
   cp::Problem problem;
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi", setOfInferences);
-  cp::Inference inference(cp::FactCondition::fromStr("locationOfRobot(me)=targetLocation & grab(me, object)"),
+  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=targetLocation & grab(me, object)"),
                           cp::FactModification::fromStr("locationOfObj(object)=targetLocation"));
   inference.parameters.emplace_back("targetLocation");
   inference.parameters.emplace_back("object");
@@ -2031,12 +2031,12 @@ void _completeMovingObjectScenario()
   const std::string actionWhereIsObject = "actionWhereIsObject";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction(cp::FactCondition::fromStr("!lost(me) & !pathIsBlocked"),
+  cp::Action navAction(cp::Condition::fromStr("!lost(me) & !pathIsBlocked"),
                        cp::FactModification::fromStr("locationOfRobot(me)=targetPlace"));
   navAction.parameters.emplace_back("targetPlace");
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(cp::FactCondition::fromStr("equals(locationOfRobot(me), locationOfObject(object))"),
+  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObject(object))"),
                         cp::FactModification::fromStr("grab(me)=object"));
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
@@ -2045,7 +2045,7 @@ void _completeMovingObjectScenario()
   ungrabAction.parameters.emplace_back("object");
   actions.emplace(_action_ungrab, ungrabAction);
 
-  cp::Action whereIsObjectAction(cp::FactCondition::fromStr("!locationOfObject(object)=*"),
+  cp::Action whereIsObjectAction(cp::Condition::fromStr("!locationOfObject(object)=*"),
                                  cp::FactModification::fromStr("locationOfObject(object)=aLocation"));
   whereIsObjectAction.parameters.emplace_back("object");
   whereIsObjectAction.parameters.emplace_back("aLocation");
@@ -2058,7 +2058,7 @@ void _completeMovingObjectScenario()
   cp::Problem problem;
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi", setOfInferences);
-  cp::Inference inference(cp::FactCondition::fromStr("locationOfRobot(me)=location & grab(me)=object"),
+  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=location & grab(me)=object"),
                           cp::FactModification::fromStr("locationOfObject(object)=location"));
   inference.parameters.emplace_back("object");
   inference.parameters.emplace_back("location");
@@ -2087,17 +2087,17 @@ void _inferenceWithANegatedFactWithParameter()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action ungrabLeftAction(cp::FactCondition::fromStr("!hasTwoHandles(object)"),
+  cp::Action ungrabLeftAction(cp::Condition::fromStr("!hasTwoHandles(object)"),
                               cp::FactModification::fromStr("!grabLeftHand(me)=object"));
   ungrabLeftAction.parameters.emplace_back("object");
   actions.emplace(actionUngrabLeftHand, ungrabLeftAction);
 
-  cp::Action ungrabRightAction(cp::FactCondition::fromStr("!hasTwoHandles(object)"),
+  cp::Action ungrabRightAction(cp::Condition::fromStr("!hasTwoHandles(object)"),
                                cp::FactModification::fromStr("!grabRightHand(me)=object"));
   ungrabRightAction.parameters.emplace_back("object");
   actions.emplace(actionUngrabRightHand, ungrabRightAction);
 
-  cp::Action ungrabBothAction(cp::FactCondition::fromStr("hasTwoHandles(object)"),
+  cp::Action ungrabBothAction(cp::Condition::fromStr("hasTwoHandles(object)"),
                               cp::FactModification::fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"));
   ungrabBothAction.parameters.emplace_back("object");
   actions.emplace(actionUngrabBothHands, ungrabBothAction);
@@ -2108,7 +2108,7 @@ void _inferenceWithANegatedFactWithParameter()
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi", setOfInferences);
 
-  cp::Inference inference2(cp::FactCondition::fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"),
+  cp::Inference inference2(cp::Condition::fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"),
                            cp::FactModification::fromStr("!grab(me, object)"));
   inference2.parameters.emplace_back("object");
   setOfInferences->addInference("inference1", inference2);
@@ -2150,9 +2150,9 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 
   actions.emplace(action1, cp::Action({},
                                       cp::FactModification::fromStr("!" + _fact_a),
-                                      cp::FactCondition::fromStr(_fact_c + " & " + _fact_d)));
+                                      cp::Condition::fromStr(_fact_c + " & " + _fact_d)));
 
-  actions.emplace(action2, cp::Action(cp::FactCondition::fromStr("!" + _fact_a + " & " + _fact_e),
+  actions.emplace(action2, cp::Action(cp::Condition::fromStr("!" + _fact_a + " & " + _fact_e),
                                       cp::FactModification::fromStr(_fact_b)));
 
   actions.emplace(action3, cp::Action({},
@@ -2179,7 +2179,7 @@ void _useTwoTimesAnInference()
   auto setOfInferences = std::make_shared<cp::SetOfInferences>();
   problem.addSetOfInferences("soi", setOfInferences);
 
-  cp::Inference inference2(cp::FactCondition::fromStr(_fact_a + " & " + _fact_b + "(object)"),
+  cp::Inference inference2(cp::Condition::fromStr(_fact_a + " & " + _fact_b + "(object)"),
                            cp::FactModification::fromStr(_fact_c + "(object)"));
   inference2.parameters.emplace_back("object");
   setOfInferences->addInference("inference1", inference2);
@@ -2199,7 +2199,7 @@ void _linkWithAnyValueInCondition()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  actions.emplace(action1, cp::Action(cp::FactCondition::fromStr("!" + _fact_a + "=*"),
+  actions.emplace(action1, cp::Action(cp::Condition::fromStr("!" + _fact_a + "=*"),
                                       cp::FactModification::fromStr(_fact_b)));
   cp::Action act2({}, cp::FactModification::fromStr("!" + _fact_a + "=aVal"));
   act2.parameters.emplace_back("aVal");
@@ -2241,10 +2241,10 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({},
                                       cp::FactModification::fromStr(_fact_a + "(1)"),
-                                      cp::FactCondition::fromStr(_fact_c)));
-  actions.emplace(action2, cp::Action(cp::FactCondition::fromStr(_fact_a + "(2)"),
+                                      cp::Condition::fromStr(_fact_c)));
+  actions.emplace(action2, cp::Action(cp::Condition::fromStr(_fact_a + "(2)"),
                                       cp::FactModification::fromStr(_fact_b)));
-  actions.emplace(action3, cp::Action(cp::FactCondition::fromStr(_fact_b),
+  actions.emplace(action3, cp::Action(cp::Condition::fromStr(_fact_b),
                                       cp::FactModification::fromStr(_fact_d)));
   cp::Domain domain(std::move(actions));
 
@@ -2262,7 +2262,7 @@ void _checkPreferInContext()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
   std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_a), cp::FactCondition::fromStr(_fact_b)));
+  actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_a), cp::Condition::fromStr(_fact_b)));
   actions.emplace(action2, cp::Action({}, cp::FactModification::fromStr(_fact_a)));
 
   cp::Problem problem;
@@ -2278,7 +2278,7 @@ void _checkPreferHighImportanceOfNotRepeatingIt()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
   std::map<std::string, cp::Action> actions;
-  auto action1Obj = cp::Action({}, cp::FactModification::fromStr(_fact_a), cp::FactCondition::fromStr(_fact_b));
+  auto action1Obj = cp::Action({}, cp::FactModification::fromStr(_fact_a), cp::Condition::fromStr(_fact_b));
   action1Obj.highImportanceOfNotRepeatingIt = true;
   actions.emplace(action1, action1Obj);
   auto action2Obj = cp::Action({}, cp::FactModification::fromStr(_fact_a));
@@ -2304,12 +2304,12 @@ void _actionWithFactWithANegatedFact()
   actions.emplace(action1, cp::Action({},
                                       cp::FactModification::fromStr(_fact_a + "=a")));
 
-  actions.emplace(action2, cp::Action(cp::FactCondition::fromStr(_fact_a + "!=b & " + _fact_d),
+  actions.emplace(action2, cp::Action(cp::Condition::fromStr(_fact_a + "!=b & " + _fact_d),
                                       cp::FactModification::fromStr(_fact_c)));
 
   actions.emplace(action3, cp::Action({},
                                       cp::FactModification::fromStr(_fact_d),
-                                      cp::FactCondition::fromStr(_fact_e)));
+                                      cp::Condition::fromStr(_fact_e)));
 
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
@@ -2328,7 +2328,7 @@ void _negatedFactValueInWorldState()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  actions.emplace(action1, cp::Action(cp::FactCondition::fromStr(_fact_a + "!=b"),
+  actions.emplace(action1, cp::Action(cp::Condition::fromStr(_fact_a + "!=b"),
                                       cp::FactModification::fromStr(_fact_b)));
 
   cp::Domain domain(std::move(actions));
@@ -2378,7 +2378,7 @@ int main(int argc, char *argv[])
   planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();
   _test_goalToStr();
-  _test_factConditionParameters();
+  _test_conditionParameters();
   _test_factModificationToStr();
   _test_checkCondition();
   _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0();

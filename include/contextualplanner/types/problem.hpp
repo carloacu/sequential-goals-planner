@@ -437,7 +437,7 @@ private:
    * @param pParameters Parameter names.
    * @param pDomain Domain containing all the possible actions.
    */
-  void _feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
+  void _feedAccessibleFactsFromDeduction(const std::unique_ptr<Condition>& pCondition,
                                          const ProblemUpdate& pEffect,
                                          const std::vector<std::string>& pParameters,
                                          const Domain& pDomain,
@@ -505,8 +505,8 @@ private:
   void _notifyWhatChanged(WhatChanged& pWhatChanged,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  friend struct FactConditionNode;
-  friend struct FactConditionFact;
+  friend struct ConditionNode;
+  friend struct ConditionFact;
 };
 
 } // !cp

@@ -118,10 +118,10 @@ inline bool ProblemUpdate::hasFact(const cp::Fact& pFact) const
     return true;
   for (const auto& currGoalWithPriority : goalsToAdd)
     for (const auto& currGoal : currGoalWithPriority.second)
-      if (currGoal.factCondition().hasFact(pFact))
+      if (currGoal.objective().hasFact(pFact))
         return true;
   for (const auto& currGoal : goalsToAddInCurrentPriority)
-    if (currGoal.factCondition().hasFact(pFact))
+    if (currGoal.objective().hasFact(pFact))
       return true;
   return false;
 }
@@ -155,9 +155,9 @@ inline void ProblemUpdate::replaceFact(const cp::Fact& pOldFact,
     potentialFactsModifications->replaceFact(pOldFact, pNewFact);
   for (auto& currGoalWithPriority : goalsToAdd)
     for (auto& currGoal : currGoalWithPriority.second)
-      currGoal.factCondition().replaceFact(pOldFact, pNewFact);
+      currGoal.objective().replaceFact(pOldFact, pNewFact);
   for (auto& currGoal : goalsToAddInCurrentPriority)
-    currGoal.factCondition().replaceFact(pOldFact, pNewFact);
+    currGoal.objective().replaceFact(pOldFact, pNewFact);
 }
 
 inline bool ProblemUpdate::forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,

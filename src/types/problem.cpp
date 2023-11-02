@@ -526,7 +526,7 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
   }
 }
 
-void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
+void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Condition>& pCondition,
                                                 const ProblemUpdate& pEffect,
                                                 const std::vector<std::string>& pParameters,
                                                 const Domain& pDomain,
@@ -869,7 +869,7 @@ bool Problem::isGoalSatisfied(const Goal& pGoal) const
 {
   auto* condFactOptPtr = pGoal.conditionFactOptionalPtr();
   return (condFactOptPtr != nullptr && !isOptionalFactSatisfied(*condFactOptPtr)) ||
-      pGoal.factCondition().isTrue(*this);
+      pGoal.objective().isTrue(*this);
 }
 
 bool Problem::isFactPatternSatisfied(const FactOptional& pFactOptional,
