@@ -85,13 +85,13 @@ struct CONTEXTUALPLANNER_API ProblemUpdate
    * @return True if one callback returned true, false otherwise.
    */
   bool forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
-                       const Problem& pProblem) const;
+                       const WorldState& pWorldState) const;
   /**
    * @brief Iterate over all the facts.
    * @param pCallback Callback called for each fact.
    */
   void forAll(const std::function<void(const cp::FactOptional&)>& pCallback,
-              const Problem& pProblem) const;
+              const WorldState& pWorldState) const;
 
   std::string factsModifications_str() const { return factsModifications ? factsModifications->toStr() : ""; }
   std::string potentialFactsModifications_str() const { return potentialFactsModifications ? potentialFactsModifications->toStr() : ""; }
@@ -161,22 +161,22 @@ inline void ProblemUpdate::replaceFact(const cp::Fact& pOldFact,
 }
 
 inline bool ProblemUpdate::forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
-                                           const Problem& pProblem) const
+                                           const WorldState& pWorldState) const
 {
-  if (factsModifications && factsModifications->forAllUntilTrue(pCallback, pProblem))
+  if (factsModifications && factsModifications->forAllUntilTrue(pCallback, pWorldState))
     return true;
-  if (potentialFactsModifications && potentialFactsModifications->forAllUntilTrue(pCallback, pProblem))
+  if (potentialFactsModifications && potentialFactsModifications->forAllUntilTrue(pCallback, pWorldState))
     return true;
   return false;
 }
 
 inline void ProblemUpdate::forAll(const std::function<void(const cp::FactOptional&)>& pCallback,
-                                  const Problem& pProblem) const
+                                  const WorldState& pWorldState) const
 {
   if (factsModifications)
-    factsModifications->forAll(pCallback, pProblem);
+    factsModifications->forAll(pCallback, pWorldState);
   if (potentialFactsModifications)
-    potentialFactsModifications->forAll(pCallback, pProblem);
+    potentialFactsModifications->forAll(pCallback, pWorldState);
 }
 
 

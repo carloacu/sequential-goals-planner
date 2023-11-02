@@ -1,11 +1,11 @@
 #include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/problem.hpp>
+#include <contextualplanner/types/worldstate.hpp>
 
 namespace cp
 {
 namespace
 {
-static const Problem _emptyProblem;
+static const WorldState _emptyWorldState;
 static const std::map<std::string, std::set<std::string>> _emptyParametersWithValues;
 static const std::vector<std::string> _emptyParameters;
 
@@ -28,7 +28,7 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
         return !pConditionPtr || !pConditionPtr->containsFactOpt(pFactOptional,
                                                                  _emptyParametersWithValues,
                                                                  _emptyParameters);
-}, _emptyProblem))
+}, _emptyWorldState))
   {
     return false;
   }

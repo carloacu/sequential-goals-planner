@@ -126,10 +126,10 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
   // Compare according to prefer in context
   std::size_t nbOfPreferInContextSatisfied = 0;
   std::size_t nbOfPreferInContextNotSatisfied = 0;
-  _getPreferInContextStatistics(nbOfPreferInContextSatisfied, nbOfPreferInContextNotSatisfied, action, pProblem.facts());
+  _getPreferInContextStatistics(nbOfPreferInContextSatisfied, nbOfPreferInContextNotSatisfied, action, pProblem.worldState.facts());
   std::size_t otherNbOfPreconditionsSatisfied = 0;
   std::size_t otherNbOfPreconditionsNotSatisfied = 0;
-  _getPreferInContextStatistics(otherNbOfPreconditionsSatisfied, otherNbOfPreconditionsNotSatisfied, otherAction, pProblem.facts());
+  _getPreferInContextStatistics(otherNbOfPreconditionsSatisfied, otherNbOfPreconditionsNotSatisfied, otherAction, pProblem.worldState.facts());
   if (nbOfPreferInContextSatisfied != otherNbOfPreconditionsSatisfied)
     return nbOfPreferInContextSatisfied > otherNbOfPreconditionsSatisfied;
   if (nbOfPreferInContextNotSatisfied != otherNbOfPreconditionsNotSatisfied)
@@ -172,7 +172,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
 {
   if (!pCondition ||
       (pCondition->containsFactOpt(pFactOptional, pParentParameters, pParameters) &&
-       pCondition->canBecomeTrue(pProblem)))
+       pCondition->canBecomeTrue(pProblem.worldState)))
   {
     std::map<std::string, std::set<std::string>> parametersToValues;
     for (const auto& currParam : pParameters)
@@ -200,7 +200,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
             else
               currParentParam.second.insert(parentParamValue);
             return currParentParam.second.empty();
-          }, pProblem, parametersToValues);
+          }, pProblem.worldState, parametersToValues);
 
           if (!currParentParam.second.empty())
             break;
@@ -214,7 +214,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
       // Check that the new fact pattern is not already satisfied
       if (actionIsAPossibleFollowUp)
       {
-        if (!pProblem.isFactPatternSatisfied(pFactOptional, {}, {}, &pParentParameters, nullptr))
+        if (!pProblem.worldState.isFactPatternSatisfied(pFactOptional, {}, {}, &pParentParameters, nullptr))
           return PossibleEffect::SATISFIED;
         return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
       }
@@ -312,13 +312,13 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   };
 
   if (pEffectToCheck.factsModifications &&
-      pEffectToCheck.factsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem))
+      pEffectToCheck.factsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
   {
     pSatisfyObjective = true;
     return true;
   }
   if (pEffectToCheck.potentialFactsModifications &&
-      pEffectToCheck.potentialFactsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem))
+      pEffectToCheck.potentialFactsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
   {
     pSatisfyObjective = true;
     return true;
@@ -331,12 +331,12 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     {
       if (!pFactOptional.isFactNegated)
       {
-        if (pProblem.facts().count(pFactOptional.fact) > 0)
+        if (pProblem.worldState.facts().count(pFactOptional.fact) > 0)
           return false;
       }
       else
       {
-        if (pProblem.facts().count(pFactOptional.fact) == 0)
+        if (pProblem.worldState.facts().count(pFactOptional.fact) == 0)
            return false;
       }
     }
@@ -383,7 +383,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
       return possibleEffect == PossibleEffect::SATISFIED;
     }
     return false;
-  }, pProblem);
+  }, pProblem.worldState);
 }
 
 
@@ -407,7 +407,7 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       auto newPotRes = PotentialNextAction(currAction, action);
       if (_lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, action.effect, pGoal,
                                   pProblem, pFactOptionalToSatisfy, pDomain, factsAlreadyChecked) &&
-          (!action.precondition || action.precondition->isTrue(pProblem, {}, {}, &newPotRes.parameters)))
+          (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parameters)))
       {
         if (newPotRes.isMoreImportantThan(newPotNextAction, pProblem, pGlobalHistorical))
         {
@@ -435,7 +435,7 @@ ActionId _nextStepOfTheProblemForAGoal(
     const Historical* pGlobalHistorical)
 {
   PotentialNextAction res;
-  for (const auto& currFact : pProblem.factNamesToFacts())
+  for (const auto& currFact : pProblem.worldState.factNamesToFacts())
   {
     auto itPrecToActions = pDomain.preconditionToActions().find(currFact.first);
     if (itPrecToActions != pDomain.preconditionToActions().end())
@@ -461,7 +461,8 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     const Historical* pGlobalHistorical)
 {
-  pProblem.fillAccessibleFacts(pDomain);
+  auto& setOfInferences = pProblem.getSetOfInferences();
+  pProblem.worldState.fillAccessibleFacts(pDomain, setOfInferences);
 
   std::unique_ptr<OneStepOfPlannerResult> res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
@@ -469,13 +470,13 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     pGoal.objective().untilFalse(
           [&](const FactOptional& pFactOptional)
     {
-      if (!pProblem.isOptionalFactSatisfied(pFactOptional))
+      if (!pProblem.worldState.isOptionalFactSatisfied(pFactOptional))
       {
         factOptionalToSatisfyPtr = &pFactOptional;
         return false;
       }
       return true;
-    }, pProblem, {});
+    }, pProblem.worldState, {});
 
     if (factOptionalToSatisfyPtr != nullptr)
     {
@@ -494,7 +495,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     return false;
   };
 
-  pProblem.iterateOnGoalsAndRemoveNonPersistent(tryToFindAnActionTowardGoal, pNow);
+  pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(tryToFindAnActionTowardGoal, pProblem.worldState, pNow);
   return res;
 }
 
@@ -520,7 +521,7 @@ std::list<ActionInstance> lookForResolutionPlan(
 {
   std::set<std::string> actionAlreadyInPlan;
   std::list<ActionInstance> res;
-  while (!pProblem.goals().empty())
+  while (!pProblem.goalStack.goals().empty())
   {
     auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical);
     if (!onStepOfPlannerResult)

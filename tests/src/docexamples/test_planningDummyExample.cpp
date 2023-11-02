@@ -23,7 +23,7 @@ void planningDummyExample()
 
   // Initialize the problem with the goal to satisfy
   cp::Problem problem;
-  problem.setGoals({userIsGreeted}, now);
+  problem.goalStack.setGoals({userIsGreeted}, problem.worldState, now);
 
   // Look for an action to do
   auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, now);

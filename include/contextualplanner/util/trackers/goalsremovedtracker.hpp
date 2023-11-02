@@ -4,16 +4,16 @@
 #include <set>
 #include <string>
 #include "../api.hpp"
-#include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/util/observableunsafe.hpp>
 
 
 namespace cp
 {
+struct GoalStack;
 
 struct CONTEXTUALPLANNER_API GoalsRemovedTracker
 {
-  GoalsRemovedTracker(const Problem& pProblem);
+  GoalsRemovedTracker(const GoalStack& pGoalStack);
   ~GoalsRemovedTracker();
   cpstd::observable::ObservableUnsafe<void (const std::set<std::string>&)> onGoalsRemoved{};
 

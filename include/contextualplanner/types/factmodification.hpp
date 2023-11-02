@@ -9,7 +9,7 @@
 
 namespace cp
 {
-struct Problem;
+struct WorldState;
 struct FactModificationNode;
 struct FactModificationFact;
 struct FactModificationNumber;
@@ -32,14 +32,14 @@ struct CONTEXTUALPLANNER_API FactModification
   virtual void replaceFact(const cp::Fact& pOldFact,
                            const Fact& pNewFact) = 0;
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                      const Problem& pProblem) const = 0;
+                      const WorldState& pWorldState) const = 0;
   virtual bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const Problem& pProblem) const = 0;
+                               const WorldState& pWorldState) const = 0;
 
   virtual bool operator==(const FactModification& pOther) const = 0;
   virtual bool operator!=(const FactModification& pOther) const { return !operator==(pOther); }
 
-  virtual std::string getValue(const Problem& pProblem) const = 0;
+  virtual std::string getValue(const WorldState& pWorldState) const = 0;
 
   virtual std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const = 0;
   virtual std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
@@ -82,12 +82,12 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
   void replaceFact(const Fact& pOldFact,
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const Problem& pProblem) const override;
+              const WorldState& pWorldState) const override;
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                       const Problem& pProblem) const override;
+                       const WorldState& pWorldState) const override;
   bool operator==(const FactModification& pOther) const override;
 
-  std::string getValue(const Problem& pProblem) const override;
+  std::string getValue(const WorldState& pWorldState) const override;
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
@@ -104,7 +104,7 @@ struct CONTEXTUALPLANNER_API FactModificationNode : public FactModification
 
 private:
   void _forAllInstruction(const std::function<void (const FactModification&)>& pCallback,
-                          const Problem& pProblem) const;
+                          const WorldState& pWorldState) const;
 };
 
 struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
@@ -118,12 +118,12 @@ struct CONTEXTUALPLANNER_API FactModificationFact : public FactModification
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const Problem&) const override { pFactCallback(factOptional); }
+              const WorldState&) const override { pFactCallback(factOptional); }
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                       const Problem& pProblem) const override;
+                       const WorldState& pWorldState) const override;
   bool operator==(const FactModification& pOther) const override;
 
-  std::string getValue(const Problem& pProblem) const override;
+  std::string getValue(const WorldState& pWorldState) const override;
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;
@@ -148,12 +148,12 @@ struct CONTEXTUALPLANNER_API FactModificationNumber : public FactModification
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
-              const Problem&) const override {}
+              const WorldState&) const override {}
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>&,
-                       const Problem&) const override { return false; }
+                       const WorldState&) const override { return false; }
   bool operator==(const FactModification& pOther) const override;
 
-  std::string getValue(const Problem& pProblem) const override;
+  std::string getValue(const WorldState& pWorldState) const override;
 
   std::unique_ptr<FactModification> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
   std::unique_ptr<FactModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParameters) const override;

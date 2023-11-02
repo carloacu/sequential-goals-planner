@@ -1,6 +1,6 @@
 #include <contextualplanner/types/condition.hpp>
 #include <sstream>
-#include <contextualplanner/types/problem.hpp>
+#include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
@@ -14,12 +14,12 @@ const std::string _equalsFunctionName = "equals";
 bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
                         bool pUntilValue,
                         const Condition& pCondition,
-                        const Problem& pProblem,
+                        const WorldState& pWorldState,
                         const std::map<std::string, std::set<std::string>>* pParametersPtr)
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    return pValueCallback(pCondition.getValue(pProblem));
+    return pValueCallback(pCondition.getValue(pWorldState));
   }
 
   std::list<std::map<std::string, std::string>> paramPossibilities;
@@ -27,7 +27,7 @@ bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCa
   for (auto& currParamPoss : paramPossibilities)
   {
     auto condToExtractValue = pCondition.clone(&currParamPoss);
-    if (pValueCallback(condToExtractValue->getValue(pProblem)) == pUntilValue)
+    if (pValueCallback(condToExtractValue->getValue(pWorldState)) == pUntilValue)
       return pUntilValue;
   }
   return !pUntilValue;
@@ -36,12 +36,12 @@ bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCa
 
 void _forEach(const std::function<void (const std::string&)>& pValueCallback,
               const Condition& pCondition,
-              const Problem& pProblem,
+              const WorldState& pWorldState,
               const std::map<std::string, std::set<std::string>>* pParametersPtr)
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    pValueCallback(pCondition.getValue(pProblem));
+    pValueCallback(pCondition.getValue(pWorldState));
     return;
   }
 
@@ -50,7 +50,7 @@ void _forEach(const std::function<void (const std::string&)>& pValueCallback,
   for (auto& currParamPoss : paramPossibilities)
   {
     auto factToExtractValue = pCondition.clone(&currParamPoss);
-    pValueCallback(factToExtractValue->getValue(pProblem));
+    pValueCallback(factToExtractValue->getValue(pWorldState));
   }
 }
 
@@ -169,14 +169,14 @@ void ConditionNode::forAll(const std::function<void (const FactOptional&)>& pFac
 }
 
 bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const Problem& pProblem,
+                               const WorldState& pWorldState,
                                const std::map<std::string, std::set<std::string>>& pParameters) const
 {
   if (nodeType == ConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pProblem, pParameters))
+    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pWorldState, pParameters))
       return false;
-    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pProblem, pParameters))
+    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pWorldState, pParameters))
       return false;
   }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -190,7 +190,7 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
         auto factToCheck = leftFactPtr->factOptional.fact;
         factToCheck.value = pValue;
         return pFactCallback(FactOptional(factToCheck));
-      }, false, *rightOperand, pProblem, &pParameters);
+      }, false, *rightOperand, pWorldState, &pParameters);
     }
   }
   return true;
@@ -208,7 +208,7 @@ bool ConditionNode::canBeTrue() const
 
 
 
-bool ConditionNode::isTrue(const Problem& pProblem,
+bool ConditionNode::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,
                            const std::set<Fact>& pRemovedFacts,
                            std::map<std::string, std::set<std::string>>* pParametersPtr,
@@ -220,21 +220,21 @@ bool ConditionNode::isTrue(const Problem& pProblem,
     if (pCanBecomeTruePtr == nullptr)
       pCanBecomeTruePtr = &canBecomeTrue;
 
-    if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+    if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
     {
       // Sometimes for negation of fact with parameter we need to check in the inverse order
       if (pCanBecomeTruePtr != nullptr && *pCanBecomeTruePtr)
       {
-        if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+        if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
           return false;
 
-        if (leftOperand && !leftOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+        if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
           return false;
         return true;
       }
       return false;
     }
-    if (rightOperand && !rightOperand->isTrue(pProblem, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+    if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
       return false;
   }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -252,8 +252,8 @@ bool ConditionNode::isTrue(const Problem& pProblem,
         if (factToCheck.isPunctual())
           res = pPunctualFacts.count(factToCheck) != 0 || res;
         else
-          res = factToCheck.isInOtherFacts(pProblem._facts, true, &newParameters, pParametersPtr) || res;
-      }, *rightOperand, pProblem, pParametersPtr);
+          res = factToCheck.isInOtherFacts(pWorldState._facts, true, &newParameters, pParametersPtr) || res;
+      }, *rightOperand, pWorldState, pParametersPtr);
 
       if (pParametersPtr != nullptr)
         applyNewParams(*pParametersPtr, newParameters);
@@ -263,13 +263,13 @@ bool ConditionNode::isTrue(const Problem& pProblem,
   return true;
 }
 
-bool ConditionNode::canBecomeTrue(const Problem& pProblem) const
+bool ConditionNode::canBecomeTrue(const WorldState& pWorldState) const
 {
   if (nodeType == ConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->canBecomeTrue(pProblem))
+    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState))
       return false;
-    if (rightOperand && !rightOperand->canBecomeTrue(pProblem))
+    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState))
       return false;
   }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -279,8 +279,8 @@ bool ConditionNode::canBecomeTrue(const Problem& pProblem) const
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = pProblem.getFactValue(rightFactPtr->factOptional.fact);
-      return pProblem.canFactBecomeTrue(factToCheck);
+      factToCheck.value = pWorldState.getFactValue(rightFactPtr->factOptional.fact);
+      return pWorldState.canFactBecomeTrue(factToCheck);
     }
   }
   return true;
@@ -295,18 +295,18 @@ bool ConditionNode::operator==(const Condition& pOther) const
       _areEqual(rightOperand, otherNodePtr->rightOperand);
 }
 
-std::string ConditionNode::getValue(const Problem& pProblem) const
+std::string ConditionNode::getValue(const WorldState& pWorldState) const
 {
   if (nodeType == ConditionNodeType::PLUS)
   {
-    auto leftValue = leftOperand->getValue(pProblem);
-    auto rightValue = rightOperand->getValue(pProblem);
+    auto leftValue = leftOperand->getValue(pWorldState);
+    auto rightValue = rightOperand->getValue(pWorldState);
     return plusIntOrStr(leftValue, rightValue);
   }
   if (nodeType == ConditionNodeType::MINUS)
   {
-    auto leftValue = leftOperand->getValue(pProblem);
-    auto rightValue = rightOperand->getValue(pProblem);
+    auto leftValue = leftOperand->getValue(pWorldState);
+    auto rightValue = rightOperand->getValue(pWorldState);
     return minusIntOrStr(leftValue, rightValue);
   }
   return "";
@@ -373,29 +373,29 @@ void ConditionFact::replaceFact(const cp::Fact& pOldFact,
     factOptional.fact = pNewFact;
 }
 
-bool ConditionFact::isTrue(const Problem& pProblem,
+bool ConditionFact::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,
                            const std::set<Fact>& pRemovedFacts,
                            std::map<std::string, std::set<std::string>>* pParametersPtr,
                            bool* pCanBecomeTruePtr) const
 {
-  return pProblem.isFactPatternSatisfied(factOptional, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr);
+  return pWorldState.isFactPatternSatisfied(factOptional, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr);
 }
 
-bool ConditionFact::canBecomeTrue(const Problem& pProblem) const
+bool ConditionFact::canBecomeTrue(const WorldState& pWorldState) const
 {
   if (factOptional.isFactNegated)
   {
-    if (pProblem._removableFacts.count(factOptional.fact) == 0)
+    if (pWorldState._removableFacts.count(factOptional.fact) == 0)
     {
       if (factOptional.fact.value == Fact::anyValue)
         return true;
-      if (pProblem._facts.count(factOptional.fact) > 0)
+      if (pWorldState._facts.count(factOptional.fact) > 0)
         return false;
     }
     return true;
   }
-  return pProblem.canFactBecomeTrue(factOptional.fact);
+  return pWorldState.canFactBecomeTrue(factOptional.fact);
 }
 
 bool ConditionFact::operator==(const Condition& pOther) const
@@ -405,9 +405,9 @@ bool ConditionFact::operator==(const Condition& pOther) const
       factOptional == otherFactPtr->factOptional;
 }
 
-std::string ConditionFact::getValue(const Problem& pProblem) const
+std::string ConditionFact::getValue(const WorldState& pWorldState) const
 {
-  return pProblem.getFactValue(factOptional.fact);
+  return pWorldState.getFactValue(factOptional.fact);
 }
 
 std::unique_ptr<Condition> ConditionFact::clone(const std::map<std::string, std::string>* pParametersPtr) const
@@ -434,7 +434,7 @@ bool ConditionNumber::operator==(const Condition& pOther) const
       nb == otherNbPtr->nb;
 }
 
-std::string ConditionNumber::getValue(const Problem&) const
+std::string ConditionNumber::getValue(const WorldState& pWorldState) const
 {
   return toStr(nullptr);
 }

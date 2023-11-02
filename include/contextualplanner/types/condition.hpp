@@ -9,7 +9,7 @@
 
 namespace cp
 {
-struct Problem;
+struct WorldState;
 struct ConditionNode;
 struct ConditionFact;
 struct ConditionNumber;
@@ -33,19 +33,19 @@ struct CONTEXTUALPLANNER_API Condition
                            const Fact& pNewFact) = 0;
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                          const Problem& pProblem,
+                          const WorldState& pWorldState,
                           const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
   virtual bool canBeTrue() const = 0;
-  virtual bool isTrue(const Problem& pProblem,
+  virtual bool isTrue(const WorldState& pWorldState,
                       const std::set<Fact>& pPunctualFacts = {},
                       const std::set<Fact>& pRemovedFacts = {},
                       std::map<std::string, std::set<std::string>>* pParametersPtr = nullptr,
                       bool* pCanBecomeTruePtr = nullptr) const = 0;
-  virtual bool canBecomeTrue(const Problem& pProblem) const = 0;
+  virtual bool canBecomeTrue(const WorldState& pWorldState) const = 0;
   virtual bool operator==(const Condition& pOther) const = 0;
   virtual bool operator!=(const Condition& pOther) const { return !operator==(pOther); }
 
-  virtual std::string getValue(const Problem& pProblem) const = 0;
+  virtual std::string getValue(const WorldState& pWorldState) const = 0;
 
   virtual std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pParametersPtr = nullptr) const = 0;
 
@@ -89,18 +89,18 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const Problem& pProblem,
+                  const WorldState& pWorldState,
                   const std::map<std::string, std::set<std::string>>& pParameters) const override;
   bool canBeTrue() const override;
-  bool isTrue(const Problem& pProblem,
+  bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
               std::map<std::string, std::set<std::string>>* pParametersPtr,
               bool* pCanBecomeTruePtr) const override;
-  bool canBecomeTrue(const Problem& pProblem) const override;
+  bool canBecomeTrue(const WorldState& pWorldState) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const Problem& pProblem) const override;
+  std::string getValue(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 
@@ -130,18 +130,18 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                    const Fact& pNewFact) override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override { pFactCallback(factOptional); }
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const Problem&,
+                  const WorldState&,
                   const std::map<std::string, std::set<std::string>>&) const override { return pFactCallback(factOptional); }
   bool canBeTrue() const override { return factOptional.isFactNegated || !factOptional.fact.isUnreachable(); }
-  bool isTrue(const Problem& pProblem,
+  bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
               std::map<std::string, std::set<std::string>>* pParametersPtr,
               bool* pCanBecomeTruePtr) const override;
-  bool canBecomeTrue(const Problem& pProblem) const override;
+  bool canBecomeTrue(const WorldState& pWorldState) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const Problem& pProblem) const override;
+  std::string getValue(const WorldState& pWorldState) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
@@ -170,18 +170,18 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
                    const Fact& pNewFact) override {}
   void forAll(const std::function<void (const FactOptional&)>&) const override {}
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
-                  const Problem&,
+                  const WorldState&,
                   const std::map<std::string, std::set<std::string>>&) const override { return true; }
   bool canBeTrue() const override { return true; }
-  bool isTrue(const Problem& pProblem,
+  bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
               std::map<std::string, std::set<std::string>>* pParametersPtr,
               bool* pCanBecomeTruePtr) const override { return true; }
-  bool canBecomeTrue(const Problem& pProblem) const override  { return true; }
+  bool canBecomeTrue(const WorldState& pWorldState) const override  { return true; }
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const Problem& pProblem) const override;
+  std::string getValue(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
 

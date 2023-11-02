@@ -1,6 +1,6 @@
 #include <contextualplanner/types/factmodification.hpp>
 #include <sstream>
-#include <contextualplanner/types/problem.hpp>
+#include <contextualplanner/types/worldstate.hpp>
 #include "expressionParsed.hpp"
 #include <contextualplanner/util/util.hpp>
 
@@ -186,7 +186,7 @@ void FactModificationNode::replaceFact(const cp::Fact& pOldFact,
 }
 
 void FactModificationNode::_forAllInstruction(const std::function<void (const FactModification&)>& pCallback,
-                                              const Problem& pProblem) const
+                                              const WorldState& pWorldState) const
 {
   if (leftOperand && rightOperand && !parameterName.empty())
   {
@@ -194,7 +194,7 @@ void FactModificationNode::_forAllInstruction(const std::function<void (const Fa
     if (leftFactPtr != nullptr)
     {
       std::set<cp::Fact> parameterValues;
-      pProblem.forAllInstruction(parameterName, leftFactPtr->factOptional.fact, parameterValues);
+      pWorldState.forAllInstruction(parameterName, leftFactPtr->factOptional.fact, parameterValues);
       if (!parameterValues.empty())
       {
         auto oldFact = Fact::fromStr(parameterName);
@@ -210,14 +210,14 @@ void FactModificationNode::_forAllInstruction(const std::function<void (const Fa
 }
 
 void FactModificationNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                                  const Problem& pProblem) const
+                                  const WorldState& pWorldState) const
 {
   if (nodeType == FactModificationNodeType::AND)
   {
     if (leftOperand)
-      leftOperand->forAll(pFactCallback, pProblem);
+      leftOperand->forAll(pFactCallback, pWorldState);
     if (rightOperand)
-      rightOperand->forAll(pFactCallback, pProblem);
+      rightOperand->forAll(pFactCallback, pWorldState);
   }
   else if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
   {
@@ -225,7 +225,7 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = rightOperand->getValue(pProblem);
+      factToCheck.fact.value = rightOperand->getValue(pWorldState);
       return pFactCallback(factToCheck);
     }
 
@@ -235,8 +235,8 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
     _forAllInstruction(
           [&](const FactModification& pFactModification)
     {
-      pFactModification.forAll(pFactCallback, pProblem);
-    }, pProblem);
+      pFactModification.forAll(pFactCallback, pWorldState);
+    }, pWorldState);
   }
   else if (nodeType == FactModificationNodeType::ADD && leftOperand && rightOperand)
   {
@@ -244,7 +244,7 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = plusIntOrStr(leftOperand->getValue(pProblem), rightOperand->getValue(pProblem));
+      factToCheck.fact.value = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -252,11 +252,11 @@ void FactModificationNode::forAll(const std::function<void (const FactOptional&)
 
 
 bool FactModificationNode::forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                           const Problem& pProblem) const
+                                           const WorldState& pWorldState) const
 {
   if (nodeType == FactModificationNodeType::AND)
-    return (leftOperand && leftOperand->forAllUntilTrue(pFactCallback, pProblem)) ||
-        (rightOperand && rightOperand->forAllUntilTrue(pFactCallback, pProblem));
+    return (leftOperand && leftOperand->forAllUntilTrue(pFactCallback, pWorldState)) ||
+        (rightOperand && rightOperand->forAllUntilTrue(pFactCallback, pWorldState));
 
   if (nodeType == FactModificationNodeType::SET && leftOperand && rightOperand)
   {
@@ -264,7 +264,7 @@ bool FactModificationNode::forAllUntilTrue(const std::function<bool (const FactO
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = rightOperand->getValue(pProblem);
+      factToCheck.fact.value = rightOperand->getValue(pWorldState);
       return pFactCallback(factToCheck);
     }
   }
@@ -276,8 +276,8 @@ bool FactModificationNode::forAllUntilTrue(const std::function<bool (const FactO
           [&](const FactModification& pFactModification)
     {
       if (!res)
-        res = pFactModification.forAllUntilTrue(pFactCallback, pProblem);
-    }, pProblem);
+        res = pFactModification.forAllUntilTrue(pFactCallback, pWorldState);
+    }, pWorldState);
     return res;
   }
 
@@ -287,7 +287,7 @@ bool FactModificationNode::forAllUntilTrue(const std::function<bool (const FactO
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.value = plusIntOrStr(leftOperand->getValue(pProblem), rightOperand->getValue(pProblem));
+      factToCheck.fact.value = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -305,18 +305,18 @@ bool FactModificationNode::operator==(const FactModification& pOther) const
       parameterName == otherNodePtr->parameterName;
 }
 
-std::string FactModificationNode::getValue(const Problem& pProblem) const
+std::string FactModificationNode::getValue(const WorldState& pWorldState) const
 {
   if (nodeType == FactModificationNodeType::PLUS)
   {
-    auto leftValue = leftOperand->getValue(pProblem);
-    auto rightValue = rightOperand->getValue(pProblem);
+    auto leftValue = leftOperand->getValue(pWorldState);
+    auto rightValue = rightOperand->getValue(pWorldState);
     return plusIntOrStr(leftValue, rightValue);
   }
   if (nodeType == FactModificationNodeType::MINUS)
   {
-    auto leftValue = leftOperand->getValue(pProblem);
-    auto rightValue = rightOperand->getValue(pProblem);
+    auto leftValue = leftOperand->getValue(pWorldState);
+    auto rightValue = rightOperand->getValue(pWorldState);
     return minusIntOrStr(leftValue, rightValue);
   }
   return "";
@@ -397,7 +397,7 @@ void FactModificationFact::replaceFact(const cp::Fact& pOldFact,
     factOptional.fact.replaceFactInArguments(pOldFact, pNewFact);
 }
 
-bool FactModificationFact::forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const Problem&) const
+bool FactModificationFact::forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const WorldState&) const
 {
   return pFactCallback(factOptional);
 }
@@ -409,9 +409,9 @@ bool FactModificationFact::operator==(const FactModification& pOther) const
       factOptional == otherFactPtr->factOptional;
 }
 
-std::string FactModificationFact::getValue(const Problem& pProblem) const
+std::string FactModificationFact::getValue(const WorldState& pWorldState) const
 {
-  return pProblem.getFactValue(factOptional.fact);
+  return pWorldState.getFactValue(factOptional.fact);
 }
 
 std::unique_ptr<FactModification> FactModificationFact::clone(const std::map<std::string, std::string>* pParametersPtr) const
@@ -445,7 +445,7 @@ bool FactModificationNumber::operator==(const FactModification& pOther) const
       nb == otherNumberPtr->nb;
 }
 
-std::string FactModificationNumber::getValue(const Problem&) const
+std::string FactModificationNumber::getValue(const WorldState& pWorldState) const
 {
   return toStr();
 }

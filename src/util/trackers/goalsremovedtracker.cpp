@@ -1,14 +1,15 @@
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
+#include <contextualplanner/types/goalstack.hpp>
 
 
 namespace cp
 {
 
 
-GoalsRemovedTracker::GoalsRemovedTracker(const Problem& pProblem)
+GoalsRemovedTracker::GoalsRemovedTracker(const GoalStack& pGoalStack)
   : _existingGoals(),
     _onGoalsChangedConnection(
-      pProblem.onGoalsChanged.connectUnsafe([this](const std::map<int, std::vector<Goal>>& pGoals) {
+      pGoalStack.onGoalsChanged.connectUnsafe([this](const std::map<int, std::vector<Goal>>& pGoals) {
   std::set<std::string> newGoals;
   for (const auto& currGoals : pGoals)
   {
