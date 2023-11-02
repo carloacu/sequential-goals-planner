@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_WORLDMODIFICATION_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_WORLDMODIFICATION_HPP
+#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEMUPDATE_HPP
+#define INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEMUPDATE_HPP
 
 #include <functional>
 #include <map>
@@ -15,10 +15,10 @@ namespace cp
 
 
 // Specification of a modification of the world.
-struct CONTEXTUALPLANNER_API WorldModification
+struct CONTEXTUALPLANNER_API ProblemUpdate
 {
   /// Construct a world modification without arguments.
-  WorldModification()
+  ProblemUpdate()
     : factsModifications(),
       potentialFactsModifications(),
       goalsToAdd(),
@@ -30,8 +30,8 @@ struct CONTEXTUALPLANNER_API WorldModification
    * @brief Construct a world modification from the set of facts.
    * @param pSetOfFacts Set of facts to add in the world modification.
    */
-  WorldModification(std::unique_ptr<cp::FactModification> pFactsModifications,
-                    std::unique_ptr<cp::FactModification> pPotentialFactsModifications = std::unique_ptr<cp::FactModification>())
+  ProblemUpdate(std::unique_ptr<cp::FactModification> pFactsModifications,
+                std::unique_ptr<cp::FactModification> pPotentialFactsModifications = std::unique_ptr<cp::FactModification>())
     : factsModifications(pFactsModifications ? std::move(pFactsModifications): std::unique_ptr<cp::FactModification>()),
       potentialFactsModifications(pPotentialFactsModifications ? std::move(pPotentialFactsModifications) : std::unique_ptr<cp::FactModification>()),
       goalsToAdd(),
@@ -39,7 +39,7 @@ struct CONTEXTUALPLANNER_API WorldModification
   {
   }
 
-  WorldModification(const WorldModification& pOther)
+  ProblemUpdate(const ProblemUpdate& pOther)
     : factsModifications(pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>()),
       potentialFactsModifications(pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>()),
       goalsToAdd(pOther.goalsToAdd),
@@ -47,7 +47,7 @@ struct CONTEXTUALPLANNER_API WorldModification
   {
   }
 
-  void operator=(const WorldModification& pOther)
+  void operator=(const ProblemUpdate& pOther)
   {
     factsModifications = pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>();
     potentialFactsModifications = pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>();
@@ -59,8 +59,8 @@ struct CONTEXTUALPLANNER_API WorldModification
   bool empty() const { return !factsModifications && !potentialFactsModifications && goalsToAdd.empty() && goalsToAddInCurrentPriority.empty(); }
 
   /// Check equality with another world modification.
-  bool operator==(const WorldModification& pOther) const;
-  bool operator!=(const WorldModification& pOther) const { return !operator==(pOther); }
+  bool operator==(const ProblemUpdate& pOther) const;
+  bool operator!=(const ProblemUpdate& pOther) const { return !operator==(pOther); }
 
   /// Check if this object contains a fact.
   bool hasFact(const cp::Fact& pFact) const;
@@ -69,7 +69,7 @@ struct CONTEXTUALPLANNER_API WorldModification
    * @brief Add the content of another world modifiation.
    * @param pOther The other world modification to add.
    */
-  void add(const WorldModification& pOther);
+  void add(const ProblemUpdate& pOther);
 
   /**
    * @brief Replace a fact by another inside this object.
@@ -111,7 +111,7 @@ struct CONTEXTUALPLANNER_API WorldModification
 
 // Implemenation
 
-inline bool WorldModification::hasFact(const cp::Fact& pFact) const
+inline bool ProblemUpdate::hasFact(const cp::Fact& pFact) const
 {
   if ((factsModifications && factsModifications->hasFact(pFact)) ||
       (potentialFactsModifications && potentialFactsModifications->hasFact(pFact)))
@@ -126,7 +126,7 @@ inline bool WorldModification::hasFact(const cp::Fact& pFact) const
   return false;
 }
 
-inline void WorldModification::add(const WorldModification& pOther)
+inline void ProblemUpdate::add(const ProblemUpdate& pOther)
 {
   if (pOther.factsModifications)
   {
@@ -146,8 +146,8 @@ inline void WorldModification::add(const WorldModification& pOther)
   goalsToAddInCurrentPriority.insert(goalsToAddInCurrentPriority.end(), pOther.goalsToAddInCurrentPriority.begin(), pOther.goalsToAddInCurrentPriority.end());
 }
 
-inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
-                                           const cp::Fact& pNewFact)
+inline void ProblemUpdate::replaceFact(const cp::Fact& pOldFact,
+                                       const cp::Fact& pNewFact)
 {
   if (factsModifications)
     factsModifications->replaceFact(pOldFact, pNewFact);
@@ -160,8 +160,8 @@ inline void WorldModification::replaceFact(const cp::Fact& pOldFact,
     currGoal.factCondition().replaceFact(pOldFact, pNewFact);
 }
 
-inline bool WorldModification::forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
-                                               const Problem& pProblem) const
+inline bool ProblemUpdate::forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
+                                           const Problem& pProblem) const
 {
   if (factsModifications && factsModifications->forAllUntilTrue(pCallback, pProblem))
     return true;
@@ -170,8 +170,8 @@ inline bool WorldModification::forAllUntilTrue(const std::function<bool(const cp
   return false;
 }
 
-inline void WorldModification::forAll(const std::function<void(const cp::FactOptional&)>& pCallback,
-                                      const Problem& pProblem) const
+inline void ProblemUpdate::forAll(const std::function<void(const cp::FactOptional&)>& pCallback,
+                                  const Problem& pProblem) const
 {
   if (factsModifications)
     factsModifications->forAll(pCallback, pProblem);
@@ -184,4 +184,4 @@ inline void WorldModification::forAll(const std::function<void(const cp::FactOpt
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_WORLDMODIFICATION_HPP
+#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEMUPDATE_HPP

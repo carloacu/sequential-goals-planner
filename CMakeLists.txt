@@ -17,8 +17,8 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/inference.hpp
     include/contextualplanner/types/onestepofplannerresult.hpp
     include/contextualplanner/types/problem.hpp
+    include/contextualplanner/types/problemupdate.hpp
     include/contextualplanner/types/setofinferences.hpp
-    include/contextualplanner/types/worldmodification.hpp
     include/contextualplanner/util/exportsymbols/macro.hpp
     include/contextualplanner/util/trackers/goalsremovedtracker.hpp
     include/contextualplanner/util/api.hpp
@@ -46,8 +46,8 @@ set(CHATBOTPLANNER_SRCS
     src/types/inference.cpp
     src/types/onestepofplannerresult.cpp
     src/types/problem.cpp
+    src/types/problemupdate.cpp
     src/types/setofinferences.cpp
-    src/types/worldmodification.cpp
     src/util/trackers/goalsremovedtracker.cpp
     src/util/arithmeticevaluator.cpp
     src/util/print.cpp

@@ -16,7 +16,7 @@
 namespace cp
 {
 struct Domain;
-struct WorldModification;
+struct ProblemUpdate;
 struct SetOfInferences;
 struct OneStepOfPlannerResult;
 
@@ -438,9 +438,9 @@ private:
    * @param pDomain Domain containing all the possible actions.
    */
   void _feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
-                                        const WorldModification& pEffect,
-                                        const std::vector<std::string>& pParameters,
-                                        const Domain& pDomain,
+                                         const ProblemUpdate& pEffect,
+                                         const std::vector<std::string>& pParameters,
+                                         const Domain& pDomain,
                                          FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**

@@ -527,7 +527,7 @@ void Problem::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId
 }
 
 void Problem::_feedAccessibleFactsFromDeduction(const std::unique_ptr<FactCondition>& pCondition,
-                                                const WorldModification& pEffect,
+                                                const ProblemUpdate& pEffect,
                                                 const std::vector<std::string>& pParameters,
                                                 const Domain& pDomain,
                                                 FactsAlreadyChecked& pFactsAlreadychecked)

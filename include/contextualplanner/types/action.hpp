@@ -4,7 +4,7 @@
 #include <vector>
 #include "../util/api.hpp"
 #include <contextualplanner/types/factcondition.hpp>
-#include <contextualplanner/types/worldmodification.hpp>
+#include <contextualplanner/types/problemupdate.hpp>
 
 
 namespace cp
@@ -21,7 +21,7 @@ struct CONTEXTUALPLANNER_API Action
    * @param pPreferInContext[in] Set of facts that will increase the priority of this action if they are present in the world.
    */
   Action(std::unique_ptr<FactCondition> pPrecondition,
-         const WorldModification& pEffect,
+         const ProblemUpdate& pEffect,
          std::unique_ptr<FactCondition> pPreferInContext = {})
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<FactCondition>()),
@@ -33,7 +33,7 @@ struct CONTEXTUALPLANNER_API Action
 
   /// Move constructor of an action.
   Action(std::unique_ptr<FactCondition>&& pPrecondition,
-         WorldModification&& pEffect,
+         ProblemUpdate&& pEffect,
          std::unique_ptr<FactCondition>&& pPreferInContext)
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<FactCondition>()),
@@ -91,7 +91,7 @@ struct CONTEXTUALPLANNER_API Action
   /// More this condition matches the world higher the priority of this action will be.
   std::unique_ptr<FactCondition> preferInContext;
   /// Modification to apply to the world when this action will finish.
-  WorldModification effect;
+  ProblemUpdate effect;
   /// If it is important to not repeat this action.
   bool highImportanceOfNotRepeatingIt = false;
 };
