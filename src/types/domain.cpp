@@ -40,6 +40,11 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
 
 
 Domain::Domain(const std::map<ActionId, Action>& pActions)
+  : _actions(),
+    _preconditionToActions(),
+    _notPreconditionToActions(),
+    _actionsWithoutFactToAddInPrecondition(),
+    _setOfInferences()
 {
   for (const auto& currAction : pActions)
     addAction(currAction.first, currAction.second);
@@ -108,6 +113,27 @@ void Domain::removeAction(const ActionId& pActionId)
 
   _actions.erase(it);
 }
+
+
+
+void Domain::addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
+                                const std::shared_ptr<const SetOfInferences>& pSetOfInferences)
+{
+  _setOfInferences.emplace(pSetOfInferencesId, pSetOfInferences);
+}
+
+void Domain::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
+{
+  auto it = _setOfInferences.find(pSetOfInferencesId);
+  if (it != _setOfInferences.end())
+    _setOfInferences.erase(it);
+}
+
+void Domain::clearInferences()
+{
+  _setOfInferences.clear();
+}
+
 
 
 } // !cp

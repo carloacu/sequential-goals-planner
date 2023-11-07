@@ -6,7 +6,7 @@
 #include "../util/api.hpp"
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/types/action.hpp>
-
+#include <contextualplanner/types/setofinferences.hpp>
 
 namespace cp
 {
@@ -49,6 +49,35 @@ struct CONTEXTUALPLANNER_API Domain
   const std::set<ActionId>& actionsWithoutFactToAddInPrecondition() const { return _actionsWithoutFactToAddInPrecondition; }
 
 
+
+  // Inferences
+  // ----------
+
+  /**
+   * @brief Add a set of inferences.
+   * @param pSetOfInferencesId Identifier of the set of inferences to add.
+   * @param pSetOfInferences Set of inferences to add.
+   *
+   * If the identifier is already used, the addition will not be done.
+   */
+  void addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
+                          const std::shared_ptr<const SetOfInferences>& pSetOfInferences);
+
+  /**
+   * @brief Remove a set of inferences.
+   * @param pSetOfInferencesId Identifier of the set of inferences to remove.
+   *
+   * If the inference is not found, this function will have no effect.
+   * No exception will be raised.
+   */
+  void removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId);
+
+  void clearInferences();
+
+  /// Get the set of inferences.
+  const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& getSetOfInferences() const { return _setOfInferences; }
+
+
 private:
   /// Map of action identifiers to action.
   std::map<ActionId, Action> _actions;
@@ -58,6 +87,8 @@ private:
   std::map<std::string, std::set<ActionId>> _notPreconditionToActions;
   /// Set of action identifiers of the actions without precondtion.
   std::set<ActionId> _actionsWithoutFactToAddInPrecondition;
+  /// Map set of inferences identifiers to the set of inferences.
+  std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>> _setOfInferences{};
 };
 
 } // !cp

@@ -125,8 +125,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @brief Fill accessible facts internally, according to a domain.
    * @param pDomain Domain containing the actions.
    */
-  void fillAccessibleFacts(const Domain& pDomain,
-                           const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences);
+  void fillAccessibleFacts(const Domain& pDomain);
 
   /**
    * @brief Can a fact become true, according to the world and the accessible facts stored internally in this object.

@@ -48,7 +48,6 @@ set(CHATBOTPLANNER_SRCS
     src/types/historical.cpp
     src/types/inference.cpp
     src/types/onestepofplannerresult.cpp
-    src/types/problem.cpp
     src/types/problemupdate.cpp
     src/types/setofinferences.cpp
     src/types/worldstate.cpp

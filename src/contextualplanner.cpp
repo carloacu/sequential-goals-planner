@@ -324,7 +324,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     return true;
   }
 
-  auto& setOfInferences = pProblem.getSetOfInferences();
+  auto& setOfInferences = pDomain.getSetOfInferences();
   return pEffectToCheck.forAllUntilTrue([&](const cp::FactOptional& pFactOptional) {
     // Condition only for optimization
     if (pParameters.empty())
@@ -461,8 +461,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     const Historical* pGlobalHistorical)
 {
-  auto& setOfInferences = pProblem.getSetOfInferences();
-  pProblem.worldState.fillAccessibleFacts(pDomain, setOfInferences);
+  pProblem.worldState.fillAccessibleFacts(pDomain);
 
   std::unique_ptr<OneStepOfPlannerResult> res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
@@ -500,6 +499,22 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
 }
 
 
+void _notifyActionDone(Problem& pProblem,
+                       const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                       const OneStepOfPlannerResult& pOnStepOfPlannerResult,
+                       const std::unique_ptr<FactModification>& pEffect,
+                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                       const std::map<int, std::vector<Goal>>* pGoalsToAdd,
+                       const std::vector<Goal>* pGoalsToAddInCurrentPriority)
+{
+  pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInstance.actionId);
+
+  pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pProblem.goalStack, pSetOfInferences, pNow);
+
+  pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pEffect, pNow, pGoalsToAdd,
+                              pGoalsToAddInCurrentPriority, pProblem.worldState);
+}
+
 
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
@@ -508,9 +523,14 @@ void notifyActionDone(Problem& pProblem,
 {
   auto itAction = pDomain.actions().find(pOnStepOfPlannerResult.actionInstance.actionId);
   if (itAction != pDomain.actions().end())
-    pProblem.notifyActionDone(pOnStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
-                              &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
+  {
+    auto& setOfInferences = pDomain.getSetOfInferences();
+    _notifyActionDone(pProblem, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
+                      &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
+  }
 }
+
+
 
 
 std::list<ActionInstance> lookForResolutionPlan(
@@ -537,8 +557,9 @@ std::list<ActionInstance> lookForResolutionPlan(
     {
       if (pGlobalHistorical != nullptr)
         pGlobalHistorical->notifyActionDone(actionToDo);
-      pProblem.notifyActionDone(*onStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
-                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
+      auto& setOfInferences = pDomain.getSetOfInferences();
+      _notifyActionDone(pProblem, setOfInferences, *onStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
+                        &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
     }
   }
   return res;

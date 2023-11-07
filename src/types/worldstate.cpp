@@ -376,11 +376,11 @@ void WorldState::forAllInstruction(const std::string& pParameterName,
 }
 
 
-void WorldState::fillAccessibleFacts(const Domain& pDomain,
-                                     const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences)
+void WorldState::fillAccessibleFacts(const Domain& pDomain)
 {
   if (!_needToAddAccessibleFacts)
     return;
+  auto& setOfInferences = pDomain.getSetOfInferences();
   FactsAlreadyChecked factsAlreadychecked;
   for (const auto& currFact : _facts)
   {
@@ -389,11 +389,11 @@ void WorldState::fillAccessibleFacts(const Domain& pDomain,
       auto itPrecToActions = pDomain.preconditionToActions().find(currFact.name);
       if (itPrecToActions != pDomain.preconditionToActions().end())
         _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain,
-                                             factsAlreadychecked, pSetOfInferences);
+                                             factsAlreadychecked, setOfInferences);
     }
   }
   _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain,
-                                       factsAlreadychecked, pSetOfInferences);
+                                       factsAlreadychecked, setOfInferences);
   _needToAddAccessibleFacts = false;
 }
 
