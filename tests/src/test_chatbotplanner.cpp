@@ -310,14 +310,13 @@ void _noPreconditionGoalImmediatlyReached()
   actions.emplace(_action_goodBoy, cp::Action({},
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain));
   assert_true(!problem.goalStack.goals().empty());
   assert_true(!problem.worldState.hasFact(_fact_beHappy));
-  problem.worldState.addFact(_fact_beHappy, problem.goalStack, setOfInstances, now);
+  problem.worldState.addFact(_fact_beHappy, problem.goalStack, _emptySetOfInferences, now);
   assert_true(problem.worldState.hasFact(_fact_beHappy));
 }
 
@@ -457,13 +456,12 @@ void _testWithNegatedAccessibleFacts()
   actions.emplace(action3, cp::Action(cp::Condition::fromStr(_fact_a + " & !" + _fact_c),
                                       cp::FactModification::fromStr(_fact_d)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   cp::Problem problem;
-  problem.worldState.setFacts({_fact_a, _fact_b, _fact_c}, problem.goalStack, setOfInstances, now);
+  problem.worldState.setFacts({_fact_a, _fact_b, _fact_c}, problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {_fact_d});
   assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
-  problem.worldState.addFact(_fact_e,  problem.goalStack, setOfInstances, now);
+  problem.worldState.addFact(_fact_e,  problem.goalStack, _emptySetOfInferences, now);
   assert_eq(action2, _lookForAnActionToDoStr(problem, domain));
 }
 
@@ -584,7 +582,6 @@ void _privigelizeTheActionsThatHaveManyPreferedInContext()
   actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_greeted + " & " + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
@@ -593,13 +590,13 @@ void _privigelizeTheActionsThatHaveManyPreferedInContext()
             _action_checkIn + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.worldState.setFacts({_fact_hasQrCode}, problem.goalStack, setOfInstances, now);
+  problem.worldState.setFacts({_fact_hasQrCode}, problem.goalStack, _emptySetOfInferences, now);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithQrCode + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  problem.worldState.setFacts({_fact_hasCheckInPasword}, problem.goalStack, setOfInstances, now);
+  problem.worldState.setFacts({_fact_hasCheckInPasword}, problem.goalStack, _emptySetOfInferences, now);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithPassword + _sep +
@@ -766,10 +763,9 @@ void _goDoTheActionThatHaveTheMostPreferInContextValidated()
   actions.emplace(_action_goodBoy, cp::Action(cp::Condition::fromStr(_fact_advertised + "&" + _fact_checkedIn),
                                               cp::FactModification::fromStr(_fact_beHappy)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   cp::Problem problem;
-  problem.worldState.setFacts({_fact_is_close}, problem.goalStack, setOfInstances, now);
+  problem.worldState.setFacts({_fact_is_close}, problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {_fact_beHappy});
   assert_eq(_action_checkIn, _lookForAnActionToDoStr(problem, domain));
 }
@@ -782,12 +778,12 @@ void _checkNotInAPrecondition()
   actions.emplace(_action_greet, cp::Action(cp::Condition::fromStr("!" + _fact_checkedIn),
                                             cp::FactModification::fromStr(_fact_greeted)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted});
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
-  problem.worldState.modifyFacts(cp::FactModification::fromStr(_fact_checkedIn), problem.goalStack, setOfInstances, now);
+  problem.worldState.modifyFacts(cp::FactModification::fromStr(_fact_checkedIn), problem.goalStack,
+                                 _emptySetOfInferences, now);
   assert_eq(std::string(), _lookForAnActionToDoConstStr(problem, domain));
 }
 
@@ -795,13 +791,11 @@ void _checkNotInAPrecondition()
 void _checkClearGoalsWhenItsAlreadySatisfied()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
-  std::map<std::string, cp::Action> actions;
-  cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
-  cp::Problem problem;
-  problem.worldState.setFacts({_fact_greeted}, problem.goalStack, setOfInstances, now);
+ cp::Problem problem;
+  problem.worldState.setFacts({_fact_greeted}, problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {_fact_greeted});
   assert_eq<std::size_t>(1, problem.goalStack.goals().size());
+  cp::Domain domain;
   _lookForAnActionToDo(problem, domain);
   assert_eq<std::size_t>(0, problem.goalStack.goals().size());
 }
@@ -855,11 +849,10 @@ void _testIncrementOfVariables()
   actions.emplace(_action_finisehdToAskQuestions, actionFinishToActActions);
   actions.emplace(_action_sayQuestionBilan, actionSayQuestionBilan);
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   cp::Problem problem;
-  problem.worldState.modifyFacts(cp::FactModification::fromStr(initFactsStr), problem.goalStack, setOfInstances, now);
+  problem.worldState.modifyFacts(cp::FactModification::fromStr(initFactsStr), problem.goalStack, _emptySetOfInferences, now);
   assert(cp::Condition::fromStr(initFactsStr)->isTrue(problem.worldState));
   assert(!actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -877,8 +870,10 @@ void _testIncrementOfVariables()
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
-    problem.worldState.modifyFacts(itAction->second.effect.factsModifications, problem.goalStack, setOfInstances, now);
-    problem.worldState.modifyFacts(cp::FactModification::fromStr("!" + _fact_askAllTheQuestions), problem.goalStack, setOfInstances, now);
+    problem.worldState.modifyFacts(itAction->second.effect.factsModifications, problem.goalStack,
+                                   _emptySetOfInferences, now);
+    problem.worldState.modifyFacts(cp::FactModification::fromStr("!" + _fact_askAllTheQuestions), problem.goalStack,
+                                   _emptySetOfInferences, now);
   }
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -888,11 +883,13 @@ void _testIncrementOfVariables()
   problem.historical.notifyActionDone(actionToDo);
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
-  problem.worldState.modifyFacts(itAction->second.effect.factsModifications, problem.goalStack, setOfInstances, now);
+  problem.worldState.modifyFacts(itAction->second.effect.factsModifications, problem.goalStack,
+                                 _emptySetOfInferences, now);
   assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDoStr(problem, domain));
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(actionSayQuestionBilan.precondition->isTrue(problem.worldState));
-  problem.worldState.modifyFacts(actionSayQuestionBilan.effect.factsModifications, problem.goalStack, setOfInstances, now);
+  problem.worldState.modifyFacts(actionSayQuestionBilan.effect.factsModifications, problem.goalStack,
+                                 _emptySetOfInferences, now);
 }
 
 void _precoditionEqualEffect()
@@ -1118,14 +1115,13 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
   actions.emplace(_action_checkIn, cp::Action({},
                                               cp::FactModification::fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   cp::Historical historical;
   cp::Problem problem;
-  problem.worldState.setFacts({_fact_engagedWithUser}, problem.goalStack, setOfInstances, now);
+  problem.worldState.setFacts({_fact_engagedWithUser}, problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {"persist(" + _fact_userSatisfied + ")"});
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
-  problem.worldState.removeFact(_fact_userSatisfied, problem.goalStack, setOfInstances, now);
+  problem.worldState.removeFact(_fact_userSatisfied, problem.goalStack, _emptySetOfInferences, now);
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
 }
 
@@ -1140,11 +1136,10 @@ void _dontLinkActionWithPreferredInContext()
   actions.emplace(_action_checkIn, cp::Action(cp::Condition::fromStr(_fact_engagedWithUser),
                                               cp::FactModification::fromStr(_fact_checkedIn)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   cp::Historical historical;
   cp::Problem problem;
-  problem.worldState.setFacts({_fact_engagedWithUser}, problem.goalStack, setOfInstances, now);
+  problem.worldState.setFacts({_fact_engagedWithUser}, problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {_fact_userSatisfied});
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
 }
@@ -1197,7 +1192,6 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
   actions.emplace(_action_goodBoy, cp::Action({}, cp::FactModification::fromStr(_fact_beHappy)));
   actions.emplace(_action_presentation, cp::Action({}, cp::FactModification::fromStr(_fact_presented)));
   cp::Domain domain(std::move(actions));
-  auto& setOfInstances = domain.getSetOfInferences();
 
   // Even if _fact_checkedIn has maxTimeToKeepInactive equal to 0, it is not removed because the goal with a higher priority is inactive.
   cp::Problem problem;
@@ -1207,7 +1201,7 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
             _action_goodBoy, _solveStr(problem, actions));
 
   cp::Problem problem2;
-  problem2.worldState.addFact(_fact_presented, problem2.goalStack, setOfInstances, now); // The difference here is that the condition of the first goal is satisfied
+  problem2.worldState.addFact(_fact_presented, problem2.goalStack, _emptySetOfInferences, now); // The difference here is that the condition of the first goal is satisfied
   problem2.goalStack.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}},
                               problem2.worldState, {});
   assert_eq(_action_greet + _sep +
@@ -1217,7 +1211,7 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
   cp::Problem problem3;
   problem3.goalStack.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}},
                       problem3.worldState, {});
-  problem3.worldState.addFact(_fact_presented, problem3.goalStack, setOfInstances, now); // The difference here is that the condition is validated after the add of the goal
+  problem3.worldState.addFact(_fact_presented, problem3.goalStack, _emptySetOfInferences, now); // The difference here is that the condition is validated after the add of the goal
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem3, actions));
 
@@ -1225,8 +1219,8 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
   cp::Problem problem4;
   problem4.goalStack.setGoals({{10, {cp::Goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", 0)}}, {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}},
                       problem4.worldState, {});
-  problem4.worldState.addFact(_fact_presented, problem4.goalStack, setOfInstances, now); // Here _fact_checkedIn goal shoud be removed from the stack
-  problem4.worldState.removeFact(_fact_presented, problem4.goalStack, setOfInstances, now); // The difference here is that the condition was validated only punctually
+  problem4.worldState.addFact(_fact_presented, problem4.goalStack, _emptySetOfInferences, now); // Here _fact_checkedIn goal shoud be removed from the stack
+  problem4.worldState.removeFact(_fact_presented, problem4.goalStack, _emptySetOfInferences, now); // The difference here is that the condition was validated only punctually
   assert_eq(_action_goodBoy, _solveStr(problem4, actions));
 }
 
@@ -1552,8 +1546,8 @@ void _checkInferenceThatAddAGoal()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("imply(" + _fact_g + ", " + _fact_d + ")")});
   assert_eq<std::string>("", _solveStrConst(problem, domain));
-  auto& setOfInstances = domain.getSetOfInferences();
-  problem.worldState.addFact(_fact_g, problem.goalStack, setOfInstances, now);
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  problem.worldState.addFact(_fact_g, problem.goalStack, setOfInferencesMap, now);
   assert_eq(action1 + _sep + action4 + _sep + action3 + _sep + action2, _solveStr(problem, domain));
 }
 
@@ -1586,7 +1580,6 @@ void _checkThatUnReachableCannotTriggeranInference()
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   domain.clearInferences();
-  //setOfInferences->removeInference(inference1);
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
 }
 
@@ -2068,11 +2061,11 @@ void _failToMoveAnUnknownObject()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)")});
 
-  auto& setOfInstances = domain.getSetOfInferences();
-  problem.worldState.addFact(cp::Fact("charging(me)"), problem.goalStack, setOfInstances, now);
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  problem.worldState.addFact(cp::Fact("charging(me)"), problem.goalStack, setOfInferencesMap, now);
   assert_eq(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  problem.worldState.addFact(cp::Fact("locationOfObj(sweets)=kitchen"), problem.goalStack, setOfInstances, now);
+  problem.worldState.addFact(cp::Fact("locationOfObj(sweets)=kitchen"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)")});
   assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
