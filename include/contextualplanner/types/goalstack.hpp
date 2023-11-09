@@ -16,7 +16,7 @@
 namespace cp
 {
 struct Domain;
-struct ProblemUpdate;
+struct ProblemModification;
 struct SetOfInferences;
 struct OneStepOfPlannerResult;
 

@@ -809,7 +809,7 @@ void _checkClearGoalsWhenItsAlreadySatisfied()
 
 void _checkActionHasAFact()
 {
-  cp::ProblemUpdate effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
+  cp::ProblemModification effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
   effect.potentialFactsModifications = cp::FactModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::GoalStack::defaultPriority] = {_fact_d};
   const cp::Action action(cp::Condition::fromStr(_fact_e),
@@ -826,7 +826,7 @@ void _checkActionHasAFact()
 
 void _checkActionReplacefact()
 {
-  cp::ProblemUpdate effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
+  cp::ProblemModification effect(cp::FactModification::fromStr(_fact_a + " & !" + _fact_b));
   effect.potentialFactsModifications = cp::FactModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::GoalStack::defaultPriority] = {_fact_d};
   cp::Action action(cp::Condition::fromStr(_fact_e),
@@ -1589,7 +1589,7 @@ void _testQuiz()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::ProblemUpdate questionEffect(cp::FactModification::fromStr("add(numberOfQuestion, 1)"));
+  cp::ProblemModification questionEffect(cp::FactModification::fromStr("add(numberOfQuestion, 1)"));
   questionEffect.potentialFactsModifications = cp::FactModification::fromStr(_fact_askAllTheQuestions);
   const cp::Action actionQ1({}, questionEffect);
   const cp::Action actionSayQuestionBilan(cp::Condition::fromStr(_fact_askAllTheQuestions),
@@ -1782,9 +1782,9 @@ void _oneStepTowards()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<cp::ActionId, cp::Action> actions;
-  cp::ProblemUpdate greetWordModification;
-  greetWordModification.potentialFactsModifications = cp::FactModification::fromStr(_fact_greeted);
-  actions.emplace(_action_greet, cp::Action({}, greetWordModification));
+  cp::ProblemModification greetPbModification;
+  greetPbModification.potentialFactsModifications = cp::FactModification::fromStr(_fact_greeted);
+  actions.emplace(_action_greet, cp::Action({}, greetPbModification));
   actions.emplace(_action_goodBoy, cp::Action({}, cp::FactModification::fromStr(_fact_beHappy)));
   static const std::string actionb = "actionb";
   actions.emplace(actionb, cp::Action({}, cp::FactModification::fromStr(_fact_b)));
@@ -1811,9 +1811,9 @@ void _infrenceLinksFromManyInferencesSets()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
   std::map<cp::ActionId, cp::Action> actions;
-  cp::ProblemUpdate actionWordModification;
-  actionWordModification.potentialFactsModifications = cp::FactModification::fromStr(_fact_d);
-  actions.emplace(action1, cp::Action({}, actionWordModification));
+  cp::ProblemModification pbModification;
+  pbModification.potentialFactsModifications = cp::FactModification::fromStr(_fact_d);
+  actions.emplace(action1, cp::Action({}, pbModification));
   actions.emplace(action2, cp::Action({}, cp::FactModification::fromStr(_fact_c)));
   cp::Domain domain(std::move(actions));
   auto& setOfInstances = domain.getSetOfInferences();
@@ -1871,7 +1871,7 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
   const std::string action2 = "action2";
 
   std::map<cp::ActionId, cp::Action> actions;
-  cp::ProblemUpdate wm(cp::FactModification::fromStr(_fact_a));
+  cp::ProblemModification wm(cp::FactModification::fromStr(_fact_a));
   wm.goalsToAddInCurrentPriority.push_back(cp::Goal(_fact_b, 0));
   actions.emplace(action1, cp::Action({}, wm));
   actions.emplace(action2, cp::Action({}, cp::FactModification::fromStr(_fact_b)));

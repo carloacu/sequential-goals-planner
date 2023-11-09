@@ -437,7 +437,7 @@ void WorldState::_feedAccessibleFactsFromSetOfInferences(const std::set<Inferenc
 }
 
 void WorldState::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Condition>& pCondition,
-                                                const ProblemUpdate& pEffect,
+                                                const ProblemModification& pEffect,
                                                 const std::vector<std::string>& pParameters,
                                                 const Domain& pDomain,
                                                 FactsAlreadyChecked& pFactsAlreadychecked,

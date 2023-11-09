@@ -1,11 +1,11 @@
-#include <contextualplanner/types/problemupdate.hpp>
+#include <contextualplanner/types/problemmodification.hpp>
 #include <contextualplanner/util/util.hpp>
 
 
 namespace cp
 {
 
-bool ProblemUpdate::operator==(const ProblemUpdate& pOther) const
+bool ProblemModification::operator==(const ProblemModification& pOther) const
 {
   return areUPtrEqual(factsModifications, pOther.factsModifications) &&
       areUPtrEqual(potentialFactsModifications, pOther.potentialFactsModifications) &&
