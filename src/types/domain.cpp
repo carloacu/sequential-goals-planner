@@ -1,5 +1,6 @@
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/worldstate.hpp>
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -62,7 +63,7 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
     addAction(currAction.first, currAction.second);
 
   if (!pSetOfInferences.empty())
-    addSetOfInferences(setOfInferencesIdFromConstructor, pSetOfInferences);
+    _setOfInferences.emplace(setOfInferencesIdFromConstructor, pSetOfInferences);
 }
 
 
@@ -131,11 +132,19 @@ void Domain::removeAction(const ActionId& pActionId)
 
 
 
-void Domain::addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
-                                const SetOfInferences& pSetOfInferences)
+SetOfInferencesId Domain::addSetOfInferences(const SetOfInferences& pSetOfInferences,
+                                             const SetOfInferencesId& pSetOfInferencesId)
 {
-  _setOfInferences.emplace(pSetOfInferencesId, pSetOfInferences);
+  auto isIdOkForInsertion = [this](const std::string& pId)
+  {
+    return _setOfInferences.count(pId) == 0;
+  };
+
+  auto newId = incrementLastNumberUntilAConditionIsSatisfied(pSetOfInferencesId, isIdOkForInsertion);
+  _setOfInferences.emplace(newId, pSetOfInferences);
+  return newId;
 }
+
 
 void Domain::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
 {

@@ -59,13 +59,13 @@ struct CONTEXTUALPLANNER_API Domain
 
   /**
    * @brief Add a set of inferences.
-   * @param pSetOfInferencesId Identifier of the set of inferences to add.
    * @param pSetOfInferences Set of inferences to add.
+   * @param pSetOfInferencesId Identifier of the set of inferences to add.
    *
    * If the identifier is already used, the addition will not be done.
    */
-  void addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
-                          const SetOfInferences& pSetOfInferences);
+  SetOfInferencesId addSetOfInferences(const SetOfInferences& pSetOfInferences,
+                                       const SetOfInferencesId& pSetOfInferencesId = "soi");
 
   /**
    * @brief Remove a set of inferences.

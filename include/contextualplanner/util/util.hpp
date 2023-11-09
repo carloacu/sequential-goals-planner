@@ -2,6 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_UTIL_UTIL_HPP
 
 #include "api.hpp"
+#include <functional>
 #include <list>
 #include <map>
 #include <set>
@@ -32,6 +33,12 @@ CONTEXTUALPLANNER_API
 std::string minusIntOrStr(
     const std::string& pNb1Str,
     const std::string& pNb2Str);
+
+CONTEXTUALPLANNER_API
+std::string incrementLastNumberUntilAConditionIsSatisfied(
+    const std::string& pStr,
+    const std::function<bool(const std::string&)>& pCondition);
+
 
 template <typename T>
 T lexical_cast(const std::string& pStr)

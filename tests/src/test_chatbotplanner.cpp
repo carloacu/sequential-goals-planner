@@ -1391,7 +1391,7 @@ void _checkInferences()
                                cp::Inference(cp::Condition::fromStr(_fact_headTouched),
                                              cp::FactModification::fromStr("!" + _fact_headTouched),
                                              {{{9, {_fact_checkedIn}}}}));
-  domain.addSetOfInferences("soi", std::move(setOfInferences));
+  domain.addSetOfInferences(std::move(setOfInferences));
   assert_eq<std::string>("", _solveStr(problem, domain, now));
   auto& setOfInferencesMap = domain.getSetOfInferences();
   problem.worldState.addFact(_fact_headTouched, problem.goalStack, setOfInferencesMap, now);
@@ -1488,7 +1488,7 @@ void _checkInferenceInsideAPlan()
                                                              cp::FactModification::fromStr(_fact_b)));
     setOfInferences.addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b + "&" + _fact_d),
                                                              cp::FactModification::fromStr(_fact_c)));
-    domain.addSetOfInferences("soi", std::move(setOfInferences));
+    domain.addSetOfInferences(std::move(setOfInferences));
   }
 
   cp::Problem problem;
@@ -1499,7 +1499,7 @@ void _checkInferenceInsideAPlan()
     cp::SetOfInferences setOfInferences2;
     setOfInferences2.addInference("inference3", cp::Inference(cp::Condition::fromStr(_fact_b),
                                                               cp::FactModification::fromStr(_fact_c)));
-    domain.addSetOfInferences("soi2", std::move(setOfInferences2));
+    domain.addSetOfInferences(std::move(setOfInferences2));
   }
 
   assert_eq(action1 + _sep + action2, _solveStrConst(problem, domain)); // check with a copy of the problem
@@ -1556,7 +1556,6 @@ void _checkThatUnReachableCannotTriggeranInference()
 {
   const std::string action1 = "action1";
   const std::string inference1 = "inference1";
-  const std::string soi = "soi";
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_unreachable_u1)));
@@ -1576,7 +1575,7 @@ void _checkThatUnReachableCannotTriggeranInference()
   domain.removeSetOfInferences(cp::Domain::setOfInferencesIdFromConstructor);
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   _setGoalsForAPriority(problem, {_fact_a});
-  domain.addSetOfInferences(soi, setOfInferences);
+  domain.addSetOfInferences(setOfInferences);
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
   domain.clearInferences();
@@ -1815,7 +1814,7 @@ void _infrenceLinksFromManyInferencesSets()
     cp::SetOfInferences setOfInferences;
     setOfInferences.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
                                                              {}, {{lowPriority, {"oneStepTowards(" + _fact_d + ")"}}}));
-    domain.addSetOfInferences("soi", setOfInferences);
+    domain.addSetOfInferences(setOfInferences);
   }
   cp::Problem problem;
   problem.goalStack.setGoals({{lowPriority, {cp::Goal("oneStepTowards(" + _fact_d + ")", 0)}}}, problem.worldState, {});
@@ -1826,7 +1825,7 @@ void _infrenceLinksFromManyInferencesSets()
                                                                cp::FactModification::fromStr(_fact_b + "&" + _fact_punctual_p2)));
     setOfInferences2.addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b),
                                                                {}, {{cp::GoalStack::defaultPriority, {"oneStepTowards(" + _fact_c + ")"}}}));
-    domain.addSetOfInferences("soi2", setOfInferences2);
+    domain.addSetOfInferences(setOfInferences2);
   }
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -2418,7 +2417,7 @@ void _negatedFactValueInWorldState()
 int main(int argc, char *argv[])
 {
   test_arithmeticEvaluator();
-  test_unfoldMapWithSet();
+  test_util();
   planningDummyExample();
   planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();

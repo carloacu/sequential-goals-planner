@@ -93,4 +93,43 @@ std::string minusIntOrStr(
   return pNb1Str + "-" + pNb2Str;
 }
 
+
+std::string incrementLastNumberUntilAConditionIsSatisfied(
+    const std::string& pStr,
+    const std::function<bool(const std::string&)>& pCondition)
+{
+  if (pCondition(pStr))
+    return pStr;
+
+  std::string base = pStr;
+  std::size_t versionNb = 2;
+
+  auto posUnderscore = pStr.find('_');
+  if (posUnderscore != std::string::npos)
+  {
+    auto nbBeginOfPos = posUnderscore + 1;
+    if (pStr.size() > nbBeginOfPos)
+    {
+      try
+      {
+        versionNb = lexical_cast<std::size_t>(pStr.substr(nbBeginOfPos, pStr.size() - nbBeginOfPos));
+        base = pStr.substr(0, posUnderscore);
+      } catch (...) {}
+    }
+  }
+
+  for (std::size_t i = 0; i < 1000000; ++i)
+  {
+    std::stringstream currentSs;
+    currentSs << base << "_" << versionNb;
+    auto currentStr = currentSs.str();
+    if (pCondition(currentStr))
+      return currentStr;
+    ++versionNb;
+  }
+  throw std::runtime_error("incrementLastNumberUntilAConditionIsSatisfied(" + pStr + ") cannot find a condition statisfied");
+}
+
+
+
 }
