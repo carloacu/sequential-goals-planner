@@ -39,7 +39,7 @@ struct CONTEXTUALPLANNER_API WorldState
    */
   void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
                         const std::unique_ptr<FactModification>& pEffect,
-                        GoalStack &pGoalStack,
+                        GoalStack& pGoalStack,
                         const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
@@ -63,7 +63,7 @@ struct CONTEXTUALPLANNER_API WorldState
   */
   bool addFact(const Fact& pFact,
                GoalStack& pGoalStack,
-               const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences> > &pSetOfInferences,
+               const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -86,7 +86,7 @@ struct CONTEXTUALPLANNER_API WorldState
   * @param pNow Current time.
   */
   bool removeFact(const Fact& pFact,
-                  GoalStack &pGoalStack,
+                  GoalStack& pGoalStack,
                   const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
@@ -107,7 +107,7 @@ struct CONTEXTUALPLANNER_API WorldState
   * @param pNow Current time.
   */
   bool modifyFacts(const std::unique_ptr<FactModification>& pFactModification,
-                   GoalStack &pGoalStack,
+                   GoalStack& pGoalStack,
                    const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
@@ -168,7 +168,7 @@ struct CONTEXTUALPLANNER_API WorldState
    */
   bool isGoalSatisfied(const Goal& pGoal) const;
 
-  bool isFactPatternSatisfied(const FactOptional &pFactOptional,
+  bool isFactPatternSatisfied(const FactOptional& pFactOptional,
                               const std::set<Fact>& pPunctualFacts,
                               const std::set<Fact>& pRemovedFacts,
                               std::map<std::string, std::set<std::string>>* pParametersPtr,
@@ -300,7 +300,7 @@ private:
    */
   void _modifyFacts(WhatChanged& pWhatChanged,
                     const std::unique_ptr<FactModification>& pFactModification,
-                    GoalStack &pGoalStack,
+                    GoalStack& pGoalStack,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
@@ -326,7 +326,7 @@ private:
    * @param[in] pNow Current time.
    */
   void _notifyWhatChanged(WhatChanged& pWhatChanged,
-                          GoalStack &pGoalStack,
+                          GoalStack& pGoalStack,
                           const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 

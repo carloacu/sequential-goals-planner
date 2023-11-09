@@ -116,7 +116,7 @@ struct CONTEXTUALPLANNER_API GoalStack
    * @param pPriorityPriority of the goal to add.
    */
   void pushFrontGoal(const Goal& pGoal,
-                     const WorldState &pWorldState,
+                     const WorldState& pWorldState,
                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                      int pPriority = defaultPriority);
 
@@ -141,7 +141,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   void changeGoalPriority(const std::string& pGoalStr,
                           int pPriority,
                           bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal,
-                          const WorldState &pWorldState,
+                          const WorldState& pWorldState,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -176,7 +176,7 @@ struct CONTEXTUALPLANNER_API GoalStack
    * A goal is not satisfied if the condition is true (if it exist) and if the value of the goal is not true.
    * @return Map of priority to not satisfied goals.
    */
-  std::map<int, std::vector<Goal>> getNotSatisfiedGoals(const WorldState &pWorldState) const;
+  std::map<int, std::vector<Goal>> getNotSatisfiedGoals(const WorldState& pWorldState) const;
 
 
 private:
