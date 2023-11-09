@@ -21,7 +21,8 @@ struct CONTEXTUALPLANNER_API Domain
    * @brief Construct a domain.
    * @param[in] pActions Map of action identifiers to action.
    */
-  Domain(const std::map<ActionId, Action>& pActions);
+  Domain(const std::map<ActionId, Action>& pActions,
+         const SetOfInferences& pSetOfInferences = {});
 
   /**
    * @brief Add an action.
@@ -64,7 +65,7 @@ struct CONTEXTUALPLANNER_API Domain
    * If the identifier is already used, the addition will not be done.
    */
   void addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
-                          const std::shared_ptr<const SetOfInferences>& pSetOfInferences);
+                          const SetOfInferences& pSetOfInferences);
 
   /**
    * @brief Remove a set of inferences.
@@ -78,8 +79,10 @@ struct CONTEXTUALPLANNER_API Domain
   void clearInferences();
 
   /// Get the set of inferences.
-  const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& getSetOfInferences() const { return _setOfInferences; }
+  const std::map<SetOfInferencesId, SetOfInferences>& getSetOfInferences() const { return _setOfInferences; }
 
+
+  static const SetOfInferencesId setOfInferencesIdFromConstructor;
 
 private:
   /// Map of action identifiers to action.
@@ -91,7 +94,7 @@ private:
   /// Set of action identifiers of the actions without precondtion.
   std::set<ActionId> _actionsWithoutFactToAddInPrecondition;
   /// Map set of inferences identifiers to the set of inferences.
-  std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>> _setOfInferences;
+  std::map<SetOfInferencesId, SetOfInferences> _setOfInferences;
 };
 
 } // !cp

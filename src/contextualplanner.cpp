@@ -358,18 +358,18 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
       {
         for (auto& currSetOfInferences : setOfInferences)
         {
-          auto& inferences = currSetOfInferences.second->inferences();
+          auto& inferences = currSetOfInferences.second.inferences();
           auto& conditionToReachableInferences = !pFactOptional.isFactNegated ?
-                currSetOfInferences.second->reachableInferenceLinks().conditionToInferences :
-                currSetOfInferences.second->reachableInferenceLinks().notConditionToInferences;
+                currSetOfInferences.second.reachableInferenceLinks().conditionToInferences :
+                currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
           possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, conditionToReachableInferences, inferences,
                                                                                    pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
           if (possibleEffect == PossibleEffect::SATISFIED)
             break;
           auto& conditionToUnreachableInferences = !pFactOptional.isFactNegated ?
-                currSetOfInferences.second->unreachableInferenceLinks().conditionToInferences :
-                currSetOfInferences.second->unreachableInferenceLinks().notConditionToInferences;
+                currSetOfInferences.second.unreachableInferenceLinks().conditionToInferences :
+                currSetOfInferences.second.unreachableInferenceLinks().notConditionToInferences;
           possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, conditionToUnreachableInferences, inferences,
                                                                                    pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
@@ -500,7 +500,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
 
 
 void _notifyActionDone(Problem& pProblem,
-                       const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                       const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                        const OneStepOfPlannerResult& pOnStepOfPlannerResult,
                        const std::unique_ptr<FactModification>& pEffect,
                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,

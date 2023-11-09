@@ -40,7 +40,7 @@ struct CONTEXTUALPLANNER_API WorldState
   void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
                         const std::unique_ptr<FactModification>& pEffect,
                         GoalStack& pGoalStack,
-                        const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
@@ -63,7 +63,7 @@ struct CONTEXTUALPLANNER_API WorldState
   */
   bool addFact(const Fact& pFact,
                GoalStack& pGoalStack,
-               const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+               const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -74,7 +74,7 @@ struct CONTEXTUALPLANNER_API WorldState
   template<typename FACTS>
   bool addFacts(const FACTS& pFacts,
                 GoalStack& pGoalStack,
-                const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /// Check if the world has a fact.
@@ -87,7 +87,7 @@ struct CONTEXTUALPLANNER_API WorldState
   */
   bool removeFact(const Fact& pFact,
                   GoalStack& pGoalStack,
-                  const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                  const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -98,7 +98,7 @@ struct CONTEXTUALPLANNER_API WorldState
   template<typename FACTS>
   bool removeFacts(const FACTS& pFacts,
                    GoalStack& pGoalStack,
-                   const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -108,7 +108,7 @@ struct CONTEXTUALPLANNER_API WorldState
   */
   bool modifyFacts(const std::unique_ptr<FactModification>& pFactModification,
                    GoalStack& pGoalStack,
-                   const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -118,7 +118,7 @@ struct CONTEXTUALPLANNER_API WorldState
    */
   void setFacts(const std::set<Fact>& pFacts,
                 GoalStack& pGoalStack,
-                const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -244,7 +244,7 @@ private:
   void _feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
                                             const Domain& pDomain,
                                             FactsAlreadyChecked& pFactsAlreadychecked,
-                                            const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences);
+                                            const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences);
 
   /**
    * @brief Feed accessible facts from a set of inferences.
@@ -256,7 +256,7 @@ private:
                                                const std::map<InferenceId, Inference>& pAllInferences,
                                                const Domain& pDomain,
                                                FactsAlreadyChecked& pFactsAlreadychecked,
-                                               const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences);
+                                               const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences);
 
   /**
    * @brief Feed accessible facts from a condition and an effect.
@@ -270,7 +270,7 @@ private:
                                          const std::vector<std::string>& pParameters,
                                          const Domain& pDomain,
                                          FactsAlreadyChecked& pFactsAlreadychecked,
-                                         const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences);
+                                         const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences);
 
   /**
    * @brief Feed accessible facts from a fact.
@@ -280,7 +280,7 @@ private:
   void _feedAccessibleFactsFromFact(const Fact& pFact,
                                     const Domain& pDomain,
                                     FactsAlreadyChecked& pFactsAlreadychecked,
-                                    const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences);
+                                    const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences);
 
   /**
    * @brief Feed accessible facts from a negated fact.
@@ -290,7 +290,7 @@ private:
   void _feedAccessibleFactsFromNotFact(const Fact& pFact,
                                        const Domain& pDomain,
                                        FactsAlreadyChecked& pFactsAlreadychecked,
-                                       const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences);
+                                       const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences);
 
   /**
    * @brief Modify some facts in the world.
@@ -327,7 +327,7 @@ private:
    */
   void _notifyWhatChanged(WhatChanged& pWhatChanged,
                           GoalStack& pGoalStack,
-                          const std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>>& pSetOfInferences,
+                          const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   friend struct ConditionNode;

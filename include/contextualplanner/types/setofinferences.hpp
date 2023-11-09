@@ -40,8 +40,11 @@ struct CONTEXTUALPLANNER_API SetOfInferences
     std::map<std::string, std::set<InferenceId>> conditionToInferences{};
     /// Map of negated fact conditions to inference idntifiers.
     std::map<std::string, std::set<InferenceId>> notConditionToInferences{};
+
+    bool empty() const { return conditionToInferences.empty() && notConditionToInferences.empty(); }
   };
 
+  bool empty() const { return _inferences.empty() && _reachableInferenceLinks.empty() && _unreachableInferenceLinks.empty(); }
   /// All inferences of the problem.
   const std::map<InferenceId, Inference>& inferences() const { return _inferences; }
   /// Reachable inference links.

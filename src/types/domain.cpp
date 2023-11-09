@@ -3,6 +3,8 @@
 
 namespace cp
 {
+const SetOfInferencesId Domain::setOfInferencesIdFromConstructor = "soi_from_constructor";
+
 namespace
 {
 static const WorldState _emptyWorldState;
@@ -48,7 +50,8 @@ Domain::Domain()
 }
 
 
-Domain::Domain(const std::map<ActionId, Action>& pActions)
+Domain::Domain(const std::map<ActionId, Action>& pActions,
+               const SetOfInferences& pSetOfInferences)
   : _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
@@ -57,6 +60,9 @@ Domain::Domain(const std::map<ActionId, Action>& pActions)
 {
   for (const auto& currAction : pActions)
     addAction(currAction.first, currAction.second);
+
+  if (!pSetOfInferences.empty())
+    addSetOfInferences(setOfInferencesIdFromConstructor, pSetOfInferences);
 }
 
 
@@ -126,7 +132,7 @@ void Domain::removeAction(const ActionId& pActionId)
 
 
 void Domain::addSetOfInferences(const SetOfInferencesId& pSetOfInferencesId,
-                                const std::shared_ptr<const SetOfInferences>& pSetOfInferences)
+                                const SetOfInferences& pSetOfInferences)
 {
   _setOfInferences.emplace(pSetOfInferencesId, pSetOfInferences);
 }
