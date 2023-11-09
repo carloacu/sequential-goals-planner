@@ -1387,11 +1387,9 @@ void _checkInferences()
   assert_eq<std::string>("", _solveStr(problem, domain, now));
   // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
   cp::SetOfInferences setOfInferences;
-  setOfInferences.addInference("inference1",
-                               cp::Inference(cp::Condition::fromStr(_fact_headTouched),
-                                             cp::FactModification::fromStr("!" + _fact_headTouched),
-                                             {{{9, {_fact_checkedIn}}}}));
-  domain.addSetOfInferences(std::move(setOfInferences));
+  domain.addSetOfInferences(cp::Inference(cp::Condition::fromStr(_fact_headTouched),
+                                          cp::FactModification::fromStr("!" + _fact_headTouched),
+                                          {{{9, {_fact_checkedIn}}}}));
   assert_eq<std::string>("", _solveStr(problem, domain, now));
   auto& setOfInferencesMap = domain.getSetOfInferences();
   problem.worldState.addFact(_fact_headTouched, problem.goalStack, setOfInferencesMap, now);
@@ -1409,11 +1407,9 @@ void _checkInferencesWithImply()
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_checkedIn)));
 
   // Inference: if (_fact_headTouched) then add(_fact_userWantsToCheckedIn) and remove(_fact_headTouched)
-  cp::SetOfInferences setOfInferences;
-  setOfInferences.addInference("inference1",
-                               cp::Inference(cp::Condition::fromStr(_fact_headTouched),
-                                             cp::FactModification::fromStr(_fact_userWantsToCheckedIn + " & !" + _fact_headTouched)));
-  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  cp::Domain domain(std::move(actions),
+                    cp::Inference(cp::Condition::fromStr(_fact_headTouched),
+                                  cp::FactModification::fromStr(_fact_userWantsToCheckedIn + " & !" + _fact_headTouched)));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))")});
@@ -1433,10 +1429,9 @@ void _checkInferenceWithPunctualCondition()
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr("!" + _fact_userWantsToCheckedIn)));
 
   // Inference: if (_fact_punctual_headTouched) then add(_fact_userWantsToCheckedIn)
-  cp::SetOfInferences setOfInferences;
-  setOfInferences.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_headTouched),
-                                                           cp::FactModification::fromStr(_fact_userWantsToCheckedIn)));
-  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  cp::Domain domain(std::move(actions),
+                    cp::Inference(cp::Condition::fromStr(_fact_punctual_headTouched),
+                                  cp::FactModification::fromStr(_fact_userWantsToCheckedIn)));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
@@ -1456,10 +1451,10 @@ void _checkInferenceAtEndOfAPlan()
   actions.emplace(_action_checkIn, cp::Action({}, cp::FactModification::fromStr(_fact_punctual_checkedIn)));
 
   cp::SetOfInferences setOfInferences;
-  setOfInferences.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_headTouched),
-                                                           cp::FactModification::fromStr(_fact_userWantsToCheckedIn)));
-  setOfInferences.addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_punctual_checkedIn),
-                                                           cp::FactModification::fromStr("!" + _fact_userWantsToCheckedIn)));
+  setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_punctual_headTouched),
+                                             cp::FactModification::fromStr(_fact_userWantsToCheckedIn)));
+  setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_punctual_checkedIn),
+                                             cp::FactModification::fromStr("!" + _fact_userWantsToCheckedIn)));
   cp::Domain domain(std::move(actions), std::move(setOfInferences));
 
   cp::Problem problem;
@@ -1484,10 +1479,10 @@ void _checkInferenceInsideAPlan()
 
   {
     cp::SetOfInferences setOfInferences;
-    setOfInferences.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_a),
-                                                             cp::FactModification::fromStr(_fact_b)));
-    setOfInferences.addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b + "&" + _fact_d),
-                                                             cp::FactModification::fromStr(_fact_c)));
+    setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_a),
+                                               cp::FactModification::fromStr(_fact_b)));
+    setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_b + "&" + _fact_d),
+                                               cp::FactModification::fromStr(_fact_c)));
     domain.addSetOfInferences(std::move(setOfInferences));
   }
 
@@ -1495,12 +1490,8 @@ void _checkInferenceInsideAPlan()
   _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
   assert_eq<std::string>("", _solveStrConst(problem, domain));
 
-  {
-    cp::SetOfInferences setOfInferences2;
-    setOfInferences2.addInference("inference3", cp::Inference(cp::Condition::fromStr(_fact_b),
-                                                              cp::FactModification::fromStr(_fact_c)));
-    domain.addSetOfInferences(std::move(setOfInferences2));
-  }
+  domain.addSetOfInferences(cp::Inference(cp::Condition::fromStr(_fact_b),
+                                          cp::FactModification::fromStr(_fact_c)));
 
   assert_eq(action1 + _sep + action2, _solveStrConst(problem, domain)); // check with a copy of the problem
   assert_true(!problem.worldState.hasFact(_fact_a));
@@ -1536,11 +1527,11 @@ void _checkInferenceThatAddAGoal()
   actions.emplace(action5, cp::Action(cp::Condition::fromStr(_fact_b),
                                       cp::FactModification::fromStr(_fact_g)));
   cp::SetOfInferences setOfInferences;
-  setOfInferences.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_a),
-                                                           cp::FactModification::fromStr(_fact_b),
-                                                           {{cp::GoalStack::defaultPriority, {_fact_e}}}));
-  setOfInferences.addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b),
-                                                           cp::FactModification::fromStr(_fact_c)));
+  setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_a),
+                                             cp::FactModification::fromStr(_fact_b),
+                                             {{cp::GoalStack::defaultPriority, {_fact_e}}}));
+  setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_b),
+                                             cp::FactModification::fromStr(_fact_c)));
   cp::Domain domain(std::move(actions), std::move(setOfInferences));
 
   cp::Problem problem;
@@ -1560,10 +1551,9 @@ void _checkThatUnReachableCannotTriggeranInference()
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, cp::FactModification::fromStr(_fact_unreachable_u1)));
 
-  cp::SetOfInferences setOfInferences;
-  setOfInferences.addInference(inference1, cp::Inference(cp::Condition::fromStr(_fact_unreachable_u1),
-                                                         cp::FactModification::fromStr(_fact_a)));
-  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  cp::SetOfInferences setOfInferences(cp::Inference(cp::Condition::fromStr(_fact_unreachable_u1),
+                                                    cp::FactModification::fromStr(_fact_a)));
+  cp::Domain domain(std::move(actions), setOfInferences);
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_a});
@@ -1597,11 +1587,9 @@ void _testQuiz()
   actions.emplace(_action_askQuestion2, cp::Action({}, questionEffect));
   actions.emplace(_action_sayQuestionBilan, actionSayQuestionBilan);
 
-  cp::SetOfInferences setOfInferences;
-  const cp::Inference inferenceFinishToActActions(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
-                                                  cp::FactModification::fromStr(_fact_askAllTheQuestions));
-  setOfInferences.addInference(_action_finisehdToAskQuestions, inferenceFinishToActActions);
-  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  cp::Domain domain(std::move(actions),
+                    cp::Inference(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)"),
+                                  cp::FactModification::fromStr(_fact_askAllTheQuestions)));
 
   auto initFacts = cp::FactModification::fromStr("numberOfQuestion=0 & maxNumberOfQuestions=3");
 
@@ -1755,12 +1743,12 @@ void _checkLinkedInferences()
   cp::SetOfInferences setOfInferences;
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("persist(!" + _fact_userWantsToCheckedIn + ")")});
-  setOfInferences.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
-                                                           cp::FactModification::fromStr(_fact_a)));
-  setOfInferences.addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_punctual_p5),
-                                                           cp::FactModification::fromStr(_fact_punctual_p2 + "&" + _fact_punctual_p3)));
-  setOfInferences.addInference("inference3", cp::Inference(cp::Condition::fromStr(_fact_punctual_p4),
-                                                           cp::FactModification::fromStr(_fact_punctual_p5 + "&" + _fact_punctual_p1)));
+  setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
+                                             cp::FactModification::fromStr(_fact_a)));
+  setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_punctual_p5),
+                                             cp::FactModification::fromStr(_fact_punctual_p2 + "&" + _fact_punctual_p3)));
+  setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_punctual_p4),
+                                             cp::FactModification::fromStr(_fact_punctual_p5 + "&" + _fact_punctual_p1)));
 
   std::map<cp::SetOfInferencesId, cp::SetOfInferences> setOfInferencesMap = {{"soi", setOfInferences}};
   assert_false(problem.worldState.hasFact(_fact_a));
@@ -1810,21 +1798,17 @@ void _infrenceLinksFromManyInferencesSets()
 
   assert_true(cp::GoalStack::defaultPriority >= 1);
   auto lowPriority = cp::GoalStack::defaultPriority - 1;
-  {
-    cp::SetOfInferences setOfInferences;
-    setOfInferences.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
-                                                             {}, {{lowPriority, {"oneStepTowards(" + _fact_d + ")"}}}));
-    domain.addSetOfInferences(setOfInferences);
-  }
+  domain.addSetOfInferences(cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
+                                          {}, {{lowPriority, {"oneStepTowards(" + _fact_d + ")"}}}));
   cp::Problem problem;
   problem.goalStack.setGoals({{lowPriority, {cp::Goal("oneStepTowards(" + _fact_d + ")", 0)}}}, problem.worldState, {});
 
   {
     cp::SetOfInferences setOfInferences2;
-    setOfInferences2.addInference("inference1", cp::Inference(cp::Condition::fromStr(_fact_punctual_p1),
-                                                               cp::FactModification::fromStr(_fact_b + "&" + _fact_punctual_p2)));
-    setOfInferences2.addInference("inference2", cp::Inference(cp::Condition::fromStr(_fact_b),
-                                                               {}, {{cp::GoalStack::defaultPriority, {"oneStepTowards(" + _fact_c + ")"}}}));
+    setOfInferences2.addInference(cp::Inference(cp::Condition::fromStr(_fact_punctual_p1),
+                                                cp::FactModification::fromStr(_fact_b + "&" + _fact_punctual_p2)));
+    setOfInferences2.addInference(cp::Inference(cp::Condition::fromStr(_fact_b),
+                                                {}, {{cp::GoalStack::defaultPriority, {"oneStepTowards(" + _fact_c + ")"}}}));
     domain.addSetOfInferences(setOfInferences2);
   }
 
@@ -1999,7 +1983,7 @@ void _moveAndUngrabObject()
                           cp::FactModification::fromStr("locationOfObj(object)=targetLocation"));
   inference.parameters.emplace_back("targetLocation");
   inference.parameters.emplace_back("object");
-  setOfInferences.addInference("inference1", inference);
+  setOfInferences.addInference(inference);
   cp::Domain domain(std::move(actions), std::move(setOfInferences));
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -2054,7 +2038,7 @@ void _failToMoveAnUnknownObject()
                           cp::FactModification::fromStr("locationOfObj(object)=targetLocation"));
   inference.parameters.emplace_back("targetLocation");
   inference.parameters.emplace_back("object");
-  setOfInferences.addInference("inference1", inference);
+  setOfInferences.addInference(inference);
   cp::Domain domain(std::move(actions), std::move(setOfInferences));
 
   cp::Problem problem;
@@ -2104,7 +2088,7 @@ void _completeMovingObjectScenario()
                           cp::FactModification::fromStr("locationOfObject(object)=location"));
   inference.parameters.emplace_back("object");
   inference.parameters.emplace_back("location");
-  setOfInferences.addInference("inference1", inference);
+  setOfInferences.addInference(inference);
   cp::Domain domain(std::move(actions), std::move(setOfInferences));
 
   cp::Problem problem;
@@ -2147,10 +2131,10 @@ void _inferenceWithANegatedFactWithParameter()
   actions.emplace(actionUngrabBothHands, ungrabBothAction);
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference2(cp::Condition::fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"),
-                           cp::FactModification::fromStr("!grab(me, object)"));
-  inference2.parameters.emplace_back("object");
-  setOfInferences.addInference("inference1", inference2);
+  cp::Inference inference(cp::Condition::fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"),
+                          cp::FactModification::fromStr("!grab(me, object)"));
+  inference.parameters.emplace_back("object");
+  setOfInferences.addInference(inference);
 
   cp::Domain domain(std::move(actions), std::move(setOfInferences));
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -2221,7 +2205,7 @@ void _useTwoTimesAnInference()
   cp::Inference inference(cp::Condition::fromStr(_fact_a + " & " + _fact_b + "(object)"),
                           cp::FactModification::fromStr(_fact_c + "(object)"));
   inference.parameters.emplace_back("object");
-  setOfInferences.addInference("inference1", inference);
+  setOfInferences.addInference(inference);
 
   std::map<std::string, cp::Action> actions;
   cp::Domain domain(std::move(actions), std::move(setOfInferences));

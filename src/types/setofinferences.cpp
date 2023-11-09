@@ -1,15 +1,28 @@
 #include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
 
-
-void SetOfInferences::addInference(const InferenceId& pInferenceId,
-                                   const Inference& pInference)
+SetOfInferences::SetOfInferences(const Inference& pInference)
+ : _inferences(),
+   _reachableInferenceLinks(),
+   _unreachableInferenceLinks()
 {
-  if (_inferences.count(pInferenceId) > 0)
-    return;
-  _inferences.emplace(pInferenceId, pInference);
+  addInference(pInference);
+}
+
+
+InferenceId SetOfInferences::addInference(const Inference& pInference,
+                                          const InferenceId& pInferenceId)
+{
+  auto isIdOkForInsertion = [this](const std::string& pId)
+  {
+    return _inferences.count(pId) == 0;
+  };
+  auto newId = incrementLastNumberUntilAConditionIsSatisfied(pInferenceId, isIdOkForInsertion);
+
+  _inferences.emplace(newId, pInference);
   auto& links = pInference.isReachable ? _reachableInferenceLinks : _unreachableInferenceLinks;
 
   if (pInference.condition)
@@ -18,12 +31,13 @@ void SetOfInferences::addInference(const InferenceId& pInferenceId,
           [&](const FactOptional& pFactOptional)
     {
       if (pFactOptional.isFactNegated)
-        links.notConditionToInferences[pFactOptional.fact.name].insert(pInferenceId);
+        links.notConditionToInferences[pFactOptional.fact.name].insert(newId);
       else
-        links.conditionToInferences[pFactOptional.fact.name].insert(pInferenceId);
+        links.conditionToInferences[pFactOptional.fact.name].insert(newId);
     }
     );
   }
+  return newId;
 }
 
 

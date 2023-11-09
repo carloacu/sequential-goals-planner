@@ -15,13 +15,15 @@ struct CONTEXTUALPLANNER_API SetOfInferences
   /// Construct the set of inferences.
   SetOfInferences() = default;
 
+  SetOfInferences(const Inference& pInference);
+
   /**
    * @brief Add an inference to check when the facts or the goals change.
    * @param pInferenceId Identifier of the inference to add.
    * @param pInference Inference to add.
    */
-  void addInference(const InferenceId& pInferenceId,
-                    const Inference& pInference);
+  InferenceId addInference(const Inference& pInference,
+                           const InferenceId& pInferenceId = "inference");
 
   /**
    * @brief Remove an inference.
