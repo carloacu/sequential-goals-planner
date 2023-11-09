@@ -38,6 +38,15 @@ bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModificati
 
 }
 
+Domain::Domain()
+  : _actions(),
+    _preconditionToActions(),
+    _notPreconditionToActions(),
+    _actionsWithoutFactToAddInPrecondition(),
+    _setOfInferences()
+{
+}
+
 
 Domain::Domain(const std::map<ActionId, Action>& pActions)
   : _actions(),

@@ -14,6 +14,9 @@ namespace cp
 /// Set of all the actions that the bot can do with accessors to optimize the search of a action.
 struct CONTEXTUALPLANNER_API Domain
 {
+  /// Construct an empty domain.
+  Domain();
+
   /**
    * @brief Construct a domain.
    * @param[in] pActions Map of action identifiers to action.
@@ -88,7 +91,7 @@ private:
   /// Set of action identifiers of the actions without precondtion.
   std::set<ActionId> _actionsWithoutFactToAddInPrecondition;
   /// Map set of inferences identifiers to the set of inferences.
-  std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>> _setOfInferences{};
+  std::map<SetOfInferencesId, std::shared_ptr<const SetOfInferences>> _setOfInferences;
 };
 
 } // !cp
