@@ -20,9 +20,9 @@ void planningExampleWithAPreconditionSolve()
 
   // Initialize the domain with a set of actions
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::FactModification::fromStr(userIsGreeted)));
+  actions.emplace(sayHi, cp::Action({}, cp::WorldStateModification::fromStr(userIsGreeted)));
   actions.emplace(askHowICanHelp, cp::Action(cp::Condition::fromStr(userIsGreeted),
-                                             cp::FactModification::fromStr(proposedOurHelpToUser)));
+                                             cp::WorldStateModification::fromStr(proposedOurHelpToUser)));
   cp::Domain domain(actions);
 
   // Initialize the problem with the goal to satisfy

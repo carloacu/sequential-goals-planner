@@ -17,7 +17,7 @@ static const std::vector<std::string> _emptyParameters;
  * @param pOther The other SetOfFacts to check.
  * @return True if this object is included, false otherwise.
  */
-bool _isIncludedIn(const std::unique_ptr<cp::FactModification>& pFactsModifications,
+bool _isIncludedIn(const std::unique_ptr<cp::WorldStateModification>& pFactsModifications,
                    const std::unique_ptr<Condition>& pConditionPtr)
 {
   if (!pFactsModifications)

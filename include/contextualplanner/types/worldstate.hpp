@@ -38,7 +38,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param pGoalsToAddInCurrentPriority Goals to add in current priority.
    */
   void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
-                        const std::unique_ptr<FactModification>& pEffect,
+                        const std::unique_ptr<WorldStateModification>& pEffect,
                         GoalStack& pGoalStack,
                         const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -106,7 +106,7 @@ struct CONTEXTUALPLANNER_API WorldState
   * @param pSetOfFacts Facts to modify in the world.
   * @param pNow Current time.
   */
-  bool modifyFacts(const std::unique_ptr<FactModification>& pFactModification,
+  bool modifyFacts(const std::unique_ptr<WorldStateModification>& pWsModif,
                    GoalStack& pGoalStack,
                    const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -299,7 +299,7 @@ private:
    * @param[in] pNow Current time.
    */
   void _modifyFacts(WhatChanged& pWhatChanged,
-                    const std::unique_ptr<FactModification>& pFactModification,
+                    const std::unique_ptr<WorldStateModification>& pWsModif,
                     GoalStack& pGoalStack,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 

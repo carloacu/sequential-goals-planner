@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 #include "../util/api.hpp"
-#include <contextualplanner/types/factmodification.hpp>
+#include <contextualplanner/types/worldstatemodification.hpp>
 #include <contextualplanner/types/goal.hpp>
 
 
@@ -30,18 +30,18 @@ struct CONTEXTUALPLANNER_API ProblemModification
    * @brief Construct a world modification from the set of facts.
    * @param pSetOfFacts Set of facts to add in the world modification.
    */
-  ProblemModification(std::unique_ptr<cp::FactModification> pFactsModifications,
-                      std::unique_ptr<cp::FactModification> pPotentialFactsModifications = std::unique_ptr<cp::FactModification>())
-    : factsModifications(pFactsModifications ? std::move(pFactsModifications): std::unique_ptr<cp::FactModification>()),
-      potentialFactsModifications(pPotentialFactsModifications ? std::move(pPotentialFactsModifications) : std::unique_ptr<cp::FactModification>()),
+  ProblemModification(std::unique_ptr<cp::WorldStateModification> pFactsModifications,
+                      std::unique_ptr<cp::WorldStateModification> pPotentialFactsModifications = std::unique_ptr<cp::WorldStateModification>())
+    : factsModifications(pFactsModifications ? std::move(pFactsModifications): std::unique_ptr<cp::WorldStateModification>()),
+      potentialFactsModifications(pPotentialFactsModifications ? std::move(pPotentialFactsModifications) : std::unique_ptr<cp::WorldStateModification>()),
       goalsToAdd(),
       goalsToAddInCurrentPriority()
   {
   }
 
   ProblemModification(const ProblemModification& pOther)
-    : factsModifications(pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>()),
-      potentialFactsModifications(pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>()),
+    : factsModifications(pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
+      potentialFactsModifications(pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
       goalsToAdd(pOther.goalsToAdd),
       goalsToAddInCurrentPriority(pOther.goalsToAddInCurrentPriority)
   {
@@ -49,8 +49,8 @@ struct CONTEXTUALPLANNER_API ProblemModification
 
   void operator=(const ProblemModification& pOther)
   {
-    factsModifications = pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>();
-    potentialFactsModifications = pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::FactModification>();
+    factsModifications = pOther.factsModifications ? pOther.factsModifications->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
+    potentialFactsModifications = pOther.potentialFactsModifications ? pOther.potentialFactsModifications->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
     goalsToAdd = pOther.goalsToAdd;
     goalsToAddInCurrentPriority = pOther.goalsToAddInCurrentPriority;
   }
@@ -97,9 +97,9 @@ struct CONTEXTUALPLANNER_API ProblemModification
   std::string potentialFactsModifications_str() const { return potentialFactsModifications ? potentialFactsModifications->toStr() : ""; }
 
   /// Fact modifications declared and that will be applied to the world.
-  std::unique_ptr<cp::FactModification> factsModifications;
+  std::unique_ptr<cp::WorldStateModification> factsModifications;
   /// Fact modifications declared but that will not be applied to the world.
-  std::unique_ptr<cp::FactModification> potentialFactsModifications;
+  std::unique_ptr<cp::WorldStateModification> potentialFactsModifications;
   /// Goal priorities to goals to add in the world.
   std::map<int, std::vector<cp::Goal>> goalsToAdd;
   /// Goals to add in current priority in the world.
@@ -131,14 +131,14 @@ inline void ProblemModification::add(const ProblemModification& pOther)
   if (pOther.factsModifications)
   {
     if (factsModifications)
-      factsModifications = FactModification::merge(*factsModifications, *pOther.factsModifications);
+      factsModifications = WorldStateModification::merge(*factsModifications, *pOther.factsModifications);
     else
       factsModifications = pOther.factsModifications->clone(nullptr);
   }
   if (pOther.potentialFactsModifications)
   {
     if (potentialFactsModifications)
-      potentialFactsModifications = FactModification::merge(*potentialFactsModifications, *pOther.potentialFactsModifications);
+      potentialFactsModifications = WorldStateModification::merge(*potentialFactsModifications, *pOther.potentialFactsModifications);
     else
       potentialFactsModifications = pOther.potentialFactsModifications->clone(nullptr);
   }

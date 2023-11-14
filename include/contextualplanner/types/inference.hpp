@@ -7,7 +7,7 @@
 #include <vector>
 #include "../util/api.hpp"
 #include <contextualplanner/types/condition.hpp>
-#include <contextualplanner/types/factmodification.hpp>
+#include <contextualplanner/types/worldstatemodification.hpp>
 #include <contextualplanner/types/goal.hpp>
 
 namespace cp
@@ -18,14 +18,14 @@ struct CONTEXTUALPLANNER_API Inference
 {
   /// Construct an inference.
   Inference(std::unique_ptr<Condition> pCondition,
-            std::unique_ptr<FactModification> pFactsToModify,
+            std::unique_ptr<WorldStateModification> pFactsToModify,
             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
 
   /// Construct a copy.
   Inference(const Inference& pInference)
     : parameters(pInference.parameters),
       condition(pInference.condition ? pInference.condition->clone() : std::unique_ptr<Condition>()),
-      factsToModify(pInference.factsToModify ? pInference.factsToModify->clone(nullptr) : std::unique_ptr<FactModification>()),
+      factsToModify(pInference.factsToModify ? pInference.factsToModify->clone(nullptr) : std::unique_ptr<WorldStateModification>()),
       goalsToAdd(pInference.goalsToAdd),
       isReachable(pInference.isReachable)
   {
@@ -41,7 +41,7 @@ struct CONTEXTUALPLANNER_API Inference
    */
   const std::unique_ptr<Condition> condition;
   /// Facts to add or to remove if the condition is true.
-  const std::unique_ptr<FactModification> factsToModify;
+  const std::unique_ptr<WorldStateModification> factsToModify;
   /// Goals to add if the condition is true.
   const std::map<int, std::vector<cp::Goal>> goalsToAdd;
   /**

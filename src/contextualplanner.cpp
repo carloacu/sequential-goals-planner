@@ -502,7 +502,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
 void _notifyActionDone(Problem& pProblem,
                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                        const OneStepOfPlannerResult& pOnStepOfPlannerResult,
-                       const std::unique_ptr<FactModification>& pEffect,
+                       const std::unique_ptr<WorldStateModification>& pEffect,
                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                        const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                        const std::vector<Goal>* pGoalsToAddInCurrentPriority)

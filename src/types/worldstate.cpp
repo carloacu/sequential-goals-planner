@@ -63,7 +63,7 @@ WorldState::WorldState(const WorldState& pOther)
 
 
 void WorldState::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerResult,
-                                  const std::unique_ptr<FactModification>& pEffect,
+                                  const std::unique_ptr<WorldStateModification>& pEffect,
                                   GoalStack& pGoalStack,
                                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
@@ -254,29 +254,29 @@ void WorldState::clearAccessibleAndRemovableFacts()
   _removableFacts.clear();
 }
 
-bool WorldState::modifyFacts(const std::unique_ptr<FactModification>& pFactModification,
+bool WorldState::modifyFacts(const std::unique_ptr<WorldStateModification>& pWsModif,
                              GoalStack& pGoalStack,
                              const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
-  _modifyFacts(whatChanged, pFactModification, pGoalStack, pNow);
+  _modifyFacts(whatChanged, pWsModif, pGoalStack, pNow);
   _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
   return whatChanged.hasFactsModifications();
 }
 
 
 void WorldState::_modifyFacts(WhatChanged& pWhatChanged,
-                              const std::unique_ptr<FactModification>& pFactModification,
+                              const std::unique_ptr<WorldStateModification>& pWsModif,
                               GoalStack& pGoalStack,
                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  if (!pFactModification)
+  if (!pWsModif)
     return;
 
   std::list<Fact> factsToAdd;
   std::list<Fact> factsToRemove;
-  pFactModification->forAll(
+  pWsModif->forAll(
         [&](const FactOptional& pFactOptional)
   {
     if (pFactOptional.isFactNegated)
