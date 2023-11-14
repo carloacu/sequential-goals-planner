@@ -110,8 +110,8 @@ bool Fact::areEqualWithoutValueConsideration(const Fact& pFact) const
 
 
 bool Fact::areEqualExceptAnyValues(const Fact& pOther,
-                                   const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr,
-                                   const std::vector<std::string>* pThisFactArgumentsToConsiderAsAnyValuePtr) const
+                                   const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
+                                   const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr) const
 {
   if (name != pOther.name || arguments.size() != pOther.arguments.size())
     return false;
@@ -121,15 +121,15 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
   while (itParam != arguments.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
-        !(!itParam->fact.arguments.empty() && itParam->fact.value != "" && _isInside(itParam->fact.name, pThisFactArgumentsToConsiderAsAnyValuePtr)) &&
-        !(!itOtherParam->fact.arguments.empty() && itOtherParam->fact.value != "" && _isInside(itOtherParam->fact.name, pOtherFactArgumentsToConsiderAsAnyValuePtr)))
+        !(!itParam->fact.arguments.empty() && itParam->fact.value != "" && _isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr)) &&
+        !(!itOtherParam->fact.arguments.empty() && itOtherParam->fact.value != "" && _isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr)))
       return false;
     ++itParam;
     ++itOtherParam;
   }
 
   if (!(value == pOther.value || value == anyValue || pOther.value == anyValue ||
-        _isInside(value, pThisFactArgumentsToConsiderAsAnyValuePtr) || _isInside(pOther.value, pOtherFactArgumentsToConsiderAsAnyValuePtr)))
+        _isInside(value, pThisFactParametersToConsiderAsAnyValuePtr) || _isInside(pOther.value, pOtherFactParametersToConsiderAsAnyValuePtr)))
     return isValueNegated != pOther.isValueNegated;
 
   return isValueNegated == pOther.isValueNegated;

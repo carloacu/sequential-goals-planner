@@ -8,7 +8,7 @@ namespace cp
 {
 namespace
 {
-const std::string _equalsFunctionName = "equals";
+const char* _equalsFunctionName = "equals";
 
 
 bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
@@ -109,12 +109,6 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
 }
 
 
-Condition::Condition(ConditionType pType)
-  : type(pType)
-{
-}
-
-
 std::unique_ptr<Condition> Condition::fromStr(const std::string& pStr)
 {
   if (pStr.empty())
@@ -123,6 +117,35 @@ std::unique_ptr<Condition> Condition::fromStr(const std::string& pStr)
   auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
   return _expressionParsedToCondition(expressionParsed);
 }
+
+std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
+{
+  std::string leftOperandStr;
+  if (leftOperand)
+    leftOperandStr = leftOperand->toStr(pFactWriterPtr);
+  std::string rightOperandStr;
+  if (rightOperand)
+    rightOperandStr = rightOperand->toStr(pFactWriterPtr);
+
+  switch (nodeType)
+  {
+  case ConditionNodeType::AND:
+    return leftOperandStr + " & " + rightOperandStr;
+  case ConditionNodeType::EQUALITY:
+    return std::string(_equalsFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  case ConditionNodeType::PLUS:
+    return leftOperandStr + " + " + rightOperandStr;
+  case ConditionNodeType::MINUS:
+    return leftOperandStr + " - " + rightOperandStr;
+  }
+  return "";
+}
+
+Condition::Condition(ConditionType pType)
+  : type(pType)
+{
+}
+
 
 ConditionNode::ConditionNode(ConditionNodeType pNodeType,
                              std::unique_ptr<Condition> pLeftOperand,
@@ -143,14 +166,14 @@ bool ConditionNode::hasFact(const Fact& pFact) const
 
 bool ConditionNode::containsFactOpt(const FactOptional& pFactOptional,
                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
-                                    const std::vector<std::string>& pThisFactParameters) const
+                                    const std::vector<std::string>& pConditionParameters) const
 {
-  return (leftOperand && leftOperand->containsFactOpt(pFactOptional, pFactParameters, pThisFactParameters)) ||
-      (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pThisFactParameters));
+  return (leftOperand && leftOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters)) ||
+      (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters));
 }
 
 
-void ConditionNode::replaceFact(const cp::Fact& pOldFact,
+void ConditionNode::replaceFact(const Fact& pOldFact,
                                 const Fact& pNewFact)
 {
   if (leftOperand)
@@ -170,13 +193,13 @@ void ConditionNode::forAll(const std::function<void (const FactOptional&)>& pFac
 
 bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const WorldState& pWorldState,
-                               const std::map<std::string, std::set<std::string>>& pParameters) const
+                               const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
 {
   if (nodeType == ConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pWorldState, pParameters))
+    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pWorldState, pConditionParametersToPossibleArguments))
       return false;
-    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pWorldState, pParameters))
+    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pWorldState, pConditionParametersToPossibleArguments))
       return false;
   }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -190,7 +213,7 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
         auto factToCheck = leftFactPtr->factOptional.fact;
         factToCheck.value = pValue;
         return pFactCallback(FactOptional(factToCheck));
-      }, false, *rightOperand, pWorldState, &pParameters);
+      }, false, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
     }
   }
   return true;
@@ -206,12 +229,10 @@ bool ConditionNode::canBeTrue() const
 }
 
 
-
-
 bool ConditionNode::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,
                            const std::set<Fact>& pRemovedFacts,
-                           std::map<std::string, std::set<std::string>>* pParametersPtr,
+                           std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
                            bool* pCanBecomeTruePtr) const
 {
   if (nodeType == ConditionNodeType::AND)
@@ -220,21 +241,21 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
     if (pCanBecomeTruePtr == nullptr)
       pCanBecomeTruePtr = &canBecomeTrue;
 
-    if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+    if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
     {
       // Sometimes for negation of fact with parameter we need to check in the inverse order
       if (pCanBecomeTruePtr != nullptr && *pCanBecomeTruePtr)
       {
-        if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+        if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
           return false;
 
-        if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+        if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
           return false;
         return true;
       }
       return false;
     }
-    if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr))
+    if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
       return false;
   }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
@@ -252,11 +273,11 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
         if (factToCheck.isPunctual())
           res = pPunctualFacts.count(factToCheck) != 0 || res;
         else
-          res = factToCheck.isInOtherFacts(pWorldState._facts, true, &newParameters, pParametersPtr) || res;
-      }, *rightOperand, pWorldState, pParametersPtr);
+          res = factToCheck.isInOtherFacts(pWorldState._facts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
+      }, *rightOperand, pWorldState, pConditionParametersToPossibleArguments);
 
-      if (pParametersPtr != nullptr)
-        applyNewParams(*pParametersPtr, newParameters);
+      if (pConditionParametersToPossibleArguments != nullptr)
+        applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
       return res;
     }
   }
@@ -313,35 +334,12 @@ std::string ConditionNode::getValue(const WorldState& pWorldState) const
 }
 
 
-std::unique_ptr<Condition> ConditionNode::clone(const std::map<std::string, std::string>* pParametersPtr) const
+std::unique_ptr<Condition> ConditionNode::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
 {
   return std::make_unique<ConditionNode>(
         nodeType,
-        leftOperand ? leftOperand->clone(pParametersPtr) : std::unique_ptr<Condition>(),
-        rightOperand ? rightOperand->clone(pParametersPtr) : std::unique_ptr<Condition>());
-}
-
-std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
-{
-  std::string leftOperandStr;
-  if (leftOperand)
-    leftOperandStr = leftOperand->toStr(pFactWriterPtr);
-  std::string rightOperandStr;
-  if (rightOperand)
-    rightOperandStr = rightOperand->toStr(pFactWriterPtr);
-
-  switch (nodeType)
-  {
-  case ConditionNodeType::AND:
-    return leftOperandStr + " & " + rightOperandStr;
-  case ConditionNodeType::EQUALITY:
-    return _equalsFunctionName + "(" + leftOperandStr + ", " + rightOperandStr + ")";
-  case ConditionNodeType::PLUS:
-    return leftOperandStr + " + " + rightOperandStr;
-  case ConditionNodeType::MINUS:
-    return leftOperandStr + " - " + rightOperandStr;
-  }
-  return "";
+        leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>(),
+        rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>());
 }
 
 
@@ -352,21 +350,21 @@ ConditionFact::ConditionFact(const FactOptional& pFactOptional)
 {
 }
 
-bool ConditionFact::hasFact(const cp::Fact& pFact) const
+bool ConditionFact::hasFact(const Fact& pFact) const
 {
   return factOptional.fact == pFact;
 }
 
 bool ConditionFact::containsFactOpt(const FactOptional& pFactOptional,
                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
-                                    const std::vector<std::string>& pThisFactParameters) const
+                                    const std::vector<std::string>& pConditionParameters) const
 {
   if (pFactOptional.isFactNegated == factOptional.isFactNegated)
-    return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, &pThisFactParameters);
+    return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, &pConditionParameters);
   return false;
 }
 
-void ConditionFact::replaceFact(const cp::Fact& pOldFact,
+void ConditionFact::replaceFact(const Fact& pOldFact,
                                 const Fact& pNewFact)
 {
   if (factOptional.fact == pOldFact)
@@ -376,10 +374,10 @@ void ConditionFact::replaceFact(const cp::Fact& pOldFact,
 bool ConditionFact::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,
                            const std::set<Fact>& pRemovedFacts,
-                           std::map<std::string, std::set<std::string>>* pParametersPtr,
+                           std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
                            bool* pCanBecomeTruePtr) const
 {
-  return pWorldState.isFactPatternSatisfied(factOptional, pPunctualFacts, pRemovedFacts, pParametersPtr, pCanBecomeTruePtr);
+  return pWorldState.isFactPatternSatisfied(factOptional, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr);
 }
 
 bool ConditionFact::canBecomeTrue(const WorldState& pWorldState) const
@@ -410,16 +408,23 @@ std::string ConditionFact::getValue(const WorldState& pWorldState) const
   return pWorldState.getFactValue(factOptional.fact);
 }
 
-std::unique_ptr<Condition> ConditionFact::clone(const std::map<std::string, std::string>* pParametersPtr) const
+std::unique_ptr<Condition> ConditionFact::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
 {
   auto res = std::make_unique<ConditionFact>(factOptional);
-  if (pParametersPtr != nullptr)
-    res->factOptional.fact.replaceArguments(*pParametersPtr);
+  if (pConditionParametersToArgumentPtr != nullptr)
+    res->factOptional.fact.replaceArguments(*pConditionParametersToArgumentPtr);
   return res;
 }
 
 
 
+
+std::string ConditionNumber::toStr(const std::function<std::string (const Fact&)>*) const
+{
+  std::stringstream ss;
+  ss << nb;
+  return ss.str();
+}
 
 ConditionNumber::ConditionNumber(int pNb)
   : Condition(ConditionType::NUMBER),
@@ -439,16 +444,10 @@ std::string ConditionNumber::getValue(const WorldState& pWorldState) const
   return toStr(nullptr);
 }
 
-std::unique_ptr<Condition> ConditionNumber::clone(const std::map<std::string, std::string>*) const
+std::unique_ptr<Condition> ConditionNumber::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
 {
   return std::make_unique<ConditionNumber>(nb);
 }
 
-std::string ConditionNumber::toStr(const std::function<std::string (const Fact&)>*) const
-{
-  std::stringstream ss;
-  ss << nb;
-  return ss.str();
-}
 
 } // !cp

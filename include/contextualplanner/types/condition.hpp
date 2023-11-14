@@ -14,6 +14,7 @@ struct ConditionNode;
 struct ConditionFact;
 struct ConditionNumber;
 
+/// Different types of Condition children classes.
 enum class ConditionType
 {
   NODE,
@@ -21,47 +22,123 @@ enum class ConditionType
   NUMBER
 };
 
+
+/// Condition with a tree structure to check in a world.
 struct CONTEXTUALPLANNER_API Condition
 {
+  /**
+   * @brief Create a condition from a string.
+   * @param pStr String to convert as a condition.
+   * @return New condition created.
+   */
+  static std::unique_ptr<Condition> fromStr(const std::string& pStr);
+
+  /**
+   * @brief Convert the condition to a string.
+   * @param pFactWriterPtr Specific function to use to convert a fact to a string.
+   * @return Condition converted to a string;
+   */
+  virtual std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr) const = 0;
+
+  /// Constructor.
   Condition(ConditionType pType);
 
-  virtual bool hasFact(const cp::Fact& pFact) const = 0;
+  /// Check if this condition contains a fact or the negation of the fact.
+  virtual bool hasFact(const Fact& pFact) const = 0;
+
+  /**
+   * @brief Replace a fact or the negation of the fact by another fact.
+   * @param pOldFact Existing fact to replace.
+   * @param pNewFact New fact to set instead.
+   */
+  virtual void replaceFact(const Fact& pOldFact,
+                           const Fact& pNewFact) = 0;
+
+  /**
+   * @brief Check if this condition contains an optional fact with parameters compatibility.
+   * @param pFactOptional Optional fact to consider.
+   * @param pFactParameters Optional fact parameters to possible values. The possible value will not be considered here.
+   * @param pConditionParameters Parameters of the condition.
+   * @return True if this condition contains an optional fact with parameters compatibility.
+   */
   virtual bool containsFactOpt(const FactOptional& pFactOptional,
                                const std::map<std::string, std::set<std::string>>& pFactParameters,
-                               const std::vector<std::string>& pThisFactParameters) const = 0;
-  virtual void replaceFact(const cp::Fact& pOldFact,
-                           const Fact& pNewFact) = 0;
+                               const std::vector<std::string>& pConditionParameters) const = 0;
+
+  /**
+   * @brief Iterate over all the optional facts of the condition.
+   * @param pFactCallback Callback called for each optional fact of the condition.
+   */
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
+
+  /**
+   * @brief Iterate over all the optional facts with parameters resolution according to the wold sate of the condition until the callback returns false.
+   * @param pFactCallback Callback called for each optional fact until the callback returns false.
+   * @param pWorldState World state to consider.
+   * @param pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments.
+   * @return False if one callback returned false, true otherwise.
+   */
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                           const WorldState& pWorldState,
-                          const std::map<std::string, std::set<std::string>>& pParameters) const = 0;
+                          const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const = 0;
+
+  /// Check if this condition can be true for a world state.
   virtual bool canBeTrue() const = 0;
+
+  /**
+   * @brief Check if this condition is true for a specific world state.
+   * @param pWorldState World state to consider.
+   * @param pPunctualFacts Punctual facts raised right now.
+   * @param pRemovedFacts Facts present in the world state but that should be consider as not present.
+   * @param pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments <br/>
+   * refreshed if it is necessary to have the condition true.
+   * @param pCanBecomeTruePtr Boolean to know if this condition can become true according to the facts that can become true in the world state.
+   * @return True if this condition is satisfied.
+   */
   virtual bool isTrue(const WorldState& pWorldState,
                       const std::set<Fact>& pPunctualFacts = {},
                       const std::set<Fact>& pRemovedFacts = {},
-                      std::map<std::string, std::set<std::string>>* pParametersPtr = nullptr,
+                      std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments = nullptr,
                       bool* pCanBecomeTruePtr = nullptr) const = 0;
+
+  /**
+   * @brief Check if the condition can become true according to the facts that can become true in a world state.
+   * @param pWorldState World state to consider.
+   * @return True if this condition can be satisfied.
+   */
   virtual bool canBecomeTrue(const WorldState& pWorldState) const = 0;
+
+  /// Equality operators.
   virtual bool operator==(const Condition& pOther) const = 0;
   virtual bool operator!=(const Condition& pOther) const { return !operator==(pOther); }
 
+  /**
+   * @brief Convert this condition to a value.
+   * @param pWorldState World state use to extract value of the facts.
+   * @return The condition converted to a string value.
+   */
   virtual std::string getValue(const WorldState& pWorldState) const = 0;
 
-  virtual std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pParametersPtr = nullptr) const = 0;
+  /**
+   * @brief Create a copy of this condition with arguments filling (or not if pConditionParametersToArgumentPtr is nullptr).
+   * @param pConditionParametersToArgumentPtr Parameters to replace by their argument in new condition to create.
+   * @return A copy of this condition with arguments filling.
+   */
+  virtual std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr = nullptr) const = 0;
 
+  /// Cast to ConditionNode* is possible.
   virtual const ConditionNode* fcNodePtr() const = 0;
   virtual ConditionNode* fcNodePtr() = 0;
 
+  /// Cast to ConditionFact* is possible.
   virtual const ConditionFact* fcFactPtr() const = 0;
   virtual ConditionFact* fcFactPtr() = 0;
 
+  /// Cast to ConditionNumber* is possible.
   virtual const ConditionNumber* fcNbPtr() const = 0;
   virtual ConditionNumber* fcNbPtr() = 0;
 
-  static std::unique_ptr<Condition> fromStr(const std::string& pStr);
-
-  virtual std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr) const = 0;
-
+  /// Instance type of this condition.
   ConditionType type;
 };
 
@@ -75,34 +152,37 @@ enum class ConditionNodeType
 };
 
 
+/// Condition tree node that holds children.
 struct CONTEXTUALPLANNER_API ConditionNode : public Condition
 {
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+
   ConditionNode(ConditionNodeType pNodeType,
                 std::unique_ptr<Condition> pLeftOperand,
                 std::unique_ptr<Condition> pRightOperand);
 
   bool hasFact(const Fact& pFact) const override;
-  bool containsFactOpt(const FactOptional& pFactOptional,
-                       const std::map<std::string, std::set<std::string>>& pFactParameters,
-                       const std::vector<std::string>& pThisFactParameters) const override;
   void replaceFact(const Fact& pOldFact,
                    const Fact& pNewFact) override;
+  bool containsFactOpt(const FactOptional& pFactOptional,
+                       const std::map<std::string, std::set<std::string>>& pFactParameters,
+                       const std::vector<std::string>& pConditionParameters) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState& pWorldState,
-                  const std::map<std::string, std::set<std::string>>& pParameters) const override;
+                  const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const override;
   bool canBeTrue() const override;
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
-              std::map<std::string, std::set<std::string>>* pParametersPtr,
+              std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr) const override;
   bool canBecomeTrue(const WorldState& pWorldState) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::string getValue(const WorldState& pWorldState) const override;
 
-  std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
+  std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return this; }
   ConditionNode* fcNodePtr() override { return this; }
@@ -111,23 +191,24 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
   const ConditionNumber* fcNbPtr() const override { return nullptr; }
   ConditionNumber* fcNbPtr() override { return nullptr; }
 
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
-
   ConditionNodeType nodeType;
   std::unique_ptr<Condition> leftOperand;
   std::unique_ptr<Condition> rightOperand;
 };
 
+/// Condition tree node that holds only an optional fact.
 struct CONTEXTUALPLANNER_API ConditionFact : public Condition
 {
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override { return factOptional.toStr(pFactWriterPtr); }
+
   ConditionFact(const FactOptional& pFactOptional);
 
-  bool hasFact(const cp::Fact& pFact) const override;
+  bool hasFact(const Fact& pFact) const override;
+  void replaceFact(const Fact& pOldFact,
+                   const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
-                       const std::vector<std::string>& pThisFactParameters) const override;
-  void replaceFact(const cp::Fact& pOldFact,
-                   const Fact& pNewFact) override;
+                       const std::vector<std::string>& pConditionParameters) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override { pFactCallback(factOptional); }
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState&,
@@ -136,7 +217,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
-              std::map<std::string, std::set<std::string>>* pParametersPtr,
+              std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr) const override;
   bool canBecomeTrue(const WorldState& pWorldState) const override;
   bool operator==(const Condition& pOther) const override;
@@ -150,42 +231,40 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
   const ConditionNumber* fcNbPtr() const override { return nullptr; }
   ConditionNumber* fcNbPtr() override { return nullptr; }
 
-  std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
-
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override { return factOptional.toStr(pFactWriterPtr); }
+  std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const override;
 
   FactOptional factOptional;
 };
 
-
+/// Condition tree node that holds only a number.
 struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
 {
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+
   ConditionNumber(int pNb);
 
-  bool hasFact(const cp::Fact&) const override  { return false; }
+  bool hasFact(const Fact&) const override  { return false; }
+  void replaceFact(const Fact& pOldFact,
+                   const Fact& pNewFact) override {}
   bool containsFactOpt(const FactOptional&,
                        const std::map<std::string, std::set<std::string>>&,
                        const std::vector<std::string>&) const override { return false; }
-  void replaceFact(const cp::Fact& pOldFact,
-                   const Fact& pNewFact) override {}
   void forAll(const std::function<void (const FactOptional&)>&) const override {}
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
                   const WorldState&,
                   const std::map<std::string, std::set<std::string>>&) const override { return true; }
   bool canBeTrue() const override { return true; }
-  bool isTrue(const WorldState& pWorldState,
-              const std::set<Fact>& pPunctualFacts,
-              const std::set<Fact>& pRemovedFacts,
-              std::map<std::string, std::set<std::string>>* pParametersPtr,
-              bool* pCanBecomeTruePtr) const override { return true; }
+  bool isTrue(const WorldState&,
+              const std::set<Fact>&,
+              const std::set<Fact>&,
+              std::map<std::string, std::set<std::string>>*,
+              bool*) const override { return true; }
   bool canBecomeTrue(const WorldState& pWorldState) const override  { return true; }
   bool operator==(const Condition& pOther) const override;
 
   std::string getValue(const WorldState& pWorldState) const override;
 
-  std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pParametersPtr) const override;
-
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+  std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }

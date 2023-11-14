@@ -52,8 +52,8 @@ struct CONTEXTUALPLANNER_API Fact
    * @return True if the 2 facts match, false otherwise.
    */
   bool areEqualExceptAnyValues(const Fact& pOther,
-                               const std::map<std::string, std::set<std::string>>* pOtherFactArgumentsToConsiderAsAnyValuePtr = nullptr,
-                               const std::vector<std::string>* pThisFactArgumentsToConsiderAsAnyValuePtr = nullptr) const;
+                               const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
+                               const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
 
   /**
    * @brief Is it a punctual fact.<br/>

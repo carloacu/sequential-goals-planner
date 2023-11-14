@@ -17,8 +17,8 @@ struct CONTEXTUALPLANNER_API Action
   /**
    * @brief Construct an Action.
    * @param pPreconditions[in] Set of facts that should be present in the world to be able to do this action.
-   * @param pEffect[in] How the world will change when this action will finish.
-   * @param pPreferInContext[in] Set of facts that will increase the priority of this action if they are present in the world.
+   * @param pEffect[in] How the problem will change when this action will finish.
+   * @param pPreferInContext[in] Set of facts that will modify the priority of this action if they are present in the world.
    */
   Action(std::unique_ptr<Condition> pPrecondition,
          const ProblemModification& pEffect,
@@ -90,7 +90,7 @@ struct CONTEXTUALPLANNER_API Action
   std::unique_ptr<Condition> precondition;
   /// More this condition matches the world higher the priority of this action will be.
   std::unique_ptr<Condition> preferInContext;
-  /// Modification to apply to the world when this action will finish.
+  /// Modification to apply to the problem when this action will finish.
   ProblemModification effect;
   /// If it is important to not repeat this action.
   bool highImportanceOfNotRepeatingIt = false;
