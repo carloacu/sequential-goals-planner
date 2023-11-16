@@ -11,7 +11,7 @@ Inference::Inference(std::unique_ptr<Condition> pCondition,
     condition(pCondition ? std::move(pCondition) : std::unique_ptr<Condition>()),
     factsToModify(pFactsToModify ? std::move(pFactsToModify) : std::unique_ptr<WorldStateModification>()),
     goalsToAdd(pGoalsToAdd),
-    isReachable(condition && condition->canBeTrue() && (!pGoalsToAdd.empty() || (factsToModify && factsToModify->canModifySomethingInTheWorld())))
+    isReachable(condition && condition->canBeTrue() && (!pGoalsToAdd.empty() || (factsToModify && factsToModify->canModifySomethingInAWorld())))
 {
   assert(condition);
   assert(factsToModify || !goalsToAdd.empty());

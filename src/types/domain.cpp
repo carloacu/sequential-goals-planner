@@ -13,30 +13,32 @@ static const std::map<std::string, std::set<std::string>> _emptyParametersWithVa
 static const std::vector<std::string> _emptyParameters;
 
 /**
- * @brief Check if this object is totally included in another SetOfFacts object.
- * @param pOther The other SetOfFacts to check.
- * @return True if this object is included, false otherwise.
+ * @brief Check if a world state modification can do some modification if we assume the world already satisfies a condition.
+ * @param[in] pWorldStateModification World state modification to check.
+ * @param[in] pSatisfiedConditionPtr Condition that is already satisfied.
+ * @return True if the world state modification can do some modification in the world.
  */
-bool _isIncludedIn(const std::unique_ptr<cp::WorldStateModification>& pFactsModifications,
-                   const std::unique_ptr<Condition>& pConditionPtr)
+bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorldStateModification,
+                       const std::unique_ptr<Condition>& pSatisfiedConditionPtr)
 {
-  if (!pFactsModifications)
-    return true;
-  if (pFactsModifications->isDynamic())
+  if (!pWorldStateModification)
     return false;
+  if (!pWorldStateModification->isOnlyASetOfFacts())
+    return true;
 
-  if (pFactsModifications->forAllUntilTrue(
+  if (pWorldStateModification->forAllUntilTrue(
         [&](const FactOptional& pFactOptional)
   {
-        return !pConditionPtr || !pConditionPtr->containsFactOpt(pFactOptional,
-                                                                 _emptyParametersWithValues,
-                                                                 _emptyParameters);
+      return !pSatisfiedConditionPtr ||
+        !pSatisfiedConditionPtr->containsFactOpt(pFactOptional,
+                                                 _emptyParametersWithValues,
+                                                 _emptyParameters);
 }, _emptyWorldState))
   {
-    return false;
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 }
@@ -75,8 +77,8 @@ void Domain::addAction(const ActionId& pActionId,
     return;
   _actions.emplace(pActionId, pAction);
 
-  if (_isIncludedIn(pAction.effect.factsModifications, pAction.precondition) &&
-      _isIncludedIn(pAction.effect.potentialFactsModifications, pAction.precondition))
+  if (!_canWmDoSomething(pAction.effect.worldStateModification, pAction.precondition) &&
+      !_canWmDoSomething(pAction.effect.potentialWorldStateModification, pAction.precondition))
     return;
 
   bool hasAddedAFact = false;

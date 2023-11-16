@@ -6,7 +6,6 @@
 #include <memory>
 #include "../util/api.hpp"
 #include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/factsalreadychecked.hpp>
 #include <contextualplanner/types/goal.hpp>
 #include <contextualplanner/types/inference.hpp>
 #include <contextualplanner/types/worldstate.hpp>

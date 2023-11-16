@@ -214,7 +214,7 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
       // Check that the new fact pattern is not already satisfied
       if (actionIsAPossibleFollowUp)
       {
-        if (!pProblem.worldState.isFactPatternSatisfied(pFactOptional, {}, {}, &pParentParameters, nullptr))
+        if (!pProblem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &pParentParameters, nullptr))
           return PossibleEffect::SATISFIED;
         return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
       }
@@ -311,14 +311,14 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     return res;
   };
 
-  if (pEffectToCheck.factsModifications &&
-      pEffectToCheck.factsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
+  if (pEffectToCheck.worldStateModification &&
+      pEffectToCheck.worldStateModification->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
   {
     pSatisfyObjective = true;
     return true;
   }
-  if (pEffectToCheck.potentialFactsModifications &&
-      pEffectToCheck.potentialFactsModifications->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
+  if (pEffectToCheck.potentialWorldStateModification &&
+      pEffectToCheck.potentialWorldStateModification->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
   {
     pSatisfyObjective = true;
     return true;
@@ -525,7 +525,7 @@ void notifyActionDone(Problem& pProblem,
   if (itAction != pDomain.actions().end())
   {
     auto& setOfInferences = pDomain.getSetOfInferences();
-    _notifyActionDone(pProblem, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
+    _notifyActionDone(pProblem, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                       &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
   }
 }
@@ -558,7 +558,7 @@ std::list<ActionInstance> lookForResolutionPlan(
       if (pGlobalHistorical != nullptr)
         pGlobalHistorical->notifyActionDone(actionToDo);
       auto& setOfInferences = pDomain.getSetOfInferences();
-      _notifyActionDone(pProblem, setOfInferences, *onStepOfPlannerResult, itAction->second.effect.factsModifications, pNow,
+      _notifyActionDone(pProblem, setOfInferences, *onStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                         &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
     }
   }

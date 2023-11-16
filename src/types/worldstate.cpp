@@ -2,6 +2,7 @@
 #include <map>
 #include <sstream>
 #include <contextualplanner/types/domain.hpp>
+#include <contextualplanner/types/factsalreadychecked.hpp>
 #include <contextualplanner/types/goalstack.hpp>
 #include <contextualplanner/types/onestepofplannerresult.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
@@ -73,12 +74,12 @@ void WorldState::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlanner
   {
     if (pOnStepOfPlannerResult.actionInstance.parameters.empty())
     {
-      _modifyFacts(whatChanged, pEffect, pGoalStack, pNow);
+      _modify(whatChanged, pEffect, pGoalStack, pNow);
     }
     else
     {
       auto effect = pEffect->cloneParamSet(pOnStepOfPlannerResult.actionInstance.parameters);
-      _modifyFacts(whatChanged, effect, pGoalStack, pNow);
+      _modify(whatChanged, effect, pGoalStack, pNow);
     }
   }
 
@@ -103,7 +104,7 @@ bool WorldState::addFacts(const FACTS& pFacts,
   WhatChanged whatChanged;
   _addFacts(whatChanged, pFacts, pGoalStack, pNow);
   _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
-  return whatChanged.hasFactsModifications();
+  return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
 template bool WorldState::addFacts<std::set<Fact>>(const std::set<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
@@ -131,7 +132,7 @@ bool WorldState::removeFacts(const FACTS& pFacts,
   WhatChanged whatChanged;
   _removeFacts(whatChanged, pFacts, pGoalStack, pNow);
   _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
-  return whatChanged.hasFactsModifications();
+  return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
 
@@ -190,7 +191,7 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
     if (itAccessible != _accessibleFacts.end())
       _accessibleFacts.erase(itAccessible);
     else
-      clearAccessibleAndRemovableFacts();
+      _clearAccessibleAndRemovableFacts();
   }
   pGoalStack._refresh(*this, pNow);
 }
@@ -240,36 +241,16 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
       if (itFactName->second.empty())
         _factNamesToFacts.erase(itFactName);
     }
-    clearAccessibleAndRemovableFacts();
+    _clearAccessibleAndRemovableFacts();
   }
   pGoalStack._refresh(*this, pNow);
 }
 
 
-void WorldState::clearAccessibleAndRemovableFacts()
-{
-  _needToAddAccessibleFacts = true;
-  _accessibleFacts.clear();
-  _accessibleFactsWithAnyValues.clear();
-  _removableFacts.clear();
-}
-
-bool WorldState::modifyFacts(const std::unique_ptr<WorldStateModification>& pWsModif,
-                             GoalStack& pGoalStack,
-                             const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
-                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
-{
-  WhatChanged whatChanged;
-  _modifyFacts(whatChanged, pWsModif, pGoalStack, pNow);
-  _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
-  return whatChanged.hasFactsModifications();
-}
-
-
-void WorldState::_modifyFacts(WhatChanged& pWhatChanged,
-                              const std::unique_ptr<WorldStateModification>& pWsModif,
-                              GoalStack& pGoalStack,
-                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+void WorldState::_modify(WhatChanged& pWhatChanged,
+                         const std::unique_ptr<WorldStateModification>& pWsModif,
+                         GoalStack& pGoalStack,
+                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (!pWsModif)
     return;
@@ -289,6 +270,27 @@ void WorldState::_modifyFacts(WhatChanged& pWhatChanged,
   _removeFacts(pWhatChanged, factsToRemove, pGoalStack, pNow);
 }
 
+
+void WorldState::_clearAccessibleAndRemovableFacts()
+{
+  _needToAddAccessibleFacts = true;
+  _accessibleFacts.clear();
+  _accessibleFactsWithAnyValues.clear();
+  _removableFacts.clear();
+}
+
+bool WorldState::modify(const std::unique_ptr<WorldStateModification>& pWsModif,
+                             GoalStack& pGoalStack,
+                             const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  WhatChanged whatChanged;
+  _modify(whatChanged, pWsModif, pGoalStack, pNow);
+  _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
+  return whatChanged.hasFactsToModifyInTheWorldForSure();
+}
+
+
 void WorldState::setFacts(const std::set<Fact>& pFacts,
                           GoalStack& pGoalStack,
                           const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
@@ -300,7 +302,7 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
     _factNamesToFacts.clear();
     for (const auto& currFact : pFacts)
       _factNamesToFacts[currFact.name].insert(currFact);
-    clearAccessibleAndRemovableFacts();
+    _clearAccessibleAndRemovableFacts();
     WhatChanged whatChanged;
     pGoalStack._refresh(*this, pNow);
     _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
@@ -343,9 +345,10 @@ std::string WorldState::getFactValue(const cp::Fact& pFact) const
 }
 
 
-void WorldState::forAllInstruction(const std::string& pParameterName,
-                                const Fact& pFact,
-                                std::set<Fact>& pParameterValues) const
+void WorldState::extractPotentialArgumentsOfAFactParameter(
+    std::set<Fact>& pPotentialArgumentsOfTheParameter,
+    const Fact& pFact,
+    const std::string& pParameter) const
 {
   auto itFact = _factNamesToFacts.find(pFact.name);
   if (itFact != _factNamesToFacts.end())
@@ -358,7 +361,7 @@ void WorldState::forAllInstruction(const std::string& pParameterName,
         bool doesItMatch = true;
         for (auto i = 0; i < pFact.arguments.size(); ++i)
         {
-          if (pFact.arguments[i] == pParameterName)
+          if (pFact.arguments[i] == pParameter)
           {
             potentialNewValues.insert(currFact.arguments[i].fact);
             continue;
@@ -369,7 +372,12 @@ void WorldState::forAllInstruction(const std::string& pParameterName,
           break;
         }
         if (doesItMatch)
-          pParameterValues.insert(potentialNewValues.begin(), potentialNewValues.end());
+        {
+          if (pPotentialArgumentsOfTheParameter.empty())
+            pPotentialArgumentsOfTheParameter = std::move(potentialNewValues);
+          else
+            pPotentialArgumentsOfTheParameter.insert(potentialNewValues.begin(), potentialNewValues.end());
+        }
       }
     }
   }
@@ -380,7 +388,6 @@ void WorldState::fillAccessibleFacts(const Domain& pDomain)
 {
   if (!_needToAddAccessibleFacts)
     return;
-  auto& setOfInferences = pDomain.getSetOfInferences();
   FactsAlreadyChecked factsAlreadychecked;
   for (const auto& currFact : _facts)
   {
@@ -388,20 +395,18 @@ void WorldState::fillAccessibleFacts(const Domain& pDomain)
     {
       auto itPrecToActions = pDomain.preconditionToActions().find(currFact.name);
       if (itPrecToActions != pDomain.preconditionToActions().end())
-        _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain,
-                                             factsAlreadychecked, setOfInferences);
+        _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, factsAlreadychecked);
     }
   }
   _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain,
-                                       factsAlreadychecked, setOfInferences);
+                                       factsAlreadychecked);
   _needToAddAccessibleFacts = false;
 }
 
 
 void WorldState::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
                                                       const Domain& pDomain,
-                                                      FactsAlreadyChecked& pFactsAlreadychecked,
-                                                      const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences)
+                                                      FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto& actions = pDomain.actions();
   for (const auto& currAction : pActions)
@@ -411,7 +416,7 @@ void WorldState::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& 
     {
       auto& action = itAction->second;
       _feedAccessibleFactsFromDeduction(action.precondition, action.effect, action.parameters,
-                                        pDomain, pFactsAlreadychecked, pSetOfInferences);
+                                        pDomain, pFactsAlreadychecked);
     }
   }
 }
@@ -420,8 +425,7 @@ void WorldState::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& 
 void WorldState::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
                                                          const std::map<InferenceId, Inference>& pAllInferences,
                                                          const Domain& pDomain,
-                                                         FactsAlreadyChecked& pFactsAlreadychecked,
-                                                         const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences)
+                                                         FactsAlreadyChecked& pFactsAlreadychecked)
 {
   for (const auto& currInference : pInferences)
   {
@@ -431,17 +435,16 @@ void WorldState::_feedAccessibleFactsFromSetOfInferences(const std::set<Inferenc
       auto& inference = itInference->second;
       std::vector<std::string> parameters;
       _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify->clone(nullptr),
-                                        parameters, pDomain, pFactsAlreadychecked, pSetOfInferences);
+                                        parameters, pDomain, pFactsAlreadychecked);
     }
   }
 }
 
 void WorldState::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Condition>& pCondition,
-                                                const ProblemModification& pEffect,
-                                                const std::vector<std::string>& pParameters,
-                                                const Domain& pDomain,
-                                                FactsAlreadyChecked& pFactsAlreadychecked,
-                                                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences)
+                                                   const ProblemModification& pEffect,
+                                                   const std::vector<std::string>& pParameters,
+                                                   const Domain& pDomain,
+                                                   FactsAlreadyChecked& pFactsAlreadychecked)
 {
   if (!pCondition || pCondition->canBecomeTrue(*this))
   {
@@ -476,11 +479,11 @@ void WorldState::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Conditi
       _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
       _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
       for (const auto& currNewFact : accessibleFactsToAdd)
-        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked, pSetOfInferences);
+        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
       for (const auto& currNewFact : accessibleFactsToAddWithAnyValues)
-        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked, pSetOfInferences);
+        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
       for (const auto& currNewFact : removableFactsToAdd)
-        _feedAccessibleFactsFromNotFact(currNewFact, pDomain, pFactsAlreadychecked, pSetOfInferences);
+        _feedAccessibleFactsFromNotFact(currNewFact, pDomain, pFactsAlreadychecked);
     }
   }
 }
@@ -488,54 +491,54 @@ void WorldState::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Conditi
 
 void WorldState::_feedAccessibleFactsFromFact(const Fact& pFact,
                                               const Domain& pDomain,
-                                              FactsAlreadyChecked& pFactsAlreadychecked,
-                                              const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences)
+                                              FactsAlreadyChecked& pFactsAlreadychecked)
 {
   if (!pFactsAlreadychecked.factsToAdd.insert(pFact).second)
     return;
 
   auto itPrecToActions = pDomain.preconditionToActions().find(pFact.name);
   if (itPrecToActions != pDomain.preconditionToActions().end())
-    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked, pSetOfInferences);
+    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked);
 
-  for (auto& currSetOfInferences : pSetOfInferences)
+  const auto& setOfInferences = pDomain.getSetOfInferences();
+  for (const auto& currSetOfInferences : setOfInferences)
   {
     auto& allInferences = currSetOfInferences.second.inferences();
     auto& conditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().conditionToInferences;
     auto itCondToReachableInferences = conditionToReachableInferences.find(pFact.name);
     if (itCondToReachableInferences != conditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked, pSetOfInferences);
+      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
     auto& conditionToUnreachableInferences = currSetOfInferences.second.unreachableInferenceLinks().conditionToInferences;
     auto itCondToUnreachableInferences = conditionToUnreachableInferences.find(pFact.name);
     if (itCondToUnreachableInferences != conditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked, pSetOfInferences);
+      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 
 
 void WorldState::_feedAccessibleFactsFromNotFact(const Fact& pFact,
                                                  const Domain& pDomain,
-                                                 FactsAlreadyChecked& pFactsAlreadychecked,
-                                                 const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences)
+                                                 FactsAlreadyChecked& pFactsAlreadychecked)
 {
   if (!pFactsAlreadychecked.factsToRemove.insert(pFact).second)
     return;
 
   auto itPrecToActions = pDomain.notPreconditionToActions().find(pFact.name);
   if (itPrecToActions != pDomain.notPreconditionToActions().end())
-    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked, pSetOfInferences);
+    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked);
 
-  for (auto& currSetOfInferences : pSetOfInferences)
+  const auto& setOfInferences = pDomain.getSetOfInferences();
+  for (const auto& currSetOfInferences : setOfInferences)
   {
     auto& allInferences = currSetOfInferences.second.inferences();
     auto& notConditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
     auto itCondToReachableInferences = notConditionToReachableInferences.find(pFact.name);
     if (itCondToReachableInferences != notConditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked, pSetOfInferences);
+      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
     auto& notConditionToUnreachableInferences = currSetOfInferences.second.unreachableInferenceLinks().notConditionToInferences;
     auto itCondToUnreachableInferences = notConditionToUnreachableInferences.find(pFact.name);
     if (itCondToUnreachableInferences != notConditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked, pSetOfInferences);
+      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 
@@ -547,18 +550,12 @@ bool WorldState::isOptionalFactSatisfied(const FactOptional& pFactOptional) cons
 }
 
 
-bool WorldState::isGoalSatisfied(const Goal& pGoal) const
-{
-  auto* condFactOptPtr = pGoal.conditionFactOptionalPtr();
-  return (condFactOptPtr != nullptr && !isOptionalFactSatisfied(*condFactOptPtr)) ||
-      pGoal.objective().isTrue(*this);
-}
-
-bool WorldState::isFactPatternSatisfied(const FactOptional& pFactOptional,
-                                        const std::set<Fact>& pPunctualFacts,
-                                        const std::set<Fact>& pRemovedFacts,
-                                        std::map<std::string, std::set<std::string>>* pParametersPtr,
-                                        bool* pCanBecomeTruePtr) const
+bool WorldState::isOptionalFactSatisfiedInASpecificContext(
+    const FactOptional& pFactOptional,
+    const std::set<Fact>& pPunctualFacts,
+    const std::set<Fact>& pRemovedFacts,
+    std::map<std::string, std::set<std::string>>* pParametersToPossibleArgumentsPtr,
+    bool* pCanBecomeTruePtr) const
 {
   if (pFactOptional.fact.isPunctual() && !pFactOptional.isFactNegated)
     return pPunctualFacts.count(pFactOptional.fact) != 0;
@@ -566,21 +563,21 @@ bool WorldState::isFactPatternSatisfied(const FactOptional& pFactOptional,
   std::map<std::string, std::set<std::string>> newParameters;
   if (pFactOptional.isFactNegated)
   {
-    bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pParametersPtr);
+    bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pParametersToPossibleArgumentsPtr);
     if (res)
     {
-      if (pParametersPtr != nullptr)
-        applyNewParams(*pParametersPtr, newParameters);
+      if (pParametersToPossibleArgumentsPtr != nullptr)
+        applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
       return true;
     }
 
     auto itFacts = _factNamesToFacts.find(pFactOptional.fact.name);
     if (itFacts != _factNamesToFacts.end())
     {
-      if (pParametersPtr != nullptr)
+      if (pParametersToPossibleArgumentsPtr != nullptr)
       {
         std::list<std::map<std::string, std::string>> paramPossibilities;
-        unfoldMapWithSet(paramPossibilities, (*pParametersPtr));
+        unfoldMapWithSet(paramPossibilities, *pParametersToPossibleArgumentsPtr);
 
         for (auto& currParamPoss : paramPossibilities)
         {
@@ -596,7 +593,7 @@ bool WorldState::isFactPatternSatisfied(const FactOptional& pFactOptional,
                 {
                   std::map<std::string, std::set<std::string>> newParameters =
                   {{pFactOptional.fact.value, {currFact.value}}};
-                  applyNewParams(*pParametersPtr, newParameters);
+                  applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
                 }
                 return false;
               }
@@ -618,7 +615,7 @@ bool WorldState::isFactPatternSatisfied(const FactOptional& pFactOptional,
     }
 
     bool triedToMidfyParameters = false;
-    if (pFactOptional.fact.isInOtherFacts(_facts, true, nullptr, pParametersPtr, &triedToMidfyParameters))
+    if (pFactOptional.fact.isInOtherFacts(_facts, true, nullptr, pParametersToPossibleArgumentsPtr, &triedToMidfyParameters))
     {
       if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
         *pCanBecomeTruePtr = true;
@@ -627,12 +624,20 @@ bool WorldState::isFactPatternSatisfied(const FactOptional& pFactOptional,
     return true;
   }
 
-  auto res = pFactOptional.fact.isInOtherFacts(_facts, true, &newParameters, pParametersPtr);
-  if (pParametersPtr != nullptr)
-    applyNewParams(*pParametersPtr, newParameters);
+  auto res = pFactOptional.fact.isInOtherFacts(_facts, true, &newParameters, pParametersToPossibleArgumentsPtr);
+  if (pParametersToPossibleArgumentsPtr != nullptr)
+    applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
   return res;
 }
 
+
+
+bool WorldState::isGoalSatisfied(const Goal& pGoal) const
+{
+  auto* condFactOptPtr = pGoal.conditionFactOptionalPtr();
+  return (condFactOptPtr != nullptr && !isOptionalFactSatisfied(*condFactOptPtr)) ||
+      pGoal.objective().isTrue(*this);
+}
 
 
 
@@ -669,12 +674,12 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
               for (const auto& currParamsPoss : parametersToValuePoss)
               {
                 auto factsToModify = currInference.factsToModify->clone(&currParamsPoss);
-                _modifyFacts(pWhatChanged, factsToModify, pGoalStack, pNow);
+                _modify(pWhatChanged, factsToModify, pGoalStack, pNow);
               }
             }
             else
             {
-              _modifyFacts(pWhatChanged, currInference.factsToModify, pGoalStack, pNow);
+              _modify(pWhatChanged, currInference.factsToModify, pGoalStack, pNow);
             }
           }
           pGoalStack.addGoals(currInference.goalsToAdd, *this, pNow);
@@ -737,7 +742,7 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
       onFactsAdded(pWhatChanged.addedFacts);
     if (!pWhatChanged.removedFacts.empty())
       onFactsRemoved(pWhatChanged.removedFacts);
-    if (pWhatChanged.hasFactsModifications())
+    if (pWhatChanged.hasFactsToModifyInTheWorldForSure())
       onFactsChanged(_facts);
   }
 }

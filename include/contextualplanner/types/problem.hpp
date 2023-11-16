@@ -10,14 +10,25 @@
 namespace cp
 {
 
-
-/// Current world, goal for the world and historical of actions done.
+/**
+ * @brief The problem is the part of the planification that describes the current state.<br/>
+ * It is composed of 3 parts:<br/>
+ *  * Goals of the bot<br/>
+ *  * Current state of the world.<br/>
+ *  * History of actions done. It is useful because some actions should not be repeated.<br/>
+ *  <br/>
+ *  The other part of the planification is the domain. The domain describes how the word can be modified.<br/>
+ *  Contrary to the problem, the domain does not change a lot usually.
+ */
 struct CONTEXTUALPLANNER_API Problem
 {
+  /// Objectives that the bot wants to do.
   GoalStack goalStack;
+
+  /// Current state of the world.
   WorldState worldState;
 
-  /// Historical of actions done.
+  /// History of actions done.
   Historical historical;
 };
 

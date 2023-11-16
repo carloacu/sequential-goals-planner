@@ -7,8 +7,8 @@ namespace cp
 
 bool ProblemModification::operator==(const ProblemModification& pOther) const
 {
-  return areUPtrEqual(factsModifications, pOther.factsModifications) &&
-      areUPtrEqual(potentialFactsModifications, pOther.potentialFactsModifications) &&
+  return areUPtrEqual(worldStateModification, pOther.worldStateModification) &&
+      areUPtrEqual(potentialWorldStateModification, pOther.potentialWorldStateModification) &&
       goalsToAdd == pOther.goalsToAdd &&
       goalsToAddInCurrentPriority == pOther.goalsToAddInCurrentPriority;
 }

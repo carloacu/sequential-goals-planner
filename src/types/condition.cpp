@@ -141,16 +141,11 @@ std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>*
   return "";
 }
 
-Condition::Condition(ConditionType pType)
-  : type(pType)
-{
-}
-
 
 ConditionNode::ConditionNode(ConditionNodeType pNodeType,
                              std::unique_ptr<Condition> pLeftOperand,
                              std::unique_ptr<Condition> pRightOperand)
-  : Condition(ConditionType::NODE),
+  : Condition(),
     nodeType(pNodeType),
     leftOperand(std::move(pLeftOperand)),
     rightOperand(std::move(pRightOperand))
@@ -345,7 +340,7 @@ std::unique_ptr<Condition> ConditionNode::clone(const std::map<std::string, std:
 
 
 ConditionFact::ConditionFact(const FactOptional& pFactOptional)
-  : Condition(ConditionType::FACT),
+  : Condition(),
     factOptional(pFactOptional)
 {
 }
@@ -377,7 +372,7 @@ bool ConditionFact::isTrue(const WorldState& pWorldState,
                            std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
                            bool* pCanBecomeTruePtr) const
 {
-  return pWorldState.isFactPatternSatisfied(factOptional, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr);
+  return pWorldState.isOptionalFactSatisfiedInASpecificContext(factOptional, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr);
 }
 
 bool ConditionFact::canBecomeTrue(const WorldState& pWorldState) const
@@ -427,7 +422,7 @@ std::string ConditionNumber::toStr(const std::function<std::string (const Fact&)
 }
 
 ConditionNumber::ConditionNumber(int pNb)
-  : Condition(ConditionType::NUMBER),
+  : Condition(),
     nb(pNb)
 {
 }

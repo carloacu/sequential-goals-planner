@@ -24,6 +24,9 @@ struct CONTEXTUALPLANNER_API Domain
   Domain(const std::map<ActionId, Action>& pActions,
          const SetOfInferences& pSetOfInferences = {});
 
+  // Actions
+  // -------
+
   /**
    * @brief Add an action.
    * @param pActionId[in] Identifier of the action to add.

@@ -193,7 +193,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
     /*
     auto itAction = pDomain.actions().find(res->actionInstance.actionId);
     if (itAction != pDomain.actions().end())
-      pProblem.notifyActionDone(*res, itAction->second.effect.factsModifications, pNow,
+      pProblem.notifyActionDone(*res, itAction->second.effect.worldStateModification, pNow,
                                 &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
                                 */
     return *res;
@@ -782,7 +782,7 @@ void _checkNotInAPrecondition()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted});
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
-  problem.worldState.modifyFacts(cp::WorldStateModification::fromStr(_fact_checkedIn), problem.goalStack,
+  problem.worldState.modify(cp::WorldStateModification::fromStr(_fact_checkedIn), problem.goalStack,
                                  _emptySetOfInferences, now);
   assert_eq(std::string(), _lookForAnActionToDoConstStr(problem, domain));
 }
@@ -804,7 +804,7 @@ void _checkClearGoalsWhenItsAlreadySatisfied()
 void _checkActionHasAFact()
 {
   cp::ProblemModification effect(cp::WorldStateModification::fromStr(_fact_a + " & !" + _fact_b));
-  effect.potentialFactsModifications = cp::WorldStateModification::fromStr(_fact_c);
+  effect.potentialWorldStateModification = cp::WorldStateModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::GoalStack::defaultPriority] = {_fact_d};
   const cp::Action action(cp::Condition::fromStr(_fact_e),
                           effect,
@@ -821,7 +821,7 @@ void _checkActionHasAFact()
 void _checkActionReplacefact()
 {
   cp::ProblemModification effect(cp::WorldStateModification::fromStr(_fact_a + " & !" + _fact_b));
-  effect.potentialFactsModifications = cp::WorldStateModification::fromStr(_fact_c);
+  effect.potentialWorldStateModification = cp::WorldStateModification::fromStr(_fact_c);
   effect.goalsToAdd[cp::GoalStack::defaultPriority] = {_fact_d};
   cp::Action action(cp::Condition::fromStr(_fact_e),
                     effect,
@@ -852,7 +852,7 @@ void _testIncrementOfVariables()
 
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   cp::Problem problem;
-  problem.worldState.modifyFacts(cp::WorldStateModification::fromStr(initFactsStr), problem.goalStack, _emptySetOfInferences, now);
+  problem.worldState.modify(cp::WorldStateModification::fromStr(initFactsStr), problem.goalStack, _emptySetOfInferences, now);
   assert(cp::Condition::fromStr(initFactsStr)->isTrue(problem.worldState));
   assert(!actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -870,9 +870,9 @@ void _testIncrementOfVariables()
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
-    problem.worldState.modifyFacts(itAction->second.effect.factsModifications, problem.goalStack,
+    problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
                                    _emptySetOfInferences, now);
-    problem.worldState.modifyFacts(cp::WorldStateModification::fromStr("!" + _fact_askAllTheQuestions), problem.goalStack,
+    problem.worldState.modify(cp::WorldStateModification::fromStr("!" + _fact_askAllTheQuestions), problem.goalStack,
                                    _emptySetOfInferences, now);
   }
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
@@ -883,12 +883,12 @@ void _testIncrementOfVariables()
   problem.historical.notifyActionDone(actionToDo);
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
-  problem.worldState.modifyFacts(itAction->second.effect.factsModifications, problem.goalStack,
+  problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
                                  _emptySetOfInferences, now);
   assert_eq<std::string>(_action_sayQuestionBilan, _lookForAnActionToDoStr(problem, domain));
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(actionSayQuestionBilan.precondition->isTrue(problem.worldState));
-  problem.worldState.modifyFacts(actionSayQuestionBilan.effect.factsModifications, problem.goalStack,
+  problem.worldState.modify(actionSayQuestionBilan.effect.worldStateModification, problem.goalStack,
                                  _emptySetOfInferences, now);
 }
 
@@ -1579,7 +1579,7 @@ void _testQuiz()
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
   cp::ProblemModification questionEffect(cp::WorldStateModification::fromStr("add(numberOfQuestion, 1)"));
-  questionEffect.potentialFactsModifications = cp::WorldStateModification::fromStr(_fact_askAllTheQuestions);
+  questionEffect.potentialWorldStateModification = cp::WorldStateModification::fromStr(_fact_askAllTheQuestions);
   const cp::Action actionQ1({}, questionEffect);
   const cp::Action actionSayQuestionBilan(cp::Condition::fromStr(_fact_askAllTheQuestions),
                                           cp::WorldStateModification::fromStr(_fact_finishToAskQuestions));
@@ -1596,7 +1596,7 @@ void _testQuiz()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_finishToAskQuestions});
   auto& setOfInferencesMap = domain.getSetOfInferences();
-  problem.worldState.modifyFacts(initFacts, problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.modify(initFacts, problem.goalStack, setOfInferencesMap, now);
   for (std::size_t i = 0; i < 3; ++i)
   {
     auto actionToDo = _lookForAnActionToDoStr(problem, domain);
@@ -1607,7 +1607,7 @@ void _testQuiz()
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
-    problem.worldState.modifyFacts(itAction->second.effect.factsModifications, problem.goalStack, setOfInferencesMap, now);
+    problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack, setOfInferencesMap, now);
   }
 
   auto actionToDo = _lookForAnActionToDoStr(problem, domain);
@@ -1725,7 +1725,7 @@ void _testGoalUnderPersist()
     /*
     auto itAction = domain.actions().find(action2);
     if (itAction != domain.actions().end())
-      problem.notifyActionDone(plannerResult, itAction->second.effect.factsModifications, now,
+      problem.notifyActionDone(plannerResult, itAction->second.effect.worldStateModification, now,
                                 &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
                                 */
 
@@ -1763,7 +1763,7 @@ void _oneStepTowards()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<cp::ActionId, cp::Action> actions;
   cp::ProblemModification greetPbModification;
-  greetPbModification.potentialFactsModifications = cp::WorldStateModification::fromStr(_fact_greeted);
+  greetPbModification.potentialWorldStateModification = cp::WorldStateModification::fromStr(_fact_greeted);
   actions.emplace(_action_greet, cp::Action({}, greetPbModification));
   actions.emplace(_action_goodBoy, cp::Action({}, cp::WorldStateModification::fromStr(_fact_beHappy)));
   static const std::string actionb = "actionb";
@@ -1791,7 +1791,7 @@ void _infrenceLinksFromManyInferencesSets()
   const std::string action2 = "action2";
   std::map<cp::ActionId, cp::Action> actions;
   cp::ProblemModification pbModification;
-  pbModification.potentialFactsModifications = cp::WorldStateModification::fromStr(_fact_d);
+  pbModification.potentialWorldStateModification = cp::WorldStateModification::fromStr(_fact_d);
   actions.emplace(action1, cp::Action({}, pbModification));
   actions.emplace(action2, cp::Action({}, cp::WorldStateModification::fromStr(_fact_c)));
   cp::Domain domain(std::move(actions));

@@ -14,51 +14,41 @@ struct ConditionNode;
 struct ConditionFact;
 struct ConditionNumber;
 
-/// Different types of Condition children classes.
-enum class ConditionType
-{
-  NODE,
-  FACT,
-  NUMBER
-};
-
 
 /// Condition with a tree structure to check in a world.
 struct CONTEXTUALPLANNER_API Condition
 {
   /**
    * @brief Create a condition from a string.
-   * @param pStr String to convert as a condition.
+   * @param[in] pStr String to convert as a condition.
    * @return New condition created.
    */
   static std::unique_ptr<Condition> fromStr(const std::string& pStr);
 
   /**
    * @brief Convert the condition to a string.
-   * @param pFactWriterPtr Specific function to use to convert a fact to a string.
-   * @return Condition converted to a string;
+   * @param[in] pFactWriterPtr Specific function to use to convert a fact to a string.
+   * @return Condition converted to a string.
    */
   virtual std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr) const = 0;
 
-  /// Constructor.
-  Condition(ConditionType pType);
 
   /// Check if this condition contains a fact or the negation of the fact.
   virtual bool hasFact(const Fact& pFact) const = 0;
 
   /**
    * @brief Replace a fact or the negation of the fact by another fact.
-   * @param pOldFact Existing fact to replace.
-   * @param pNewFact New fact to set instead.
+   * @param[in] pOldFact Existing fact to replace.
+   * @param[in] pNewFact New fact to set instead.
    */
   virtual void replaceFact(const Fact& pOldFact,
                            const Fact& pNewFact) = 0;
 
   /**
    * @brief Check if this condition contains an optional fact with parameters compatibility.
-   * @param pFactOptional Optional fact to consider.
-   * @param pFactParameters Optional fact parameters to possible values. The possible value will not be considered here.
-   * @param pConditionParameters Parameters of the condition.
+   * @param[in] pFactOptional Optional fact to consider.
+   * @param[in] pFactParameters Optional fact parameters to possible values. The possible value will not be considered here.
+   * @param[in] pConditionParameters Parameters of the condition.
    * @return True if this condition contains an optional fact with parameters compatibility.
    */
   virtual bool containsFactOpt(const FactOptional& pFactOptional,
@@ -66,16 +56,16 @@ struct CONTEXTUALPLANNER_API Condition
                                const std::vector<std::string>& pConditionParameters) const = 0;
 
   /**
-   * @brief Iterate over all the optional facts of the condition.
-   * @param pFactCallback Callback called for each optional fact of the condition.
+   * @brief Iterate over all the optional facts.
+   * @param[in] pFactCallback Callback called for each optional fact of the condition.
    */
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
 
   /**
-   * @brief Iterate over all the optional facts with parameters resolution according to the wold sate of the condition until the callback returns false.
-   * @param pFactCallback Callback called for each optional fact until the callback returns false.
-   * @param pWorldState World state to consider.
-   * @param pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments.
+   * @brief Iterate over all the optional facts with fact value resolution according to the world sate until the callback returns false.
+   * @param[in] pFactCallback Callback called for each optional fact until the callback returns false.
+   * @param[in] pWorldState World state to consider.
+   * @param[in] pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments.
    * @return False if one callback returned false, true otherwise.
    */
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
@@ -87,12 +77,12 @@ struct CONTEXTUALPLANNER_API Condition
 
   /**
    * @brief Check if this condition is true for a specific world state.
-   * @param pWorldState World state to consider.
-   * @param pPunctualFacts Punctual facts raised right now.
-   * @param pRemovedFacts Facts present in the world state but that should be consider as not present.
-   * @param pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments <br/>
+   * @param[in] pWorldState World state to consider.
+   * @param[in] pPunctualFacts Punctual facts raised right now.
+   * @param[in] pRemovedFacts Facts present in the world state but that should be consider as not present.
+   * @param[in, out] pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments <br/>
    * refreshed if it is necessary to have the condition true.
-   * @param pCanBecomeTruePtr Boolean to know if this condition can become true according to the facts that can become true in the world state.
+   * @param[out] pCanBecomeTruePtr If this condition can become true according to the facts that can become true in the world state.
    * @return True if this condition is satisfied.
    */
   virtual bool isTrue(const WorldState& pWorldState,
@@ -103,7 +93,7 @@ struct CONTEXTUALPLANNER_API Condition
 
   /**
    * @brief Check if the condition can become true according to the facts that can become true in a world state.
-   * @param pWorldState World state to consider.
+   * @param[in] pWorldState World state to consider.
    * @return True if this condition can be satisfied.
    */
   virtual bool canBecomeTrue(const WorldState& pWorldState) const = 0;
@@ -114,14 +104,14 @@ struct CONTEXTUALPLANNER_API Condition
 
   /**
    * @brief Convert this condition to a value.
-   * @param pWorldState World state use to extract value of the facts.
+   * @param[in] pWorldState World state use to extract value of the facts.
    * @return The condition converted to a string value.
    */
   virtual std::string getValue(const WorldState& pWorldState) const = 0;
 
   /**
    * @brief Create a copy of this condition with arguments filling (or not if pConditionParametersToArgumentPtr is nullptr).
-   * @param pConditionParametersToArgumentPtr Parameters to replace by their argument in new condition to create.
+   * @param pConditionParametersToArgumentPtr Parameters to replace by their argument in the new condition to create.
    * @return A copy of this condition with arguments filling.
    */
   virtual std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr = nullptr) const = 0;
@@ -137,9 +127,6 @@ struct CONTEXTUALPLANNER_API Condition
   /// Cast to ConditionNumber* is possible.
   virtual const ConditionNumber* fcNbPtr() const = 0;
   virtual ConditionNumber* fcNbPtr() = 0;
-
-  /// Instance type of this condition.
-  ConditionType type;
 };
 
 

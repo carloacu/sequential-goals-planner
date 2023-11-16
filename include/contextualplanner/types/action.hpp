@@ -16,9 +16,10 @@ struct CONTEXTUALPLANNER_API Action
 {
   /**
    * @brief Construct an Action.
-   * @param pPreconditions[in] Set of facts that should be present in the world to be able to do this action.
+   * @param pPreconditions[in] Condition that should be satisfied in the world to be able to do this action.
    * @param pEffect[in] How the problem will change when this action will finish.
-   * @param pPreferInContext[in] Set of facts that will modify the priority of this action if they are present in the world.
+   * @param pPreferInContext[in] More this condition contains parts that are satisfied in the world more the priority of this action will be.<br/>
+   * More this condition contains parts that are not satisfied in the world less the priority of this action will be.
    */
   Action(std::unique_ptr<Condition> pPrecondition,
          const ProblemModification& pEffect,
