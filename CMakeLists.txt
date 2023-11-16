@@ -10,7 +10,6 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/domain.hpp
     include/contextualplanner/types/fact.hpp
     include/contextualplanner/types/factoptional.hpp
-    include/contextualplanner/types/factsalreadychecked.hpp
     include/contextualplanner/types/goal.hpp
     include/contextualplanner/types/goalstack.hpp
     include/contextualplanner/types/historical.hpp
@@ -42,6 +41,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/expressionParsed.cpp
     src/types/fact.cpp
     src/types/factoptional.cpp
+    src/types/factsalreadychecked.hpp
     src/types/goal.cpp
     src/types/goalstack.cpp
     src/types/historical.cpp
@@ -50,6 +50,8 @@ set(CHATBOTPLANNER_SRCS
     src/types/problemmodification.cpp
     src/types/setofinferences.cpp
     src/types/worldstate.cpp
+    src/types/worldstatecache.hpp
+    src/types/worldstatecache.cpp
     src/types/worldstatemodification.cpp
     src/util/trackers/goalsremovedtracker.cpp
     src/util/arithmeticevaluator.cpp

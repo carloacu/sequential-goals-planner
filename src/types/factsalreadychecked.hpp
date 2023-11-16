@@ -2,7 +2,6 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_FACTSALREADYCHECKED_HPP
 
 #include <set>
-#include "../util/api.hpp"
 #include <contextualplanner/types/fact.hpp>
 
 namespace cp

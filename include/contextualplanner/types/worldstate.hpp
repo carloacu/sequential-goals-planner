@@ -13,17 +13,14 @@
 
 namespace cp
 {
-struct Condition;
 struct Domain;
 struct Goal;
 struct GoalStack;
 struct Inference;
 struct OneStepOfPlannerResult;
-struct ProblemModification;
 struct SetOfInferences;
 struct WorldStateModification;
-struct FactsAlreadyChecked;
-
+struct WorldStateCache;
 
 /**
  * @brief Current state of the world.<br/>
@@ -33,9 +30,13 @@ struct FactsAlreadyChecked;
 struct CONTEXTUALPLANNER_API WorldState
 {
   /// Construct a world state.
-  WorldState() = default;
+  WorldState();
   /// Construct a world state from another world state.
   WorldState(const WorldState& pOther);
+
+  ~WorldState();
+
+  void operator=(const WorldState& pOther);
 
   /**
    * @brief Notify that an action has been done.
@@ -54,13 +55,13 @@ struct CONTEXTUALPLANNER_API WorldState
 
 
   /// Be notified when facts changed.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsChanged{};
+  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsChanged;
   /// Be notified when punctual facts changed.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onPunctualFacts{};
+  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onPunctualFacts;
   /// Be notified when facts are added.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsAdded{};
+  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsAdded;
   /// Be notified when facts are removed.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsRemoved{};
+  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsRemoved;
 
   /**
    * @brief Add a fact.
@@ -208,26 +209,17 @@ struct CONTEXTUALPLANNER_API WorldState
   bool isGoalSatisfied(const Goal& pGoal) const;
 
 
-  /**
-   * @brief For internal usage only!! It fills the accessible facts according to a domain.
-   * @param[in] pDomain Domain containing the actions.
-   */
-  void fillAccessibleFacts(const Domain& pDomain);
+  void refreshCacheIfNeeded(const Domain& pDomain);
+
+  const std::set<Fact>& removableFacts() const;
 
 
 private:
   /// Facts of the world state.
-  std::set<Fact> _facts{};
+  std::set<Fact> _facts;
   /// Fact names to facts in the world state.
-  std::map<std::string, std::set<Fact>> _factNamesToFacts{};
-  /// Facts that can be reached with the set of actions of the domain.
-  std::set<Fact> _accessibleFacts{};
-  /// Facts with values that can be reached with the set of actions of the domain.
-  std::set<Fact> _accessibleFactsWithAnyValues{};
-  /// Facts that can be removed with the set of actions of the domain.
-  std::set<Fact> _removableFacts{};
-  /// Know if we need to add accessible facts.
-  bool _needToAddAccessibleFacts = true;
+  std::map<std::string, std::set<Fact>> _factNamesToFacts;
+  std::unique_ptr<WorldStateCache> _cache;
 
   /// Stored what changed.
   struct WhatChanged
@@ -244,9 +236,6 @@ private:
     /// Has some facts to add or to remove.
     bool hasFactsToModifyInTheWorldForSure() const { return !addedFacts.empty() || !removedFacts.empty(); }
   };
-
-  /// Clear accessible and removable facts.
-  void _clearAccessibleAndRemovableFacts();
 
 
   /**
@@ -321,65 +310,8 @@ private:
                           const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /**
-   * @brief Feed accessible facts from a set of actions.
-   * @param[in] pActions Set of actions.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
-   * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
-   */
-  void _feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
-                                            const Domain& pDomain,
-                                            FactsAlreadyChecked& pFactsAlreadychecked);
-
-  /**
-   * @brief Feed accessible facts from a set of inferences.
-   * @param[in] pInferences Set of inferences.
-   * @param[in] pAllInferences All inferences to consider.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
-   * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
-   */
-  void _feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
-                                               const std::map<InferenceId, Inference>& pAllInferences,
-                                               const Domain& pDomain,
-                                               FactsAlreadyChecked& pFactsAlreadychecked);
-
-  /**
-   * @brief Feed accessible facts from a condition and an effect.
-   * @param[in] pCondition condition to check.
-   * @param[in] pEffect Effect to apply.
-   * @param[in] pParameters Parameters of the condition and effect.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
-   * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
-   */
-  void _feedAccessibleFactsFromDeduction(const std::unique_ptr<Condition>& pCondition,
-                                         const ProblemModification& pEffect,
-                                         const std::vector<std::string>& pParameters,
-                                         const Domain& pDomain,
-                                         FactsAlreadyChecked& pFactsAlreadychecked);
-
-  /**
-   * @brief Feed accessible facts from a fact.
-   * @param[in] pFact A fact.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
-   * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
-   */
-  void _feedAccessibleFactsFromFact(const Fact& pFact,
-                                    const Domain& pDomain,
-                                    FactsAlreadyChecked& pFactsAlreadychecked);
-
-  /**
-   * @brief Feed accessible facts from a negated fact.
-   * @param[in] pFact A negated fact.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
-   * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
-   */
-  void _feedAccessibleFactsFromNotFact(const Fact& pFact,
-                                       const Domain& pDomain,
-                                       FactsAlreadyChecked& pFactsAlreadychecked);
-
 
   friend struct ConditionNode;
-  friend struct ConditionFact;
 };
 
 } // !cp

@@ -265,10 +265,11 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
       {
         auto factToCheck = leftFactPtr->factOptional.fact;
         factToCheck.value = pValue;
+        const auto& facts = pWorldState.facts();
         if (factToCheck.isPunctual())
           res = pPunctualFacts.count(factToCheck) != 0 || res;
         else
-          res = factToCheck.isInOtherFacts(pWorldState._facts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
+          res = factToCheck.isInOtherFacts(facts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
       }, *rightOperand, pWorldState, pConditionParametersToPossibleArguments);
 
       if (pConditionParametersToPossibleArguments != nullptr)
@@ -379,11 +380,11 @@ bool ConditionFact::canBecomeTrue(const WorldState& pWorldState) const
 {
   if (factOptional.isFactNegated)
   {
-    if (pWorldState._removableFacts.count(factOptional.fact) == 0)
+    if (pWorldState.removableFacts().count(factOptional.fact) == 0)
     {
       if (factOptional.fact.value == Fact::anyValue)
         return true;
-      if (pWorldState._facts.count(factOptional.fact) > 0)
+      if (pWorldState.facts().count(factOptional.fact) > 0)
         return false;
     }
     return true;

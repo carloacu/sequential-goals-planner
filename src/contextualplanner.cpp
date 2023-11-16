@@ -1,8 +1,9 @@
 #include <contextualplanner/contextualplanner.hpp>
 #include <algorithm>
-#include <contextualplanner/types/factsalreadychecked.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/util.hpp>
+#include "types/factsalreadychecked.hpp"
+
 
 namespace cp
 {
@@ -461,7 +462,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     const Historical* pGlobalHistorical)
 {
-  pProblem.worldState.fillAccessibleFacts(pDomain);
+  pProblem.worldState.refreshCacheIfNeeded(pDomain);
 
   std::unique_ptr<OneStepOfPlannerResult> res;
   auto tryToFindAnActionTowardGoal = [&](Goal& pGoal, int pPriority){
