@@ -1,6 +1,7 @@
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/util.hpp>
+#include "../util/uuid.hpp"
 
 namespace cp
 {
@@ -44,7 +45,8 @@ bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorld
 }
 
 Domain::Domain()
-  : _actions(),
+  : _uuid(),
+    _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
     _actionsWithoutFactToAddInPrecondition(),
@@ -55,7 +57,8 @@ Domain::Domain()
 
 Domain::Domain(const std::map<ActionId, Action>& pActions,
                const SetOfInferences& pSetOfInferences)
-  : _actions(),
+  : _uuid(generateUuid()),
+    _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
     _actionsWithoutFactToAddInPrecondition(),
@@ -80,6 +83,8 @@ void Domain::addAction(const ActionId& pActionId,
   if (!_canWmDoSomething(pAction.effect.worldStateModification, pAction.precondition) &&
       !_canWmDoSomething(pAction.effect.potentialWorldStateModification, pAction.precondition))
     return;
+
+  _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
 
   bool hasAddedAFact = false;
   if (pAction.precondition)
@@ -111,6 +116,7 @@ void Domain::removeAction(const ActionId& pActionId)
   if (it == _actions.end())
     return;
   auto& actionThatWillBeRemoved = it->second;
+  _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
 
   if (actionThatWillBeRemoved.precondition)
   {
@@ -137,6 +143,7 @@ void Domain::removeAction(const ActionId& pActionId)
 SetOfInferencesId Domain::addSetOfInferences(const SetOfInferences& pSetOfInferences,
                                              const SetOfInferencesId& pSetOfInferencesId)
 {
+  _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
   auto isIdOkForInsertion = [this](const std::string& pId)
   {
     return _setOfInferences.count(pId) == 0;
@@ -152,12 +159,19 @@ void Domain::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
 {
   auto it = _setOfInferences.find(pSetOfInferencesId);
   if (it != _setOfInferences.end())
+  {
+    _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
     _setOfInferences.erase(it);
+  }
 }
 
 void Domain::clearInferences()
 {
-  _setOfInferences.clear();
+  if (!_setOfInferences.empty())
+  {
+    _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
+    _setOfInferences.clear();
+  }
 }
 
 

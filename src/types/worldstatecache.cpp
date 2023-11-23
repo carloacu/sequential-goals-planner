@@ -6,6 +6,10 @@
 
 namespace cp
 {
+namespace
+{
+std::string _noUuid = "noUuid";
+}
 
 
 WorldStateCache::WorldStateCache(const WorldState& pWorldState)
@@ -13,7 +17,7 @@ WorldStateCache::WorldStateCache(const WorldState& pWorldState)
     _accessibleFacts(),
     _accessibleFactsWithAnyValues(),
     _removableFacts(),
-    _needToAddAccessibleFacts(true)
+    _uuidOfLastDomainUsed(_noUuid)
 {
 }
 
@@ -24,7 +28,7 @@ WorldStateCache::WorldStateCache(const WorldState& pWorldState,
     _accessibleFacts(pOther._accessibleFacts),
     _accessibleFactsWithAnyValues(pOther._accessibleFactsWithAnyValues),
     _removableFacts(pOther._removableFacts),
-    _needToAddAccessibleFacts(pOther._needToAddAccessibleFacts)
+    _uuidOfLastDomainUsed(pOther._uuidOfLastDomainUsed)
 {
 }
 
@@ -34,7 +38,7 @@ void WorldStateCache::clear()
   _accessibleFacts.clear();
   _accessibleFactsWithAnyValues.clear();
   _removableFacts.clear();
-  _needToAddAccessibleFacts = true;
+  _uuidOfLastDomainUsed = _noUuid;
 }
 
 
@@ -58,8 +62,10 @@ void WorldStateCache::notifyAboutANewFact(const Fact& pNewFact)
 void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
                                       const std::set<Fact>& pFacts)
 {
-  if (!_needToAddAccessibleFacts)
+  if (_uuidOfLastDomainUsed == pDomain.getUuid())
     return;
+  _uuidOfLastDomainUsed = pDomain.getUuid();
+
   FactsAlreadyChecked factsAlreadychecked;
   for (const auto& currFact : pFacts)
   {
@@ -72,7 +78,6 @@ void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
   }
   _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain,
                                        factsAlreadychecked);
-  _needToAddAccessibleFacts = false;
 }
 
 

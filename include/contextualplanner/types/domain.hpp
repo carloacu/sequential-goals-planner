@@ -79,15 +79,20 @@ struct CONTEXTUALPLANNER_API Domain
    */
   void removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId);
 
+  /// Remove all the inferences.
   void clearInferences();
 
   /// Get the set of inferences.
   const std::map<SetOfInferencesId, SetOfInferences>& getSetOfInferences() const { return _setOfInferences; }
 
+  /// Get the universal unique identifier regenerated each time this object is modified.
+  const std::string& getUuid() const { return _uuid; }
 
   static const SetOfInferencesId setOfInferencesIdFromConstructor;
 
 private:
+  /// Universal unique identifier regenerated each time this object is modified.
+  std::string _uuid;
   /// Map of action identifiers to action.
   std::map<ActionId, Action> _actions;
   /// Map of facts in precondition to action identifiers.

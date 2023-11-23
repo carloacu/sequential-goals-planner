@@ -2358,8 +2358,8 @@ void _negatedFactValueInWorldState()
 
   actions.emplace(action1, cp::Action(cp::Condition::fromStr(_fact_a + "!=b"),
                                       cp::WorldStateModification::fromStr(_fact_b)));
-
   cp::Domain domain(std::move(actions));
+
   {
     cp::Problem problem;
     _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
@@ -2392,6 +2392,28 @@ void _negatedFactValueInWorldState()
   }
 }
 
+
+void _problemThatUseADomainThatChangedSinceLastUsage()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  actions.emplace(action1, cp::Action(cp::Condition::fromStr(_fact_a),
+                                      cp::WorldStateModification::fromStr(_fact_b)));
+  cp::Domain domain(std::move(actions));
+
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+  assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain, now)); // set problem cache about domain
+
+  domain.addAction(action2, cp::Action({},
+                                       cp::WorldStateModification::fromStr(_fact_a)));
+
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+  assert_eq<std::string>(action2, _lookForAnActionToDoStr(problem, domain, now)); // as domain as changed since last time the problem cache should be regenerated
+}
 
 }
 
@@ -2489,6 +2511,7 @@ int main(int argc, char *argv[])
   _checkPreferHighImportanceOfNotRepeatingIt();
   _actionWithFactWithANegatedFact();
   _negatedFactValueInWorldState();
+  _problemThatUseADomainThatChangedSinceLastUsage();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

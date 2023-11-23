@@ -48,7 +48,7 @@ private:
   /// Facts that can be removed with the set of actions of the domain.
   std::set<Fact> _removableFacts;
   /// Know if we need to add accessible facts.
-  bool _needToAddAccessibleFacts;
+  std::string _uuidOfLastDomainUsed;
 
 
   /**

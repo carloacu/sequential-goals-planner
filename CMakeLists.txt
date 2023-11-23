@@ -58,6 +58,8 @@ set(CHATBOTPLANNER_SRCS
     src/util/print.cpp
     src/util/replacevariables.cpp
     src/util/util.cpp
+    src/util/uuid.hpp
+    src/util/uuid.cpp
     src/contextualplanner.cpp
 )
 
