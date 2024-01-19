@@ -561,7 +561,33 @@ std::list<ActionInstance> lookForResolutionPlan(
       auto& setOfInferences = pDomain.getSetOfInferences();
       _notifyActionDone(pProblem, setOfInferences, *onStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                         &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
+
+      if (itAction->second.effect.potentialFactsModifications)
+      {
+        auto potentialEffect = itAction->second.effect.potentialFactsModifications->cloneParamSet(onStepOfPlannerResult->actionInstance.parameters);
+        pProblem.worldState.modifyFacts(potentialEffect, pProblem.goalStack, setOfInferences, pNow);
+      }
     }
+  }
+  return res;
+}
+
+
+std::string planToStr(const std::list<cp::ActionInstance>& pPlan,
+                      const std::string& pSep)
+{
+  auto size = pPlan.size();
+  if (size == 1)
+    return pPlan.front().toStr();
+  std::string res;
+  bool firstIteration = true;
+  for (const auto& currAction : pPlan)
+  {
+    if (firstIteration)
+      firstIteration = false;
+    else
+      res += pSep;
+    res += currAction.toStr();
   }
   return res;
 }

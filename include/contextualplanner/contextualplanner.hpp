@@ -64,6 +64,17 @@ std::list<ActionInstance> lookForResolutionPlan(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical = nullptr);
 
+
+/**
+ * @brief Convert  a plan to a string.
+ * @param[in] pPlan Plan to print.
+ * @param[in] pSep Separator between each action of the plan to do sequentially.
+ * @return The plan written in string.
+ */
+CONTEXTUALPLANNER_API
+std::string planToStr(const std::list<cp::ActionInstance>& pPlan,
+                      const std::string& pSep = ", ");
+
 } // !cp
 
 

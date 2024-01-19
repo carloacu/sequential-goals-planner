@@ -89,32 +89,13 @@ void assert_false(const TYPE& pValue)
 }
 
 
-std::string _listOfActionsToStr(const std::list<cp::ActionInstance>& pActions)
-{
-  auto size = pActions.size();
-  if (size == 1)
-    return pActions.front().toStr();
-  std::string res;
-  bool firstIteration = true;
-  for (const auto& currAction : pActions)
-  {
-    if (firstIteration)
-      firstIteration = false;
-    else
-      res += _sep;
-    res += currAction.toStr();
-  }
-  return res;
-}
-
-
 std::string _solveStrConst(const cp::Problem& pProblem,
                            const std::map<std::string, cp::Action>& pActions,
                            cp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
   cp::Domain domain(pActions);
-  return _listOfActionsToStr(cp::lookForResolutionPlan(problem, domain, {}, pGlobalHistorical));
+  return cp::planToStr(cp::lookForResolutionPlan(problem, domain, {}, pGlobalHistorical), _sep);
 }
 
 std::string _solveStrConst(const cp::Problem& pProblem,
@@ -122,7 +103,7 @@ std::string _solveStrConst(const cp::Problem& pProblem,
                            cp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  return _listOfActionsToStr(cp::lookForResolutionPlan(problem, pDomain, {}, pGlobalHistorical));
+  return cp::planToStr(cp::lookForResolutionPlan(problem, pDomain, {}, pGlobalHistorical), _sep);
 }
 
 std::string _solveStr(cp::Problem& pProblem,
@@ -131,7 +112,7 @@ std::string _solveStr(cp::Problem& pProblem,
                       cp::Historical* pGlobalHistorical = nullptr)
 {
   cp::Domain domain(pActions);
-  return _listOfActionsToStr(cp::lookForResolutionPlan(pProblem, domain, pNow, pGlobalHistorical));
+  return cp::planToStr(cp::lookForResolutionPlan(pProblem, domain, pNow, pGlobalHistorical), _sep);
 }
 
 std::string _solveStr(cp::Problem& pProblem,
@@ -139,7 +120,7 @@ std::string _solveStr(cp::Problem& pProblem,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                       cp::Historical* pGlobalHistorical = nullptr)
 {
-  return _listOfActionsToStr(cp::lookForResolutionPlan(pProblem, pDomain, pNow, pGlobalHistorical));
+  return cp::planToStr(cp::lookForResolutionPlan(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
 }
 
 cp::OneStepOfPlannerResult _lookForAnActionToDo(cp::Problem& pProblem,
