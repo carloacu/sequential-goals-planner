@@ -549,9 +549,10 @@ std::list<ActionInstance> lookForResolutionPlan(
       break;
     res.emplace_back(onStepOfPlannerResult->actionInstance);
     const auto& actionToDo = onStepOfPlannerResult->actionInstance.actionId;
-    if (actionAlreadyInPlan.count(actionToDo) > 0)
+    const auto& actionToDoStr = onStepOfPlannerResult->actionInstance.toStr();
+    if (actionAlreadyInPlan.count(actionToDoStr) > 0)
       break;
-    actionAlreadyInPlan.insert(actionToDo);
+    actionAlreadyInPlan.insert(actionToDoStr);
 
     auto itAction = pDomain.actions().find(actionToDo);
     if (itAction != pDomain.actions().end())
@@ -562,10 +563,10 @@ std::list<ActionInstance> lookForResolutionPlan(
       _notifyActionDone(pProblem, setOfInferences, *onStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                         &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
 
-      if (itAction->second.effect.potentialFactsModifications)
+      if (itAction->second.effect.potentialWorldStateModification)
       {
-        auto potentialEffect = itAction->second.effect.potentialFactsModifications->cloneParamSet(onStepOfPlannerResult->actionInstance.parameters);
-        pProblem.worldState.modifyFacts(potentialEffect, pProblem.goalStack, setOfInferences, pNow);
+        auto potentialEffect = itAction->second.effect.potentialWorldStateModification->cloneParamSet(onStepOfPlannerResult->actionInstance.parameters);
+        pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfInferences, pNow);
       }
     }
   }
