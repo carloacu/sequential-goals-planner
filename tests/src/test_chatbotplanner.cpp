@@ -128,7 +128,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDo(cp::Problem& pProblem,
                                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                                                 const cp::Historical* pGlobalHistorical = nullptr)
 {
-  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical);
+  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(pProblem, pDomain, true, pNow, pGlobalHistorical);
   if (oneStepOfPlannerResultPtr)
     return *oneStepOfPlannerResultPtr;
   return cp::OneStepOfPlannerResult("", {}, {}, 0);
@@ -140,7 +140,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDoConst(const cp::Problem& pProblem
                                                      const cp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(problem, pDomain, pNow, pGlobalHistorical);
+  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(problem, pDomain, true, pNow, pGlobalHistorical);
   if (oneStepOfPlannerResultPtr)
     return *oneStepOfPlannerResultPtr;
   return cp::OneStepOfPlannerResult("", {}, {}, 0);
@@ -167,7 +167,7 @@ cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
     const cp::Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  auto res = cp::lookForAnActionToDo(pProblem, pDomain, pNow);
+  auto res = cp::lookForAnActionToDo(pProblem, pDomain, true, pNow);
   if (res)
   {
     notifyActionDone(pProblem, pDomain, *res, pNow);
@@ -2027,10 +2027,11 @@ void _failToMoveAnUnknownObject()
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
   problem.worldState.addFact(cp::Fact("charging(me)"), problem.goalStack, setOfInferencesMap, now);
-  assert_eq(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   problem.worldState.addFact(cp::Fact("locationOfObj(sweets)=kitchen"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)")});
+  assert_eq(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
@@ -2396,6 +2397,49 @@ void _problemThatUseADomainThatChangedSinceLastUsage()
   assert_eq<std::string>(action2, _lookForAnActionToDoStr(problem, domain, now)); // as domain as changed since last time the problem cache should be regenerated
 }
 
+
+void _doNextActionThatBringsToTheSmallerCost()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action navAction({}, cp::WorldStateModification::fromStr("locationOfRobot(me)=targetPlace"));
+  navAction.parameters.emplace_back("targetPlace");
+  actions.emplace(_action_navigate, navAction);
+
+  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObject(object)) & !grab(me)=*"),
+                        cp::WorldStateModification::fromStr("grab(me)=object"));
+  grabAction.parameters.emplace_back("object");
+  actions.emplace(_action_grab, grabAction);
+
+  cp::Action ungrabAction({}, cp::WorldStateModification::fromStr("!grab(me)=object"));
+  ungrabAction.parameters.emplace_back("object");
+  actions.emplace(_action_ungrab, ungrabAction);
+
+  cp::SetOfInferences setOfInferences;
+  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=location & grab(me)=object"),
+                          cp::WorldStateModification::fromStr("locationOfObject(object)=location"));
+  inference.parameters.emplace_back("object");
+  inference.parameters.emplace_back("location");
+  setOfInferences.addInference(inference);
+  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=livingRoom"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact("grab(me)=obj2"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact("locationOfObject(obj2)=livingRoom"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact("locationOfObject(obj1)=kitchen"), problem.goalStack, setOfInferencesMap, now);
+  auto secondProblem = problem;
+  // Here it will will be quicker for the second goal if we ungrab the obj2 right away
+  _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), cp::Goal("locationOfObject(obj2)=livingRoom & !grab(me)=obj2")});
+  assert_eq(_action_ungrab + "(object -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+
+  // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
+  _setGoalsForAPriority(secondProblem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), cp::Goal("locationOfObject(obj2)=kitchen & !grab(me)=obj2")});
+  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(secondProblem, domain, now).actionInstance.toStr());
+}
+
+
 }
 
 
@@ -2493,6 +2537,7 @@ int main(int argc, char *argv[])
   _actionWithFactWithANegatedFact();
   _negatedFactValueInWorldState();
   _problemThatUseADomainThatChangedSinceLastUsage();
+  _doNextActionThatBringsToTheSmallerCost();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

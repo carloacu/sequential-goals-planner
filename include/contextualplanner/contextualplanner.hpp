@@ -18,6 +18,7 @@ namespace cp
  * @brief Ask the planner to get the next action to do.
  * @param[in, out] pProblem Problem of the planner.
  * @param[in] pDomain Domain of the planner.
+ * @param[in] pTryToDoMoreOptimalSolution True if we will try to find a result that bring the quicker to the goal.
  * @param[in] pNow Current time.
  * @param[in, opt] pGlobalHistorical A historical to give more priority to an action less frequently used.<br/>
  * Note that the problem already have a historical. The problem historical has more priority than this historical.<br/>
@@ -28,6 +29,7 @@ CONTEXTUALPLANNER_API
 std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     Problem& pProblem,
     const Domain& pDomain,
+    bool pTryToDoMoreOptimalSolution,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     const Historical* pGlobalHistorical = nullptr);
 
