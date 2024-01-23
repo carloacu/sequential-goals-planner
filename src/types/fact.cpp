@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <memory>
 #include <assert.h>
+#include <optional>
 #include <contextualplanner/types/factoptional.hpp>
 
 
@@ -147,6 +148,25 @@ bool Fact::isUnreachable() const
 }
 
 
+bool Fact::hasArgumentOrValue(
+    const std::string& pArgumentOrValue) const
+{
+  if (value == pArgumentOrValue)
+    return true;
+
+  auto itParam = arguments.begin();
+  while (itParam != arguments.end())
+  {
+    if (itParam->fact.name == pArgumentOrValue)
+      return true;
+    if (itParam->fact.hasArgumentOrValue(pArgumentOrValue))
+      return true;
+    ++itParam;
+  }
+  return false;
+}
+
+
 std::string Fact::tryToExtractArgumentFromExample(
     const std::string& pArgument,
     const Fact& pOther) const
@@ -168,8 +188,6 @@ std::string Fact::tryToExtractArgumentFromExample(
   {
     if (itParam->fact.name == pArgument)
       res = itOtherParam->fact.name;
-    else if (itParam->fact.name != itOtherParam->fact.name)
-      return "";
 
     auto subRes = itParam->fact.tryToExtractArgumentFromExample(pArgument, itOtherParam->fact);
     if (subRes != "")
@@ -179,6 +197,44 @@ std::string Fact::tryToExtractArgumentFromExample(
   }
   return res;
 }
+
+
+bool Fact::isPatternOf(
+    const std::map<std::string, std::set<std::string>>& pPossibleArguments,
+    const Fact& pFactExample) const
+{
+  if (name != pFactExample.name ||
+      isValueNegated != pFactExample.isValueNegated ||
+      arguments.size() != pFactExample.arguments.size())
+    return false;
+
+  auto isOk = [&](const std::string& pPatternVal,
+                  const std::string& pExempleVal) {
+    auto itVal = pPossibleArguments.find(pPatternVal);
+    if (itVal != pPossibleArguments.end())
+    {
+      if (!itVal->second.empty() &&
+          itVal->second.count(pExempleVal) == 0)
+        return false;
+    }
+    return true;
+  };
+
+  if (!isOk(value, pFactExample.value))
+    return false;
+
+  auto itParam = arguments.begin();
+  auto itOtherParam = pFactExample.arguments.begin();
+  while (itParam != arguments.end())
+  {
+    if (!isOk(itParam->fact.name, itOtherParam->fact.name))
+      return false;
+    ++itParam;
+    ++itOtherParam;
+  }
+  return true;
+}
+
 
 
 void Fact::replaceArguments(const std::map<std::string, std::string>& pCurrentArgumentsToNewArgument)
@@ -367,6 +423,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
     return false;
 
 
+  std::map<std::string, std::set<std::string>> newPotentialParameters;
   auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
     if (pFactValue == pValueToLookFor)
       return true;
@@ -379,7 +436,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
         if (!itParam->second.empty())
           return itParam->second.count(pValueToLookFor) > 0;
         if (pNewParametersPtr != nullptr)
-          (*pNewParametersPtr)[pFactValue].insert(pValueToLookFor);
+          newPotentialParameters[pFactValue].insert(pValueToLookFor);
         else if (pTriedToModifyParametersPtr != nullptr)
           *pTriedToModifyParametersPtr = true;
         return true;
@@ -411,17 +468,37 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       return false;
   }
 
+  std::optional<bool> resOpt;
   if (pParametersAreForTheFact)
   {
     if (doesItMatch(value, pOtherFact.value))
-      return pOtherFact.isValueNegated == isValueNegated;
+      resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
   }
   else
   {
     if (doesItMatch(pOtherFact.value, value))
-      return pOtherFact.isValueNegated == isValueNegated;
+      resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
   }
-  return pOtherFact.isValueNegated != isValueNegated;
+  if (!resOpt)
+    resOpt.emplace(pOtherFact.isValueNegated != isValueNegated);
+
+  if (*resOpt)
+  {
+    if (pNewParametersPtr != nullptr & !newPotentialParameters.empty())
+    {
+      if (pNewParametersPtr->empty())
+      {
+        *pNewParametersPtr = std::move(newPotentialParameters);
+      }
+      else
+      {
+        for (auto& currNewPotParam : newPotentialParameters)
+          (*pNewParametersPtr)[currNewPotParam.first].insert(currNewPotParam.second.begin(), currNewPotParam.second.end());
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 

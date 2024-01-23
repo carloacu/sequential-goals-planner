@@ -2416,7 +2416,7 @@ void _doNextActionThatBringsToTheSmallerCost()
   actions.emplace(_action_ungrab, ungrabAction);
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=location & grab(me)=object"),
+  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=location & grab(me)=object & objectGrabable(object)"),
                           cp::WorldStateModification::fromStr("locationOfObject(object)=location"));
   inference.parameters.emplace_back("object");
   inference.parameters.emplace_back("location");
@@ -2425,6 +2425,8 @@ void _doNextActionThatBringsToTheSmallerCost()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
+  problem.worldState.addFact(cp::Fact("objectGrabable(obj1)"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact("objectGrabable(obj2)"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact("locationOfRobot(me)=livingRoom"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact("grab(me)=obj2"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact("locationOfObject(obj2)=livingRoom"), problem.goalStack, setOfInferencesMap, now);
@@ -2437,6 +2439,64 @@ void _doNextActionThatBringsToTheSmallerCost()
   // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
   _setGoalsForAPriority(secondProblem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), cp::Goal("locationOfObject(obj2)=kitchen & !grab(me)=obj2")});
   assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(secondProblem, domain, now).actionInstance.toStr());
+}
+
+
+void _checkFilterFactInCondition()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1({}, cp::WorldStateModification::fromStr(_fact_a + "(obj)"));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2(cp::Condition::fromStr(_fact_b + "(obj, loc) & " + _fact_a + "(obj)"),
+                        cp::WorldStateModification::fromStr(_fact_c));
+  actionObj2.parameters.emplace_back("obj");
+  actionObj2.parameters.emplace_back("loc");
+  actions.emplace(action2, actionObj2);
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact(_fact_b + "(obj1, loc1)"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(obj1, loc2)"), problem.goalStack, setOfInferencesMap, now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
+  assert_eq<std::string>(action1 + "(obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>(action2 + "(loc -> loc1, obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+}
+
+
+void _checkFilterFactInConditionAndThenPropagate()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1({}, cp::WorldStateModification::fromStr(_fact_a + "=obj"));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2(cp::Condition::fromStr(_fact_b + "(obj, loc) & " + _fact_a + "=obj"),
+                        cp::WorldStateModification::fromStr(_fact_c + "(loc)"));
+  actionObj2.parameters.emplace_back("obj");
+  actionObj2.parameters.emplace_back("loc");
+  actions.emplace(action2, actionObj2);
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact(_fact_b + "(obj1, loc1)"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(obj2, loc2)"), problem.goalStack, setOfInferencesMap, now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c + "(loc2)")});
+  assert_eq(action1 + "(obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action2 + "(loc -> loc2, obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
 }
 
 
@@ -2538,6 +2598,8 @@ int main(int argc, char *argv[])
   _negatedFactValueInWorldState();
   _problemThatUseADomainThatChangedSinceLastUsage();
   _doNextActionThatBringsToTheSmallerCost();
+  _checkFilterFactInCondition();
+  _checkFilterFactInConditionAndThenPropagate();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

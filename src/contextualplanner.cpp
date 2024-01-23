@@ -186,47 +186,78 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
     std::map<std::string, std::set<std::string>> parametersToValues;
     for (const auto& currParam : pParameters)
       parametersToValues[currParam];
-    bool satisfyObjective = false;
-    if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
-                                pDomain, pFactsAlreadychecked))
-    {
-      bool actionIsAPossibleFollowUp = true;
-      // fill parent parameters
-      for (auto& currParentParam : pParentParameters)
-      {
-        if (currParentParam.second.empty())
-        {
-          pCondition->untilFalse(
-                [&](const FactOptional& pConditionFactOptional)
-          {
-            auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(currParentParam.first, pConditionFactOptional.fact);
-            if (parentParamValue.empty())
-              return true;
-            // Maybe the extracted parameter is also a parameter so we replace by it's value
-            auto itParam = parametersToValues.find(parentParamValue);
-            if (itParam != parametersToValues.end())
-              currParentParam.second = itParam->second;
-            else
-              currParentParam.second.insert(parentParamValue);
-            return currParentParam.second.empty();
-          }, pProblem.worldState, parametersToValues);
+    bool tryToMatchWothFactOfTheWorld = false;
 
-          if (!currParentParam.second.empty())
-            break;
-          if (currParentParam.second.empty())
+    while (true)
+    {
+      bool satisfyObjective = false;
+      if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
+                                  pDomain, pFactsAlreadychecked))
+      {
+        bool actionIsAPossibleFollowUp = true;
+        // fill parent parameters
+        for (auto& currParentParam : pParentParameters)
+        {
+          if (currParentParam.second.empty() &&
+              pFactOptional.fact.hasArgumentOrValue(currParentParam.first))
           {
-            actionIsAPossibleFollowUp = false;
-            break;
+            pCondition->untilFalse(
+                  [&](const FactOptional& pConditionFactOptional)
+            {
+              auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(currParentParam.first, pConditionFactOptional.fact);
+              if (parentParamValue.empty())
+                return true;
+              // Maybe the extracted parameter is also a parameter so we replace by it's value
+              auto itParam = parametersToValues.find(parentParamValue);
+              if (itParam != parametersToValues.end())
+                currParentParam.second = itParam->second;
+              else
+                currParentParam.second.insert(parentParamValue);
+              return currParentParam.second.empty();
+            }, pProblem.worldState, parametersToValues);
+
+            if (!currParentParam.second.empty())
+              break;
+            if (currParentParam.second.empty())
+            {
+              actionIsAPossibleFollowUp = false;
+              break;
+            }
           }
         }
+
+        // Check that the new fact pattern is not already satisfied
+        if (actionIsAPossibleFollowUp)
+        {
+          if (!pProblem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &pParentParameters, nullptr))
+            return PossibleEffect::SATISFIED;
+          return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
+        }
       }
-      // Check that the new fact pattern is not already satisfied
-      if (actionIsAPossibleFollowUp)
-      {
-        if (!pProblem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &pParentParameters, nullptr))
-          return PossibleEffect::SATISFIED;
-        return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
-      }
+
+      // If we did not succedded to match the parameters from effet we try to resolve according to the facts in the world
+      if (tryToMatchWothFactOfTheWorld)
+        break;
+      tryToMatchWothFactOfTheWorld = true;
+      const auto& swFactNamesToFacts = pProblem.worldState.factNamesToFacts();
+      pCondition->forAll([&](const FactOptional& pConditionFactOptional) {
+        auto itNameToWorldFacts = swFactNamesToFacts.find(pConditionFactOptional.fact.name);
+        if (itNameToWorldFacts != swFactNamesToFacts.end())
+        {
+          for (const auto& currWorldFact : itNameToWorldFacts->second)
+          {
+            if (pConditionFactOptional.fact.isPatternOf(parametersToValues, currWorldFact))
+            {
+              for (auto& currParamToValues : parametersToValues)
+              {
+                auto parentParamValue = pConditionFactOptional.fact.tryToExtractArgumentFromExample(currParamToValues.first, currWorldFact);
+                if (!parentParamValue.empty())
+                  currParamToValues.second.insert(parentParamValue);
+              }
+            }
+          }
+        }
+      });
     }
   }
   return PossibleEffect::NOT_SATISFIED;

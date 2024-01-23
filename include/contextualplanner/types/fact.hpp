@@ -71,6 +71,14 @@ struct CONTEXTUALPLANNER_API Fact
   bool isUnreachable() const;
 
   /**
+   * @brief hasArgumentOrValue Does this fact contains a specific string in his arguments or in his value.
+   * @param pArgumentOrValue[in] String that can match in the arguments or in the value of this fact.
+   * @return True if the string matches in the arguments or in the value of this fact, false otherwise.
+   */
+  bool hasArgumentOrValue(
+      const std::string& pArgumentOrValue) const;
+
+  /**
    * @brief Extract an argument from another instance of this fact.<br/>
    * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).
    * @param pArgument[in] Argument of this fact.
@@ -80,6 +88,16 @@ struct CONTEXTUALPLANNER_API Fact
   std::string tryToExtractArgumentFromExample(
       const std::string& pArgument,
       const Fact& pOther) const;
+
+  /**
+   * @brief isPatternOf Does this fact is a generic form of the fact example according to the possible arguments.
+   * @param pPossibleArguments[in] Possible arguments limitation.
+   * @param pFactExample[in] The fact in example.
+   * @return True if this fact is a generic form of the fact example according to the possible arguments.
+   */
+  bool isPatternOf(
+      const std::map<std::string, std::set<std::string>>& pPossibleArguments,
+      const Fact& pFactExample) const;
 
   /**
    * @brief Replace some arguments by other ones.

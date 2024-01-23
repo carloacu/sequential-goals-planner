@@ -303,7 +303,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact) const
   const auto& accessibleFacts = _cache->accessibleFacts();
   if (!pFact.isValueNegated)
   {
-    if (_facts.count(pFact) > 0 ||
+    if (_factNamesToFacts.count(pFact.name) ||
         accessibleFacts.count(pFact) > 0)
       return true;
 
