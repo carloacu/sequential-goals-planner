@@ -74,9 +74,9 @@ PotentialNextAction::PotentialNextAction(const ActionId& pActionId,
 
 
 void _getPreferInContextStatistics(std::size_t& nbOfPreconditionsSatisfied,
-                               std::size_t& nbOfPreconditionsNotSatisfied,
-                               const Action& pAction,
-                               const std::set<Fact>& pFacts)
+                                   std::size_t& nbOfPreconditionsNotSatisfied,
+                                   const Action& pAction,
+                                   const std::set<Fact>& pFacts)
 {
   auto onFact = [&](const FactOptional& pFactOptional)
   {
@@ -186,13 +186,15 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
     std::map<std::string, std::set<std::string>> parametersToValues;
     for (const auto& currParam : pParameters)
       parametersToValues[currParam];
-    bool tryToMatchWothFactOfTheWorld = false;
 
-    while (true)
+
+
+    bool satisfyObjective = false;
+    if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
+                                pDomain, pFactsAlreadychecked))
     {
-      bool satisfyObjective = false;
-      if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, pEffect, pGoal, pProblem, pFactOptionalToSatisfy,
-                                  pDomain, pFactsAlreadychecked))
+      bool tryToMatchWothFactOfTheWorld = false;
+      while (true)
       {
         bool actionIsAPossibleFollowUp = true;
         // fill parent parameters
@@ -233,31 +235,35 @@ PossibleEffect _lookForAPossibleDeduction(const std::vector<std::string>& pParam
             return PossibleEffect::SATISFIED;
           return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
         }
-      }
 
-      // If we did not succedded to match the parameters from effet we try to resolve according to the facts in the world
-      if (tryToMatchWothFactOfTheWorld)
-        break;
-      tryToMatchWothFactOfTheWorld = true;
-      const auto& swFactNamesToFacts = pProblem.worldState.factNamesToFacts();
-      pCondition->forAll([&](const FactOptional& pConditionFactOptional) {
-        auto itNameToWorldFacts = swFactNamesToFacts.find(pConditionFactOptional.fact.name);
-        if (itNameToWorldFacts != swFactNamesToFacts.end())
-        {
-          for (const auto& currWorldFact : itNameToWorldFacts->second)
+        // If we did not succedded to fill the parameters from effet we try to resolve according to the constant facts in the world
+        if (tryToMatchWothFactOfTheWorld)
+          break;
+        tryToMatchWothFactOfTheWorld = true;
+        const auto& swFactNamesToFacts = pProblem.worldState.factNamesToFacts();
+        pCondition->forAll([&](const FactOptional& pConditionFactOptional) {
+          if (!pConditionFactOptional.isFactNegated &&
+              !pProblem.worldState.canFactNameBeModified(pConditionFactOptional.fact.name))
           {
-            if (pConditionFactOptional.fact.isPatternOf(parametersToValues, currWorldFact))
+            auto itNameToWorldFacts = swFactNamesToFacts.find(pConditionFactOptional.fact.name);
+            if (itNameToWorldFacts != swFactNamesToFacts.end())
             {
-              for (auto& currParamToValues : parametersToValues)
+              for (const auto& currWorldFact : itNameToWorldFacts->second)
               {
-                auto parentParamValue = pConditionFactOptional.fact.tryToExtractArgumentFromExample(currParamToValues.first, currWorldFact);
-                if (!parentParamValue.empty())
-                  currParamToValues.second.insert(parentParamValue);
+                if (pConditionFactOptional.fact.isPatternOf(parametersToValues, currWorldFact))
+                {
+                  for (auto& currParamToValues : parametersToValues)
+                  {
+                    auto parentParamValue = pConditionFactOptional.fact.tryToExtractArgumentFromExample(currParamToValues.first, currWorldFact);
+                    if (!parentParamValue.empty())
+                      currParamToValues.second.insert(parentParamValue);
+                  }
+                }
               }
             }
           }
-        }
-      });
+        });
+      }
     }
   }
   return PossibleEffect::NOT_SATISFIED;
@@ -377,7 +383,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
       else
       {
         if (pProblem.worldState.facts().count(pFactOptional.fact) == 0)
-           return false;
+          return false;
       }
     }
 
@@ -439,7 +445,7 @@ void _notifyActionDone(Problem& pProblem,
   pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pProblem.goalStack, pSetOfInferences, pNow);
 
   pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pEffect, pNow, pGoalsToAdd,
-                              pGoalsToAddInCurrentPriority, pProblem.worldState);
+                                      pGoalsToAddInCurrentPriority, pProblem.worldState);
 }
 
 void _updateProblemForNextPotentialPlannerResult(
@@ -473,6 +479,7 @@ std::size_t _extractPlanCost(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical)
 {
+  static const std::size_t bigCostToAddInCaseOfFailure = 1000;
   const bool tryToDoMoreOptimalSolution = false;
   std::set<std::string> actionAlreadyInPlan;
   std::size_t res = 0;
@@ -481,12 +488,15 @@ std::size_t _extractPlanCost(
     auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, tryToDoMoreOptimalSolution,
                                                      pNow, pGlobalHistorical);
     if (!onStepOfPlannerResult)
+    {
+      res += bigCostToAddInCaseOfFailure;
       break;
+    }
     ++res;
     const auto& actionToDoStr = onStepOfPlannerResult->actionInstance.toStr();
     if (actionAlreadyInPlan.count(actionToDoStr) > 0)
     {
-      res += 1000;
+      res += bigCostToAddInCaseOfFailure;
       break;
     }
     actionAlreadyInPlan.insert(actionToDoStr);

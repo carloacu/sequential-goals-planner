@@ -2475,6 +2475,7 @@ void _checkFilterFactInConditionAndThenPropagate()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
+  const std::string action3 = "action3";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
@@ -2487,15 +2488,23 @@ void _checkFilterFactInConditionAndThenPropagate()
   actionObj2.parameters.emplace_back("obj");
   actionObj2.parameters.emplace_back("loc");
   actions.emplace(action2, actionObj2);
+
+
+  cp::Action actionObj3(cp::Condition::fromStr(_fact_c + "(loc)"),
+                        cp::WorldStateModification::fromStr(_fact_d + "(loc)"));
+  actionObj3.parameters.emplace_back("loc");
+  actions.emplace(action3, actionObj3);
+
   cp::Domain domain(std::move(actions));
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact(_fact_b + "(obj1, loc1)"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact(_fact_b + "(obj2, loc2)"), problem.goalStack, setOfInferencesMap, now);
-  _setGoalsForAPriority(problem, {cp::Goal(_fact_c + "(loc2)")});
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d + "(loc2)")});
   assert_eq(action1 + "(obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq(action2 + "(loc -> loc2, obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action3 + "(loc -> loc2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
 }
 

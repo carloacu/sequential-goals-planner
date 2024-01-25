@@ -322,6 +322,20 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact) const
   return false;
 }
 
+bool WorldState::canFactNameBeModified(const std::string& pFactName) const
+{
+  const auto& accessibleFacts = _cache->accessibleFacts();
+  for (const auto& currAccessibleFact : accessibleFacts)
+    if (currAccessibleFact.name == pFactName)
+      return true;
+
+  const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
+  for (const auto& currAccessibleFact : accessibleFactsWithAnyValues)
+    if (currAccessibleFact.name == pFactName)
+      return true;
+  return false;
+}
+
 std::string WorldState::getFactValue(const cp::Fact& pFact) const
 {
   auto itFact = _factNamesToFacts.find(pFact.name);

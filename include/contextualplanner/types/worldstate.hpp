@@ -154,6 +154,13 @@ struct CONTEXTUALPLANNER_API WorldState
   bool canFactBecomeTrue(const Fact& pFact) const;
 
   /**
+   * @brief Can a fact be modified according to the cache of accessible facts.
+   * @param[in] pFactName Name of the fact to check.
+   * @return True if the fact can be modified according to the cache of accessible facts.
+   */
+  bool canFactNameBeModified(const std::string& pFactName) const;
+
+  /**
    * @brief Get the value of a fact in the world state.
    * @param[in] pFact Fact to extract the value.
    * @return The value of the fact in the world state, an empty string if the fact is not in the world state.
