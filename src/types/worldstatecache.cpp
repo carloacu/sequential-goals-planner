@@ -17,6 +17,7 @@ WorldStateCache::WorldStateCache(const WorldState& pWorldState)
     _accessibleFacts(),
     _accessibleFactsWithAnyValues(),
     _removableFacts(),
+    _removableFactsWithAnyValues(),
     _uuidOfLastDomainUsed(_noUuid)
 {
 }
@@ -28,6 +29,7 @@ WorldStateCache::WorldStateCache(const WorldState& pWorldState,
     _accessibleFacts(pOther._accessibleFacts),
     _accessibleFactsWithAnyValues(pOther._accessibleFactsWithAnyValues),
     _removableFacts(pOther._removableFacts),
+    _removableFactsWithAnyValues(pOther._removableFactsWithAnyValues),
     _uuidOfLastDomainUsed(pOther._uuidOfLastDomainUsed)
 {
 }
@@ -38,6 +40,7 @@ void WorldStateCache::clear()
   _accessibleFacts.clear();
   _accessibleFactsWithAnyValues.clear();
   _removableFacts.clear();
+  _removableFactsWithAnyValues.clear();
   _uuidOfLastDomainUsed = _noUuid;
 }
 
@@ -128,6 +131,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Co
     std::set<Fact> accessibleFactsToAdd;
     std::vector<Fact> accessibleFactsToAddWithAnyValues;
     std::set<Fact> removableFactsToAdd;
+    std::vector<Fact> removableFactsToAddWithAnyValues;
 
     pEffect.forAll([&](const cp::FactOptional& pFactOpt) {
       if (!pFactOpt.isFactNegated)
@@ -146,15 +150,23 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Co
       {
         if (_worldState.facts().count(pFactOpt.fact) > 0 &&
             _removableFacts.count(pFactOpt.fact) == 0)
-          removableFactsToAdd.insert(pFactOpt.fact);
+        {
+          auto factToRemove = pFactOpt.fact;
+          if (factToRemove.replaceSomeArgumentsByAny(pParameters))
+            removableFactsToAddWithAnyValues.push_back(std::move(factToRemove));
+          else
+            removableFactsToAdd.insert(std::move(factToRemove));
+        }
       }
     }, _worldState);
 
-    if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() || !removableFactsToAdd.empty())
+    if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() ||
+        !removableFactsToAdd.empty() || !removableFactsToAddWithAnyValues.empty())
     {
       _accessibleFacts.insert(accessibleFactsToAdd.begin(), accessibleFactsToAdd.end());
       _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
       _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
+      _removableFactsWithAnyValues.insert(removableFactsToAddWithAnyValues.begin(), removableFactsToAddWithAnyValues.end());
       for (const auto& currNewFact : accessibleFactsToAdd)
         _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
       for (const auto& currNewFact : accessibleFactsToAddWithAnyValues)

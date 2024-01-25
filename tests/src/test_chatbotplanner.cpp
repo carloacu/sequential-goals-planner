@@ -2517,6 +2517,36 @@ void _satisfyGoalWithSuperiorOperator()
 }
 
 
+void _checkRemovableFactsWithAnyValue()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1({}, cp::WorldStateModification::fromStr("!" + _fact_a + "=obj"));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2({}, cp::WorldStateModification::fromStr("!" + _fact_b + "=obj"));
+  actionObj2.parameters.emplace_back("obj");
+  actions.emplace(action2, actionObj2);
+
+  cp::Action actionObj3(cp::Condition::fromStr("!" + _fact_a + "=* & !" + _fact_b + "=*"),
+                        cp::WorldStateModification::fromStr(_fact_c));
+  actions.emplace(action3, actionObj3);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact(_fact_a + "=obj1"), problem.goalStack, setOfInferencesMap, now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
+  assert_eq(action1 + "(obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+}
+
+
 }
 
 
@@ -2618,6 +2648,7 @@ int main(int argc, char *argv[])
   _checkFilterFactInCondition();
   _checkFilterFactInConditionAndThenPropagate();
   _satisfyGoalWithSuperiorOperator();
+  _checkRemovableFactsWithAnyValue();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

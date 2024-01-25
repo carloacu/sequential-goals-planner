@@ -318,6 +318,15 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact) const
       return true;
     if (_isNegatedFactCompatibleWithFacts(pFact, accessibleFacts))
       return true;
+
+    const auto& removableFacts = _cache->removableFacts();
+    if (removableFacts.count(pFact) > 0)
+      return true;
+
+    const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
+    for (const auto& currRemovableFact : removableFactsWithAnyValues)
+      if (pFact.areEqualExceptAnyValues(currRemovableFact))
+        return true;
   }
   return false;
 }
@@ -332,6 +341,11 @@ bool WorldState::canFactNameBeModified(const std::string& pFactName) const
   const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
   for (const auto& currAccessibleFact : accessibleFactsWithAnyValues)
     if (currAccessibleFact.name == pFactName)
+      return true;
+
+  const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
+  for (const auto& currRemovableFact : removableFactsWithAnyValues)
+    if (currRemovableFact.name == pFactName)
       return true;
   return false;
 }
