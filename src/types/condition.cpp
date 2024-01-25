@@ -97,6 +97,10 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
       nodeType = ConditionNodeType::PLUS;
     else if (pExpressionParsed.separatorToFollowingExp == '-')
       nodeType = ConditionNodeType::MINUS;
+    else if (pExpressionParsed.separatorToFollowingExp == '>')
+      nodeType = ConditionNodeType::SUPERIOR;
+    else if (pExpressionParsed.separatorToFollowingExp == '<')
+      nodeType = ConditionNodeType::INFERIOR;
     res = std::make_unique<ConditionNode>(nodeType,
                                           std::move(res),
                                           _expressionParsedToCondition(*pExpressionParsed.followingExpression));
@@ -137,6 +141,10 @@ std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>*
     return leftOperandStr + " + " + rightOperandStr;
   case ConditionNodeType::MINUS:
     return leftOperandStr + " - " + rightOperandStr;
+  case ConditionNodeType::SUPERIOR:
+    return leftOperandStr + ">" + rightOperandStr;
+  case ConditionNodeType::INFERIOR:
+    return leftOperandStr + "<" + rightOperandStr;
   }
   return "";
 }
@@ -197,18 +205,26 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
     if (rightOperand && !rightOperand->untilFalse(pFactCallback, pWorldState, pConditionParametersToPossibleArguments))
       return false;
   }
-  else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
+  else if (leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
     if (leftFactPtr != nullptr)
     {
-      return _forEachValueUntil(
-            [&](const std::string& pValue)
+      const auto& leftFact = *leftFactPtr;
+      if (nodeType == ConditionNodeType::EQUALITY)
       {
-        auto factToCheck = leftFactPtr->factOptional.fact;
-        factToCheck.value = pValue;
-        return pFactCallback(FactOptional(factToCheck));
-      }, false, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
+        return _forEachValueUntil(
+              [&](const std::string& pValue)
+        {
+          auto factToCheck = leftFact.factOptional.fact;
+          factToCheck.value = pValue;
+          return pFactCallback(FactOptional(factToCheck));
+        }, false, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
+      }
+      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
+      {
+         return pFactCallback(leftFact.factOptional);
+      }
     }
   }
   return true;
@@ -253,28 +269,45 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
     if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
       return false;
   }
-  else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
+  else if (leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
     if (leftFactPtr != nullptr)
     {
-      bool res = false;
-      std::map<std::string, std::set<std::string>> newParameters;
-      _forEach(
-            [&](const std::string& pValue)
-      {
-        auto factToCheck = leftFactPtr->factOptional.fact;
-        factToCheck.value = pValue;
-        const auto& facts = pWorldState.facts();
-        if (factToCheck.isPunctual())
-          res = pPunctualFacts.count(factToCheck) != 0 || res;
-        else
-          res = factToCheck.isInOtherFacts(facts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
-      }, *rightOperand, pWorldState, pConditionParametersToPossibleArguments);
+      const auto& leftFact = leftFactPtr->factOptional.fact;
 
-      if (pConditionParametersToPossibleArguments != nullptr)
-        applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
-      return res;
+      if (nodeType == ConditionNodeType::EQUALITY)
+      {
+        bool res = false;
+        std::map<std::string, std::set<std::string>> newParameters;
+        _forEach([&](const std::string& pValue)
+        {
+          auto factToCheck = leftFactPtr->factOptional.fact;
+          factToCheck.value = pValue;
+          const auto& facts = pWorldState.facts();
+          if (factToCheck.isPunctual())
+            res = pPunctualFacts.count(factToCheck) != 0 || res;
+          else
+            res = factToCheck.isInOtherFacts(facts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
+        }, *rightOperand, pWorldState, pConditionParametersToPossibleArguments);
+
+        if (pConditionParametersToPossibleArguments != nullptr)
+          applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
+        return res;
+      }
+      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
+      {
+        auto* rightNbPtr = rightOperand->fcNbPtr();
+        if (rightNbPtr != nullptr)
+        {
+          const auto& factNamesToFacts = pWorldState.factNamesToFacts();
+          auto itWsFacts = factNamesToFacts.find(leftFact.name);
+          if (itWsFacts != factNamesToFacts.end())
+            for (const auto& currWsFact : itWsFacts->second)
+              if (leftFact.areEqualWithoutValueConsideration(currWsFact))
+                return compIntNb(currWsFact.value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
+        }
+      }
     }
   }
   return true;

@@ -214,6 +214,7 @@ void _test_conditionParameters()
   assert_eq<std::string>("!a", cp::Condition::fromStr("!a")->toStr());
   assert_eq<std::string>("a!=", cp::Condition::fromStr("a!=")->toStr());
   assert_eq<std::string>("a!=b", cp::Condition::fromStr("a!=b")->toStr());
+  assert_eq<std::string>("a>3", cp::Condition::fromStr("a>3")->toStr());
 }
 
 void _test_wsModificationToStr()
@@ -2509,6 +2510,25 @@ void _checkFilterFactInConditionAndThenPropagate()
 }
 
 
+
+void _satisfyGoalWithSuperiorOperator()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr(_fact_a + "=100")));
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact(_fact_a + "=10"), problem.goalStack, setOfInferencesMap, now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_a + ">50")});
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+}
+
+
 }
 
 
@@ -2609,6 +2629,7 @@ int main(int argc, char *argv[])
   _doNextActionThatBringsToTheSmallerCost();
   _checkFilterFactInCondition();
   _checkFilterFactInConditionAndThenPropagate();
+  _satisfyGoalWithSuperiorOperator();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

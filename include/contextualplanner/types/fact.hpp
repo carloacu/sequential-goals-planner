@@ -175,7 +175,8 @@ struct CONTEXTUALPLANNER_API Fact
                      bool pParametersAreForTheFact,
                      std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                      const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                     bool* pTriedToModifyParametersPtr = nullptr) const;
+                     bool* pTriedToModifyParametersPtr = nullptr,
+                     bool pIgnoreValues = false) const;
 
   /**
    * @brief Replace, in the arguments of this fact, a fact by another fact.

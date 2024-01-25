@@ -416,7 +416,8 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
                          bool pParametersAreForTheFact,
                          std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                          const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                         bool* pTriedToModifyParametersPtr) const
+                         bool* pTriedToModifyParametersPtr,
+                         bool pIgnoreValues) const
 {
   if (pOtherFact.name != name ||
       pOtherFact.arguments.size() != arguments.size())
@@ -471,12 +472,12 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   std::optional<bool> resOpt;
   if (pParametersAreForTheFact)
   {
-    if (doesItMatch(value, pOtherFact.value))
+    if (pIgnoreValues || doesItMatch(value, pOtherFact.value))
       resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
   }
   else
   {
-    if (doesItMatch(pOtherFact.value, value))
+    if (pIgnoreValues || doesItMatch(pOtherFact.value, value))
       resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
   }
   if (!resOpt)

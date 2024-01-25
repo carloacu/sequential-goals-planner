@@ -351,8 +351,17 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   {
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
       return false;
+    const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
+    ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
+    bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
     std::map<std::string, std::set<std::string>> newParameters;
-    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters);
+    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters, nullptr, objIsAComparison);
+    if (res && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
+    {
+      const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
+      if (objValPtr != nullptr)
+        res = compIntNb(pFactOptional.fact.value, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
+    }
     applyNewParams(pParameters, newParameters);
     return res;
   };

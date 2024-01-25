@@ -35,6 +35,12 @@ std::string minusIntOrStr(
     const std::string& pNb2Str);
 
 CONTEXTUALPLANNER_API
+bool compIntNb(
+    const std::string& pNb1Str,
+    int pNb2,
+    bool pBoolSuperiorOrInferior);
+
+CONTEXTUALPLANNER_API
 std::string incrementLastNumberUntilAConditionIsSatisfied(
     const std::string& pStr,
     const std::function<bool(const std::string&)>& pCondition);

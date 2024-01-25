@@ -10,7 +10,7 @@ namespace
 
 bool _isASeparatorForTheBeginOfAFollowingExpression(char pChar)
 {
-  return pChar == '&' || pChar == '+' || pChar == '-';
+  return pChar == '&' || pChar == '+' || pChar == '-' || pChar == '<' || pChar == '>';
 }
 
 bool _isASeparator(char pChar)
@@ -90,7 +90,6 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
         throw std::runtime_error("Arguments parenthesis is not closed: \"" + pStr + "\"");
     }
   }
-
 
   // extract value
   if (pPos < strSize)

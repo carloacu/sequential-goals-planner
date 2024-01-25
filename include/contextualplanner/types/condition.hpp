@@ -133,6 +133,8 @@ struct CONTEXTUALPLANNER_API Condition
 enum class ConditionNodeType
 {
   EQUALITY,
+  SUPERIOR,
+  INFERIOR,
   AND,
   PLUS,
   MINUS

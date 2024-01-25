@@ -94,6 +94,22 @@ std::string minusIntOrStr(
 }
 
 
+bool compIntNb(
+    const std::string& pNb1Str,
+    int pNb2,
+    bool pBoolSuperiorOrInferior)
+{
+  try
+  {
+    int nb1 = lexical_cast<int>(pNb1Str);
+    if (pBoolSuperiorOrInferior)
+      return nb1 > pNb2;
+    else
+      return nb1 < pNb2;
+  } catch (...) {}
+  return false;
+}
+
 std::string incrementLastNumberUntilAConditionIsSatisfied(
     const std::string& pStr,
     const std::function<bool(const std::string&)>& pCondition)
