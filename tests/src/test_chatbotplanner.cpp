@@ -171,12 +171,6 @@ cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
   if (res)
   {
     notifyActionDone(pProblem, pDomain, *res, pNow);
-    /*
-    auto itAction = pDomain.actions().find(res->actionInstance.actionId);
-    if (itAction != pDomain.actions().end())
-      pProblem.notifyActionDone(*res, itAction->second.effect.worldStateModification, pNow,
-                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
-                                */
     return *res;
   }
   return cp::OneStepOfPlannerResult("", {}, {}, 0);
@@ -1704,12 +1698,6 @@ void _testGoalUnderPersist()
 
     now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now() + std::chrono::minutes(5));
     cp::notifyActionDone(problem, domain, plannerResult, now);
-    /*
-    auto itAction = domain.actions().find(action2);
-    if (itAction != domain.actions().end())
-      problem.notifyActionDone(plannerResult, itAction->second.effect.worldStateModification, now,
-                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
-                                */
 
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
     assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId); // Not action1 because it was inactive for too long
