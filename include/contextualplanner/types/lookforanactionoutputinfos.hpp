@@ -26,10 +26,13 @@ struct LookForAnActionOutputInfos
   void setType(PlannerStepType pType) { _type = pType; }
   PlannerStepType getType() const { return _type; }
   void notifySatisfiedGoal(const Goal& pGoal);
+  void notifyNotSatisfiedGoal(const Goal& pGoal);
+  std::size_t nbOfNotSatisfiedGoals() const { return _nbOfNonPersistentGoalsNotSatisfied; }
   std::size_t nbOfSatisfiedGoals() const { return _nbOfNonPersistentGoalsSatisfied + _persistentGoalsSatisfied.size(); }
 
 private:
   PlannerStepType _type;
+  std::size_t _nbOfNonPersistentGoalsNotSatisfied;
   std::size_t _nbOfNonPersistentGoalsSatisfied;
   std::set<const Goal*> _persistentGoalsSatisfied;
 };

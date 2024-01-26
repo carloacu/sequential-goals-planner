@@ -100,6 +100,9 @@ void GoalStack::_iterateOnGoalsAndRemoveNonPersistent(
 
         if (pLookForAnActionOutputInfosPtr != nullptr)
           pLookForAnActionOutputInfosPtr->setType(PlannerStepType::FINISEHD_ON_FAILURE);
+
+        if (pLookForAnActionOutputInfosPtr != nullptr)
+          pLookForAnActionOutputInfosPtr->notifyNotSatisfiedGoal(*itGoal);
       }
       else
       {

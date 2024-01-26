@@ -31,9 +31,28 @@ PossibleEffect _merge(PossibleEffect pEff1,
   return PossibleEffect::NOT_SATISFIED;
 }
 
+struct PlanCost
+{
+  bool success = true;
+  std::size_t nbOfGoalsNotSatisfied = 0;
+  std::size_t nbOfGoalsSatisfied = 0;
+  std::size_t nbOfActionDones = 0;
+
+  bool isBetterThan(const PlanCost& pOther) const
+  {
+    if (success != pOther.success)
+      return success;
+    if (nbOfGoalsNotSatisfied != pOther.nbOfGoalsNotSatisfied)
+      return nbOfGoalsNotSatisfied > pOther.nbOfGoalsNotSatisfied;
+    if (nbOfGoalsSatisfied != pOther.nbOfGoalsSatisfied)
+      return nbOfGoalsSatisfied > pOther.nbOfGoalsSatisfied;
+    return nbOfActionDones < pOther.nbOfActionDones;
+  }
+};
+
 struct PotentialNextActionComparisonCache
 {
-  std::size_t currentCost;
+  PlanCost currentCost;
   std::list<const ProblemModification*> effectsWithWorseCosts;
 };
 
@@ -485,37 +504,38 @@ void _updateProblemForNextPotentialPlannerResult(
 }
 
 
-std::size_t _extractPlanCost(
+PlanCost _extractPlanCost(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    Historical* pGlobalHistorical)
+    Historical* pGlobalHistorical,
+    LookForAnActionOutputInfos& pLookForAnActionOutputInfos)
 {
-  static const std::size_t bigCostToAddInCaseOfFailure = 1000;
+  PlanCost res;
   const bool tryToDoMoreOptimalSolution = false;
   std::set<std::string> actionAlreadyInPlan;
-  std::size_t res = 0;
-  LookForAnActionOutputInfos lookForAnActionOutputInfos;
   while (!pProblem.goalStack.goals().empty())
   {
     auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, tryToDoMoreOptimalSolution,
-                                                     pNow, pGlobalHistorical, &lookForAnActionOutputInfos);
+                                                     pNow, pGlobalHistorical, &pLookForAnActionOutputInfos);
     if (!onStepOfPlannerResult)
-    {
-      res += bigCostToAddInCaseOfFailure;
       break;
-    }
-    ++res;
+    ++res.nbOfActionDones;
     const auto& actionToDoStr = onStepOfPlannerResult->actionInstance.toStr();
     if (actionAlreadyInPlan.count(actionToDoStr) > 0)
     {
-      res += bigCostToAddInCaseOfFailure;
+      res.success = false;
       break;
     }
     actionAlreadyInPlan.insert(actionToDoStr);
     _updateProblemForNextPotentialPlannerResult(pProblem, *onStepOfPlannerResult, pDomain, pNow, pGlobalHistorical,
-                                                &lookForAnActionOutputInfos);
+                                                &pLookForAnActionOutputInfos);
   }
+
+  if (pLookForAnActionOutputInfos.getType() == PlannerStepType::FINISEHD_ON_FAILURE)
+    res.success = false;
+  res.nbOfGoalsNotSatisfied = pLookForAnActionOutputInfos.nbOfNotSatisfiedGoals();
+  res.nbOfGoalsSatisfied = pLookForAnActionOutputInfos.nbOfSatisfiedGoals();
   return res;
 }
 
@@ -540,29 +560,30 @@ bool _isMoreOptimalNextAction(
     OneStepOfPlannerResult oneStepOfPlannerResult2(pCurrentNextAction.actionId, pCurrentNextAction.parameters, {}, 0);
     std::unique_ptr<std::chrono::steady_clock::time_point> now;
 
-    std::size_t newCost = 0;
-    if (!newCost)
+    PlanCost newCost;
     {
       auto localProblem1 = pProblem;
-      _updateProblemForNextPotentialPlannerResult(localProblem1, oneStepOfPlannerResult1, pDomain, now, nullptr, nullptr);
-      newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr);
+      LookForAnActionOutputInfos lookForAnActionOutputInfos;
+      _updateProblemForNextPotentialPlannerResult(localProblem1, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
+      newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr, lookForAnActionOutputInfos);
     }
 
     if (!pPotentialNextActionComparisonCacheOpt)
     {
       auto localProblem2 = pProblem;
-      _updateProblemForNextPotentialPlannerResult(localProblem2, oneStepOfPlannerResult2, pDomain, now, nullptr, nullptr);
+      LookForAnActionOutputInfos lookForAnActionOutputInfos;
+      _updateProblemForNextPotentialPlannerResult(localProblem2, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       pPotentialNextActionComparisonCacheOpt = PotentialNextActionComparisonCache();
-      pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr);
+      pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr, lookForAnActionOutputInfos);
     }
 
-    if (newCost < pPotentialNextActionComparisonCacheOpt->currentCost)
+    if (newCost.isBetterThan(pPotentialNextActionComparisonCacheOpt->currentCost))
     {
       pPotentialNextActionComparisonCacheOpt->currentCost = newCost;
       pPotentialNextActionComparisonCacheOpt->effectsWithWorseCosts.push_back(&pCurrentNextAction.actionPtr->effect);
       return true;
     }
-    if (pPotentialNextActionComparisonCacheOpt->currentCost < newCost)
+    if (pPotentialNextActionComparisonCacheOpt->currentCost.isBetterThan(newCost))
     {
       pPotentialNextActionComparisonCacheOpt->effectsWithWorseCosts.push_back(&pNewPotentialNextAction.actionPtr->effect);
       return false;
