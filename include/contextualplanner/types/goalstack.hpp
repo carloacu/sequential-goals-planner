@@ -18,6 +18,7 @@ struct Domain;
 struct ProblemModification;
 struct SetOfInferences;
 struct OneStepOfPlannerResult;
+struct LookForAnActionOutputInfos;
 
 
 /// Current world, goal for the world and historical of actions done.
@@ -31,17 +32,17 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Notify that an action has been done.
    * @param[in] pOnStepOfPlannerResult Planner result step that motivated this action.
-   * @param pEffect Effect of the action done.
    * @param pNow Current time.
    * @param pGoalsToAdd Priorities to goals to add.
+   * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
    * @param pGoalsToAddInCurrentPriority Goals to add in current priority.
    */
   void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
-                        const std::unique_ptr<WorldStateModification>& pEffect,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                         const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                         const std::vector<Goal>* pGoalsToAddInCurrentPriority,
-                        const WorldState& pWorldState);
+                        const WorldState& pWorldState,
+                        LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /// Be notified when goals changed.
   cpstd::observable::ObservableUnsafe<void (const std::map<int, std::vector<Goal>>&)> onGoalsChanged{};
@@ -60,10 +61,12 @@ struct CONTEXTUALPLANNER_API GoalStack
    * @brief Iterate on goals and remove non persistent goals.
    * @param pManageGoal Callback to manage the goal. If the callback returns true we stop the iteration.
    * @param pNow Current time.
+   * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
    */
   void iterateOnGoalsAndRemoveNonPersistent(const std::function<bool (Goal&, int)>& pManageGoal,
                                             const WorldState& pWorldState,
-                                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+                                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                            LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /// Default priority.
   static const int defaultPriority;
@@ -202,21 +205,25 @@ private:
    * @brief Remove the first goals that are already satisfied.
    * @param[out] pWhatChanged Get what changed.
    * @param[in] pNow Current time.
+   * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
    */
   void _removeFirstGoalsThatAreAlreadySatisfied(WhatChanged& pWhatChanged,
                                                 const WorldState& pWorldState,
-                                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+                                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                                LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /**
    * @brief Iterate on goals and remove non persistent goals.
    * @param[out] pWhatChanged Get what changed.
    * @param pManageGoal Callback to manage the goal. If the callback returns true we stop the iteration.
    * @param[in] pNow Current time.
+   * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
    */
   void _iterateOnGoalsAndRemoveNonPersistent(WhatChanged& pWhatChanged,
                                              const std::function<bool (Goal&, int)>& pManageGoal,
                                              const WorldState& pWorldState,
-                                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+                                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                             LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /// Get the priority of the goal in top of the stack.
   int _getCurrentPriority(const WorldState& pWorldState) const;

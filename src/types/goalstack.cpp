@@ -5,6 +5,8 @@
 #include <contextualplanner/types/onestepofplannerresult.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/util.hpp>
+#include <contextualplanner/types/lookforanactionoutputinfos.hpp>
+
 
 namespace cp
 {
@@ -21,11 +23,11 @@ GoalStack::GoalStack(const GoalStack& pOther)
 
 
 void GoalStack::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerResult,
-                                 const std::unique_ptr<WorldStateModification>& pEffect,
                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                  const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                                  const std::vector<Goal>* pGoalsToAddInCurrentPriority,
-                                 const WorldState& pWorldState)
+                                 const WorldState& pWorldState,
+                                 LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
   WhatChanged whatChanged;
 
@@ -34,11 +36,11 @@ void GoalStack::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerR
   if (pOnStepOfPlannerResult.fromGoal && pOnStepOfPlannerResult.fromGoal->isOneStepTowards())
   {
     auto isNotGoalThatHasDoneOneStepForward = [&](const Goal& pGoal, int){ return pGoal != *pOnStepOfPlannerResult.fromGoal; };
-    _iterateOnGoalsAndRemoveNonPersistent(whatChanged, isNotGoalThatHasDoneOneStepForward, pWorldState, pNow);
+    _iterateOnGoalsAndRemoveNonPersistent(whatChanged, isNotGoalThatHasDoneOneStepForward, pWorldState, pNow, pLookForAnActionOutputInfosPtr);
   }
   else // Else remove only the first goals already satisfied
   {
-    _removeFirstGoalsThatAreAlreadySatisfied(whatChanged, pWorldState, pNow);
+    _removeFirstGoalsThatAreAlreadySatisfied(whatChanged, pWorldState, pNow, pLookForAnActionOutputInfosPtr);
   }
 
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
@@ -52,10 +54,11 @@ void GoalStack::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerR
 
 void GoalStack::_removeFirstGoalsThatAreAlreadySatisfied(WhatChanged& pWhatChanged,
                                                          const WorldState& pWorldState,
-                                                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                                                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                                         LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
   auto alwaysTrue = [&](const Goal&, int){ return true; };
-  _iterateOnGoalsAndRemoveNonPersistent(pWhatChanged, alwaysTrue, pWorldState, pNow);
+  _iterateOnGoalsAndRemoveNonPersistent(pWhatChanged, alwaysTrue, pWorldState, pNow, pLookForAnActionOutputInfosPtr);
 }
 
 
@@ -63,8 +66,12 @@ void GoalStack::_iterateOnGoalsAndRemoveNonPersistent(
     WhatChanged& pWhatChanged,
     const std::function<bool(Goal&, int)>& pManageGoal,
     const WorldState& pWorldState,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
+  if (pLookForAnActionOutputInfosPtr != nullptr)
+    pLookForAnActionOutputInfosPtr->setType(PlannerStepType::FINISHED_ON_SUCCESS);
+
   bool isCurrentlyActiveGoal = true;
   for (auto itGoalsGroup = _goals.end(); itGoalsGroup != _goals.begin(); )
   {
@@ -84,13 +91,27 @@ void GoalStack::_iterateOnGoalsAndRemoveNonPersistent(
         _currentGoalPtr = &*itGoal;
         // Check if we are still in this goal
         if (pManageGoal(*itGoal, itGoalsGroup->first))
+        {
+          if (pLookForAnActionOutputInfosPtr != nullptr)
+            pLookForAnActionOutputInfosPtr->setType(PlannerStepType::IN_PROGRESS);
           return;
+        }
         isCurrentlyActiveGoal = false;
+
+        if (pLookForAnActionOutputInfosPtr != nullptr)
+          pLookForAnActionOutputInfosPtr->setType(PlannerStepType::FINISEHD_ON_FAILURE);
       }
-      else if (_currentGoalPtr == &*itGoal)
+      else
       {
-        isCurrentlyActiveGoal = false;
+        if (pLookForAnActionOutputInfosPtr != nullptr && pLookForAnActionOutputInfosPtr->getType() != PlannerStepType::FINISEHD_ON_FAILURE)
+          pLookForAnActionOutputInfosPtr->setType(PlannerStepType::FINISHED_ON_SUCCESS);
+
+        if (pLookForAnActionOutputInfosPtr != nullptr)
+          pLookForAnActionOutputInfosPtr->notifySatisfiedGoal(*itGoal);
+        if (_currentGoalPtr == &*itGoal)
+          isCurrentlyActiveGoal = false;
       }
+
 
       if (itGoal->isPersistent())
       {
@@ -107,6 +128,7 @@ void GoalStack::_iterateOnGoalsAndRemoveNonPersistent(
     if (itGoalsGroup->second.empty())
       itGoalsGroup = _goals.erase(itGoalsGroup);
   }
+
   // If a goal was activated, but it is not anymore, and we did not find any other active goal
   // then we do not consider anymore the previously activited goal as an activated goal
   if (!isCurrentlyActiveGoal)
@@ -156,10 +178,12 @@ const Goal* GoalStack::getCurrentGoalPtr() const
 void GoalStack::iterateOnGoalsAndRemoveNonPersistent(
     const std::function<bool(Goal&, int)>& pManageGoal,
     const WorldState& pWorldState,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
   WhatChanged whatChanged;
-  _iterateOnGoalsAndRemoveNonPersistent(whatChanged, pManageGoal, pWorldState, pNow);
+  _iterateOnGoalsAndRemoveNonPersistent(whatChanged, pManageGoal, pWorldState, pNow,
+                                        pLookForAnActionOutputInfosPtr);
   _notifyWhatChanged(whatChanged, pNow);
 }
 
@@ -374,7 +398,7 @@ void GoalStack::removeFirstGoalsThatAreAlreadySatisfied(const WorldState& pWorld
                                                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
-  _removeFirstGoalsThatAreAlreadySatisfied(whatChanged, pWorldState, pNow);
+  _removeFirstGoalsThatAreAlreadySatisfied(whatChanged, pWorldState, pNow, nullptr);
   _notifyWhatChanged(whatChanged, pNow);
 }
 

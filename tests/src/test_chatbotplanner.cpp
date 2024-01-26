@@ -2517,6 +2517,49 @@ void _satisfyGoalWithSuperiorOperator()
 }
 
 
+
+void _checkOutputValueOfLookForAnActionToDo()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr(_fact_a)));
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_a)});
+
+  {
+    cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
+    auto res = cp::lookForAnActionToDo(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
+    assert(res.operator bool());
+    assert_eq(cp::PlannerStepType::IN_PROGRESS, lookForAnActionOutputInfos.getType());
+    assert_eq<std::size_t>(0, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
+  }
+
+  {
+    problem.worldState.addFact(cp::Fact(_fact_a), problem.goalStack, setOfInferencesMap, now);
+    cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
+    auto res = cp::lookForAnActionToDo(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
+    assert(!res.operator bool());
+    assert_eq(cp::PlannerStepType::FINISHED_ON_SUCCESS, lookForAnActionOutputInfos.getType());
+    assert_eq<std::size_t>(1, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
+  }
+
+  {
+    _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+    cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
+    auto res = cp::lookForAnActionToDo(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
+    assert(!res.operator bool());
+    assert_eq(cp::PlannerStepType::FINISEHD_ON_FAILURE, lookForAnActionOutputInfos.getType());
+    assert_eq<std::size_t>(0, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
+  }
+
+}
+
+
+
 }
 
 
@@ -2618,6 +2661,7 @@ int main(int argc, char *argv[])
   _checkFilterFactInCondition();
   _checkFilterFactInConditionAndThenPropagate();
   _satisfyGoalWithSuperiorOperator();
+  _checkOutputValueOfLookForAnActionToDo();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

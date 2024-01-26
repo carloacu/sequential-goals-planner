@@ -447,14 +447,15 @@ void _notifyActionDone(Problem& pProblem,
                        const std::unique_ptr<WorldStateModification>& pEffect,
                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                        const std::map<int, std::vector<Goal>>* pGoalsToAdd,
-                       const std::vector<Goal>* pGoalsToAddInCurrentPriority)
+                       const std::vector<Goal>* pGoalsToAddInCurrentPriority,
+                       LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
   pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInstance.actionId);
 
   pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pProblem.goalStack, pSetOfInferences, pNow);
 
-  pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pEffect, pNow, pGoalsToAdd,
-                                      pGoalsToAddInCurrentPriority, pProblem.worldState);
+  pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pNow, pGoalsToAdd,
+                                      pGoalsToAddInCurrentPriority, pProblem.worldState, pLookForAnActionOutputInfosPtr);
 }
 
 void _updateProblemForNextPotentialPlannerResult(
@@ -462,7 +463,8 @@ void _updateProblemForNextPotentialPlannerResult(
     const OneStepOfPlannerResult& pOneStepOfPlannerResult,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    Historical* pGlobalHistorical)
+    Historical* pGlobalHistorical,
+    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
   auto itAction = pDomain.actions().find(pOneStepOfPlannerResult.actionInstance.actionId);
   if (itAction != pDomain.actions().end())
@@ -471,7 +473,8 @@ void _updateProblemForNextPotentialPlannerResult(
       pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInstance.actionId);
     auto& setOfInferences = pDomain.getSetOfInferences();
     _notifyActionDone(pProblem, setOfInferences, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
-                      &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
+                      &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
+                      pLookForAnActionOutputInfosPtr);
 
     if (itAction->second.effect.potentialWorldStateModification)
     {
@@ -492,10 +495,11 @@ std::size_t _extractPlanCost(
   const bool tryToDoMoreOptimalSolution = false;
   std::set<std::string> actionAlreadyInPlan;
   std::size_t res = 0;
+  LookForAnActionOutputInfos lookForAnActionOutputInfos;
   while (!pProblem.goalStack.goals().empty())
   {
     auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, tryToDoMoreOptimalSolution,
-                                                     pNow, pGlobalHistorical);
+                                                     pNow, pGlobalHistorical, &lookForAnActionOutputInfos);
     if (!onStepOfPlannerResult)
     {
       res += bigCostToAddInCaseOfFailure;
@@ -509,7 +513,8 @@ std::size_t _extractPlanCost(
       break;
     }
     actionAlreadyInPlan.insert(actionToDoStr);
-    _updateProblemForNextPotentialPlannerResult(pProblem, *onStepOfPlannerResult, pDomain, pNow, pGlobalHistorical);
+    _updateProblemForNextPotentialPlannerResult(pProblem, *onStepOfPlannerResult, pDomain, pNow, pGlobalHistorical,
+                                                &lookForAnActionOutputInfos);
   }
   return res;
 }
@@ -539,14 +544,14 @@ bool _isMoreOptimalNextAction(
     if (!newCost)
     {
       auto localProblem1 = pProblem;
-      _updateProblemForNextPotentialPlannerResult(localProblem1, oneStepOfPlannerResult1, pDomain, now, nullptr);
+      _updateProblemForNextPotentialPlannerResult(localProblem1, oneStepOfPlannerResult1, pDomain, now, nullptr, nullptr);
       newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr);
     }
 
     if (!pPotentialNextActionComparisonCacheOpt)
     {
       auto localProblem2 = pProblem;
-      _updateProblemForNextPotentialPlannerResult(localProblem2, oneStepOfPlannerResult2, pDomain, now, nullptr);
+      _updateProblemForNextPotentialPlannerResult(localProblem2, oneStepOfPlannerResult2, pDomain, now, nullptr, nullptr);
       pPotentialNextActionComparisonCacheOpt = PotentialNextActionComparisonCache();
       pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr);
     }
@@ -651,7 +656,8 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    const Historical* pGlobalHistorical)
+    const Historical* pGlobalHistorical,
+    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
   pProblem.worldState.refreshCacheIfNeeded(pDomain);
 
@@ -686,7 +692,8 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     return false;
   };
 
-  pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(tryToFindAnActionTowardGoal, pProblem.worldState, pNow);
+  pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(tryToFindAnActionTowardGoal, pProblem.worldState, pNow,
+                                                          pLookForAnActionOutputInfosPtr);
   return res;
 }
 
@@ -702,7 +709,8 @@ void notifyActionDone(Problem& pProblem,
   {
     auto& setOfInferences = pDomain.getSetOfInferences();
     _notifyActionDone(pProblem, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
-                      &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority);
+                      &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
+                      nullptr);
   }
 }
 
@@ -736,7 +744,7 @@ std::list<ActionInstance> lookForResolutionPlan(
         break;
       ++itAlreadyFoundAction->second;
     }
-    _updateProblemForNextPotentialPlannerResult(pProblem, *onStepOfPlannerResult, pDomain, pNow, pGlobalHistorical);
+    _updateProblemForNextPotentialPlannerResult(pProblem, *onStepOfPlannerResult, pDomain, pNow, pGlobalHistorical, nullptr);
   }
   return res;
 }

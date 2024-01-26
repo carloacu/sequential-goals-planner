@@ -14,6 +14,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/goalstack.hpp
     include/contextualplanner/types/historical.hpp
     include/contextualplanner/types/inference.hpp
+    include/contextualplanner/types/lookforanactionoutputinfos.hpp
     include/contextualplanner/types/onestepofplannerresult.hpp
     include/contextualplanner/types/problem.hpp
     include/contextualplanner/types/problemmodification.hpp
@@ -46,6 +47,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/goalstack.cpp
     src/types/historical.cpp
     src/types/inference.cpp
+    src/types/lookforanactionoutputinfos.cpp
     src/types/onestepofplannerresult.cpp
     src/types/problemmodification.cpp
     src/types/setofinferences.cpp

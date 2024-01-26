@@ -8,7 +8,7 @@
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/onestepofplannerresult.hpp>
 #include <contextualplanner/types/problem.hpp>
-
+#include <contextualplanner/types/lookforanactionoutputinfos.hpp>
 
 namespace cp
 {
@@ -23,6 +23,7 @@ namespace cp
  * @param[in, opt] pGlobalHistorical A historical to give more priority to an action less frequently used.<br/>
  * Note that the problem already have a historical. The problem historical has more priority than this historical.<br/>
  * This historical can be useful if you have different problem instances and you want to favorise the action less freqently used at a global scope.
+ * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
  * @return One step of the planner containing the next action to do, his parameters and information about the goal that motivated that action.
  */
 CONTEXTUALPLANNER_API
@@ -31,7 +32,8 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    const Historical* pGlobalHistorical = nullptr);
+    const Historical* pGlobalHistorical = nullptr,
+    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr = nullptr);
 
 
 /**
