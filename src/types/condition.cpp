@@ -230,15 +230,6 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
   return true;
 }
 
-bool ConditionNode::canBeTrue() const
-{
-  if (leftOperand && !leftOperand->canBeTrue())
-    return false;
-  if (rightOperand && !rightOperand->canBeTrue())
-    return false;
-  return true;
-}
-
 
 bool ConditionNode::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,

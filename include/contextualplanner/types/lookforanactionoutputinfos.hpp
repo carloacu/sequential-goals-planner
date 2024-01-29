@@ -2,6 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_LOOKFORANACTIONOUTPUTINFOS_HPP
 
 #include <list>
+#include <optional>
 #include <set>
 #include "../util/api.hpp"
 #include <contextualplanner/types/goal.hpp>
@@ -29,12 +30,14 @@ struct LookForAnActionOutputInfos
   void notifyNotSatisfiedGoal(const Goal& pGoal);
   std::size_t nbOfNotSatisfiedGoals() const { return _nbOfNonPersistentGoalsNotSatisfied; }
   std::size_t nbOfSatisfiedGoals() const { return _nbOfNonPersistentGoalsSatisfied + _persistentGoalsSatisfied.size(); }
+  bool isFirstGoalInSuccess() const { return _firstGoalInSuccess && *_firstGoalInSuccess; }
 
 private:
   PlannerStepType _type;
   std::size_t _nbOfNonPersistentGoalsNotSatisfied;
   std::size_t _nbOfNonPersistentGoalsSatisfied;
   std::set<const Goal*> _persistentGoalsSatisfied;
+  std::optional<bool> _firstGoalInSuccess;
 };
 
 } // !cp

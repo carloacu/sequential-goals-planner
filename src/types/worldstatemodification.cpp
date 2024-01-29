@@ -82,8 +82,6 @@ struct WorldStateModificationNode : public WorldStateModification
         (rightOperand && rightOperand->hasFact(pFact));
   }
 
-  bool canModifySomethingInAWorld() const override;
-
   bool isOnlyASetOfFacts() const override
   {
     if (nodeType == WorldStateModificationNodeType::SET ||
@@ -174,11 +172,6 @@ struct WorldStateModificationFact : public WorldStateModification
     return factOptional.fact == pFact;
   }
 
-  bool canModifySomethingInAWorld() const override
-  {
-    return !factOptional.fact.isUnreachable();
-  }
-
   bool isOnlyASetOfFacts() const override { return true; }
 
   void replaceFact(const cp::Fact& pOldFact,
@@ -241,7 +234,6 @@ struct WorldStateModificationNumber : public WorldStateModification
   }
 
   bool hasFact(const cp::Fact& pFact) const override { return false; }
-  bool canModifySomethingInAWorld() const override { return false; }
   bool isOnlyASetOfFacts() const override { return false; }
 
   void replaceFact(const cp::Fact& pOldFact,
@@ -284,32 +276,6 @@ const WorldStateModificationFact* _toWmFact(const WorldStateModification& pOther
 const WorldStateModificationNumber* _toWmNumber(const WorldStateModification& pOther)
 {
   return static_cast<const WorldStateModificationNumber*>(&pOther);
-}
-
-
-bool WorldStateModificationNode::canModifySomethingInAWorld() const
-{
-  if (nodeType == WorldStateModificationNodeType::AND)
-  {
-    return (leftOperand && leftOperand->canModifySomethingInAWorld()) ||
-        (rightOperand && rightOperand->canModifySomethingInAWorld());
-  }
-
-  if (nodeType == WorldStateModificationNodeType::SET && leftOperand && rightOperand)
-  {
-    auto* leftFactPtr = _toWmFact(*leftOperand);
-    auto* rightFactPtr = _toWmFact(*rightOperand);
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
-      return !leftFactPtr->factOptional.fact.isUnreachable();
-  }
-
-  if (nodeType == WorldStateModificationNodeType::FOR_ALL)
-    return rightOperand && rightOperand->canModifySomethingInAWorld();
-
-  if (nodeType == WorldStateModificationNodeType::ADD)
-    return true;
-
-  return false;
 }
 
 void WorldStateModificationNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,

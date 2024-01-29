@@ -72,9 +72,6 @@ struct CONTEXTUALPLANNER_API Condition
                           const WorldState& pWorldState,
                           const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const = 0;
 
-  /// Check if this condition can be true for a world state.
-  virtual bool canBeTrue() const = 0;
-
   /**
    * @brief Check if this condition is true for a specific world state.
    * @param[in] pWorldState World state to consider.
@@ -160,7 +157,6 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState& pWorldState,
                   const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const override;
-  bool canBeTrue() const override;
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -202,7 +198,6 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState&,
                   const std::map<std::string, std::set<std::string>>&) const override { return pFactCallback(factOptional); }
-  bool canBeTrue() const override { return factOptional.isFactNegated || !factOptional.fact.isUnreachable(); }
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -242,7 +237,6 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
                   const WorldState&,
                   const std::map<std::string, std::set<std::string>>&) const override { return true; }
-  bool canBeTrue() const override { return true; }
   bool isTrue(const WorldState&,
               const std::set<Fact>&,
               const std::set<Fact>&,

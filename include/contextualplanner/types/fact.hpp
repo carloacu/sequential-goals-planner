@@ -63,14 +63,6 @@ struct CONTEXTUALPLANNER_API Fact
   bool isPunctual() const;
 
   /**
-   * @brief Is it an unreachable fact.<br/>
-   * An unreachable fact is a fact that is neither considered punctually nor stored in the world.<br/>
-   * But an ureachable fact is considered for planning deduction.
-   * @return True if the fact is unreachable.
-   */
-  bool isUnreachable() const;
-
-  /**
    * @brief hasArgumentOrValue Does this fact contains a specific string in his arguments or in his value.
    * @param pArgumentOrValue[in] String that can match in the arguments or in the value of this fact.
    * @return True if the string matches in the arguments or in the value of this fact, false otherwise.
@@ -201,8 +193,6 @@ struct CONTEXTUALPLANNER_API Fact
   const static FactOptional anyValueFact;
   /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)
   static std::string punctualPrefix;
-  /// Prefix to detect a unreachable fact. (= fact that is neither considered punctually nor stored in the world but that can be used for deductions)
-  static std::string unreachablePrefix;
 };
 
 } // !cp

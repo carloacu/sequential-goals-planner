@@ -22,7 +22,6 @@ const std::string _fact_d = "fact_d";
 const std::string _fact_e = "fact_e";
 const std::string _fact_f = "fact_f";
 const std::string _fact_g = "fact_g";
-const std::string _fact_unreachable_u1 = cp::Fact::unreachablePrefix + "fact_u1";
 const std::string _fact_punctual_p1 = cp::Fact::punctualPrefix + "fact_p1";
 const std::string _fact_punctual_p2 = cp::Fact::punctualPrefix + "fact_p2";
 const std::string _fact_punctual_p3 = cp::Fact::punctualPrefix + "fact_p3";
@@ -1519,36 +1518,6 @@ void _checkInferenceThatAddAGoal()
 }
 
 
-void _checkThatUnReachableCannotTriggeranInference()
-{
-  const std::string action1 = "action1";
-  const std::string inference1 = "inference1";
-
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr(_fact_unreachable_u1)));
-
-  cp::SetOfInferences setOfInferences(cp::Inference(cp::Condition::fromStr(_fact_unreachable_u1),
-                                                    cp::WorldStateModification::fromStr(_fact_a)));
-  cp::Domain domain(std::move(actions), setOfInferences);
-
-  cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_a});
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
-  assert_true(!problem.worldState.hasFact(_fact_unreachable_u1));
-  assert_true(!problem.worldState.hasFact(_fact_a));
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
-  // check inferences removal
-  domain.removeSetOfInferences(cp::Domain::setOfInferencesIdFromConstructor);
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
-  _setGoalsForAPriority(problem, {_fact_a});
-  domain.addSetOfInferences(setOfInferences);
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
-  domain.clearInferences();
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
-}
-
-
 
 void _testQuiz()
 {
@@ -2555,7 +2524,56 @@ void _checkOutputValueOfLookForAnActionToDo()
     assert_eq(cp::PlannerStepType::FINISEHD_ON_FAILURE, lookForAnActionOutputInfos.getType());
     assert_eq<std::size_t>(0, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
   }
+}
 
+
+void _hardProbleThatNeedsToBeSmart()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  const std::string action4 = "action4";
+  const std::string action5 = "action5";
+  const std::string action6 = "action6";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1({}, cp::WorldStateModification::fromStr(_fact_a + "=obj"));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2(cp::Condition::fromStr(_fact_a + "=val1"),
+                        cp::WorldStateModification::fromStr(_fact_b + " & " + _fact_c));
+  actions.emplace(action2, actionObj2);
+
+  cp::Action actionObj3(cp::Condition::fromStr(_fact_a + "=val2"),
+                        cp::WorldStateModification::fromStr(_fact_b + " & " + _fact_c));
+  actions.emplace(action3, actionObj3);
+
+  cp::Action actionObj4(cp::Condition::fromStr(_fact_a + "=val3 & !" + _fact_c),
+                        cp::WorldStateModification::fromStr("!" + _fact_d + " & " + _fact_f));
+  actions.emplace(action4, actionObj4);
+
+  cp::Action actionObj5(cp::Condition::fromStr(_fact_a + "=val4"),
+                        cp::WorldStateModification::fromStr(_fact_b + " & " + _fact_c));
+  actions.emplace(action5, actionObj5);
+
+  cp::Action actionObj6(cp::Condition::fromStr(_fact_b + " & !" + _fact_d),
+                        cp::WorldStateModification::fromStr(_fact_e));
+  actions.emplace(action6, actionObj6);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact(_fact_d), problem.goalStack, setOfInferencesMap, now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_e)});
+  assert_eq(action1 + "(obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action4, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action1 + "(obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action6, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
 }
 
 
@@ -2630,7 +2648,6 @@ int main(int argc, char *argv[])
   _checkInferenceAtEndOfAPlan();
   _checkInferenceInsideAPlan();
   _checkInferenceThatAddAGoal();
-  _checkThatUnReachableCannotTriggeranInference();
   _testQuiz();
   _testGetNotSatisfiedGoals();
   _testGoalUnderPersist();
@@ -2662,6 +2679,7 @@ int main(int argc, char *argv[])
   _checkFilterFactInConditionAndThenPropagate();
   _satisfyGoalWithSuperiorOperator();
   _checkOutputValueOfLookForAnActionToDo();
+  _hardProbleThatNeedsToBeSmart();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

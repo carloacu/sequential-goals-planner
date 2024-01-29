@@ -51,6 +51,8 @@ set(CHATBOTPLANNER_SRCS
     src/types/onestepofplannerresult.cpp
     src/types/problemmodification.cpp
     src/types/setofinferences.cpp
+    src/types/treeofalreadydonepaths.hpp
+    src/types/treeofalreadydonepaths.cpp
     src/types/worldstate.cpp
     src/types/worldstatecache.hpp
     src/types/worldstatecache.cpp

@@ -145,8 +145,6 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
 {
   for (const auto& currFact : pFacts)
   {
-    if (currFact.isUnreachable())
-      continue;
     if (currFact.isPunctual())
     {
       pWhatChanged.punctualFacts.insert(currFact);

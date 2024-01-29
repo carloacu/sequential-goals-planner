@@ -41,13 +41,6 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   /// Check if this object contains a fact or the negation of the fact.
   virtual bool hasFact(const cp::Fact& pFact) const = 0;
 
-  /**
-   * @brief Check if this object can modify something in the world.<br/>
-   * For example, if this object contains only unreachable facts we already know that it will never modify something in any world.
-   * @return True if this object can modify something in the world.
-   */
-  virtual bool canModifySomethingInAWorld() const = 0;
-
   /// Does this object only represents a set of facts.
   virtual bool isOnlyASetOfFacts() const = 0;
 
