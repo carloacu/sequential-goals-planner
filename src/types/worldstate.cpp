@@ -266,9 +266,9 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
 
 
 bool WorldState::modify(const std::unique_ptr<WorldStateModification>& pWsModif,
-                             GoalStack& pGoalStack,
-                             const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
-                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                        GoalStack& pGoalStack,
+                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
   _modify(whatChanged, pWsModif, pGoalStack, pNow);
