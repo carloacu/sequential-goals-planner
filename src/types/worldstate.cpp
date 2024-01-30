@@ -73,13 +73,13 @@ void WorldState::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlanner
   WhatChanged whatChanged;
   if (pEffect)
   {
-    if (pOnStepOfPlannerResult.actionInstance.parameters.empty())
+    if (pOnStepOfPlannerResult.actionInvocation.parameters.empty())
     {
       _modify(whatChanged, pEffect, pGoalStack, pNow);
     }
     else
     {
-      auto effect = pEffect->cloneParamSet(pOnStepOfPlannerResult.actionInstance.parameters);
+      auto effect = pEffect->cloneParamSet(pOnStepOfPlannerResult.actionInvocation.parameters);
       _modify(whatChanged, effect, pGoalStack, pNow);
     }
   }

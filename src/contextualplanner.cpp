@@ -480,7 +480,7 @@ void _notifyActionDone(Problem& pProblem,
                        const std::vector<Goal>* pGoalsToAddInCurrentPriority,
                        LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
-  pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInstance.actionId);
+  pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInvocation.actionId);
 
   pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pProblem.goalStack, pSetOfInferences, pNow);
 
@@ -496,11 +496,11 @@ void _updateProblemForNextPotentialPlannerResult(
     Historical* pGlobalHistorical,
     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
-  auto itAction = pDomain.actions().find(pOneStepOfPlannerResult.actionInstance.actionId);
+  auto itAction = pDomain.actions().find(pOneStepOfPlannerResult.actionInvocation.actionId);
   if (itAction != pDomain.actions().end())
   {
     if (pGlobalHistorical != nullptr)
-      pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInstance.actionId);
+      pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
     auto& setOfInferences = pDomain.getSetOfInferences();
     _notifyActionDone(pProblem, setOfInferences, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                       &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
@@ -508,7 +508,7 @@ void _updateProblemForNextPotentialPlannerResult(
 
     if (itAction->second.effect.potentialWorldStateModification)
     {
-      auto potentialEffect = itAction->second.effect.potentialWorldStateModification->cloneParamSet(pOneStepOfPlannerResult.actionInstance.parameters);
+      auto potentialEffect = itAction->second.effect.potentialWorldStateModification->cloneParamSet(pOneStepOfPlannerResult.actionInvocation.parameters);
       pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfInferences, pNow);
     }
   }
@@ -532,7 +532,7 @@ PlanCost _extractPlanCost(
     if (!onStepOfPlannerResult)
       break;
     ++res.nbOfActionDones;
-    const auto& actionToDoStr = onStepOfPlannerResult->actionInstance.toStr();
+    const auto& actionToDoStr = onStepOfPlannerResult->actionInvocation.toStr();
     if (actionAlreadyInPlan.count(actionToDoStr) > 0)
     {
       res.success = false;
@@ -772,7 +772,7 @@ void notifyActionDone(Problem& pProblem,
                       const OneStepOfPlannerResult& pOnStepOfPlannerResult,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  auto itAction = pDomain.actions().find(pOnStepOfPlannerResult.actionInstance.actionId);
+  auto itAction = pDomain.actions().find(pOnStepOfPlannerResult.actionInvocation.actionId);
   if (itAction != pDomain.actions().end())
   {
     auto& setOfInferences = pDomain.getSetOfInferences();
@@ -784,7 +784,7 @@ void notifyActionDone(Problem& pProblem,
 
 
 
-std::list<ActionInstance> lookForResolutionPlan(
+std::list<ActionInvocation> lookForResolutionPlan(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -792,15 +792,15 @@ std::list<ActionInstance> lookForResolutionPlan(
 {
   const bool tryToDoMoreOptimalSolution = true;
   std::map<std::string, std::size_t> actionAlreadyInPlan;
-  std::list<ActionInstance> res;
+  std::list<ActionInvocation> res;
   while (!pProblem.goalStack.goals().empty())
   {
     auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, tryToDoMoreOptimalSolution,
                                                      pNow, pGlobalHistorical);
     if (!onStepOfPlannerResult)
       break;
-    res.emplace_back(onStepOfPlannerResult->actionInstance);
-    const auto& actionToDoStr = onStepOfPlannerResult->actionInstance.toStr();
+    res.emplace_back(onStepOfPlannerResult->actionInvocation);
+    const auto& actionToDoStr = onStepOfPlannerResult->actionInvocation.toStr();
     auto itAlreadyFoundAction = actionAlreadyInPlan.find(actionToDoStr);
     if (itAlreadyFoundAction == actionAlreadyInPlan.end())
     {
@@ -819,7 +819,7 @@ std::list<ActionInstance> lookForResolutionPlan(
 
 
 
-std::string planToStr(const std::list<cp::ActionInstance>& pPlan,
+std::string planToStr(const std::list<ActionInvocation>& pPlan,
                       const std::string& pSep)
 {
   auto size = pPlan.size();

@@ -32,14 +32,14 @@ void planningExampleWithAPreconditionSolve()
   // Look for an action to do
   auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, true, now);
   assert(oneStepOfPlannerResult1.operator bool());
-  assert(sayHi == oneStepOfPlannerResult1->actionInstance.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  assert(sayHi == oneStepOfPlannerResult1->actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
   cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
 
   // Look for the next action to do
   auto oneStepOfPlannerResult2 = cp::lookForAnActionToDo(problem, domain, true, now);
   assert(oneStepOfPlannerResult2.operator bool());
-  assert(askHowICanHelp == oneStepOfPlannerResult2->actionInstance.actionId); // The action found is "ask_how_I_can_help"
+  assert(askHowICanHelp == oneStepOfPlannerResult2->actionInvocation.actionId); // The action found is "ask_how_I_can_help"
   // When the action is finished we notify the planner
   cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult2, now);
 

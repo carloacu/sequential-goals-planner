@@ -28,7 +28,7 @@ void planningDummyExample()
   // Look for an action to do
   auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, true, now);
   assert(oneStepOfPlannerResult1.operator bool());
-  assert(sayHi == oneStepOfPlannerResult1->actionInstance.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  assert(sayHi == oneStepOfPlannerResult1->actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
   cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
 

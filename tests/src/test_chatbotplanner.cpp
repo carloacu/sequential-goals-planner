@@ -150,7 +150,7 @@ std::string _lookForAnActionToDoStr(cp::Problem& pProblem,
                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                                     const cp::Historical* pGlobalHistorical = nullptr)
 {
-  return _lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical).actionInstance.toStr();
+  return _lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical).actionInvocation.toStr();
 }
 
 std::string _lookForAnActionToDoConstStr(const cp::Problem& pProblem,
@@ -158,7 +158,7 @@ std::string _lookForAnActionToDoConstStr(const cp::Problem& pProblem,
                                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                                          const cp::Historical* pGlobalHistorical = nullptr)
 {
-  return _lookForAnActionToDoConst(pProblem, pDomain, pNow, pGlobalHistorical).actionInstance.toStr();
+  return _lookForAnActionToDoConst(pProblem, pDomain, pNow, pGlobalHistorical).actionInvocation.toStr();
 }
 
 cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
@@ -307,7 +307,7 @@ void _removeGoalWhenItIsSatisfiedByAnAction()
   _setGoalsForAPriority(problem, {_fact_beHappy});
 
   auto plannerResult = _lookForAnActionToDoThenNotify(problem, domain);
-  assert_eq(_action_goodBoy, plannerResult.actionInstance.toStr());
+  assert_eq(_action_goodBoy, plannerResult.actionInvocation.toStr());
   assert_eq(_fact_beHappy, plannerResult.fromGoal->toStr());
   assert_eq(10, plannerResult.fromGoalPriority);
   assert_true(problem.goalStack.goals().empty());
@@ -1322,7 +1322,7 @@ void _factChangedNotification()
   assert_eq({}, factsChangedFromSubscription);
 
   auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
-  assert_eq<std::string>(_action_greet, plannerResult.actionInstance.actionId);
+  assert_eq<std::string>(_action_greet, plannerResult.actionInvocation.actionId);
   assert_eq({_fact_beginOfConversation, _fact_greeted}, factsChangedFromSubscription);
   assert_eq({}, punctualFactsAdded);
   assert_eq({_fact_greeted}, factsAdded);
@@ -1330,7 +1330,7 @@ void _factChangedNotification()
   assert_eq({}, factsRemoved);
 
   plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
-  assert_eq<std::string>(_action_checkIn, plannerResult.actionInstance.actionId);
+  assert_eq<std::string>(_action_checkIn, plannerResult.actionInvocation.actionId);
   assert_eq({_fact_beginOfConversation, _fact_greeted, _fact_checkedIn}, factsChangedFromSubscription);
   assert_eq({_fact_punctual_p1}, punctualFactsAdded);
   assert_eq({_fact_checkedIn}, factsAdded);
@@ -1626,7 +1626,7 @@ void _testGoalUnderPersist()
   {
     cp::Problem problem;
     problem.goalStack.addGoals({"persist(" + _fact_c + ")"}, problem.worldState, now, cp::GoalStack::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain));
     problem.goalStack.addGoals({cp::Goal(_fact_b, 0)}, problem.worldState, now, cp::GoalStack::defaultPriority);
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
@@ -1635,7 +1635,7 @@ void _testGoalUnderPersist()
   {
     cp::Problem problem;
     problem.goalStack.addGoals({"persist(" + _fact_c + ")"}, problem.worldState, now, cp::GoalStack::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
     problem.goalStack.addGoals({cp::Goal(_fact_b, 0)}, problem.worldState, now, cp::GoalStack::defaultPriority);
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
@@ -1644,7 +1644,7 @@ void _testGoalUnderPersist()
   {
     cp::Problem problem;
     problem.goalStack.addGoals({_fact_c}, problem.worldState, now, cp::GoalStack::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInstance.actionId);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
     problem.goalStack.addGoals({cp::Goal(_fact_b, 0)}, problem.worldState, now, cp::GoalStack::defaultPriority);
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
@@ -1654,7 +1654,7 @@ void _testGoalUnderPersist()
     cp::Problem problem;
     problem.goalStack.pushBackGoal({"persist(!" + _fact_e + ")"}, problem.worldState, now, cp::GoalStack::defaultPriority + 2);
     problem.goalStack.pushBackGoal(_fact_c, problem.worldState, now, cp::GoalStack::defaultPriority + 2);
-    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+    assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
     problem.goalStack.addGoals({cp::Goal(_fact_b, 1)}, problem.worldState, now, cp::GoalStack::defaultPriority);
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain, now));
@@ -1663,13 +1663,13 @@ void _testGoalUnderPersist()
     problem.worldState.removeFact(_fact_c, problem.goalStack, _emptySetOfInferences, now);
     problem.goalStack.pushBackGoal(_fact_c, problem.worldState, now, cp::GoalStack::defaultPriority + 2);
     auto plannerResult = _lookForAnActionToDo(problem, domain, now);
-    assert_eq(action2, plannerResult.actionInstance.actionId);
+    assert_eq(action2, plannerResult.actionInvocation.actionId);
 
     now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now() + std::chrono::minutes(5));
     cp::notifyActionDone(problem, domain, plannerResult, now);
 
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
-    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId); // Not action1 because it was inactive for too long
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId); // Not action1 because it was inactive for too long
   }
 
 }
@@ -1715,7 +1715,7 @@ void _oneStepTowards()
                       {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, problem.worldState, now);
   problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
   assert_eq(_action_greet, _lookForAnActionToDoStr(problem, domain, now));
-  assert_eq(_action_greet, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq(_action_greet, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
   assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, now));
   assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, now));
   problem.worldState.addFact(_fact_a, problem.goalStack, _emptySetOfInferences, now);
@@ -1752,11 +1752,11 @@ void _infrenceLinksFromManyInferencesSets()
   }
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
   problem.worldState.addFact(_fact_punctual_p1, problem.goalStack, setOfInferencesMap, now);
-  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
 }
 
 
@@ -1802,7 +1802,7 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
   });
   problem.goalStack.setGoals({{27, {_fact_a}}}, problem.worldState, now);
 
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
   assert_eq<std::size_t>(1u, goalsRemoved.size());
   assert_eq(_fact_a, *goalsRemoved.begin());
   onGoalsRemovedConnection.disconnect();
@@ -1929,11 +1929,11 @@ void _moveAndUngrabObject()
   problem.worldState.addFact(cp::Fact("locationOfObj(sweets)=kitchen"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)")});
 
-  assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(problem.worldState.hasFact(cp::Fact::fromStr("locationOfObj(sweets)=kitchen")));
 }
 
@@ -1985,16 +1985,16 @@ void _failToMoveAnUnknownObject()
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
   problem.worldState.addFact(cp::Fact("charging(me)"), problem.goalStack, setOfInferencesMap, now);
-  assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   problem.worldState.addFact(cp::Fact("locationOfObj(sweets)=kitchen"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)")});
-  assert_eq(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2034,17 +2034,17 @@ void _completeMovingObjectScenario()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets")});
 
-  assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   auto& setOfInferencesMap = domain.getSetOfInferences();
   problem.worldState.addFact(cp::Fact("locationOfObject(sweets)=kitchen"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets")});
-  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_navigate + "(targetPlace -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(targetPlace -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(bottle)=entrance & !grab(me)=bottle")});
-  assert_eq(actionWhereIsObject + "(aLocation -> entrance, object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(actionWhereIsObject + "(aLocation -> entrance, object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 void _inferenceWithANegatedFactWithParameter()
@@ -2086,22 +2086,22 @@ void _inferenceWithANegatedFactWithParameter()
   problem.worldState.addFact(cp::Fact("grab(me, sweets)"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("!grab(me, sweets)")});
 
-  assert_eq(actionUngrabBothHands + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(actionUngrabBothHands + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(problem.worldState.hasFact(cp::Fact::fromStr("grab(me, sweets)")));
 
   problem.worldState.addFact(cp::Fact("grabLeftHand(me)=bottle"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact("grab(me, bottle)"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("!grab(me, bottle)")});
-  assert_eq(actionUngrabLeftHand + "(object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(actionUngrabLeftHand + "(object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 
   problem.worldState.addFact(cp::Fact("grabLeftHand(me)=bottle"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact("grab(me, bottle)"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact("grabRightHand(me)=glass"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact("grab(me, glass)"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal("!grab(me, glass)")});
-  assert_eq(actionUngrabRightHand + "(object -> glass)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(actionUngrabRightHand + "(object -> glass)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(problem.worldState.hasFact(cp::Fact::fromStr("grab(me, glass)")));
 }
 
@@ -2130,9 +2130,9 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
   problem.worldState.addFact(cp::Fact(_fact_d), problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
 
-  assert_eq(action3, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action3, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2177,9 +2177,9 @@ void _linkWithAnyValueInCondition()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact(_fact_a + "=toto"), problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
-  assert_eq(action2 + "(aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action2 + "(aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2193,7 +2193,7 @@ void _removeAFactWithAnyValue()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact(_fact_b + "=toto"), problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_a)});
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(problem.worldState.hasFact(_fact_b + "=toto"));
 }
 
@@ -2221,7 +2221,7 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   problem.worldState.addFact(cp::Fact(_fact_c), problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
 
-  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.actionId);
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
 }
 
 
@@ -2284,9 +2284,9 @@ void _actionWithFactWithANegatedFact()
   problem.worldState.addFact(_fact_e, problem.goalStack, _emptySetOfInferences, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
 
-  assert_eq(action3, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action3, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2303,14 +2303,14 @@ void _negatedFactValueInWorldState()
   {
     cp::Problem problem;
     _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
-    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   }
 
   {
     cp::Problem problem;
     problem.worldState.addFact(_fact_a + "=b", problem.goalStack, _emptySetOfInferences, now);
     _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
-    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   }
 
   {
@@ -2318,8 +2318,8 @@ void _negatedFactValueInWorldState()
     problem.worldState.addFact(_fact_a + "=c", problem.goalStack, _emptySetOfInferences, now);
     _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
 
-    assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+    assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   }
 
   {
@@ -2327,8 +2327,8 @@ void _negatedFactValueInWorldState()
     problem.worldState.addFact(_fact_a + "!=b", problem.goalStack, _emptySetOfInferences, now);
     _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
 
-    assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+    assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+    assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   }
 }
 
@@ -2392,11 +2392,11 @@ void _doNextActionThatBringsToTheSmallerCost()
   auto secondProblem = problem;
   // Here it will will be quicker for the second goal if we ungrab the obj2 right away
   _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), cp::Goal("locationOfObject(obj2)=livingRoom & !grab(me)=obj2")});
-  assert_eq(_action_ungrab + "(object -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(_action_ungrab + "(object -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 
   // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
   _setGoalsForAPriority(secondProblem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), cp::Goal("locationOfObject(obj2)=kitchen & !grab(me)=obj2")});
-  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(secondProblem, domain, now).actionInstance.toStr());
+  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(secondProblem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2423,9 +2423,9 @@ void _checkFilterFactInCondition()
   problem.worldState.addFact(cp::Fact(_fact_b + "(obj1, loc1)"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact(_fact_b + "(obj1, loc2)"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
-  assert_eq<std::string>(action1 + "(obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>(action2 + "(loc -> loc1, obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq<std::string>(action1 + "(obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>(action2 + "(loc -> loc1, obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2460,10 +2460,10 @@ void _checkFilterFactInConditionAndThenPropagate()
   problem.worldState.addFact(cp::Fact(_fact_b + "(obj1, loc1)"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact(_fact_b + "(obj2, loc2)"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_d + "(loc2)")});
-  assert_eq(action1 + "(obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action2 + "(loc -> loc2, obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action3 + "(loc -> loc2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action1 + "(obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2 + "(loc -> loc2, obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action3 + "(loc -> loc2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2481,8 +2481,8 @@ void _satisfyGoalWithSuperiorOperator()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact(_fact_a + "=10"), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_a + ">50")});
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2568,12 +2568,12 @@ void _hardProbleThatNeedsToBeSmart()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact(_fact_d), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_e)});
-  assert_eq(action1 + "(obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action4, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action1 + "(obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq(action6, _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInstance.toStr());
+  assert_eq(action1 + "(obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action4, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action6, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 

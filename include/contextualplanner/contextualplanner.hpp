@@ -62,7 +62,7 @@ void notifyActionDone(Problem& pProblem,
  * @return List of all the actions to do with their parameters with values.
  */
 CONTEXTUALPLANNER_API
-std::list<ActionInstance> lookForResolutionPlan(
+std::list<ActionInvocation> lookForResolutionPlan(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -76,7 +76,7 @@ std::list<ActionInstance> lookForResolutionPlan(
  * @return The plan written in string.
  */
 CONTEXTUALPLANNER_API
-std::string planToStr(const std::list<cp::ActionInstance>& pPlan,
+std::string planToStr(const std::list<cp::ActionInvocation>& pPlan,
                       const std::string& pSep = ", ");
 
 } // !cp
