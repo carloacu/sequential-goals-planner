@@ -310,14 +310,18 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
       if (itAction != actions.end())
       {
         auto& action = itAction->second;
+        auto cpParentParameters = pParentParameters;
         auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currActionId);
         if (newTreePtr != nullptr)
           res = _merge(_lookForAPossibleDeduction(*newTreePtr, action.parameters, action.precondition,
-                                                  action.effect, pFactOptional, pParentParameters, pGoal,
+                                                  action.effect, pFactOptional, cpParentParameters, pGoal,
                                                   pProblem, pFactOptionalToSatisfy,
                                                   pDomain, pFactsAlreadychecked), res);
         if (res == PossibleEffect::SATISFIED)
+        {
+          pParentParameters = cpParentParameters;
           return res;
+        }
       }
     }
   }
