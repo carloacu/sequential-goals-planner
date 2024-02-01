@@ -66,6 +66,7 @@ void WorldState::operator=(const WorldState& pOther)
 
 void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                   const std::unique_ptr<WorldStateModification>& pEffect,
+                                  bool& pGoalChanged,
                                   GoalStack& pGoalStack,
                                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
@@ -84,7 +85,7 @@ void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlann
     }
   }
 
-  _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
+  _notifyWhatChanged(whatChanged, pGoalChanged, pGoalStack, pSetOfInferences, pNow);
 }
 
 
@@ -104,7 +105,8 @@ bool WorldState::addFacts(const FACTS& pFacts,
 {
   WhatChanged whatChanged;
   _addFacts(whatChanged, pFacts, pGoalStack, pNow);
-  _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
+  bool goalChanged = false;
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
@@ -132,7 +134,8 @@ bool WorldState::removeFacts(const FACTS& pFacts,
 {
   WhatChanged whatChanged;
   _removeFacts(whatChanged, pFacts, pGoalStack, pNow);
-  _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
+  bool goalChanged = false;
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
@@ -272,7 +275,8 @@ bool WorldState::modify(const std::unique_ptr<WorldStateModification>& pWsModif,
 {
   WhatChanged whatChanged;
   _modify(whatChanged, pWsModif, pGoalStack, pNow);
-  _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
+  bool goalChanged = false;
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
@@ -291,7 +295,8 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
     _cache->clear();
     WhatChanged whatChanged;
     pGoalStack._refresh(*this, pNow);
-    _notifyWhatChanged(whatChanged, pGoalStack, pSetOfInferences, pNow);
+    bool goalChanged = false;
+    _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
   }
 }
 
@@ -496,6 +501,7 @@ const std::set<Fact>& WorldState::removableFacts() const
 
 bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApplied,
                                        WhatChanged& pWhatChanged,
+                                       bool& pGoalChanged,
                                        GoalStack& pGoalStack,
                                        const std::set<InferenceId>& pInferenceIds,
                                        const std::map<InferenceId, Inference>& pInferences,
@@ -535,7 +541,8 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
               _modify(pWhatChanged, currInference.factsToModify, pGoalStack, pNow);
             }
           }
-          pGoalStack.addGoals(currInference.goalsToAdd, *this, pNow);
+          if (pGoalStack.addGoals(currInference.goalsToAdd, *this, pNow))
+            pGoalChanged = true;
           somethingChanged = true;
         }
       }
@@ -546,6 +553,7 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
 
 
 void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
+                                    bool& pGoalChanged,
                                     GoalStack& pGoalStack,
                                     const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
@@ -569,21 +577,21 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
         {
           auto it = condToReachableInferences.find(currAddedFact.name);
           if (it != condToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalStack, it->second, inferences, pNow))
+              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences, pNow))
             needAnotherLoop = true;
         }
         for (auto& currAddedFact : pWhatChanged.addedFacts)
         {
           auto it = condToReachableInferences.find(currAddedFact.name);
           if (it != condToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalStack, it->second, inferences, pNow))
+              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences, pNow))
             needAnotherLoop = true;
         }
         for (auto& currRemovedFact : pWhatChanged.removedFacts)
         {
           auto it = notCondToReachableInferences.find(currRemovedFact.name);
           if (it != notCondToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalStack, it->second, inferences, pNow))
+              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences, pNow))
             needAnotherLoop = true;
         }
       }

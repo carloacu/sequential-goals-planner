@@ -42,6 +42,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @brief Notify that an action has been done.
    * @param[in] pOneStepOfPlannerResult Planner result step that motivated this action.
    * @param[in] pEffect Effect of the done action.
+   * @param[out] pGoalChanged Set to true if the goal stack changed.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
    * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
@@ -49,6 +50,7 @@ struct CONTEXTUALPLANNER_API WorldState
    */
   void notifyActionDone(const ActionInvocationWithGoal& pOneStepOfPlannerResult,
                         const std::unique_ptr<WorldStateModification>& pEffect,
+                        bool& pGoalChanged,
                         GoalStack& pGoalStack,
                         const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -292,6 +294,7 @@ private:
    * @brief Try to apply some inferences according to what changed in the world state.
    * @param[in, out] pInferencesAlreadyApplied Cache of inferences that we already considered.
    * @param[in, out] pWhatChanged What changed in the world state.
+   * @param[out] pGoalChanged Set to true if the goal stack changed.
    * @param[in] pInferenceIds Inferences to consider.
    * @param[in] pInferences All the inferences.
    * @param[in] pNow Current time.
@@ -299,6 +302,7 @@ private:
    */
   bool _tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApplied,
                              WhatChanged& pWhatChanged,
+                             bool& pGoalChanged,
                              GoalStack& pGoalStack,
                              const std::set<InferenceId>& pInferenceIds,
                              const std::map<InferenceId, Inference>& pInferences,
@@ -306,13 +310,15 @@ private:
 
   /**
    * @brief Do inferences and raise the observables if some facts or goals changed.
-   * @param[in] pWhatChanged Get what changed.
+   * @param[in, out] pWhatChanged Get what changed.
+   * @param[out] pGoalChanged Set to true if the goal stack changed.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
    * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
    * @param[in] pNow Current time.
    */
   void _notifyWhatChanged(WhatChanged& pWhatChanged,
+                          bool& pGoalChanged,
                           GoalStack& pGoalStack,
                           const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);

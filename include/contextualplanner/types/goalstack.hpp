@@ -34,10 +34,12 @@ struct CONTEXTUALPLANNER_API GoalStack
    * @param[in] pOnStepOfPlannerResult Planner result step that motivated this action.
    * @param pNow Current time.
    * @param pGoalsToAdd Priorities to goals to add.
-   * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
    * @param pGoalsToAddInCurrentPriority Goals to add in current priority.
+   * @param[in] pWorldState World state to consider.
+   * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
+   * @return True, if the goal stack has changed.
    */
-  void notifyActionDone(const ActionInvocationWithGoal& pOneStepOfPlannerResult,
+  bool notifyActionDone(const ActionInvocationWithGoal& pOneStepOfPlannerResult,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                         const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                         const std::vector<Goal>* pGoalsToAddInCurrentPriority,
@@ -60,6 +62,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Iterate on goals and remove non persistent goals.
    * @param pManageGoal Callback to manage the goal. If the callback returns true we stop the iteration.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
    */
@@ -74,6 +77,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Set the goals.
    * @param pGoals Map of priority to the associated goals.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    */
   void setGoals(const std::map<int, std::vector<Goal>>& pGoals,
@@ -83,6 +87,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Set the goals.
    * @param pGoals Set of goals.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    * @param pPriority Priority of the goals.
    */
@@ -94,19 +99,23 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Add some goals.
    * @param pGoals Map of priority to the associated goals.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
+   * @return True, if the goal stack has changed.
    */
-  void addGoals(const std::map<int, std::vector<Goal>>& pGoals,
+  bool addGoals(const std::map<int, std::vector<Goal>>& pGoals,
                 const WorldState& pWorldState,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Add some goals.
    * @param pGoals Set of goals to add.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    * @param pPriority Priority of the goals to add.
+   * @return True, if the goal stack has changed.
    */
-  void addGoals(const std::vector<Goal>& pGoals,
+  bool addGoals(const std::vector<Goal>& pGoals,
                 const WorldState& pWorldState,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                 int pPriority = defaultPriority);
@@ -114,6 +123,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Add a goal in front of the existing goals that have the same level of priority.
    * @param pGoal Goal to add.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    * @param pPriorityPriority of the goal to add.
    */
@@ -125,6 +135,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Add a goal on bottom of the existing goals that have the same level of priority.
    * @param pGoal Goal to add.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    * @param pPriorityPriority of the goal to add.
    */
@@ -138,6 +149,7 @@ struct CONTEXTUALPLANNER_API GoalStack
    * @param pGoalStr Goal concerned.
    * @param pPriority New priority to set.
    * @param pPushFrontOrBottomInCaseOfConflictWithAnotherGoal Push in front or in bottom in case of conflict with another goal.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    */
   void changeGoalPriority(const std::string& pGoalStr,
@@ -148,6 +160,7 @@ struct CONTEXTUALPLANNER_API GoalStack
 
   /**
    * @brief Clear the goals.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    */
   void clearGoals(const WorldState& pWorldState,
@@ -156,6 +169,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Remove some goals.
    * @param pGoalGroupId Group identifier of the goals to remove.
+   * @param[in] pWorldState World state to consider.
    * @param pNow Current time.
    * @return True if at least one goal is removed, false otherwise.
    */
@@ -165,6 +179,7 @@ struct CONTEXTUALPLANNER_API GoalStack
 
   /**
    * @brief Remove the first goals that are already satisfied.
+   * @param[in] pWorldState World state to consider.
    * @param[in] pNow Current time.
    */
   void removeFirstGoalsThatAreAlreadySatisfied(const WorldState& pWorldState,
@@ -176,6 +191,7 @@ struct CONTEXTUALPLANNER_API GoalStack
   /**
    * @brief Get the not satisfied goals.<br/>
    * A goal is not satisfied if the condition is true (if it exist) and if the value of the goal is not true.
+   * @param[in] pWorldState World state to consider.
    * @return Map of priority to not satisfied goals.
    */
   std::map<int, std::vector<Goal>> getNotSatisfiedGoals(const WorldState& pWorldState) const;
@@ -187,40 +203,30 @@ private:
   /// Current active goal.
   const Goal* _currentGoalPtr = nullptr;
 
-  /// Stored what changed.
-  struct WhatChanged
-  {
-    /// True if the goals changed.
-    bool goals = false;
-
-    /// Check if something changed.
-    bool somethingChanged() const { return goals; }
-  };
-
   void _refresh(const WorldState& pWorldState,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
   /**
    * @brief Remove the first goals that are already satisfied.
-   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pWorldState World state to consider.
    * @param[in] pNow Current time.
    * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
+   * @return True, if the goal stack has changed.
    */
-  void _removeFirstGoalsThatAreAlreadySatisfied(WhatChanged& pWhatChanged,
-                                                const WorldState& pWorldState,
+  bool _removeFirstGoalsThatAreAlreadySatisfied(const WorldState& pWorldState,
                                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                                 LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /**
    * @brief Iterate on goals and remove non persistent goals.
-   * @param[out] pWhatChanged Get what changed.
    * @param pManageGoal Callback to manage the goal. If the callback returns true we stop the iteration.
+   * @param[in] pWorldState World state to consider.
    * @param[in] pNow Current time.
    * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
+   * @return True, if the goal stack has changed.
    */
-  void _iterateOnGoalsAndRemoveNonPersistent(WhatChanged& pWhatChanged,
-                                             const std::function<bool (Goal&, int)>& pManageGoal,
+  bool _iterateOnGoalsAndRemoveNonPersistent(const std::function<bool (Goal&, int)>& pManageGoal,
                                              const WorldState& pWorldState,
                                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                              LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
@@ -231,32 +237,24 @@ private:
 
   /**
    * @brief Remove no stackable goals.
-   * @param[out] pWhatChanged Get what changed.
+   * @param[in] pWorldState World state to consider.
    * @param[in] pNow Current time.
+   * @return True, if the goal stack has changed.
    */
-  void _removeNoStackableGoals(WhatChanged& pWhatChanged,
-                               const WorldState& pWorldState,
+  bool _removeNoStackableGoals(const WorldState& pWorldState,
                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
   /**
    * @brief Add some goals.
-   * @param[out] pWhatChanged Get what changed.
    * @param[in] pGoals Set of goals to add.
+   * @param[in] pWorldState World state to consider.
    * @param[in] pNow Current time.
+   * @return True, if the goal stack has changed.
    */
-  void _addGoals(WhatChanged& pWhatChanged,
-                 const std::map<int, std::vector<Goal>>& pGoals,
+  bool _addGoals(const std::map<int, std::vector<Goal>>& pGoals,
                  const WorldState& pWorldState,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
-
-  /**
-   * @brief Do inferences and raise the observables if some facts or goals changed.
-   * @param[in] pWhatChanged Get what changed.
-   * @param[in] pNow Current time.
-   */
-  void _notifyWhatChanged(WhatChanged& pWhatChanged,
-                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   friend struct WorldState;
 };

@@ -472,6 +472,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 }
 
 void _notifyActionDone(Problem& pProblem,
+                       bool& pGoalChanged,
                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                        const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                        const std::unique_ptr<WorldStateModification>& pEffect,
@@ -482,14 +483,15 @@ void _notifyActionDone(Problem& pProblem,
 {
   pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInvocation.actionId);
 
-  pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pProblem.goalStack, pSetOfInferences, pNow);
+  pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pGoalChanged, pProblem.goalStack, pSetOfInferences, pNow);
 
-  pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pNow, pGoalsToAdd,
-                                      pGoalsToAddInCurrentPriority, pProblem.worldState, pLookForAnActionOutputInfosPtr);
+  pGoalChanged = pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pNow, pGoalsToAdd,
+                                                     pGoalsToAddInCurrentPriority, pProblem.worldState, pLookForAnActionOutputInfosPtr) || pGoalChanged;
 }
 
 void _updateProblemForNextPotentialPlannerResult(
     Problem& pProblem,
+    bool& pGoalChanged,
     const ActionInvocationWithGoal& pOneStepOfPlannerResult,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -502,7 +504,7 @@ void _updateProblemForNextPotentialPlannerResult(
     if (pGlobalHistorical != nullptr)
       pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
     auto& setOfInferences = pDomain.getSetOfInferences();
-    _notifyActionDone(pProblem, setOfInferences, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
+    _notifyActionDone(pProblem, pGoalChanged, setOfInferences, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                       &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                       pLookForAnActionOutputInfosPtr);
 
@@ -544,8 +546,11 @@ PlanCost _extractPlanCost(
       if (actionAlreadyInPlan.count(actionToDoStr) > 0)
         shouldBreak = true;
       actionAlreadyInPlan.insert(actionToDoStr);
-      _updateProblemForNextPotentialPlannerResult(pProblem, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
+      bool goalChanged = false;
+      _updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
                                                   &pLookForAnActionOutputInfos);
+      if (goalChanged)
+        break;
     }
   }
 
@@ -579,16 +584,18 @@ bool _isMoreOptimalNextAction(
     PlanCost newCost;
     {
       auto localProblem1 = pProblem;
+      bool goalChanged = false;
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
-      _updateProblemForNextPotentialPlannerResult(localProblem1, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
+      _updateProblemForNextPotentialPlannerResult(localProblem1, goalChanged, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr, lookForAnActionOutputInfos);
     }
 
     if (!pPotentialNextActionComparisonCacheOpt)
     {
       auto localProblem2 = pProblem;
+      bool goalChanged = false;
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
-      _updateProblemForNextPotentialPlannerResult(localProblem2, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
+      _updateProblemForNextPotentialPlannerResult(localProblem2, goalChanged, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       pPotentialNextActionComparisonCacheOpt = PotentialNextActionComparisonCache();
       pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr, lookForAnActionOutputInfos);
     }
@@ -733,7 +740,8 @@ bool _lookForAnActionToDoRec(
     if (potentialRes && potentialRes->fromGoal)
     {
       auto problemForPlanCost = pProblem;
-      _updateProblemForNextPotentialPlannerResult(problemForPlanCost, *potentialRes, pDomain, pNow, nullptr, nullptr);
+      bool goalChanged = false;
+      _updateProblemForNextPotentialPlannerResult(problemForPlanCost, goalChanged, *potentialRes, pDomain, pNow, nullptr, nullptr);
       if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
           _lookForAnActionToDoRec(pActionInvocations, problemForPlanCost, pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
       {
@@ -781,7 +789,8 @@ void notifyActionDone(Problem& pProblem,
   if (itAction != pDomain.actions().end())
   {
     auto& setOfInferences = pDomain.getSetOfInferences();
-    _notifyActionDone(pProblem, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
+    bool goalChanged = false;
+    _notifyActionDone(pProblem, goalChanged, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                       &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                       nullptr);
   }
@@ -818,8 +827,11 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
           break;
         ++itAlreadyFoundAction->second;
       }
-      _updateProblemForNextPotentialPlannerResult(pProblem, currActionInSubPlan, pDomain, pNow, pGlobalHistorical, nullptr);
+      bool goalChanged = false;
+      _updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical, nullptr);
       res.emplace_back(std::move(currActionInSubPlan));
+      if (goalChanged)
+        break;
     }
   }
   return res;
