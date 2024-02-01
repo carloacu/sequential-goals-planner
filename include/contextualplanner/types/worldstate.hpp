@@ -17,7 +17,7 @@ struct Domain;
 struct Goal;
 struct GoalStack;
 struct Inference;
-struct OneStepOfPlannerResult;
+struct ActionInvocationWithGoal;
 struct SetOfInferences;
 struct WorldStateModification;
 struct WorldStateCache;
@@ -47,7 +47,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
    * @param[in] pNow Current time.
    */
-  void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
+  void notifyActionDone(const ActionInvocationWithGoal& pOneStepOfPlannerResult,
                         const std::unique_ptr<WorldStateModification>& pEffect,
                         GoalStack& pGoalStack,
                         const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,

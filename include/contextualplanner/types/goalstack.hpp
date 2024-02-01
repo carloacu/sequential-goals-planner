@@ -17,7 +17,7 @@ namespace cp
 struct Domain;
 struct ProblemModification;
 struct SetOfInferences;
-struct OneStepOfPlannerResult;
+struct ActionInvocationWithGoal;
 struct LookForAnActionOutputInfos;
 
 
@@ -37,7 +37,7 @@ struct CONTEXTUALPLANNER_API GoalStack
    * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
    * @param pGoalsToAddInCurrentPriority Goals to add in current priority.
    */
-  void notifyActionDone(const OneStepOfPlannerResult& pOneStepOfPlannerResult,
+  void notifyActionDone(const ActionInvocationWithGoal& pOneStepOfPlannerResult,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                         const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                         const std::vector<Goal>* pGoalsToAddInCurrentPriority,

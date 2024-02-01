@@ -7,6 +7,7 @@ include(contextualplanner-config.cmake)
 set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/action.hpp
     include/contextualplanner/types/actioninvocation.hpp
+    include/contextualplanner/types/actioninvocationwithgoal.hpp
     include/contextualplanner/types/condition.hpp
     include/contextualplanner/types/domain.hpp
     include/contextualplanner/types/fact.hpp
@@ -16,7 +17,6 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/historical.hpp
     include/contextualplanner/types/inference.hpp
     include/contextualplanner/types/lookforanactionoutputinfos.hpp
-    include/contextualplanner/types/onestepofplannerresult.hpp
     include/contextualplanner/types/problem.hpp
     include/contextualplanner/types/problemmodification.hpp
     include/contextualplanner/types/setofinferences.hpp
@@ -38,6 +38,7 @@ set(CHATBOTPLANNER_HPPS
 set(CHATBOTPLANNER_SRCS
     src/types/action.cpp
     src/types/actioninvocation.cpp
+    src/types/actioninvocationwithgoal.cpp
     src/types/condition.cpp
     src/types/domain.cpp
     src/types/expressionParsed.hpp
@@ -50,7 +51,6 @@ set(CHATBOTPLANNER_SRCS
     src/types/historical.cpp
     src/types/inference.cpp
     src/types/lookforanactionoutputinfos.cpp
-    src/types/onestepofplannerresult.cpp
     src/types/problemmodification.cpp
     src/types/setofinferences.cpp
     src/types/treeofalreadydonepaths.hpp

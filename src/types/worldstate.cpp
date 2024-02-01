@@ -1,7 +1,7 @@
 #include <contextualplanner/types/worldstate.hpp>
 #include <list>
 #include <contextualplanner/types/goalstack.hpp>
-#include <contextualplanner/types/onestepofplannerresult.hpp>
+#include <contextualplanner/types/actioninvocationwithgoal.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/types/worldstatemodification.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -64,7 +64,7 @@ void WorldState::operator=(const WorldState& pOther)
   _cache = std::make_unique<WorldStateCache>(*this, *pOther._cache);
 }
 
-void WorldState::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerResult,
+void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                   const std::unique_ptr<WorldStateModification>& pEffect,
                                   GoalStack& pGoalStack,
                                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,

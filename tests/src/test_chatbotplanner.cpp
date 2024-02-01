@@ -94,7 +94,7 @@ std::string _solveStrConst(const cp::Problem& pProblem,
 {
   auto problem = pProblem;
   cp::Domain domain(pActions);
-  return cp::planToStr(cp::lookForResolutionPlan(problem, domain, {}, pGlobalHistorical), _sep);
+  return cp::planToStr(cp::planForEveryGoals(problem, domain, {}, pGlobalHistorical), _sep);
 }
 
 std::string _solveStrConst(const cp::Problem& pProblem,
@@ -102,7 +102,7 @@ std::string _solveStrConst(const cp::Problem& pProblem,
                            cp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  return cp::planToStr(cp::lookForResolutionPlan(problem, pDomain, {}, pGlobalHistorical), _sep);
+  return cp::planToStr(cp::planForEveryGoals(problem, pDomain, {}, pGlobalHistorical), _sep);
 }
 
 std::string _solveStr(cp::Problem& pProblem,
@@ -111,7 +111,7 @@ std::string _solveStr(cp::Problem& pProblem,
                       cp::Historical* pGlobalHistorical = nullptr)
 {
   cp::Domain domain(pActions);
-  return cp::planToStr(cp::lookForResolutionPlan(pProblem, domain, pNow, pGlobalHistorical), _sep);
+  return cp::planToStr(cp::planForEveryGoals(pProblem, domain, pNow, pGlobalHistorical), _sep);
 }
 
 std::string _solveStr(cp::Problem& pProblem,
@@ -119,30 +119,30 @@ std::string _solveStr(cp::Problem& pProblem,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                       cp::Historical* pGlobalHistorical = nullptr)
 {
-  return cp::planToStr(cp::lookForResolutionPlan(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
+  return cp::planToStr(cp::planForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
 }
 
-cp::OneStepOfPlannerResult _lookForAnActionToDo(cp::Problem& pProblem,
-                                                const cp::Domain& pDomain,
-                                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                const cp::Historical* pGlobalHistorical = nullptr)
+cp::ActionInvocationWithGoal _lookForAnActionToDo(cp::Problem& pProblem,
+                                                  const cp::Domain& pDomain,
+                                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                                  const cp::Historical* pGlobalHistorical = nullptr)
 {
-  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(pProblem, pDomain, true, pNow, pGlobalHistorical);
-  if (oneStepOfPlannerResultPtr)
-    return *oneStepOfPlannerResultPtr;
-  return cp::OneStepOfPlannerResult("", {}, {}, 0);
+  auto plan = cp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
+  if (!plan.empty())
+    return plan.front();
+  return cp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
-cp::OneStepOfPlannerResult _lookForAnActionToDoConst(const cp::Problem& pProblem,
-                                                     const cp::Domain& pDomain,
-                                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                     const cp::Historical* pGlobalHistorical = nullptr)
+cp::ActionInvocationWithGoal _lookForAnActionToDoConst(const cp::Problem& pProblem,
+                                                       const cp::Domain& pDomain,
+                                                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                                       const cp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  auto oneStepOfPlannerResultPtr = cp::lookForAnActionToDo(problem, pDomain, true, pNow, pGlobalHistorical);
-  if (oneStepOfPlannerResultPtr)
-    return *oneStepOfPlannerResultPtr;
-  return cp::OneStepOfPlannerResult("", {}, {}, 0);
+  auto plan = cp::planForMoreImportantGoalPossible(problem, pDomain, true, pNow, pGlobalHistorical);
+  if (!plan.empty())
+    return plan.front();
+  return cp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
 std::string _lookForAnActionToDoStr(cp::Problem& pProblem,
@@ -161,18 +161,19 @@ std::string _lookForAnActionToDoConstStr(const cp::Problem& pProblem,
   return _lookForAnActionToDoConst(pProblem, pDomain, pNow, pGlobalHistorical).actionInvocation.toStr();
 }
 
-cp::OneStepOfPlannerResult _lookForAnActionToDoThenNotify(
+cp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
     cp::Problem& pProblem,
     const cp::Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  auto res = cp::lookForAnActionToDo(pProblem, pDomain, true, pNow);
-  if (res)
+  auto plan = cp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow);
+  if (!plan.empty())
   {
-    notifyActionDone(pProblem, pDomain, *res, pNow);
-    return *res;
+    auto& firstActionInPlan = plan.front();
+    notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
+    return firstActionInPlan;
   }
-  return cp::OneStepOfPlannerResult("", {}, {}, 0);
+  return cp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
 void _setGoalsForAPriority(cp::Problem& pProblem,
@@ -893,7 +894,7 @@ void _addGoalEvenForEmptyAction()
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
   assert_true(problem.goalStack.goals().empty());
-  cp::notifyActionDone(problem, domain, cp::OneStepOfPlannerResult(action1, {}, {}, 0), {});
+  cp::notifyActionDone(problem, domain, cp::ActionInvocationWithGoal(action1, {}, {}, 0), {});
   assert_false(problem.goalStack.goals().empty());
 }
 
@@ -2501,8 +2502,8 @@ void _checkOutputValueOfLookForAnActionToDo()
 
   {
     cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
-    auto res = cp::lookForAnActionToDo(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
-    assert(res.operator bool());
+    auto res = cp::planForMoreImportantGoalPossible(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
+    assert(!res.empty());
     assert_eq(cp::PlannerStepType::IN_PROGRESS, lookForAnActionOutputInfos.getType());
     assert_eq<std::size_t>(0, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
   }
@@ -2510,8 +2511,8 @@ void _checkOutputValueOfLookForAnActionToDo()
   {
     problem.worldState.addFact(cp::Fact(_fact_a), problem.goalStack, setOfInferencesMap, now);
     cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
-    auto res = cp::lookForAnActionToDo(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
-    assert(!res.operator bool());
+    auto res = cp::planForMoreImportantGoalPossible(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
+    assert(res.empty());
     assert_eq(cp::PlannerStepType::FINISHED_ON_SUCCESS, lookForAnActionOutputInfos.getType());
     assert_eq<std::size_t>(1, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
   }
@@ -2519,8 +2520,8 @@ void _checkOutputValueOfLookForAnActionToDo()
   {
     _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
     cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
-    auto res = cp::lookForAnActionToDo(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
-    assert(!res.operator bool());
+    auto res = cp::planForMoreImportantGoalPossible(problem, domain, true, now, nullptr, &lookForAnActionOutputInfos);
+    assert(res.empty());
     assert_eq(cp::PlannerStepType::FINISEHD_ON_FAILURE, lookForAnActionOutputInfos.getType());
     assert_eq<std::size_t>(0, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
   }

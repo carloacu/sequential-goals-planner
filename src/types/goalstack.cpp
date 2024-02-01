@@ -2,7 +2,7 @@
 #include <map>
 #include <sstream>
 #include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/onestepofplannerresult.hpp>
+#include <contextualplanner/types/actioninvocationwithgoal.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/util.hpp>
 #include <contextualplanner/types/lookforanactionoutputinfos.hpp>
@@ -22,7 +22,7 @@ GoalStack::GoalStack(const GoalStack& pOther)
 }
 
 
-void GoalStack::notifyActionDone(const OneStepOfPlannerResult& pOnStepOfPlannerResult,
+void GoalStack::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                  const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                                  const std::vector<Goal>* pGoalsToAddInCurrentPriority,

@@ -6,7 +6,7 @@
 #include "util/api.hpp"
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/onestepofplannerresult.hpp>
+#include <contextualplanner/types/actioninvocationwithgoal.hpp>
 #include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/types/lookforanactionoutputinfos.hpp>
 
@@ -27,7 +27,7 @@ namespace cp
  * @return One step of the planner containing the next action to do, his parameters and information about the goal that motivated that action.
  */
 CONTEXTUALPLANNER_API
-std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
+std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
     Problem& pProblem,
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
@@ -46,7 +46,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
 CONTEXTUALPLANNER_API
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
-                      const OneStepOfPlannerResult& pOnStepOfPlannerResult,
+                      const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
@@ -62,7 +62,7 @@ void notifyActionDone(Problem& pProblem,
  * @return List of all the actions to do with their parameters with values.
  */
 CONTEXTUALPLANNER_API
-std::list<ActionInvocation> lookForResolutionPlan(
+std::list<ActionInvocationWithGoal> planForEveryGoals(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -76,7 +76,7 @@ std::list<ActionInvocation> lookForResolutionPlan(
  * @return The plan written in string.
  */
 CONTEXTUALPLANNER_API
-std::string planToStr(const std::list<cp::ActionInvocation>& pPlan,
+std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep = ", ");
 
 } // !cp

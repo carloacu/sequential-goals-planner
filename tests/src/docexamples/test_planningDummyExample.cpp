@@ -26,14 +26,15 @@ void planningDummyExample()
   problem.goalStack.setGoals({userIsGreeted}, problem.worldState, now);
 
   // Look for an action to do
-  auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, true, now);
-  assert(oneStepOfPlannerResult1.operator bool());
-  assert(sayHi == oneStepOfPlannerResult1->actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  assert(!planResult1.empty());
+  const auto& firstActionInPlan = planResult1.front();
+  assert(sayHi == firstActionInPlan.actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
+  cp::notifyActionDone(problem, domain, firstActionInPlan, now);
 
   // Look for the next action to do
-  auto oneStepOfPlannerResult2 = cp::lookForAnActionToDo(problem, domain, true, now);
-  assert(!oneStepOfPlannerResult2.operator bool()); // No action found
+  auto planResult2 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  assert(planResult2.empty()); // No action found
 }
 

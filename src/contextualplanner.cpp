@@ -473,7 +473,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 
 void _notifyActionDone(Problem& pProblem,
                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
-                       const OneStepOfPlannerResult& pOnStepOfPlannerResult,
+                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                        const std::unique_ptr<WorldStateModification>& pEffect,
                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                        const std::map<int, std::vector<Goal>>* pGoalsToAdd,
@@ -490,7 +490,7 @@ void _notifyActionDone(Problem& pProblem,
 
 void _updateProblemForNextPotentialPlannerResult(
     Problem& pProblem,
-    const OneStepOfPlannerResult& pOneStepOfPlannerResult,
+    const ActionInvocationWithGoal& pOneStepOfPlannerResult,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical,
@@ -525,22 +525,28 @@ PlanCost _extractPlanCost(
   PlanCost res;
   const bool tryToDoMoreOptimalSolution = false;
   std::set<std::string> actionAlreadyInPlan;
+  bool shouldBreak = false;
   while (!pProblem.goalStack.goals().empty())
   {
-    auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, tryToDoMoreOptimalSolution,
-                                                     pNow, pGlobalHistorical, &pLookForAnActionOutputInfos);
-    if (!onStepOfPlannerResult)
-      break;
-    ++res.nbOfActionDones;
-    const auto& actionToDoStr = onStepOfPlannerResult->actionInvocation.toStr();
-    if (actionAlreadyInPlan.count(actionToDoStr) > 0)
+    if (shouldBreak)
     {
       res.success = false;
       break;
     }
-    actionAlreadyInPlan.insert(actionToDoStr);
-    _updateProblemForNextPotentialPlannerResult(pProblem, *onStepOfPlannerResult, pDomain, pNow, pGlobalHistorical,
-                                                &pLookForAnActionOutputInfos);
+    auto subPlan = planForMoreImportantGoalPossible(pProblem, pDomain, tryToDoMoreOptimalSolution,
+                                                    pNow, pGlobalHistorical, &pLookForAnActionOutputInfos);
+    if (subPlan.empty())
+      break;
+    for (const auto& currActionInSubPlan : subPlan)
+    {
+      ++res.nbOfActionDones;
+      const auto& actionToDoStr = currActionInSubPlan.actionInvocation.toStr();
+      if (actionAlreadyInPlan.count(actionToDoStr) > 0)
+        shouldBreak = true;
+      actionAlreadyInPlan.insert(actionToDoStr);
+      _updateProblemForNextPotentialPlannerResult(pProblem, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
+                                                  &pLookForAnActionOutputInfos);
+    }
   }
 
   res.success = pLookForAnActionOutputInfos.isFirstGoalInSuccess();
@@ -566,8 +572,8 @@ bool _isMoreOptimalNextAction(
       pCurrentNextAction.actionPtr != nullptr &&
       pNewPotentialNextAction.actionPtr->effect != pCurrentNextAction.actionPtr->effect)
   {
-    OneStepOfPlannerResult oneStepOfPlannerResult1(pNewPotentialNextAction.actionId, pNewPotentialNextAction.parameters, {}, 0);
-    OneStepOfPlannerResult oneStepOfPlannerResult2(pCurrentNextAction.actionId, pCurrentNextAction.parameters, {}, 0);
+    ActionInvocationWithGoal oneStepOfPlannerResult1(pNewPotentialNextAction.actionId, pNewPotentialNextAction.parameters, {}, 0);
+    ActionInvocationWithGoal oneStepOfPlannerResult2(pCurrentNextAction.actionId, pCurrentNextAction.parameters, {}, 0);
     std::unique_ptr<std::chrono::steady_clock::time_point> now;
 
     PlanCost newCost;
@@ -687,7 +693,7 @@ ActionId _nextStepOfTheProblemForAGoal(
 
 
 bool _lookForAnActionToDoRec(
-    std::unique_ptr<OneStepOfPlannerResult>& pRes,
+    std::list<ActionInvocationWithGoal>& pActionInvocations,
     Problem& pProblem,
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
@@ -700,7 +706,7 @@ bool _lookForAnActionToDoRec(
   TreeOfAlreadyDonePath treeOfAlreadyDonePath;
   for (int i = 0; i < 100; ++i)
   {
-    std::unique_ptr<OneStepOfPlannerResult> potentialRes;
+    std::unique_ptr<ActionInvocationWithGoal> potentialRes;
     const FactOptional* factOptionalToSatisfyPtr = nullptr;
     pGoal.objective().untilFalse(
           [&](const FactOptional& pFactOptional)
@@ -721,19 +727,18 @@ bool _lookForAnActionToDoRec(
                                         pGoal, pProblem, *factOptionalToSatisfyPtr,
                                         pDomain, pTryToDoMoreOptimalSolution, 0, pGlobalHistorical);
       if (!actionId.empty())
-        potentialRes = std::make_unique<OneStepOfPlannerResult>(actionId, parameters, pGoal.clone(), pPriority);
+        potentialRes = std::make_unique<ActionInvocationWithGoal>(actionId, parameters, pGoal.clone(), pPriority);
     }
 
     if (potentialRes && potentialRes->fromGoal)
     {
       auto problemForPlanCost = pProblem;
       _updateProblemForNextPotentialPlannerResult(problemForPlanCost, *potentialRes, pDomain, pNow, nullptr, nullptr);
-      std::unique_ptr<OneStepOfPlannerResult> nextRes;
       if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
-          _lookForAnActionToDoRec(nextRes, problemForPlanCost, pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
+          _lookForAnActionToDoRec(pActionInvocations, problemForPlanCost, pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
       {
         potentialRes->fromGoal->notifyActivity();
-        pRes = std::move(potentialRes);
+        pActionInvocations.emplace_front(std::move(*potentialRes));
         return true;
       }
     }
@@ -748,7 +753,7 @@ bool _lookForAnActionToDoRec(
 }
 
 
-std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
+std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
     Problem& pProblem,
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
@@ -756,7 +761,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
     const Historical* pGlobalHistorical,
     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
-  std::unique_ptr<OneStepOfPlannerResult> res;
+  std::list<ActionInvocationWithGoal> res;
   pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(
         [&](const Goal& pGoal, int pPriority){
             return _lookForAnActionToDoRec(res, pProblem, pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority);
@@ -769,7 +774,7 @@ std::unique_ptr<OneStepOfPlannerResult> lookForAnActionToDo(
 
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
-                      const OneStepOfPlannerResult& pOnStepOfPlannerResult,
+                      const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   auto itAction = pDomain.actions().find(pOnStepOfPlannerResult.actionInvocation.actionId);
@@ -784,7 +789,7 @@ void notifyActionDone(Problem& pProblem,
 
 
 
-std::list<ActionInvocation> lookForResolutionPlan(
+std::list<ActionInvocationWithGoal> planForEveryGoals(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -792,39 +797,42 @@ std::list<ActionInvocation> lookForResolutionPlan(
 {
   const bool tryToDoMoreOptimalSolution = true;
   std::map<std::string, std::size_t> actionAlreadyInPlan;
-  std::list<ActionInvocation> res;
+  std::list<ActionInvocationWithGoal> res;
   while (!pProblem.goalStack.goals().empty())
   {
-    auto onStepOfPlannerResult = lookForAnActionToDo(pProblem, pDomain, tryToDoMoreOptimalSolution,
+    auto subPlan = planForMoreImportantGoalPossible(pProblem, pDomain, tryToDoMoreOptimalSolution,
                                                      pNow, pGlobalHistorical);
-    if (!onStepOfPlannerResult)
+    if (subPlan.empty())
       break;
-    res.emplace_back(onStepOfPlannerResult->actionInvocation);
-    const auto& actionToDoStr = onStepOfPlannerResult->actionInvocation.toStr();
-    auto itAlreadyFoundAction = actionAlreadyInPlan.find(actionToDoStr);
-    if (itAlreadyFoundAction == actionAlreadyInPlan.end())
+    for (auto& currActionInSubPlan : subPlan)
     {
-      actionAlreadyInPlan[actionToDoStr] = 1;
+      const auto& actionToDoStr = currActionInSubPlan.actionInvocation.toStr();
+      auto itAlreadyFoundAction = actionAlreadyInPlan.find(actionToDoStr);
+      if (itAlreadyFoundAction == actionAlreadyInPlan.end())
+      {
+        actionAlreadyInPlan[actionToDoStr] = 1;
+      }
+      else
+      {
+        if (itAlreadyFoundAction->second > 10)
+          break;
+        ++itAlreadyFoundAction->second;
+      }
+      _updateProblemForNextPotentialPlannerResult(pProblem, currActionInSubPlan, pDomain, pNow, pGlobalHistorical, nullptr);
+      res.emplace_back(std::move(currActionInSubPlan));
     }
-    else
-    {
-      if (itAlreadyFoundAction->second > 10)
-        break;
-      ++itAlreadyFoundAction->second;
-    }
-    _updateProblemForNextPotentialPlannerResult(pProblem, *onStepOfPlannerResult, pDomain, pNow, pGlobalHistorical, nullptr);
   }
   return res;
 }
 
 
 
-std::string planToStr(const std::list<ActionInvocation>& pPlan,
+std::string planToStr(const std::list<ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep)
 {
   auto size = pPlan.size();
   if (size == 1)
-    return pPlan.front().toStr();
+    return pPlan.front().actionInvocation.toStr();
   std::string res;
   bool firstIteration = true;
   for (const auto& currAction : pPlan)
@@ -833,7 +841,7 @@ std::string planToStr(const std::list<ActionInvocation>& pPlan,
       firstIteration = false;
     else
       res += pSep;
-    res += currAction.toStr();
+    res += currAction.actionInvocation.toStr();
   }
   return res;
 }
