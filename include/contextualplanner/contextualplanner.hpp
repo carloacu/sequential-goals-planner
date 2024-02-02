@@ -59,6 +59,7 @@ void notifyActionDone(Problem& pProblem,
  * @param[in] pNow Current time.
  * @param[in, out] pGlobalHistorical Historical more global (and with a smaller priority) than the one contained in the problem.<br/>
  * The historical is used to add diversity in the actions to do. In other words, it is to always do the same action if another action is pertinent too.
+ * @param[out] pGoalsDonePtr List of goals satisfied during the plannification.
  * @return List of all the actions to do with their parameters with values.
  */
 CONTEXTUALPLANNER_API
@@ -66,11 +67,12 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    Historical* pGlobalHistorical = nullptr);
+    Historical* pGlobalHistorical = nullptr,
+    std::list<Goal>* pGoalsDonePtr = nullptr);
 
 
 /**
- * @brief Convert  a plan to a string.
+ * @brief Convert a plan to a string.
  * @param[in] pPlan Plan to print.
  * @param[in] pSep Separator between each action of the plan to do sequentially.
  * @return The plan written in string.
@@ -78,6 +80,17 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
 CONTEXTUALPLANNER_API
 std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep = ", ");
+
+
+/**
+ * @brief Convert a list of goals to a string.
+ * @param[in] pGoals List of goals to print.
+ * @param[in] pSep Separator between each action of the plan to do sequentially.
+ * @return The list of goals written in string.
+ */
+CONTEXTUALPLANNER_API
+std::string goalsToStr(const std::list<cp::Goal>& pGoals,
+                       const std::string& pSep = ", ");
 
 } // !cp
 

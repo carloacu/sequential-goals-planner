@@ -29,13 +29,14 @@ struct LookForAnActionOutputInfos
   void notifySatisfiedGoal(const Goal& pGoal);
   void notifyNotSatisfiedGoal(const Goal& pGoal);
   std::size_t nbOfNotSatisfiedGoals() const { return _nbOfNonPersistentGoalsNotSatisfied; }
-  std::size_t nbOfSatisfiedGoals() const { return _nbOfNonPersistentGoalsSatisfied + _persistentGoalsSatisfied.size(); }
+  std::size_t nbOfSatisfiedGoals() const { return _goalsSatisfied.size(); }
   bool isFirstGoalInSuccess() const { return _firstGoalInSuccess && *_firstGoalInSuccess; }
+  void moveGoalsDone(std::list<Goal>& pGoals) { pGoals = std::move(_goalsSatisfied); }
 
 private:
   PlannerStepType _type;
   std::size_t _nbOfNonPersistentGoalsNotSatisfied;
-  std::size_t _nbOfNonPersistentGoalsSatisfied;
+  std::list<Goal> _goalsSatisfied;
   std::set<const Goal*> _persistentGoalsSatisfied;
   std::optional<bool> _firstGoalInSuccess;
 };

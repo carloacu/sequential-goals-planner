@@ -122,6 +122,17 @@ std::string _solveStr(cp::Problem& pProblem,
   return cp::planToStr(cp::planForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
 }
 
+
+std::string _getGoalsDoneDuringAPlannificationConst(const cp::Problem& pProblem,
+                                                    const cp::Domain& pDomain,
+                                                    cp::Historical* pGlobalHistorical = nullptr)
+{
+  auto problem = pProblem;
+  std::list<cp::Goal> pGoalsDone;
+  cp::planForEveryGoals(problem, pDomain, {}, pGlobalHistorical, &pGoalsDone);
+  return cp::goalsToStr(pGoalsDone, _sep);
+}
+
 cp::ActionInvocationWithGoal _lookForAnActionToDo(cp::Problem& pProblem,
                                                   const cp::Domain& pDomain,
                                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
@@ -1711,7 +1722,8 @@ void _oneStepTowards()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  problem.goalStack.setGoals({{11, {cp::Goal("persist(imply(" + _fact_a + ", " + _fact_b + "))", 0)}},
+  cp::Goal implyGoal("persist(imply(" + _fact_a + ", " + _fact_b + "))", 0);
+  problem.goalStack.setGoals({{11, {implyGoal}},
                       {10, {cp::Goal("oneStepTowards(" + _fact_greeted + ")", 0)}},
                       {9, {cp::Goal(_fact_checkedIn, 0), _fact_beHappy}}}, problem.worldState, now);
   problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
@@ -1721,6 +1733,8 @@ void _oneStepTowards()
   assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, now));
   problem.worldState.addFact(_fact_a, problem.goalStack, _emptySetOfInferences, now);
   assert_eq(actionb, _lookForAnActionToDoStr(problem, domain, now));
+  assert_eq<std::string>(actionb + _sep + _action_goodBoy, _solveStrConst(problem, domain));
+  assert_eq<std::string>(implyGoal.toStr() + _sep + _fact_beHappy, _getGoalsDoneDuringAPlannificationConst(problem, domain));
 }
 
 

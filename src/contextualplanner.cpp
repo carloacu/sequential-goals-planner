@@ -802,15 +802,17 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    Historical* pGlobalHistorical)
+    Historical* pGlobalHistorical,
+    std::list<Goal>* pGoalsDonePtr)
 {
   const bool tryToDoMoreOptimalSolution = true;
   std::map<std::string, std::size_t> actionAlreadyInPlan;
   std::list<ActionInvocationWithGoal> res;
+  LookForAnActionOutputInfos lookForAnActionOutputInfos;
   while (!pProblem.goalStack.goals().empty())
   {
     auto subPlan = planForMoreImportantGoalPossible(pProblem, pDomain, tryToDoMoreOptimalSolution,
-                                                     pNow, pGlobalHistorical);
+                                                     pNow, pGlobalHistorical, &lookForAnActionOutputInfos);
     if (subPlan.empty())
       break;
     for (auto& currActionInSubPlan : subPlan)
@@ -828,18 +830,21 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
         ++itAlreadyFoundAction->second;
       }
       bool goalChanged = false;
-      _updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical, nullptr);
+      _updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
+                                                  &lookForAnActionOutputInfos);
       res.emplace_back(std::move(currActionInSubPlan));
       if (goalChanged)
         break;
     }
   }
+  if (pGoalsDonePtr != nullptr)
+    lookForAnActionOutputInfos.moveGoalsDone(*pGoalsDonePtr);
   return res;
 }
 
 
 
-std::string planToStr(const std::list<ActionInvocationWithGoal>& pPlan,
+std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep)
 {
   auto size = pPlan.size();
@@ -857,6 +862,27 @@ std::string planToStr(const std::list<ActionInvocationWithGoal>& pPlan,
   }
   return res;
 }
+
+
+std::string goalsToStr(const std::list<cp::Goal>& pGoals,
+                       const std::string& pSep)
+{
+  auto size = pGoals.size();
+  if (size == 1)
+    return pGoals.front().toStr();
+  std::string res;
+  bool firstIteration = true;
+  for (const auto& currGoal : pGoals)
+  {
+    if (firstIteration)
+      firstIteration = false;
+    else
+      res += pSep;
+    res += currGoal.toStr();
+  }
+  return res;
+}
+
 
 
 } // !cp
