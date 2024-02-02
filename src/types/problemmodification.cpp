@@ -9,6 +9,7 @@ bool ProblemModification::operator==(const ProblemModification& pOther) const
 {
   return areUPtrEqual(worldStateModification, pOther.worldStateModification) &&
       areUPtrEqual(potentialWorldStateModification, pOther.potentialWorldStateModification) &&
+      areUPtrEqual(worldStateModificationAtStart, pOther.worldStateModificationAtStart) &&
       goalsToAdd == pOther.goalsToAdd &&
       goalsToAddInCurrentPriority == pOther.goalsToAddInCurrentPriority;
 }

@@ -2666,6 +2666,37 @@ void _goalsToDoInParallel()
 
 
 
+void _checkOverallEffectDuringParallelisation()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1(cp::Condition::fromStr("!" + _fact_d),
+                        cp::WorldStateModification::fromStr(_fact_a + " & !" + _fact_d));
+  actionObj1.effect.worldStateModificationAtStart = cp::WorldStateModification::fromStr(_fact_d);
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2(cp::Condition::fromStr("!" + _fact_d),
+                        cp::WorldStateModification::fromStr(_fact_b + " & !" + _fact_d));
+  actionObj2.effect.worldStateModificationAtStart = cp::WorldStateModification::fromStr(_fact_d);
+  actions.emplace(action2, actionObj2);
+
+  cp::Action actionObj3(cp::Condition::fromStr(_fact_a + " & " + _fact_b),
+                        cp::WorldStateModification::fromStr(_fact_c));
+  actions.emplace(action3, actionObj3);
+
+  cp::Domain domain(std::move(actions));
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
+
+  assert_eq<std::string>(action1, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+}
+
+
+
 
 }
 
@@ -2770,6 +2801,7 @@ int main(int argc, char *argv[])
   _checkOutputValueOfLookForAnActionToDo();
   _hardProbleThatNeedsToBeSmart();
   _goalsToDoInParallel();
+  _checkOverallEffectDuringParallelisation();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

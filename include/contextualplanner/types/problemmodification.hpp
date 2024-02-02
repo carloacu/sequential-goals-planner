@@ -21,6 +21,7 @@ struct CONTEXTUALPLANNER_API ProblemModification
   ProblemModification()
     : worldStateModification(),
       potentialWorldStateModification(),
+      worldStateModificationAtStart(),
       goalsToAdd(),
       goalsToAddInCurrentPriority()
   {
@@ -36,6 +37,7 @@ struct CONTEXTUALPLANNER_API ProblemModification
                       std::unique_ptr<cp::WorldStateModification> pPotentialWorldStateModification = std::unique_ptr<cp::WorldStateModification>())
     : worldStateModification(pWorldStateModification ? std::move(pWorldStateModification): std::unique_ptr<cp::WorldStateModification>()),
       potentialWorldStateModification(pPotentialWorldStateModification ? std::move(pPotentialWorldStateModification) : std::unique_ptr<cp::WorldStateModification>()),
+      worldStateModificationAtStart(),
       goalsToAdd(),
       goalsToAddInCurrentPriority()
   {
@@ -45,6 +47,7 @@ struct CONTEXTUALPLANNER_API ProblemModification
   ProblemModification(const ProblemModification& pOther)
     : worldStateModification(pOther.worldStateModification ? pOther.worldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
       potentialWorldStateModification(pOther.potentialWorldStateModification ? pOther.potentialWorldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
+      worldStateModificationAtStart(pOther.worldStateModificationAtStart ? pOther.worldStateModificationAtStart->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
       goalsToAdd(pOther.goalsToAdd),
       goalsToAddInCurrentPriority(pOther.goalsToAddInCurrentPriority)
   {
@@ -55,12 +58,13 @@ struct CONTEXTUALPLANNER_API ProblemModification
   {
     worldStateModification = pOther.worldStateModification ? pOther.worldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
     potentialWorldStateModification = pOther.potentialWorldStateModification ? pOther.potentialWorldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
+    worldStateModificationAtStart = pOther.worldStateModificationAtStart ? pOther.worldStateModificationAtStart->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
     goalsToAdd = pOther.goalsToAdd;
     goalsToAddInCurrentPriority = pOther.goalsToAddInCurrentPriority;
   }
 
   /// Is the problem modification empty.
-  bool empty() const { return !worldStateModification && !potentialWorldStateModification && goalsToAdd.empty() && goalsToAddInCurrentPriority.empty(); }
+  bool empty() const { return !worldStateModification && !potentialWorldStateModification && !worldStateModificationAtStart && goalsToAdd.empty() && goalsToAddInCurrentPriority.empty(); }
 
   /// Check equality with another problem modification.
   bool operator==(const ProblemModification& pOther) const;
@@ -109,6 +113,8 @@ struct CONTEXTUALPLANNER_API ProblemModification
   std::unique_ptr<cp::WorldStateModification> worldStateModification;
   /// World modifications declared but that will not be applied to the world.
   std::unique_ptr<cp::WorldStateModification> potentialWorldStateModification;
+  /// World modifications declared and that will be applied to the world when the action starts.
+  std::unique_ptr<cp::WorldStateModification> worldStateModificationAtStart;
   /// Goal priorities to goals to add in the goal stack.
   std::map<int, std::vector<cp::Goal>> goalsToAdd;
   /// Goals to add in the goal stack in current priority of the goal stack.
@@ -122,8 +128,9 @@ struct CONTEXTUALPLANNER_API ProblemModification
 
 inline bool ProblemModification::hasFact(const cp::Fact& pFact) const
 {
-  if ((worldStateModification && worldStateModification->hasFact(pFact)) ||
-      (potentialWorldStateModification && potentialWorldStateModification->hasFact(pFact)))
+  if (worldStateModification && worldStateModification->hasFact(pFact) ||
+      potentialWorldStateModification && potentialWorldStateModification->hasFact(pFact) ||
+      worldStateModificationAtStart && worldStateModificationAtStart->hasFact(pFact))
     return true;
   for (const auto& currGoalWithPriority : goalsToAdd)
     for (const auto& currGoal : currGoalWithPriority.second)
@@ -151,6 +158,14 @@ inline void ProblemModification::add(const ProblemModification& pOther)
     else
       potentialWorldStateModification = pOther.potentialWorldStateModification->clone(nullptr);
   }
+  if (pOther.worldStateModificationAtStart)
+  {
+    if (worldStateModificationAtStart)
+      worldStateModificationAtStart = WorldStateModification::createByConcatenation(*worldStateModificationAtStart, *pOther.worldStateModificationAtStart);
+    else
+      worldStateModificationAtStart = pOther.worldStateModificationAtStart->clone(nullptr);
+  }
+
   goalsToAdd.insert(pOther.goalsToAdd.begin(), pOther.goalsToAdd.end());
   goalsToAddInCurrentPriority.insert(goalsToAddInCurrentPriority.end(), pOther.goalsToAddInCurrentPriority.begin(), pOther.goalsToAddInCurrentPriority.end());
 }
@@ -162,6 +177,9 @@ inline void ProblemModification::replaceFact(const cp::Fact& pOldFact,
     worldStateModification->replaceFact(pOldFact, pNewFact);
   if (potentialWorldStateModification)
     potentialWorldStateModification->replaceFact(pOldFact, pNewFact);
+  if (worldStateModificationAtStart)
+    worldStateModificationAtStart->replaceFact(pOldFact, pNewFact);
+
   for (auto& currGoalWithPriority : goalsToAdd)
     for (auto& currGoal : currGoalWithPriority.second)
       currGoal.objective().replaceFact(pOldFact, pNewFact);
@@ -176,6 +194,8 @@ inline bool ProblemModification::forAllUntilTrue(const std::function<bool(const 
     return true;
   if (potentialWorldStateModification && potentialWorldStateModification->forAllUntilTrue(pCallback, pWorldState))
     return true;
+  if (worldStateModificationAtStart && worldStateModificationAtStart->forAllUntilTrue(pCallback, pWorldState))
+    return true;
   return false;
 }
 
@@ -186,6 +206,8 @@ inline void ProblemModification::forAll(const std::function<void(const cp::FactO
     worldStateModification->forAll(pCallback, pWorldState);
   if (potentialWorldStateModification)
     potentialWorldStateModification->forAll(pCallback, pWorldState);
+  if (worldStateModificationAtStart)
+    worldStateModificationAtStart->forAll(pCallback, pWorldState);
 }
 
 

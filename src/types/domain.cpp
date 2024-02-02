@@ -92,6 +92,11 @@ void Domain::addAction(const ActionId& pActionId,
     pAction.precondition->forAll(
           [&](const FactOptional& pFactOptional)
     {
+      // For optimisation, if the effect produce the same fact no need to trigger this action because of this fact
+      if (pAction.effect.worldStateModification &&
+          pAction.effect.worldStateModification->hasFactOptional(pFactOptional))
+        return;
+
       if (pFactOptional.isFactNegated)
       {
         _notPreconditionToActions[pFactOptional.fact.name].insert(pActionId);

@@ -816,14 +816,33 @@ std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
 }
 
 
+void notifyActionStarted(Problem& pProblem,
+                         const Domain& pDomain,
+                         const ActionInvocationWithGoal& pActionInvocationWithGoal,
+                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  const auto& actions = pDomain.actions();
+  auto itAction = actions.find(pActionInvocationWithGoal.actionInvocation.actionId);
+  if (itAction != actions.end())
+  {
+    if (itAction->second.effect.worldStateModificationAtStart)
+    {
+      auto worldStateModificationAtStart = itAction->second.effect.worldStateModificationAtStart->cloneParamSet(pActionInvocationWithGoal.actionInvocation.parameters);
+      auto& setOfInferences = pDomain.getSetOfInferences();
+      pProblem.worldState.modify(worldStateModificationAtStart, pProblem.goalStack, setOfInferences, pNow);
+    }
+  }
+}
+
 
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  auto itAction = pDomain.actions().find(pOnStepOfPlannerResult.actionInvocation.actionId);
-  if (itAction != pDomain.actions().end())
+  const auto& actions = pDomain.actions();
+  auto itAction = actions.find(pOnStepOfPlannerResult.actionInvocation.actionId);
+  if (itAction != actions.end())
   {
     auto& setOfInferences = pDomain.getSetOfInferences();
     bool goalChanged = false;

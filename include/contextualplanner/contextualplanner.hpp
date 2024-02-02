@@ -46,6 +46,18 @@ std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
     Historical* pGlobalHistorical = nullptr);
 
 
+/**
+ * @brief Notify that an action started. This function will update the world (contained in the problem) accordingly.
+ * @param[in, out] pProblem Problem of the planner.
+ * @param[in] pDomain Domain of the planner.
+ * @param[in] pActionInvocationWithGoal Planner result step that motivated this action.
+ * @param[in] pNow Current time.
+ */
+CONTEXTUALPLANNER_API
+void notifyActionStarted(Problem& pProblem,
+                         const Domain& pDomain,
+                         const ActionInvocationWithGoal& pActionInvocationWithGoal,
+                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 /**
  * @brief Notify that an action finished. This function will update the world (contained in the problem) accordingly.

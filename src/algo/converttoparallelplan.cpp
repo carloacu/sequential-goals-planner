@@ -6,6 +6,7 @@
 #include <contextualplanner/types/lookforanactionoutputinfos.hpp>
 #include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/types/worldstate.hpp>
+#include <contextualplanner/contextualplanner.hpp>
 #include "notifyactiondone.hpp"
 
 namespace cp
@@ -75,6 +76,7 @@ std::list<std::list<cp::ActionInvocationWithGoal>> toParallelPlan
  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   std::list<std::list<cp::ActionInvocationWithGoal>> res;
+  auto currentProblem = pProblem;
 
   // Connvert list of actions to a list of list of actions
   while (!pSequentialPlan.empty())
@@ -86,6 +88,9 @@ std::list<std::list<cp::ActionInvocationWithGoal>> toParallelPlan
   const auto& actions = pDomain.actions();
   for (auto itPlanStep = res.begin(); itPlanStep != res.end(); ++itPlanStep)
   {
+    for (auto& currAction : *itPlanStep)
+      notifyActionStarted(currentProblem, pDomain, currAction, pNow);
+
     auto itPlanStepCandidate = itPlanStep;
     ++itPlanStepCandidate;
     while (itPlanStepCandidate != res.end())
@@ -96,9 +101,9 @@ std::list<std::list<cp::ActionInvocationWithGoal>> toParallelPlan
         auto itActionCand = actions.find(actionInvocationCand.actionInvocation.actionId);
         if (itActionCand != actions.end() &&
             (!itActionCand->second.precondition ||
-             itActionCand->second.precondition->isTrue(pProblem.worldState)))
+             itActionCand->second.precondition->isTrue(currentProblem.worldState)))
         {
-          auto goalsCand = _checkSatisfiedGoals(pProblem, pDomain, res, &actionInvocationCand, &actionInvocationCand, pNow);
+          auto goalsCand = _checkSatisfiedGoals(currentProblem, pDomain, res, &actionInvocationCand, &actionInvocationCand, pNow);
           if (goalsCand == pGoals)
           {
             itPlanStep->emplace_back(std::move(actionInvocationCand));

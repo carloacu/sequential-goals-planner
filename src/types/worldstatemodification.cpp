@@ -82,6 +82,12 @@ struct WorldStateModificationNode : public WorldStateModification
         (rightOperand && rightOperand->hasFact(pFact));
   }
 
+  bool hasFactOptional(const cp::FactOptional& FactOptional) const override
+  {
+    return (leftOperand && leftOperand->hasFactOptional(FactOptional)) ||
+        (rightOperand && rightOperand->hasFactOptional(FactOptional));
+  }
+
   bool isOnlyASetOfFacts() const override
   {
     if (nodeType == WorldStateModificationNodeType::SET ||
@@ -172,6 +178,11 @@ struct WorldStateModificationFact : public WorldStateModification
     return factOptional.fact == pFact;
   }
 
+  bool hasFactOptional(const cp::FactOptional& FactOptional) const override
+  {
+    return factOptional == FactOptional;
+  }
+
   bool isOnlyASetOfFacts() const override { return true; }
 
   void replaceFact(const cp::Fact& pOldFact,
@@ -233,7 +244,8 @@ struct WorldStateModificationNumber : public WorldStateModification
     return ss.str();
   }
 
-  bool hasFact(const cp::Fact& pFact) const override { return false; }
+  bool hasFact(const cp::Fact&) const override { return false; }
+  bool hasFactOptional(const cp::FactOptional&) const override { return false; }
   bool isOnlyASetOfFacts() const override { return false; }
 
   void replaceFact(const cp::Fact& pOldFact,

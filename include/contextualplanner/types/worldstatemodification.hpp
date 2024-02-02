@@ -37,9 +37,11 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    */
   virtual std::string toStr() const = 0;
 
-
   /// Check if this object contains a fact or the negation of the fact.
   virtual bool hasFact(const cp::Fact& pFact) const = 0;
+
+  /// Check if this object contains an optional fact.
+  virtual bool hasFactOptional(const cp::FactOptional& FactOptional) const = 0;
 
   /// Does this object only represents a set of facts.
   virtual bool isOnlyASetOfFacts() const = 0;
