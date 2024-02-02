@@ -187,6 +187,19 @@ cp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
   return cp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
+
+std::string _lookForAnActionToDoInParallelThenNotifyToStr(
+    cp::Problem& pProblem,
+    const cp::Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
+{
+  auto actions = cp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
+  for (auto& currAction : actions)
+    notifyActionDone(pProblem, pDomain, currAction, pNow);
+  return cp::planToStr(actions);
+}
+
+
 void _setGoalsForAPriority(cp::Problem& pProblem,
                            const std::vector<cp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
@@ -2583,6 +2596,7 @@ void _hardProbleThatNeedsToBeSmart()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact(_fact_d), problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {cp::Goal(_fact_e)});
+
   assert_eq(action1 + "(obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq(action4, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq(action1 + "(obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
@@ -2590,6 +2604,66 @@ void _hardProbleThatNeedsToBeSmart()
   assert_eq(action6, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
+
+
+
+void _goalsToDoInParallel()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  const std::string action4 = "action4";
+  const std::string action5 = "action5";
+  const std::string action6 = "action6";
+  const std::string action7 = "action7";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1({}, cp::WorldStateModification::fromStr(_fact_a + "=obj"));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2(cp::Condition::fromStr(_fact_a + "=val1"),
+                        cp::WorldStateModification::fromStr(_fact_b + " & " + _fact_c));
+  actions.emplace(action2, actionObj2);
+
+  cp::Action actionObj3(cp::Condition::fromStr(_fact_a + "=val2"),
+                        cp::WorldStateModification::fromStr(_fact_b + " & " + _fact_c));
+  actions.emplace(action3, actionObj3);
+
+  cp::Action actionObj4(cp::Condition::fromStr(_fact_a + "=val3 & !" + _fact_c),
+                        cp::WorldStateModification::fromStr("!" + _fact_d + " & " + _fact_f));
+  actions.emplace(action4, actionObj4);
+
+  cp::Action actionObj5(cp::Condition::fromStr(_fact_a + "=val4"),
+                        cp::WorldStateModification::fromStr(_fact_b + " & " + _fact_c));
+  actions.emplace(action5, actionObj5);
+
+  cp::Action actionObj6(cp::Condition::fromStr(_fact_b + " & !" + _fact_d + " & " + _fact_g),
+                        cp::WorldStateModification::fromStr(_fact_e));
+  actions.emplace(action6, actionObj6);
+
+  cp::Action actionObj7(cp::Condition::fromStr(_fact_f),
+                        cp::WorldStateModification::fromStr(_fact_g));
+  actions.emplace(action7, actionObj7);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact(_fact_d), problem.goalStack, setOfInferencesMap, now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_e)});
+
+  assert_eq(action1 + "(obj -> val3)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+
+  assert_eq<std::string>(action1 + "(obj -> val3)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_eq<std::string>(action4, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_eq<std::string>(action7 + _sep + action1 + "(obj -> val1)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_eq<std::string>(action2, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_eq<std::string>(action6, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_eq<std::string>("", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+}
+
 
 
 
@@ -2695,6 +2769,7 @@ int main(int argc, char *argv[])
   _satisfyGoalWithSuperiorOperator();
   _checkOutputValueOfLookForAnActionToDo();
   _hardProbleThatNeedsToBeSmart();
+  _goalsToDoInParallel();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

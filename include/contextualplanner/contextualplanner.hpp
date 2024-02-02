@@ -36,6 +36,17 @@ std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr = nullptr);
 
 
+
+
+CONTEXTUALPLANNER_API
+std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
+    Problem& pProblem,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    Historical* pGlobalHistorical = nullptr);
+
+
+
 /**
  * @brief Notify that an action finished. This function will update the world (contained in the problem) accordingly.
  * @param[in, out] pProblem Problem of the planner.

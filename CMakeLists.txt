@@ -36,6 +36,10 @@ set(CHATBOTPLANNER_HPPS
 
 
 set(CHATBOTPLANNER_SRCS
+    src/algo/converttoparallelplan.hpp
+    src/algo/converttoparallelplan.cpp
+    src/algo/notifyactiondone.hpp
+    src/algo/notifyactiondone.cpp
     src/types/action.cpp
     src/types/actioninvocation.cpp
     src/types/actioninvocationwithgoal.cpp

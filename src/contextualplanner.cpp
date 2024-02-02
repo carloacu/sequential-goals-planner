@@ -5,6 +5,8 @@
 #include <contextualplanner/util/util.hpp>
 #include "types/factsalreadychecked.hpp"
 #include "types/treeofalreadydonepaths.hpp"
+#include "algo/converttoparallelplan.hpp"
+#include "algo/notifyactiondone.hpp"
 
 namespace cp
 {
@@ -77,6 +79,7 @@ struct PotentialNextAction
   bool isMoreImportantThan(const PotentialNextAction& pOther,
                            const Problem& pProblem,
                            const Historical* pGlobalHistorical) const;
+  bool removeAPossibility();
 };
 
 
@@ -177,8 +180,25 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 }
 
 
+bool PotentialNextAction::removeAPossibility()
+{
+  for (auto& currParam : parameters)
+  {
+    if (currParam.second.size() > 1)
+    {
+      currParam.second.erase(currParam.second.begin());
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
+
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              std::map<std::string, std::set<std::string>>& pParameters,
+                             bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const ProblemModification& pEffectToCheck,
                              const Goal& pGoal,
@@ -209,7 +229,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
       parametersToValues[currParam];
 
     bool satisfyObjective = false;
-    if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, pTreeOfAlreadyDonePath, pEffect,
+    if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, false, pTreeOfAlreadyDonePath, pEffect,
                                 pGoal, pProblem, pFactOptionalToSatisfy, pDomain, pFactsAlreadychecked))
     {
       bool tryToMatchWothFactOfTheWorld = false;
@@ -291,6 +311,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
 PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
     const FactOptional& pFactOptional,
     std::map<std::string, std::set<std::string>>& pParentParameters,
+    bool pTryToGetAllPossibleParentParameterValues,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
     const std::map<std::string, std::set<ActionId>>& pPreconditionToActions,
     const Goal& pGoal,
@@ -303,23 +324,38 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
   auto it = pPreconditionToActions.find(pFactOptional.fact.name);
   if (it != pPreconditionToActions.end())
   {
+    std::map<std::string, std::set<std::string>> newPossibleParentParameters;
+    std::size_t nbOfPossiblities = 0;
     auto& actions = pDomain.actions();
     for (const auto& currActionId : it->second)
     {
       auto itAction = actions.find(currActionId);
       if (itAction != actions.end())
       {
+        auto cpParentParameters = pParentParameters;
         auto& action = itAction->second;
         auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currActionId);
         if (newTreePtr != nullptr)
           res = _merge(_lookForAPossibleDeduction(*newTreePtr, action.parameters, action.precondition,
-                                                  action.effect, pFactOptional, pParentParameters, pGoal,
+                                                  action.effect, pFactOptional, cpParentParameters, pGoal,
                                                   pProblem, pFactOptionalToSatisfy,
                                                   pDomain, pFactsAlreadychecked), res);
         if (res == PossibleEffect::SATISFIED)
-          return res;
+        {
+          if (!pTryToGetAllPossibleParentParameterValues)
+          {
+            pParentParameters = cpParentParameters;
+            return res;
+          }
+
+          for (auto& currParam : cpParentParameters)
+            newPossibleParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
+          ++nbOfPossiblities;
+        }
       }
     }
+    if (nbOfPossiblities > 0)
+      pParentParameters = newPossibleParentParameters;
   }
   return res;
 }
@@ -328,6 +364,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
 PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
     const FactOptional& pFactOptional,
     std::map<std::string, std::set<std::string>>& pParentParameters,
+    bool pTryToGetAllPossibleParentParameterValues,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
     const std::map<std::string, std::set<InferenceId>>& pConditionToInferences,
     const std::map<InferenceId, Inference>& pInferences,
@@ -355,7 +392,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
                                                     inference.factsToModify->clone(nullptr), pFactOptional,
                                                     pParentParameters, pGoal, pProblem, pFactOptionalToSatisfy,
                                                     pDomain, pFactsAlreadychecked), res);
-          if (res == PossibleEffect::SATISFIED)
+          if (res == PossibleEffect::SATISFIED && !pTryToGetAllPossibleParentParameterValues)
             return res;
         }
       }
@@ -367,6 +404,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
 
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              std::map<std::string, std::set<std::string>>& pParameters,
+                             bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const ProblemModification& pEffectToCheck,
                              const Goal& pGoal,
@@ -434,7 +472,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
         subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
 
       auto& preconditionToActions = !pFactOptional.isFactNegated ? pDomain.preconditionToActions() : pDomain.notPreconditionToActions();
-      PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pFactOptional, pParameters, pTreeOfAlreadyDonePath,
+      PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pFactOptional, pParameters, pTryToGetAllPossibleParentParameterValues,
+                                                                                    pTreeOfAlreadyDonePath,
                                                                                     preconditionToActions, pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                     pDomain, subFactsAlreadychecked);
       if (possibleEffect != PossibleEffect::SATISFIED)
@@ -445,7 +484,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
           auto& conditionToReachableInferences = !pFactOptional.isFactNegated ?
                 currSetOfInferences.second.reachableInferenceLinks().conditionToInferences :
                 currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, pTreeOfAlreadyDonePath,
+          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, pTryToGetAllPossibleParentParameterValues,
+                                                                                   pTreeOfAlreadyDonePath,
                                                                                    conditionToReachableInferences, inferences,
                                                                                    pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
@@ -454,7 +494,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
           auto& conditionToUnreachableInferences = !pFactOptional.isFactNegated ?
                 currSetOfInferences.second.unreachableInferenceLinks().conditionToInferences :
                 currSetOfInferences.second.unreachableInferenceLinks().notConditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, pTreeOfAlreadyDonePath,
+          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, pTryToGetAllPossibleParentParameterValues,
+                                                                                   pTreeOfAlreadyDonePath,
                                                                                    conditionToUnreachableInferences, inferences,
                                                                                    pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
@@ -469,51 +510,6 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     }
     return false;
   }, pProblem.worldState);
-}
-
-void _notifyActionDone(Problem& pProblem,
-                       bool& pGoalChanged,
-                       const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
-                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
-                       const std::unique_ptr<WorldStateModification>& pEffect,
-                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                       const std::map<int, std::vector<Goal>>* pGoalsToAdd,
-                       const std::vector<Goal>* pGoalsToAddInCurrentPriority,
-                       LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
-{
-  pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInvocation.actionId);
-
-  pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pGoalChanged, pProblem.goalStack, pSetOfInferences, pNow);
-
-  pGoalChanged = pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pNow, pGoalsToAdd,
-                                                     pGoalsToAddInCurrentPriority, pProblem.worldState, pLookForAnActionOutputInfosPtr) || pGoalChanged;
-}
-
-void _updateProblemForNextPotentialPlannerResult(
-    Problem& pProblem,
-    bool& pGoalChanged,
-    const ActionInvocationWithGoal& pOneStepOfPlannerResult,
-    const Domain& pDomain,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    Historical* pGlobalHistorical,
-    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
-{
-  auto itAction = pDomain.actions().find(pOneStepOfPlannerResult.actionInvocation.actionId);
-  if (itAction != pDomain.actions().end())
-  {
-    if (pGlobalHistorical != nullptr)
-      pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
-    auto& setOfInferences = pDomain.getSetOfInferences();
-    _notifyActionDone(pProblem, pGoalChanged, setOfInferences, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
-                      &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
-                      pLookForAnActionOutputInfosPtr);
-
-    if (itAction->second.effect.potentialWorldStateModification)
-    {
-      auto potentialEffect = itAction->second.effect.potentialWorldStateModification->cloneParamSet(pOneStepOfPlannerResult.actionInvocation.parameters);
-      pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfInferences, pNow);
-    }
-  }
 }
 
 
@@ -547,8 +543,8 @@ PlanCost _extractPlanCost(
         shouldBreak = true;
       actionAlreadyInPlan.insert(actionToDoStr);
       bool goalChanged = false;
-      _updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
-                                                  &pLookForAnActionOutputInfos);
+      updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
+                                                 &pLookForAnActionOutputInfos);
       if (goalChanged)
         break;
     }
@@ -575,7 +571,8 @@ bool _isMoreOptimalNextAction(
       pLength == 0 &&
       pNewPotentialNextAction.actionPtr != nullptr &&
       pCurrentNextAction.actionPtr != nullptr &&
-      pNewPotentialNextAction.actionPtr->effect != pCurrentNextAction.actionPtr->effect)
+      (pNewPotentialNextAction.actionPtr->effect != pCurrentNextAction.actionPtr->effect ||
+       pNewPotentialNextAction.parameters != pCurrentNextAction.parameters))
   {
     ActionInvocationWithGoal oneStepOfPlannerResult1(pNewPotentialNextAction.actionId, pNewPotentialNextAction.parameters, {}, 0);
     ActionInvocationWithGoal oneStepOfPlannerResult2(pCurrentNextAction.actionId, pCurrentNextAction.parameters, {}, 0);
@@ -586,7 +583,7 @@ bool _isMoreOptimalNextAction(
       auto localProblem1 = pProblem;
       bool goalChanged = false;
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
-      _updateProblemForNextPotentialPlannerResult(localProblem1, goalChanged, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
+      updateProblemForNextPotentialPlannerResult(localProblem1, goalChanged, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr, lookForAnActionOutputInfos);
     }
 
@@ -595,7 +592,7 @@ bool _isMoreOptimalNextAction(
       auto localProblem2 = pProblem;
       bool goalChanged = false;
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
-      _updateProblemForNextPotentialPlannerResult(localProblem2, goalChanged, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
+      updateProblemForNextPotentialPlannerResult(localProblem2, goalChanged, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       pPotentialNextActionComparisonCacheOpt = PotentialNextActionComparisonCache();
       pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr, lookForAnActionOutputInfos);
     }
@@ -641,15 +638,20 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       auto newPotRes = PotentialNextAction(currAction, action);
       auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currAction);
       if (newTreePtr != nullptr && // To skip leaf of already seen path
-          _lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, *newTreePtr,
+          _lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, pTryToDoMoreOptimalSolution, *newTreePtr,
                                   action.effect, pGoal, pProblem, pFactOptionalToSatisfy,
                                   pDomain, factsAlreadyChecked) &&
           (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parameters)))
       {
-        if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotRes, newPotNextAction, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGlobalHistorical))
+        while (true)
         {
-          assert(newPotRes.actionPtr != nullptr);
-          newPotNextAction = newPotRes;
+          if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotRes, newPotNextAction, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGlobalHistorical))
+          {
+            assert(newPotRes.actionPtr != nullptr);
+            newPotNextAction = newPotRes;
+          }
+          if (!newPotRes.removeAPossibility())
+            break;
         }
       }
     }
@@ -702,6 +704,7 @@ ActionId _nextStepOfTheProblemForAGoal(
 bool _lookForAnActionToDoRec(
     std::list<ActionInvocationWithGoal>& pActionInvocations,
     Problem& pProblem,
+    std::map<std::string, std::size_t>& pActionAlreadyInPlan,
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -739,11 +742,26 @@ bool _lookForAnActionToDoRec(
 
     if (potentialRes && potentialRes->fromGoal)
     {
+      const auto& actionToDoStr = potentialRes->actionInvocation.toStr();
+      auto itAlreadyFoundAction = pActionAlreadyInPlan.find(actionToDoStr);
+      if (itAlreadyFoundAction == pActionAlreadyInPlan.end())
+      {
+        pActionAlreadyInPlan[actionToDoStr] = 1;
+      }
+      else
+      {
+        if (itAlreadyFoundAction->second > 10)
+          return false;
+        ++itAlreadyFoundAction->second;
+      }
+
+
       auto problemForPlanCost = pProblem;
       bool goalChanged = false;
-      _updateProblemForNextPotentialPlannerResult(problemForPlanCost, goalChanged, *potentialRes, pDomain, pNow, nullptr, nullptr);
+      updateProblemForNextPotentialPlannerResult(problemForPlanCost, goalChanged, *potentialRes, pDomain, pNow, nullptr, nullptr);
       if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
-          _lookForAnActionToDoRec(pActionInvocations, problemForPlanCost, pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
+          _lookForAnActionToDoRec(pActionInvocations, problemForPlanCost, pActionAlreadyInPlan,
+                                  pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
       {
         potentialRes->fromGoal->notifyActivity();
         pActionInvocations.emplace_front(std::move(*potentialRes));
@@ -772,12 +790,31 @@ std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
   std::list<ActionInvocationWithGoal> res;
   pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(
         [&](const Goal& pGoal, int pPriority){
-            return _lookForAnActionToDoRec(res, pProblem, pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority);
+            std::map<std::string, std::size_t> actionAlreadyInPlan;
+            return _lookForAnActionToDoRec(res, pProblem, actionAlreadyInPlan,
+                                           pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority);
           },
         pProblem.worldState, pNow,
         pLookForAnActionOutputInfosPtr);
   return res;
 }
+
+
+std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
+    Problem& pProblem,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    Historical* pGlobalHistorical)
+{
+  std::list<Goal> goalsDone;
+  auto problemForPlanResolution = pProblem;
+  auto sequentialPlan = planForEveryGoals(problemForPlanResolution, pDomain, pNow, pGlobalHistorical, &goalsDone);
+  auto parallelPlan = toParallelPlan(sequentialPlan, true, pProblem, pDomain, goalsDone, pNow);
+  if (!parallelPlan.empty())
+    return parallelPlan.front();
+  return {};
+}
+
 
 
 void notifyActionDone(Problem& pProblem,
@@ -790,9 +827,9 @@ void notifyActionDone(Problem& pProblem,
   {
     auto& setOfInferences = pDomain.getSetOfInferences();
     bool goalChanged = false;
-    _notifyActionDone(pProblem, goalChanged, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
-                      &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
-                      nullptr);
+    notifyActionInvocationDone(pProblem, goalChanged, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
+                               &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
+                               nullptr);
   }
 }
 
@@ -830,8 +867,8 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
         ++itAlreadyFoundAction->second;
       }
       bool goalChanged = false;
-      _updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
-                                                  &lookForAnActionOutputInfos);
+      updateProblemForNextPotentialPlannerResult(pProblem, goalChanged, currActionInSubPlan, pDomain, pNow, pGlobalHistorical,
+                                                 &lookForAnActionOutputInfos);
       res.emplace_back(std::move(currActionInSubPlan));
       if (goalChanged)
         break;
