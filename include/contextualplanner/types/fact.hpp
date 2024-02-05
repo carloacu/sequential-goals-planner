@@ -44,6 +44,10 @@ struct CONTEXTUALPLANNER_API Fact
   /// Check equality with another fact without considering the values.
   bool areEqualWithoutValueConsideration(const Fact& pFact) const;
 
+  /// Check equality with another fact without considering an argument.
+  bool areEqualWithoutAnArgConsideration(const Fact& pFact,
+                                         const std::string& pArgToIgnore) const;
+
   /**
    * @brief Is equal to another Fact or if any of the 2 Facts have an "any value" that can match.
    * @param pOther[in] Other fact to compare.

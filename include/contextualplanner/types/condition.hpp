@@ -62,16 +62,29 @@ struct CONTEXTUALPLANNER_API Condition
    */
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
 
+
+  /**
+   * @brief Find a condition fact candidate a fact that is in the effect of the preceding action.
+   * @param[in] pDoesConditionFactMatchFactFromEffect Callback called for each optional fact until the callback returns true.
+   * @param[in] pWorldState World state to consider.
+   * @param[in] pFactFromEffect Fact that is in the effect of the preceding action.
+   * @param[in] pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments.
+   * @return True if one callback returned true, false otherwise.
+   */
+  virtual bool findConditionCandidateFromFactFromEffect(
+      const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+      const WorldState& pWorldState,
+      const Fact& pFactFromEffect,
+      const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const = 0;
+
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world sate until the callback returns false.
    * @param[in] pFactCallback Callback called for each optional fact until the callback returns false.
    * @param[in] pWorldState World state to consider.
-   * @param[in] pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments.
    * @return False if one callback returned false, true otherwise.
    */
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                          const WorldState& pWorldState,
-                          const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const = 0;
+                          const WorldState& pWorldState) const = 0;
 
   /**
    * @brief Check if this condition is true for a specific world state.
@@ -159,9 +172,13 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
                        const std::vector<std::string>& pConditionParameters) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override;
+  bool findConditionCandidateFromFactFromEffect(
+      const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+      const WorldState& pWorldState,
+      const Fact& pFactFromEffect,
+      const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const WorldState& pWorldState,
-                  const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const override;
+                  const WorldState& pWorldState) const override;
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -204,9 +221,15 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
                        const std::vector<std::string>& pConditionParameters) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override;
+
+  bool findConditionCandidateFromFactFromEffect(
+      const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+      const WorldState& pWorldState,
+      const Fact& pFactFromEffect,
+      const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const override;
+
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const WorldState& pWorldState,
-                  const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const override;
+                  const WorldState& pWorldState) const override { return true; } // TODO
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -246,9 +269,13 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
                        const std::vector<std::string>& pConditionParameters) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override { pFactCallback(factOptional); }
+  bool findConditionCandidateFromFactFromEffect(
+      const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+      const WorldState&,
+      const Fact&,
+      const std::map<std::string, std::set<std::string>>&) const override { return pDoesConditionFactMatchFactFromEffect(factOptional); }
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const WorldState&,
-                  const std::map<std::string, std::set<std::string>>&) const override { return pFactCallback(factOptional); }
+                  const WorldState&) const override { return pFactCallback(factOptional); }
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -287,9 +314,13 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
                        const std::map<std::string, std::set<std::string>>&,
                        const std::vector<std::string>&) const override { return false; }
   void forAll(const std::function<void (const FactOptional&)>&) const override {}
+  bool findConditionCandidateFromFactFromEffect(
+      const std::function<bool (const FactOptional&)>&,
+      const WorldState&,
+      const Fact&,
+      const std::map<std::string, std::set<std::string>>&) const override { return true; }
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
-                  const WorldState&,
-                  const std::map<std::string, std::set<std::string>>&) const override { return true; }
+                  const WorldState&) const override { return true; }
   bool isTrue(const WorldState&,
               const std::set<Fact>&,
               const std::set<Fact>&,

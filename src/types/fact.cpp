@@ -108,6 +108,29 @@ bool Fact::areEqualWithoutValueConsideration(const Fact& pFact) const
   return true;
 }
 
+bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
+                                             const std::string& pArgToIgnore) const
+{
+  if (pFact.name != name ||
+      pFact.arguments.size() != arguments.size() ||
+      pFact.value != value)
+    return false;
+
+  auto itParam = arguments.begin();
+  auto itOtherParam = pFact.arguments.begin();
+  while (itParam != arguments.end())
+  {
+    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
+        *itParam != pArgToIgnore)
+      return false;
+    ++itParam;
+    ++itOtherParam;
+  }
+
+  return true;
+}
+
+
 
 bool Fact::areEqualExceptAnyValues(const Fact& pOther,
                                    const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,

@@ -150,14 +150,19 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
 void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalParamToValue,
                            const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
                            const Condition& pCondition,
-                           const std::set<Fact>& pFacts)
+                           const std::set<Fact>& pFacts,
+                           const Fact& pFactFromEffect,
+                           const std::string& pObject)
 {
   auto* factOfConditionPtr = pCondition.fcFactPtr();
   if (factOfConditionPtr != nullptr)
   {
-    std::map<std::string, std::set<std::string>> newParameters;
-    const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-    factToOfCondition.isInOtherFacts(pFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
+    const auto& factOfCondition = factOfConditionPtr->factOptional.fact;
+    if (!factOfCondition.areEqualWithoutAnArgConsideration(pFactFromEffect, pObject))
+    {
+      std::map<std::string, std::set<std::string>> newParameters;
+      factOfCondition.isInOtherFacts(pFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
+    }
     return;
   }
 
@@ -165,8 +170,8 @@ void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalP
   if (nodeOfConditionPtr != nullptr && nodeOfConditionPtr->nodeType == ConditionNodeType::AND &&
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
   {
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts);
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pFactFromEffect, pObject);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pFactFromEffect, pObject);
   }
 }
 
@@ -254,16 +259,19 @@ void ConditionNode::forAll(const std::function<void (const FactOptional&)>& pFac
     rightOperand->forAll(pFactCallback);
 }
 
-bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const WorldState& pWorldState,
-                               const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
+
+bool ConditionNode::findConditionCandidateFromFactFromEffect(
+    const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+    const WorldState& pWorldState,
+    const Fact& pFactFromEffect,
+    const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
 {
   if (nodeType == ConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pWorldState, pConditionParametersToPossibleArguments))
-      return false;
-    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pWorldState, pConditionParametersToPossibleArguments))
-      return false;
+    if (leftOperand && leftOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments))
+      return true;
+    if (rightOperand && rightOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments))
+      return true;
   }
   else if (leftOperand && rightOperand)
   {
@@ -278,8 +286,41 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
         {
           auto factToCheck = leftFact.factOptional.fact;
           factToCheck.value = pValue;
-          return pFactCallback(FactOptional(factToCheck));
-        }, false, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
+          return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
+        }, true, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
+      }
+      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
+      {
+         return pDoesConditionFactMatchFactFromEffect(leftFact.factOptional);
+      }
+    }
+  }
+  return false;
+}
+
+
+
+bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
+                               const WorldState& pWorldState) const
+{
+  if (nodeType == ConditionNodeType::AND)
+  {
+    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pWorldState))
+      return false;
+    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pWorldState))
+      return false;
+  }
+  else if (leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    if (leftFactPtr != nullptr)
+    {
+      const auto& leftFact = *leftFactPtr;
+      if (nodeType == ConditionNodeType::EQUALITY)
+      {
+        auto factToCheck = leftFact.factOptional.fact;
+        factToCheck.value = rightOperand->getValue(pWorldState);
+        return pFactCallback(FactOptional(factToCheck));
       }
       else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
       {
@@ -469,23 +510,25 @@ void ConditionExists::forAll(const std::function<void (const FactOptional&)>& pF
 }
 
 
-bool ConditionExists::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                 const WorldState& pWorldState,
-                                 const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
+bool ConditionExists::findConditionCandidateFromFactFromEffect(
+    const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+    const WorldState& pWorldState,
+    const Fact& pFactFromEffect,
+    const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
 {
   if (condition)
   {
     const auto& facts = pWorldState.facts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts);
+    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pFactFromEffect, object);
 
-    return condition->untilFalse([&](const FactOptional& pConditionFact) {
+    return condition->findConditionCandidateFromFactFromEffect([&](const FactOptional& pConditionFact) {
       auto factToConsider = pConditionFact.fact;
       factToConsider.replaceArguments(localParamToValue);
-      return pFactCallback(FactOptional(factToConsider));
-    }, pWorldState, pConditionParametersToPossibleArguments);
+      return pDoesConditionFactMatchFactFromEffect(FactOptional(factToConsider));
+    }, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments);
   }
-  return true;
+  return false;
 }
 
 

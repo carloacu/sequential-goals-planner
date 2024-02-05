@@ -242,20 +242,20 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
           if (currParentParam.second.empty() &&
               pFactOptional.fact.hasArgumentOrValue(currParentParam.first))
           {
-            pCondition->untilFalse(
+            pCondition->findConditionCandidateFromFactFromEffect(
                   [&](const FactOptional& pConditionFactOptional)
             {
               auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(currParentParam.first, pConditionFactOptional.fact);
               if (parentParamValue.empty())
-                return true;
+                return false;
               // Maybe the extracted parameter is also a parameter so we replace by it's value
               auto itParam = parametersToValues.find(parentParamValue);
               if (itParam != parametersToValues.end())
                 currParentParam.second = itParam->second;
               else
                 currParentParam.second.insert(parentParamValue);
-              return currParentParam.second.empty();
-            }, pProblem.worldState, parametersToValues);
+              return !currParentParam.second.empty();
+            }, pProblem.worldState, pFactOptional.fact, parametersToValues);
 
             if (!currParentParam.second.empty())
               break;
@@ -727,7 +727,7 @@ bool _lookForAnActionToDoRec(
         return false;
       }
       return true;
-    }, pProblem.worldState, {});
+    }, pProblem.worldState);
 
     if (factOptionalToSatisfyPtr != nullptr)
     {
