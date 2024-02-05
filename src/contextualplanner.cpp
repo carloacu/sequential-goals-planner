@@ -421,7 +421,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
     bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
     std::map<std::string, std::set<std::string>> newParameters;
-    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters, nullptr, objIsAComparison);
+    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters, nullptr, nullptr, objIsAComparison);
     if (res && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
     {
       const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();

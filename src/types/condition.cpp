@@ -9,6 +9,7 @@ namespace cp
 namespace
 {
 const char* _equalsFunctionName = "equals";
+const char* _existsFunctionName = "exists";
 
 
 bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
@@ -76,6 +77,12 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
     res = std::make_unique<ConditionNode>(ConditionNodeType::EQUALITY,
                                           _expressionParsedToCondition(pExpressionParsed.arguments.front()),
                                           _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin())));
+  }
+  else if (pExpressionParsed.name == _existsFunctionName &&
+           pExpressionParsed.arguments.size() == 2)
+  {
+    res = std::make_unique<ConditionExists>(pExpressionParsed.arguments.front().name,
+                                            _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin())));
   }
   else
   {
@@ -361,6 +368,179 @@ std::unique_ptr<Condition> ConditionNode::clone(const std::map<std::string, std:
         leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>(),
         rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>());
 }
+
+
+
+
+
+std::string ConditionExists::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
+{
+  std::string conditionStr;
+  if (condition)
+    conditionStr = condition->toStr(pFactWriterPtr);
+  return std::string(_existsFunctionName) + "(" + object + ", " + conditionStr + ")";
+}
+
+ConditionExists::ConditionExists(const std::string& pObject,
+                                 std::unique_ptr<Condition> pCondition)
+  : Condition(),
+    object(pObject),
+    condition(std::move(pCondition))
+{
+}
+
+bool ConditionExists::hasFact(const Fact& pFact) const
+{
+  return condition && condition->hasFact(pFact);
+}
+
+
+bool ConditionExists::containsFactOpt(const FactOptional& pFactOptional,
+                                      const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                      const std::vector<std::string>& pConditionParameters) const
+{
+  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters);
+}
+
+void ConditionExists::replaceFact(const Fact& pOldFact,
+                                  const Fact& pNewFact)
+{
+  if (condition)
+    condition->replaceFact(pOldFact, pNewFact);
+}
+
+void ConditionExists::forAll(const std::function<void (const FactOptional&)>& pFactCallback) const
+{
+  if (condition)
+    condition->forAll(pFactCallback);
+}
+
+
+bool ConditionExists::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
+                                 const WorldState& pWorldState,
+                                 const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
+{
+  if (condition)
+  {
+    std::set<Fact> potentialArgumentsOfTheParameter;
+    return condition->untilFalse([&](const FactOptional& pConditionFact) {
+      if (potentialArgumentsOfTheParameter.empty())
+      {
+        std::list<const Fact*> factsThatMatched;
+        pWorldState.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter, pConditionFact.fact,
+                                                              object, &factsThatMatched);
+        for (auto* currFactPtr : factsThatMatched)
+        {
+          if (!pFactCallback(FactOptional(*currFactPtr)))
+            return false;
+        }
+        return true;
+      }
+
+      std::set<Fact> newPotentialArgumentsOfTheParameter;
+      pWorldState.extractPotentialArgumentsOfAFactParameter(newPotentialArgumentsOfTheParameter, pConditionFact.fact,
+                                                            object);
+      std::set<Fact> intersect;
+      std::set_intersection(potentialArgumentsOfTheParameter.begin(), potentialArgumentsOfTheParameter.end(),
+                            newPotentialArgumentsOfTheParameter.begin(), newPotentialArgumentsOfTheParameter.end(),
+                            std::inserter(intersect, intersect.begin()));
+      if (intersect.empty())
+        return false;
+      potentialArgumentsOfTheParameter = std::move(intersect);
+
+      for (auto& currPotArg : potentialArgumentsOfTheParameter)
+      {
+        auto factWithReplacement = pConditionFact.fact;
+        factWithReplacement.replaceArguments({{object, currPotArg.name}});
+        if (!pFactCallback(FactOptional(factWithReplacement)))
+          return false;
+      }
+
+      return true;
+    }, pWorldState, pConditionParametersToPossibleArguments);
+  }
+  return true;
+}
+
+
+bool ConditionExists::isTrue(const WorldState& pWorldState,
+                             const std::set<Fact>& pPunctualFacts,
+                             const std::set<Fact>& pRemovedFacts,
+                             std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
+                             bool* pCanBecomeTruePtr) const
+{
+  if (condition)
+  {
+    const auto& facts = pWorldState.facts();
+    bool res = false;
+    std::map<std::string, std::set<std::string>> newParameters;
+
+    auto* factOfConditionPtr = condition->fcFactPtr();
+    if (factOfConditionPtr != nullptr)
+    {
+      const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
+      if (factToOfCondition.isPunctual())
+      {
+        res = pPunctualFacts.count(factToOfCondition) != 0 || res;
+      }
+      else
+      {
+        std::set<std::string> parametersToSkip{object};
+        res = factToOfCondition.isInOtherFacts(facts, true, &newParameters, pConditionParametersToPossibleArguments, &parametersToSkip) || res;
+      }
+
+      if (pConditionParametersToPossibleArguments != nullptr)
+        applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
+    }
+    return res;
+  }
+  return true;
+}
+
+
+bool ConditionExists::canBecomeTrue(const WorldState& pWorldState) const
+{
+  if (condition)
+  {
+    auto* factOfConditionPtr = condition->fcFactPtr();
+    if (factOfConditionPtr != nullptr)
+    {
+      const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
+      std::set<Fact> potentialArgumentsOfTheParameter;
+      pWorldState.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter,
+                                                            factToOfCondition, object);
+      for (auto& currPot : potentialArgumentsOfTheParameter)
+      {
+        if (currPot.arguments.empty() && currPot.value == "")
+        {
+          auto factToCheck = factToOfCondition;
+          factToCheck.replaceArguments({{object, currPot.name}});
+          if (pWorldState.canFactBecomeTrue(factToCheck))
+            return true;
+        }
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ConditionExists::operator==(const Condition& pOther) const
+{
+  auto* otherExistsPtr = pOther.fcExistsPtr();
+  return otherExistsPtr != nullptr &&
+      object == otherExistsPtr->object &&
+      _areEqual(condition, otherExistsPtr->condition);
+}
+
+std::unique_ptr<Condition> ConditionExists::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
+{
+  return std::make_unique<ConditionExists>(
+        object,
+        condition ? condition->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>());
+}
+
+
 
 
 

@@ -2,6 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_WORLDSTATE_HPP
 
 #include <chrono>
+#include <list>
 #include <map>
 #include <memory>
 #include <set>
@@ -174,11 +175,13 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[out] pPotentialArgumentsOfTheParameter The extracted the potential arguments of a fact parameter.
    * @param[in] pFact Fact to consider for the parameter.
    * @param[in] pParameter Parameter to consider in the fact.
+   * @param[out] pFactsThatMatchedPtr Get the list of facts that was used to extract the arguments.
    */
   void extractPotentialArgumentsOfAFactParameter(
       std::set<Fact>& pPotentialArgumentsOfTheParameter,
       const Fact& pFact,
-      const std::string& pParameter) const;
+      const std::string& pParameter,
+      std::list<const Fact*>* pFactsThatMatchedPtr = nullptr) const;
 
   /// Facts of the world.
   const std::set<Fact>& facts() const { return _facts; }

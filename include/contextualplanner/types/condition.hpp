@@ -11,6 +11,7 @@ namespace cp
 {
 struct WorldState;
 struct ConditionNode;
+struct ConditionExists;
 struct ConditionFact;
 struct ConditionNumber;
 
@@ -117,6 +118,10 @@ struct CONTEXTUALPLANNER_API Condition
   virtual const ConditionNode* fcNodePtr() const = 0;
   virtual ConditionNode* fcNodePtr() = 0;
 
+  /// Cast to ConditionExists* is possible.
+  virtual const ConditionExists* fcExistsPtr() const = 0;
+  virtual ConditionExists* fcExistsPtr() = 0;
+
   /// Cast to ConditionFact* is possible.
   virtual const ConditionFact* fcFactPtr() const = 0;
   virtual ConditionFact* fcFactPtr() = 0;
@@ -171,6 +176,8 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
 
   const ConditionNode* fcNodePtr() const override { return this; }
   ConditionNode* fcNodePtr() override { return this; }
+  const ConditionExists* fcExistsPtr() const override { return nullptr; }
+  ConditionExists* fcExistsPtr() override { return nullptr; }
   const ConditionFact* fcFactPtr() const override { return nullptr; }
   ConditionFact* fcFactPtr() override { return nullptr; }
   const ConditionNumber* fcNbPtr() const override { return nullptr; }
@@ -179,6 +186,50 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
   ConditionNodeType nodeType;
   std::unique_ptr<Condition> leftOperand;
   std::unique_ptr<Condition> rightOperand;
+};
+
+
+/// Condition tree to manage exists operator.
+struct CONTEXTUALPLANNER_API ConditionExists : public Condition
+{
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+
+  ConditionExists(const std::string& pObject,
+                  std::unique_ptr<Condition> pCondition);
+
+  bool hasFact(const Fact& pFact) const override;
+  void replaceFact(const Fact& pOldFact,
+                   const Fact& pNewFact) override;
+  bool containsFactOpt(const FactOptional& pFactOptional,
+                       const std::map<std::string, std::set<std::string>>& pFactParameters,
+                       const std::vector<std::string>& pConditionParameters) const override;
+  void forAll(const std::function<void (const FactOptional&)>& pFactCallback) const override;
+  bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
+                  const WorldState& pWorldState,
+                  const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const override;
+  bool isTrue(const WorldState& pWorldState,
+              const std::set<Fact>& pPunctualFacts,
+              const std::set<Fact>& pRemovedFacts,
+              std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
+              bool* pCanBecomeTruePtr) const override;
+  bool canBecomeTrue(const WorldState& pWorldState) const override;
+  bool operator==(const Condition& pOther) const override;
+
+  std::string getValue(const WorldState&) const override { return ""; }
+
+  std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const override;
+
+  const ConditionNode* fcNodePtr() const override { return nullptr; }
+  ConditionNode* fcNodePtr() override { return nullptr; }
+  const ConditionExists* fcExistsPtr() const override { return this; }
+  ConditionExists* fcExistsPtr() override { return this; }
+  const ConditionFact* fcFactPtr() const override { return nullptr; }
+  ConditionFact* fcFactPtr() override { return nullptr; }
+  const ConditionNumber* fcNbPtr() const override { return nullptr; }
+  ConditionNumber* fcNbPtr() override { return nullptr; }
+
+  std::string object;
+  std::unique_ptr<Condition> condition;
 };
 
 /// Condition tree node that holds only an optional fact.
@@ -210,6 +261,8 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
+  const ConditionExists* fcExistsPtr() const override { return nullptr; }
+  ConditionExists* fcExistsPtr() override { return nullptr; }
   const ConditionFact* fcFactPtr() const override { return this; }
   ConditionFact* fcFactPtr() override { return this; }
   const ConditionNumber* fcNbPtr() const override { return nullptr; }
@@ -251,6 +304,8 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
+  const ConditionExists* fcExistsPtr() const override { return nullptr; }
+  ConditionExists* fcExistsPtr() override { return nullptr; }
   const ConditionFact* fcFactPtr() const override { return nullptr; }
   ConditionFact* fcFactPtr() override { return nullptr; }
   const ConditionNumber* fcNbPtr() const override { return this; }

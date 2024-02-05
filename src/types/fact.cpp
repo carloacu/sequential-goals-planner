@@ -395,12 +395,13 @@ bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
                           bool pParametersAreForTheFact,
                           std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                           const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                          const std::set<std::string>* pParametersToSkipPtr,
                           bool* pTriedToModifyParametersPtr) const
 {
   bool res = false;
   for (const auto& currOtherFact : pOtherFacts)
     if (isInOtherFact(currOtherFact, pParametersAreForTheFact, pNewParametersPtr, pParametersPtr,
-                 pTriedToModifyParametersPtr))
+                 pParametersToSkipPtr, pTriedToModifyParametersPtr))
       res = true;
   return res;
 }
@@ -410,6 +411,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
                          bool pParametersAreForTheFact,
                          std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                          const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                         const std::set<std::string>* pParametersToSkipPtr,
                          bool* pTriedToModifyParametersPtr,
                          bool pIgnoreValues) const
 {
@@ -437,6 +439,10 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
         return true;
       }
     }
+
+    if (pParametersToSkipPtr != nullptr && pParametersToSkipPtr->count(pFactValue) > 0)
+      return true;
+
     return false;
   };
 

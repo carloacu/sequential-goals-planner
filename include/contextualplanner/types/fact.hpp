@@ -145,6 +145,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the set of other facts.
    * @param[out] pNewParametersPtr New parameter possibilities corresponding of the found match.
    * @param[in] pParametersPtr Already known parameters.
+   * @param[in] pParametersToSkipPtr Parameters that the value does not have importance.
    * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
    * @return True if the fact matches any of the other facts.
    */
@@ -152,6 +153,7 @@ struct CONTEXTUALPLANNER_API Fact
                       bool pParametersAreForTheFact,
                       std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                       const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                      const std::set<std::string>* pParametersToSkipPtr = nullptr,
                       bool* pTriedToModifyParametersPtr = nullptr) const;
 
   /**
@@ -160,6 +162,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the other fact.
    * @param[out] pNewParametersPtr New parameter possibilities corresponding of the found match.
    * @param[in] pParametersPtr Already known parameters.
+   * @param[in] pParametersToSkipPtr Parameters that the value does not have importance.
    * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
    * @return True if the fact matches the other fact.
    */
@@ -167,6 +170,7 @@ struct CONTEXTUALPLANNER_API Fact
                      bool pParametersAreForTheFact,
                      std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                      const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                     const std::set<std::string>* pParametersToSkipPtr,
                      bool* pTriedToModifyParametersPtr = nullptr,
                      bool pIgnoreValues = false) const;
 

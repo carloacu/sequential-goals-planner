@@ -237,6 +237,7 @@ void _test_conditionParameters()
   assert_eq<std::string>("a!=", cp::Condition::fromStr("a!=")->toStr());
   assert_eq<std::string>("a!=b", cp::Condition::fromStr("a!=b")->toStr());
   assert_eq<std::string>("a>3", cp::Condition::fromStr("a>3")->toStr());
+  assert_eq<std::string>("exists(l, at(self, l))", cp::Condition::fromStr("exists(l, at(self, l))")->toStr());
 }
 
 void _test_wsModificationToStr()
@@ -2700,6 +2701,47 @@ void _checkOverallEffectDuringParallelisation()
   assert_true(problem.worldState.hasFact(_fact_e));
 }
 
+void _checkSimpleExists()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1(cp::Condition::fromStr("exists(l, " + _fact_a + "(l))"),
+                        cp::WorldStateModification::fromStr(_fact_b));
+  actions.emplace(action1, actionObj1);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_a + "(kitchen)"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1, _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
+
+
+void _checkExistsWithActionParameterInvolved()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1(cp::Condition::fromStr("exists(l, " + _fact_a + "(l, obj))"),
+                        cp::WorldStateModification::fromStr(_fact_b));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_a + "(kitchen, pen)"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1 + "(obj -> pen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
 
 
 
@@ -2807,6 +2849,8 @@ int main(int argc, char *argv[])
   _hardProbleThatNeedsToBeSmart();
   _goalsToDoInParallel();
   _checkOverallEffectDuringParallelisation();
+  _checkSimpleExists();
+  _checkExistsWithActionParameterInvolved();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
