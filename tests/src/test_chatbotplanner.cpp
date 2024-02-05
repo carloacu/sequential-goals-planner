@@ -2770,6 +2770,36 @@ void _checkExistsWithManyFactsInvolved()
 }
 
 
+void _doAnActionToSatisfyAnExists()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1(cp::Condition::fromStr("exists(l, " + _fact_a + "(self, l) & " + _fact_b + "(obj, l))"),
+                        cp::WorldStateModification::fromStr(_fact_c + "(obj)"));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2({}, cp::WorldStateModification::fromStr(_fact_a + "(self, loc)"));
+  actionObj2.parameters.emplace_back("loc");
+  actions.emplace(action2, actionObj2);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c + "(mouse)")});
+
+  problem.worldState.addFact(cp::Fact(_fact_b + "(bottle, kitchen)"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(mouse, bedroom)"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(pen, livingroom)"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action2 + "(loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(obj -> mouse)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
+
+
+
 }
 
 
@@ -2877,6 +2907,7 @@ int main(int argc, char *argv[])
   _checkSimpleExists();
   _checkExistsWithActionParameterInvolved();
   _checkExistsWithManyFactsInvolved();
+  _doAnActionToSatisfyAnExists();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

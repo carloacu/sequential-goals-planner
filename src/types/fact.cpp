@@ -121,8 +121,8 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
   while (itParam != arguments.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
-        !(!itParam->fact.arguments.empty() && itParam->fact.value != "" && _isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr)) &&
-        !(!itOtherParam->fact.arguments.empty() && itOtherParam->fact.value != "" && _isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr)))
+        !(_isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr)) &&
+        !(_isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr)))
       return false;
     ++itParam;
     ++itOtherParam;
@@ -419,8 +419,8 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       pOtherFact.arguments.size() != arguments.size())
     return false;
 
-
   std::map<std::string, std::set<std::string>> newPotentialParameters;
+  std::map<std::string, std::set<std::string>> newParametersInPlace;
   auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
     if (pFactValue == pValueToLookFor)
       return true;
@@ -447,7 +447,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       {
         if (!itParam->second.empty())
           return itParam->second.count(pValueToLookFor) > 0;
-        itParam->second.insert(pValueToLookFor);
+        newParametersInPlace[pFactValue].insert(pValueToLookFor);
         return true;
       }
     }
@@ -506,6 +506,20 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
           (*pNewParametersPtr)[currNewPotParam.first].insert(currNewPotParam.second.begin(), currNewPotParam.second.end());
       }
     }
+
+    if (pParametersToModifyInPlacePtr != nullptr & !newParametersInPlace.empty())
+    {
+      if (pParametersToModifyInPlacePtr->empty())
+      {
+        *pParametersToModifyInPlacePtr = std::move(newParametersInPlace);
+      }
+      else
+      {
+        for (auto& currNewPotParam : newParametersInPlace)
+          (*pParametersToModifyInPlacePtr)[currNewPotParam.first].insert(currNewPotParam.second.begin(), currNewPotParam.second.end());
+      }
+    }
+
     return true;
   }
   return false;

@@ -120,8 +120,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
 bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamToValue,
                       std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
                       const Condition& pCondition,
-                      const std::set<Fact>& pFacts,
-                      const std::set<Fact>& pPunctualFacts)
+                      const std::set<Fact>& pFacts)
 {
   auto* factOfConditionPtr = pCondition.fcFactPtr();
   if (factOfConditionPtr != nullptr)
@@ -130,14 +129,7 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
     std::map<std::string, std::set<std::string>> newParameters;
 
     const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-    if (factToOfCondition.isPunctual())
-    {
-      res = pPunctualFacts.count(factToOfCondition) != 0 || res;
-    }
-    else
-    {
-      res = factToOfCondition.isInOtherFacts(pFacts, true, &newParameters, pConditionParametersToPossibleArguments, &pLocalParamToValue) || res;
-    }
+    res = factToOfCondition.isInOtherFacts(pFacts, true, &newParameters, pConditionParametersToPossibleArguments, &pLocalParamToValue) || res;
 
     if (pConditionParametersToPossibleArguments != nullptr)
       applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
@@ -148,10 +140,34 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
   if (nodeOfConditionPtr != nullptr && nodeOfConditionPtr->nodeType == ConditionNodeType::AND &&
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
   {
-    return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pPunctualFacts) &&
-        _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pPunctualFacts);
+    return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts) &&
+        _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
   }
   return false;
+}
+
+
+void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalParamToValue,
+                           const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
+                           const Condition& pCondition,
+                           const std::set<Fact>& pFacts)
+{
+  auto* factOfConditionPtr = pCondition.fcFactPtr();
+  if (factOfConditionPtr != nullptr)
+  {
+    std::map<std::string, std::set<std::string>> newParameters;
+    const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
+    factToOfCondition.isInOtherFacts(pFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
+    return;
+  }
+
+  auto* nodeOfConditionPtr = pCondition.fcNodePtr();
+  if (nodeOfConditionPtr != nullptr && nodeOfConditionPtr->nodeType == ConditionNodeType::AND &&
+      nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
+  {
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
+  }
 }
 
 }
@@ -459,46 +475,18 @@ bool ConditionExists::untilFalse(const std::function<bool (const FactOptional&)>
 {
   if (condition)
   {
-    std::set<Fact> potentialArgumentsOfTheParameter;
+    const auto& facts = pWorldState.facts();
+    std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
+    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts);
+
     return condition->untilFalse([&](const FactOptional& pConditionFact) {
-      if (potentialArgumentsOfTheParameter.empty())
-      {
-        std::list<const Fact*> factsThatMatched;
-        pWorldState.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter, pConditionFact.fact,
-                                                              object, &factsThatMatched);
-        for (auto* currFactPtr : factsThatMatched)
-        {
-          if (!pFactCallback(FactOptional(*currFactPtr)))
-            return false;
-        }
-        return true;
-      }
-
-      std::set<Fact> newPotentialArgumentsOfTheParameter;
-      pWorldState.extractPotentialArgumentsOfAFactParameter(newPotentialArgumentsOfTheParameter, pConditionFact.fact,
-                                                            object);
-      std::set<Fact> intersect;
-      std::set_intersection(potentialArgumentsOfTheParameter.begin(), potentialArgumentsOfTheParameter.end(),
-                            newPotentialArgumentsOfTheParameter.begin(), newPotentialArgumentsOfTheParameter.end(),
-                            std::inserter(intersect, intersect.begin()));
-      if (intersect.empty())
-        return false;
-      potentialArgumentsOfTheParameter = std::move(intersect);
-
-      for (auto& currPotArg : potentialArgumentsOfTheParameter)
-      {
-        auto factWithReplacement = pConditionFact.fact;
-        factWithReplacement.replaceArguments({{object, currPotArg.name}});
-        if (!pFactCallback(FactOptional(factWithReplacement)))
-          return false;
-      }
-
-      return true;
+      auto factToConsider = pConditionFact.fact;
+      factToConsider.replaceArguments(localParamToValue);
+      return pFactCallback(FactOptional(factToConsider));
     }, pWorldState, pConditionParametersToPossibleArguments);
   }
   return true;
 }
-
 
 
 bool ConditionExists::isTrue(const WorldState& pWorldState,
@@ -511,7 +499,7 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
   {
     const auto& facts = pWorldState.facts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pPunctualFacts);
+    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts);
   }
   return true;
 }
