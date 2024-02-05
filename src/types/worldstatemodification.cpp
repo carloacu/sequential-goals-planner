@@ -9,8 +9,15 @@ namespace cp
 namespace
 {
 const char* _setFunctionName = "set";
-const char* _forAllFunctionName = "forAll";
+const char* _forAllFunctionName = "forall";
+const char* _forAllOldFunctionName = "forAll";
 const char* _addFunctionName = "add";
+const char* _increaseFunctionName = "increase";
+const char* _decreaseFunctionName = "decrease";
+const char* _andFunctionName = "and";
+const char* _whenFunctionName = "when";
+const char* _notFunctionName = "not";
+
 
 bool _areEqual(
     const std::unique_ptr<WorldStateModification>& pCond1,
@@ -29,7 +36,8 @@ enum class WorldStateModificationNodeType
   AND,
   SET,
   FOR_ALL,
-  ADD,
+  INCREASE,
+  DECREASE,
   PLUS,
   MINUS
 };
@@ -65,9 +73,11 @@ struct WorldStateModificationNode : public WorldStateModification
     case WorldStateModificationNodeType::SET:
       return std::string(_setFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
     case WorldStateModificationNodeType::FOR_ALL:
-      return std::string(_forAllFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
-    case WorldStateModificationNodeType::ADD:
-      return std::string(_addFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+      return std::string(_forAllFunctionName) + "(" + parameterName + ", " + leftOperandStr + ", " + rightOperandStr + ")";
+    case WorldStateModificationNodeType::INCREASE:
+      return std::string(_increaseFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+    case WorldStateModificationNodeType::DECREASE:
+      return std::string(_decreaseFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
     case WorldStateModificationNodeType::PLUS:
       return leftOperandStr + " + " + rightOperandStr;
     case WorldStateModificationNodeType::MINUS:
@@ -92,7 +102,8 @@ struct WorldStateModificationNode : public WorldStateModification
   {
     if (nodeType == WorldStateModificationNodeType::SET ||
         nodeType == WorldStateModificationNodeType::FOR_ALL ||
-        nodeType == WorldStateModificationNodeType::ADD ||
+        nodeType == WorldStateModificationNodeType::INCREASE ||
+        nodeType == WorldStateModificationNodeType::DECREASE ||
         nodeType == WorldStateModificationNodeType::PLUS ||
         nodeType == WorldStateModificationNodeType::MINUS)
       return false;
@@ -319,13 +330,23 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
       pWsModification.forAll(pFactCallback, pWorldState);
     }, pWorldState);
   }
-  else if (nodeType == WorldStateModificationNodeType::ADD && leftOperand && rightOperand)
+  else if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand && rightOperand)
   {
     auto* leftFactPtr = _toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
       factToCheck.fact.value = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      return pFactCallback(factToCheck);
+    }
+  }
+  else if (nodeType == WorldStateModificationNodeType::DECREASE && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = minusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -362,13 +383,24 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     return res;
   }
 
-  if (nodeType == WorldStateModificationNodeType::ADD && leftOperand && rightOperand)
+  if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand && rightOperand)
   {
     auto* leftFactPtr = _toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
       factToCheck.fact.value = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      return pFactCallback(factToCheck);
+    }
+  }
+
+  if (nodeType == WorldStateModificationNodeType::DECREASE && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.value = minusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -436,21 +468,60 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
                                                        _expressionParsedToWsModification(pExpressionParsed.arguments.front()),
                                                        _expressionParsedToWsModification(*(++pExpressionParsed.arguments.begin())));
   }
-  else if (pExpressionParsed.name == _forAllFunctionName &&
-           pExpressionParsed.arguments.size() == 3)
+  else if (pExpressionParsed.name == _notFunctionName &&
+           pExpressionParsed.arguments.size() == 1)
+  {
+    auto factNegationed = pExpressionParsed.arguments.front().toFact();
+    factNegationed.isFactNegated = !factNegationed.isFactNegated;
+    res = std::make_unique<WorldStateModificationFact>(factNegationed);
+  }
+  else if ((pExpressionParsed.name == _forAllFunctionName || pExpressionParsed.name == _forAllOldFunctionName) &&
+           (pExpressionParsed.arguments.size() == 2 || pExpressionParsed.arguments.size() == 3))
   {
     auto itArg = pExpressionParsed.arguments.begin();
     auto& firstArg = *itArg;
     ++itArg;
     auto& secondArg = *itArg;
-    ++itArg;
-    auto& thridArg = *itArg;
-    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::FOR_ALL,
-                                                       std::make_unique<WorldStateModificationFact>(secondArg.toFact()),
-                                                       _expressionParsedToWsModification(thridArg),
-                                                       firstArg.name);
+    if (pExpressionParsed.arguments.size() == 3)
+    {
+      ++itArg;
+      auto& thridArg = *itArg;
+      res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::FOR_ALL,
+                                                         std::make_unique<WorldStateModificationFact>(secondArg.toFact()),
+                                                         _expressionParsedToWsModification(thridArg),
+                                                         firstArg.name);
+    }
+    else if (secondArg.name == _whenFunctionName &&
+             secondArg.arguments.size() == 2)
+    {
+      auto itWhenArg = secondArg.arguments.begin();
+      auto& firstWhenArg = *itWhenArg;
+      ++itWhenArg;
+      auto& secondWhenArg = *itWhenArg;
+      res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::FOR_ALL,
+                                                         std::make_unique<WorldStateModificationFact>(firstWhenArg.toFact()),
+                                                         _expressionParsedToWsModification(secondWhenArg),
+                                                         firstArg.name);
+    }
   }
-  else if (pExpressionParsed.name == _addFunctionName &&
+  else if (pExpressionParsed.name == _andFunctionName &&
+           pExpressionParsed.arguments.size() >= 2)
+  {
+    std::list<std::unique_ptr<WorldStateModification>> elts;
+    for (auto& currExp : pExpressionParsed.arguments)
+      elts.emplace_back(_expressionParsedToWsModification(currExp));
+
+    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::AND, std::move(*(--(--elts.end()))), std::move(elts.back()));
+    elts.pop_back();
+    elts.pop_back();
+
+    while (!elts.empty())
+    {
+      res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::AND, std::move(elts.back()), std::move(res));
+      elts.pop_back();
+    }
+  }
+  else if ((pExpressionParsed.name == _increaseFunctionName || pExpressionParsed.name == _addFunctionName) &&
            pExpressionParsed.arguments.size() == 2)
   {
     auto itArg = pExpressionParsed.arguments.begin();
@@ -464,7 +535,25 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
     if (!rightOpPtr)
       rightOpPtr = _expressionParsedToWsModification(secondArg);
 
-    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::ADD,
+    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::INCREASE,
+                                                       _expressionParsedToWsModification(firstArg),
+                                                       std::move(rightOpPtr));
+  }
+  else if (pExpressionParsed.name == _decreaseFunctionName &&
+           pExpressionParsed.arguments.size() == 2)
+  {
+    auto itArg = pExpressionParsed.arguments.begin();
+    auto& firstArg = *itArg;
+    ++itArg;
+    auto& secondArg = *itArg;
+    std::unique_ptr<WorldStateModification> rightOpPtr;
+    try {
+      rightOpPtr = std::make_unique<WorldStateModificationNumber>(lexical_cast<int>(secondArg.name));
+    }  catch (...) {}
+    if (!rightOpPtr)
+      rightOpPtr = _expressionParsedToWsModification(secondArg);
+
+    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::DECREASE,
                                                        _expressionParsedToWsModification(firstArg),
                                                        std::move(rightOpPtr));
   }

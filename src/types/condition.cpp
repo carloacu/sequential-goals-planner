@@ -10,6 +10,10 @@ namespace
 {
 const char* _equalsFunctionName = "equals";
 const char* _existsFunctionName = "exists";
+const char* _notFunctionName = "not";
+const char* _superiorFunctionName = ">";
+const char* _inferiorFunctionName = "<";
+const char* _andFunctionName = "and";
 
 
 bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
@@ -83,6 +87,44 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
   {
     res = std::make_unique<ConditionExists>(pExpressionParsed.arguments.front().name,
                                             _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin())));
+  }
+  else if (pExpressionParsed.name == _notFunctionName &&
+           pExpressionParsed.arguments.size() == 1)
+  {
+    auto factNegationed = pExpressionParsed.arguments.front().toFact();
+    factNegationed.isFactNegated = !factNegationed.isFactNegated;
+    res = std::make_unique<ConditionFact>(factNegationed);
+  }
+  else if (pExpressionParsed.name == _superiorFunctionName &&
+           pExpressionParsed.arguments.size() == 2)
+  {
+    res = std::make_unique<ConditionNode>(ConditionNodeType::SUPERIOR,
+                                          _expressionParsedToCondition(pExpressionParsed.arguments.front()),
+                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin())));
+  }
+  else if (pExpressionParsed.name == _inferiorFunctionName &&
+           pExpressionParsed.arguments.size() == 2)
+  {
+    res = std::make_unique<ConditionNode>(ConditionNodeType::INFERIOR,
+                                          _expressionParsedToCondition(pExpressionParsed.arguments.front()),
+                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin())));
+  }
+  else if (pExpressionParsed.name == _andFunctionName &&
+           pExpressionParsed.arguments.size() >= 2)
+  {
+    std::list<std::unique_ptr<Condition>> elts;
+    for (auto& currExp : pExpressionParsed.arguments)
+      elts.emplace_back(_expressionParsedToCondition(currExp));
+
+    res = std::make_unique<ConditionNode>(ConditionNodeType::AND, std::move(*(--(--elts.end()))), std::move(elts.back()));
+    elts.pop_back();
+    elts.pop_back();
+
+    while (!elts.empty())
+    {
+      res = std::make_unique<ConditionNode>(ConditionNodeType::AND, std::move(elts.back()), std::move(res));
+      elts.pop_back();
+    }
   }
   else
   {

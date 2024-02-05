@@ -232,11 +232,16 @@ void _test_conditionParameters()
 
   std::map<std::string, std::string> parameters = {{"target", "kitchen"}, {"object", "chair"}};
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::Condition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
+  assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::Condition::fromStr("and(location(me)=target, grab(me, object))")->clone(&parameters)->toStr());
+  assert_eq<std::string>("location(me)=kitchen & grab(me, chair) & i", cp::Condition::fromStr("and(location(me)=target, grab(me, object), i)")->clone(&parameters)->toStr());
   assert_eq<std::string>("equals(a, b + 3)", cp::Condition::fromStr("equals(a, b + 3)")->toStr());
   assert_eq<std::string>("!a", cp::Condition::fromStr("!a")->toStr());
+  assert_eq<std::string>("!a", cp::Condition::fromStr("not(a)")->toStr());
   assert_eq<std::string>("a!=", cp::Condition::fromStr("a!=")->toStr());
   assert_eq<std::string>("a!=b", cp::Condition::fromStr("a!=b")->toStr());
   assert_eq<std::string>("a>3", cp::Condition::fromStr("a>3")->toStr());
+  assert_eq<std::string>("a>3", cp::Condition::fromStr(">(a, 3)")->toStr());
+  assert_eq<std::string>("a<3", cp::Condition::fromStr("<(a, 3)")->toStr());
   assert_eq<std::string>("exists(l, at(self, l))", cp::Condition::fromStr("exists(l, at(self, l))")->toStr());
   assert_eq<std::string>("exists(l, at(self, l) & at(pen, l))", cp::Condition::fromStr("exists(l, at(self, l) & at(pen, l))")->toStr());
 }
@@ -246,8 +251,17 @@ void _test_wsModificationToStr()
   assert_false(cp::WorldStateModification::fromStr("").operator bool());
   assert_eq<std::string>("location(me)=target", cp::WorldStateModification::fromStr("location(me)=target")->toStr());
   assert_eq<std::string>("location(me)=target & grab(sweets)", cp::WorldStateModification::fromStr("location(me)=target & grab(sweets)")->toStr());
+  assert_eq<std::string>("location(me)=target & grab(sweets)", cp::WorldStateModification::fromStr("and(location(me)=target, grab(sweets))")->toStr());
   assert_eq<std::string>("set(a, b + 3)", cp::WorldStateModification::fromStr("set(a, b + 3)")->toStr());
   assert_eq<std::string>("set(a, b + 4 - 1)", cp::WorldStateModification::fromStr("set(a, b + 4 - 1)")->toStr());
+  assert_eq<std::string>("increase(a, 1)", cp::WorldStateModification::fromStr("add(a, 1)")->toStr());
+  assert_eq<std::string>("increase(a, 1)", cp::WorldStateModification::fromStr("increase(a, 1)")->toStr());
+  assert_eq<std::string>("decrease(a, 2)", cp::WorldStateModification::fromStr("decrease(a, 2)")->toStr());
+  assert_eq<std::string>("!a", cp::WorldStateModification::fromStr("!a")->toStr());
+  assert_eq<std::string>("!a", cp::WorldStateModification::fromStr("not(a)")->toStr());
+  assert_eq<std::string>("forall(a, f(a), d(a, c))", cp::WorldStateModification::fromStr("forall(a, f(a), d(a, c))")->toStr());
+  assert_eq<std::string>("forall(a, f(a), d(a, c))", cp::WorldStateModification::fromStr("forall(a, when(f(a), d(a, c)))")->toStr());
+  assert_eq<std::string>("forall(a, f(a), !d(a, c))", cp::WorldStateModification::fromStr("forall(a, when(f(a), not(d(a, c))))")->toStr());
 }
 
 void _test_checkCondition()
@@ -2812,6 +2826,7 @@ void _checkForAllEffectAtStart()
   actions.emplace(action1, actionObj1);
 
   cp::Action actionObj2({}, cp::WorldStateModification::fromStr(_fact_a + "(self, loc)"));
+  actionObj2.effect.worldStateModificationAtStart = cp::WorldStateModification::fromStr("forall(l, when(" + _fact_a + "(self, l), not(" + _fact_a + "(self, l))))");
   actionObj2.parameters.emplace_back("loc");
   actions.emplace(action2, actionObj2);
 
@@ -2824,7 +2839,9 @@ void _checkForAllEffectAtStart()
   problem.worldState.addFact(cp::Fact(_fact_b + "(bottle, kitchen)"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact(_fact_b + "(mouse, bedroom)"), problem.goalStack, setOfInferencesMap, now);
   problem.worldState.addFact(cp::Fact(_fact_b + "(pen, livingroom)"), problem.goalStack, setOfInferencesMap, now);
+  assert_true(problem.worldState.hasFact(cp::Fact(_fact_a + "(self, entrance)")));
   assert_eq(action2 + "(loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_a + "(self, entrance)"))); // removed by the effect at start of action2
   assert_eq(action1 + "(obj -> mouse)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
