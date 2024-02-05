@@ -43,6 +43,9 @@ void updateProblemForNextPotentialPlannerResult(
     if (pGlobalHistorical != nullptr)
       pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
     auto& setOfInferences = pDomain.getSetOfInferences();
+
+    pProblem.worldState.modify(itAction->second.effect.worldStateModificationAtStart, pProblem.goalStack, setOfInferences, pNow);
+
     notifyActionInvocationDone(pProblem, pGoalChanged, setOfInferences, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification, pNow,
                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                                pLookForAnActionOutputInfosPtr);

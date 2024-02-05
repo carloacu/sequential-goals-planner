@@ -181,6 +181,7 @@ cp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
   if (!plan.empty())
   {
     auto& firstActionInPlan = plan.front();
+    notifyActionStarted(pProblem, pDomain, firstActionInPlan, pNow);
     notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
     return firstActionInPlan;
   }
@@ -195,7 +196,10 @@ std::string _lookForAnActionToDoInParallelThenNotifyToStr(
 {
   auto actions = cp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
   for (auto& currAction : actions)
+  {
+    notifyActionStarted(pProblem, pDomain, currAction, pNow);
     notifyActionDone(pProblem, pDomain, currAction, pNow);
+  }
   return cp::planToStr(actions);
 }
 
@@ -2676,7 +2680,7 @@ void _checkOverallEffectDuringParallelisation()
 
   cp::Action actionObj1(cp::Condition::fromStr("!" + _fact_d),
                         cp::WorldStateModification::fromStr(_fact_a + " & !" + _fact_d));
-  actionObj1.effect.worldStateModificationAtStart = cp::WorldStateModification::fromStr(_fact_d);
+  actionObj1.effect.worldStateModificationAtStart = cp::WorldStateModification::fromStr(_fact_d + " & " + _fact_e);
   actions.emplace(action1, actionObj1);
 
   cp::Action actionObj2(cp::Condition::fromStr("!" + _fact_d),
@@ -2693,6 +2697,7 @@ void _checkOverallEffectDuringParallelisation()
   _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
 
   assert_eq<std::string>(action1, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_true(problem.worldState.hasFact(_fact_e));
 }
 
 
