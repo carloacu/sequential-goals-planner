@@ -238,6 +238,7 @@ void _test_conditionParameters()
   assert_eq<std::string>("a!=b", cp::Condition::fromStr("a!=b")->toStr());
   assert_eq<std::string>("a>3", cp::Condition::fromStr("a>3")->toStr());
   assert_eq<std::string>("exists(l, at(self, l))", cp::Condition::fromStr("exists(l, at(self, l))")->toStr());
+  assert_eq<std::string>("exists(l, at(self, l) & at(pen, l))", cp::Condition::fromStr("exists(l, at(self, l) & at(pen, l))")->toStr());
 }
 
 void _test_wsModificationToStr()
@@ -2744,6 +2745,30 @@ void _checkExistsWithActionParameterInvolved()
 }
 
 
+void _checkExistsWithManyFactsInvolved()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1(cp::Condition::fromStr("exists(l, " + _fact_a + "(self, l) & " + _fact_b + "(obj, l))"),
+                        cp::WorldStateModification::fromStr(_fact_c));
+  actionObj1.parameters.emplace_back("obj");
+  actions.emplace(action1, actionObj1);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
+
+  problem.worldState.addFact(cp::Fact(_fact_b + "(mouse, bedroom)"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(bottle, kitchen)"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(pen, livingroom)"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_a + "(self, kitchen)"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1 + "(obj -> bottle)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
+
 
 }
 
@@ -2851,6 +2876,7 @@ int main(int argc, char *argv[])
   _checkOverallEffectDuringParallelisation();
   _checkSimpleExists();
   _checkExistsWithActionParameterInvolved();
+  _checkExistsWithManyFactsInvolved();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

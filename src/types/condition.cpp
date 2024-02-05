@@ -117,6 +117,43 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
 }
 
 
+bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamToValue,
+                      std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
+                      const Condition& pCondition,
+                      const std::set<Fact>& pFacts,
+                      const std::set<Fact>& pPunctualFacts)
+{
+  auto* factOfConditionPtr = pCondition.fcFactPtr();
+  if (factOfConditionPtr != nullptr)
+  {
+    bool res = false;
+    std::map<std::string, std::set<std::string>> newParameters;
+
+    const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
+    if (factToOfCondition.isPunctual())
+    {
+      res = pPunctualFacts.count(factToOfCondition) != 0 || res;
+    }
+    else
+    {
+      res = factToOfCondition.isInOtherFacts(pFacts, true, &newParameters, pConditionParametersToPossibleArguments, &pLocalParamToValue) || res;
+    }
+
+    if (pConditionParametersToPossibleArguments != nullptr)
+      applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
+    return res;
+  }
+
+  auto* nodeOfConditionPtr = pCondition.fcNodePtr();
+  if (nodeOfConditionPtr != nullptr && nodeOfConditionPtr->nodeType == ConditionNodeType::AND &&
+      nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
+  {
+    return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pPunctualFacts) &&
+        _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pPunctualFacts);
+  }
+  return false;
+}
+
 }
 
 
@@ -463,6 +500,7 @@ bool ConditionExists::untilFalse(const std::function<bool (const FactOptional&)>
 }
 
 
+
 bool ConditionExists::isTrue(const WorldState& pWorldState,
                              const std::set<Fact>& pPunctualFacts,
                              const std::set<Fact>& pRemovedFacts,
@@ -472,27 +510,8 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
   if (condition)
   {
     const auto& facts = pWorldState.facts();
-    bool res = false;
-    std::map<std::string, std::set<std::string>> newParameters;
-
-    auto* factOfConditionPtr = condition->fcFactPtr();
-    if (factOfConditionPtr != nullptr)
-    {
-      const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-      if (factToOfCondition.isPunctual())
-      {
-        res = pPunctualFacts.count(factToOfCondition) != 0 || res;
-      }
-      else
-      {
-        std::set<std::string> parametersToSkip{object};
-        res = factToOfCondition.isInOtherFacts(facts, true, &newParameters, pConditionParametersToPossibleArguments, &parametersToSkip) || res;
-      }
-
-      if (pConditionParametersToPossibleArguments != nullptr)
-        applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
-    }
-    return res;
+    std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
+    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pPunctualFacts);
   }
   return true;
 }

@@ -395,13 +395,13 @@ bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
                           bool pParametersAreForTheFact,
                           std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                           const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                          const std::set<std::string>* pParametersToSkipPtr,
+                          std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
                           bool* pTriedToModifyParametersPtr) const
 {
   bool res = false;
   for (const auto& currOtherFact : pOtherFacts)
     if (isInOtherFact(currOtherFact, pParametersAreForTheFact, pNewParametersPtr, pParametersPtr,
-                 pParametersToSkipPtr, pTriedToModifyParametersPtr))
+                 pParametersToModifyInPlacePtr, pTriedToModifyParametersPtr))
       res = true;
   return res;
 }
@@ -411,7 +411,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
                          bool pParametersAreForTheFact,
                          std::map<std::string, std::set<std::string>>* pNewParametersPtr,
                          const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                         const std::set<std::string>* pParametersToSkipPtr,
+                         std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
                          bool* pTriedToModifyParametersPtr,
                          bool pIgnoreValues) const
 {
@@ -440,8 +440,17 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       }
     }
 
-    if (pParametersToSkipPtr != nullptr && pParametersToSkipPtr->count(pFactValue) > 0)
-      return true;
+    if (pParametersToModifyInPlacePtr != nullptr)
+    {
+      auto itParam = pParametersToModifyInPlacePtr->find(pFactValue);
+      if (itParam != pParametersToModifyInPlacePtr->end())
+      {
+        if (!itParam->second.empty())
+          return itParam->second.count(pValueToLookFor) > 0;
+        itParam->second.insert(pValueToLookFor);
+        return true;
+      }
+    }
 
     return false;
   };
