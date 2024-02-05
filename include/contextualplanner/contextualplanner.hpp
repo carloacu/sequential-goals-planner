@@ -24,7 +24,7 @@ namespace cp
  * Note that the problem already have a historical. The problem historical has more priority than this historical.<br/>
  * This historical can be useful if you have different problem instances and you want to favorise the action less freqently used at a global scope.
  * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
- * @return One step of the planner containing the next action to do, his parameters and information about the goal that motivated that action.
+ * @return The next action to do, his parameters and information about the goal that motivated that action.
  */
 CONTEXTUALPLANNER_API
 std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
@@ -37,7 +37,15 @@ std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
 
 
 
-
+/**
+ * @brief Ask the planner to get the next actions to do in parallel.
+ * @param[in, out] pProblem Problem of the planner.
+ * @param[in] pDomain Domain of the planner.
+ * @param[in] pNow Current time.
+ * @param[in, opt] pGlobalHistorical A historical to give more priority to an action less frequently used.<br/>
+ * Note that the problem already have a historical. The problem historical has more priority than this historical.<br/>
+ * @return The next actions to do in parallel.
+ */
 CONTEXTUALPLANNER_API
 std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
     Problem& pProblem,
