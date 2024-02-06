@@ -641,7 +641,7 @@ bool ConditionExists::canBecomeTrue(const WorldState& pWorldState) const
             return true;
         }
       }
-      return false;
+      return isNegated;
     }
   }
   return true;

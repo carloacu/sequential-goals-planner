@@ -2057,7 +2057,7 @@ void _completeMovingObjectScenario()
   navAction.parameters.emplace_back("targetPlace");
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObject(object))"),
+  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObject(object)) & not(exists(o, grab(me)=o))"),
                         cp::WorldStateModification::fromStr("grab(me)=object"));
   grabAction.parameters.emplace_back("object");
   actions.emplace(_action_grab, grabAction);
