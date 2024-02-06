@@ -2904,7 +2904,7 @@ void _actionToSatisfyANotExists()
   std::map<std::string, cp::Action> actions;
 
   cp::Action actionObj1(cp::Condition::fromStr("not(busy(spec_rec)) & not(exists(l, " + _fact_a + "(self, l)))"),
-                        cp::WorldStateModification::fromStr(_fact_b));
+                        cp::WorldStateModification::fromStr("not(busy(spec_rec)) & " + _fact_b));
   actions.emplace(action1, actionObj1);
 
   cp::Action actionObj2({}, cp::WorldStateModification::fromStr("!" + _fact_a + "(self, loc)"));
