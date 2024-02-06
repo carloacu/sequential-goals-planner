@@ -69,18 +69,21 @@ void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
     return;
   _uuidOfLastDomainUsed = pDomain.getUuid();
 
-  FactsAlreadyChecked factsAlreadychecked;
-  for (const auto& currFact : pFacts)
+  for (int i = 0; i < 2; ++i) // 2 times to have all the accessible facts
   {
-    if (_accessibleFacts.count(currFact) == 0)
+    FactsAlreadyChecked factsAlreadychecked;
+    for (const auto& currFact : pFacts)
     {
-      auto itPrecToActions = pDomain.preconditionToActions().find(currFact.name);
-      if (itPrecToActions != pDomain.preconditionToActions().end())
-        _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, factsAlreadychecked);
+      if (_accessibleFacts.count(currFact) == 0)
+      {
+        auto itPrecToActions = pDomain.preconditionToActions().find(currFact.name);
+        if (itPrecToActions != pDomain.preconditionToActions().end())
+          _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, factsAlreadychecked);
+      }
     }
+    _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain,
+                                         factsAlreadychecked);
   }
-  _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain,
-                                       factsAlreadychecked);
 }
 
 
