@@ -206,16 +206,18 @@ void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalP
                            const Condition& pCondition,
                            const std::set<Fact>& pFacts,
                            const Fact& pFactFromEffect,
-                           const std::string& pObject)
+                           const std::string& pObject,
+                           bool pIsNegated)
 {
   auto* factOfConditionPtr = pCondition.fcFactPtr();
   if (factOfConditionPtr != nullptr)
   {
-    const auto& factOfCondition = factOfConditionPtr->factOptional.fact;
-    if (!factOfCondition.areEqualWithoutAnArgConsideration(pFactFromEffect, pObject))
+    const auto& factOfConditionOpt = factOfConditionPtr->factOptional;
+    if (factOfConditionOpt.isFactNegated != pIsNegated ||
+        !factOfConditionOpt.fact.areEqualWithoutAnArgConsideration(pFactFromEffect, pObject))
     {
       std::map<std::string, std::set<std::string>> newParameters;
-      factOfCondition.isInOtherFacts(pFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
+      factOfConditionOpt.fact.isInOtherFacts(pFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
     }
     return;
   }
@@ -224,8 +226,8 @@ void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalP
   if (nodeOfConditionPtr != nullptr && nodeOfConditionPtr->nodeType == ConditionNodeType::AND &&
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
   {
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pFactFromEffect, pObject);
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pFactFromEffect, pObject);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pFactFromEffect, pObject, pIsNegated);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pFactFromEffect, pObject, pIsNegated);
   }
 }
 
@@ -288,10 +290,11 @@ bool ConditionNode::hasFact(const Fact& pFact) const
 
 bool ConditionNode::containsFactOpt(const FactOptional& pFactOptional,
                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
-                                    const std::vector<std::string>& pConditionParameters) const
+                                    const std::vector<std::string>& pConditionParameters,
+                                    bool pIsWrappingExprssionNegated) const
 {
-  return (leftOperand && leftOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters)) ||
-      (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters));
+  return (leftOperand && leftOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, pIsWrappingExprssionNegated)) ||
+      (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, pIsWrappingExprssionNegated));
 }
 
 
@@ -551,9 +554,12 @@ bool ConditionExists::hasFact(const Fact& pFact) const
 
 bool ConditionExists::containsFactOpt(const FactOptional& pFactOptional,
                                       const std::map<std::string, std::set<std::string>>& pFactParameters,
-                                      const std::vector<std::string>& pConditionParameters) const
+                                      const std::vector<std::string>& pConditionParameters,
+                                      bool pIsWrappingExprssionNegated) const
 {
-  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters);
+  if (isNegated)
+    pIsWrappingExprssionNegated = !pIsWrappingExprssionNegated;
+  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, pIsWrappingExprssionNegated);
 }
 
 void ConditionExists::replaceFact(const Fact& pOldFact,
@@ -586,7 +592,7 @@ bool ConditionExists::findConditionCandidateFromFactFromEffect(
   {
     const auto& facts = pWorldState.facts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pFactFromEffect, object);
+    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pFactFromEffect, object, isNegated);
 
     return condition->findConditionCandidateFromFactFromEffect([&](const FactOptional& pConditionFact) {
       auto factToConsider = pConditionFact.fact;
@@ -675,9 +681,11 @@ bool ConditionFact::hasFact(const Fact& pFact) const
 
 bool ConditionFact::containsFactOpt(const FactOptional& pFactOptional,
                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
-                                    const std::vector<std::string>& pConditionParameters) const
+                                    const std::vector<std::string>& pConditionParameters,
+                                    bool pIsWrappingExprssionNegated) const
 {
-  if (pFactOptional.isFactNegated == factOptional.isFactNegated)
+  if ((!pIsWrappingExprssionNegated && pFactOptional.isFactNegated == factOptional.isFactNegated) ||
+      (pIsWrappingExprssionNegated && pFactOptional.isFactNegated != factOptional.isFactNegated))
     return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, &pConditionParameters);
   return false;
 }
