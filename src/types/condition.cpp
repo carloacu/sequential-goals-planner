@@ -91,9 +91,21 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
   else if (pExpressionParsed.name == _notFunctionName &&
            pExpressionParsed.arguments.size() == 1)
   {
-    auto factNegationed = pExpressionParsed.arguments.front().toFact();
-    factNegationed.isFactNegated = !factNegationed.isFactNegated;
-    res = std::make_unique<ConditionFact>(factNegationed);
+    auto& expNegationned = pExpressionParsed.arguments.front();
+
+    if (expNegationned.name == _existsFunctionName &&
+        expNegationned.arguments.size() == 2)
+    {
+      res = std::make_unique<ConditionExists>(expNegationned.arguments.front().name,
+                                              _expressionParsedToCondition(*(++expNegationned.arguments.begin())),
+                                              true);
+    }
+    else
+    {
+      auto factNegationed = expNegationned.toFact();
+      factNegationed.isFactNegated = !factNegationed.isFactNegated;
+      res = std::make_unique<ConditionFact>(factNegationed);
+    }
   }
   else if (pExpressionParsed.name == _superiorFunctionName &&
            pExpressionParsed.arguments.size() == 2)
@@ -293,12 +305,13 @@ void ConditionNode::replaceFact(const Fact& pOldFact,
 }
 
 
-void ConditionNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback) const
+void ConditionNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
+                           bool pIsWrappingExprssionNegated) const
 {
   if (leftOperand)
-    leftOperand->forAll(pFactCallback);
+    leftOperand->forAll(pFactCallback, pIsWrappingExprssionNegated);
   if (rightOperand)
-    rightOperand->forAll(pFactCallback);
+    rightOperand->forAll(pFactCallback, pIsWrappingExprssionNegated);
 }
 
 
@@ -514,14 +527,19 @@ std::string ConditionExists::toStr(const std::function<std::string (const Fact&)
   std::string conditionStr;
   if (condition)
     conditionStr = condition->toStr(pFactWriterPtr);
-  return std::string(_existsFunctionName) + "(" + object + ", " + conditionStr + ")";
+  auto res = std::string(_existsFunctionName) + "(" + object + ", " + conditionStr + ")";
+  if (isNegated)
+    res = "!" + res;
+  return res;
 }
 
 ConditionExists::ConditionExists(const std::string& pObject,
-                                 std::unique_ptr<Condition> pCondition)
+                                 std::unique_ptr<Condition> pCondition,
+                                 bool pIsNegated)
   : Condition(),
     object(pObject),
-    condition(std::move(pCondition))
+    condition(std::move(pCondition)),
+    isNegated(pIsNegated)
 {
 }
 
@@ -545,10 +563,16 @@ void ConditionExists::replaceFact(const Fact& pOldFact,
     condition->replaceFact(pOldFact, pNewFact);
 }
 
-void ConditionExists::forAll(const std::function<void (const FactOptional&)>& pFactCallback) const
+void ConditionExists::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
+                             bool pIsWrappingExprssionNegated) const
 {
+
   if (condition)
-    condition->forAll(pFactCallback);
+  {
+    if (isNegated)
+      pIsWrappingExprssionNegated = !pIsWrappingExprssionNegated;
+    condition->forAll(pFactCallback, pIsWrappingExprssionNegated);
+  }
 }
 
 
@@ -567,10 +591,10 @@ bool ConditionExists::findConditionCandidateFromFactFromEffect(
     return condition->findConditionCandidateFromFactFromEffect([&](const FactOptional& pConditionFact) {
       auto factToConsider = pConditionFact.fact;
       factToConsider.replaceArguments(localParamToValue);
-      return pDoesConditionFactMatchFactFromEffect(FactOptional(factToConsider));
+      return pDoesConditionFactMatchFactFromEffect(FactOptional(factToConsider)) == !isNegated;
     }, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments);
   }
-  return false;
+  return isNegated;
 }
 
 
@@ -584,9 +608,9 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
   {
     const auto& facts = pWorldState.facts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts);
+    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts) == !isNegated;
   }
-  return true;
+  return !isNegated;
 }
 
 
@@ -622,14 +646,16 @@ bool ConditionExists::operator==(const Condition& pOther) const
   auto* otherExistsPtr = pOther.fcExistsPtr();
   return otherExistsPtr != nullptr &&
       object == otherExistsPtr->object &&
-      _areEqual(condition, otherExistsPtr->condition);
+      _areEqual(condition, otherExistsPtr->condition) &&
+      isNegated == otherExistsPtr->isNegated;
 }
 
 std::unique_ptr<Condition> ConditionExists::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
 {
   return std::make_unique<ConditionExists>(
         object,
-        condition ? condition->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>());
+        condition ? condition->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>(),
+        isNegated);
 }
 
 
@@ -655,6 +681,22 @@ bool ConditionFact::containsFactOpt(const FactOptional& pFactOptional,
     return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, &pConditionParameters);
   return false;
 }
+
+void ConditionFact::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
+                           bool pIsWrappingExprssionNegated) const
+{
+  if (!pIsWrappingExprssionNegated)
+  {
+    pFactCallback(factOptional);
+  }
+  else
+  {
+    auto factOptionalCopied = factOptional;
+    factOptionalCopied.isFactNegated = !factOptionalCopied.isFactNegated;
+    pFactCallback(factOptionalCopied);
+  }
+}
+
 
 void ConditionFact::replaceFact(const Fact& pOldFact,
                                 const Fact& pNewFact)

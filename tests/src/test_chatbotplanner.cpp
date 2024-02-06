@@ -244,6 +244,7 @@ void _test_conditionParameters()
   assert_eq<std::string>("a<3", cp::Condition::fromStr("<(a, 3)")->toStr());
   assert_eq<std::string>("exists(l, at(self, l))", cp::Condition::fromStr("exists(l, at(self, l))")->toStr());
   assert_eq<std::string>("exists(l, at(self, l) & at(pen, l))", cp::Condition::fromStr("exists(l, at(self, l) & at(pen, l))")->toStr());
+  assert_eq<std::string>("!exists(l, at(self, l))", cp::Condition::fromStr("not(exists(l, at(self, l)))")->toStr());
 }
 
 void _test_wsModificationToStr()
@@ -2873,6 +2874,27 @@ void _existsWithValue()
 }
 
 
+void _notExists()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1(cp::Condition::fromStr("not(exists(l, " + _fact_a + "(self, l)))"),
+                        cp::WorldStateModification::fromStr(_fact_b));
+  actions.emplace(action1, actionObj1);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+
+  assert_eq(action1, _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_a + "(self, kitchen)"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -2983,6 +3005,7 @@ int main(int argc, char *argv[])
   _doAnActionToSatisfyAnExists();
   _checkForAllEffectAtStart();
   _existsWithValue();
+  _notExists();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
