@@ -37,16 +37,19 @@ struct CONTEXTUALPLANNER_API WorldStateCache
   const std::set<Fact>& accessibleFacts() const { return _accessibleFacts; }
   const std::set<Fact>& accessibleFactsWithAnyValues() const { return _accessibleFactsWithAnyValues; }
   const std::set<Fact>& removableFacts() const { return _removableFacts; }
+  const std::set<Fact>& removableFactsWithAnyValues() const { return _removableFactsWithAnyValues; }
 
 
 private:
   const WorldState& _worldState;
   /// Facts that can be reached with the set of actions of the domain.
   std::set<Fact> _accessibleFacts;
-  /// Facts with values that can be reached with the set of actions of the domain.
+  /// Facts with any values that can be reached with the set of actions of the domain.
   std::set<Fact> _accessibleFactsWithAnyValues;
   /// Facts that can be removed with the set of actions of the domain.
   std::set<Fact> _removableFacts;
+  /// Facts with any values that can be removed with the set of actions of the domain.
+  std::set<Fact> _removableFactsWithAnyValues;
   /// Know if we need to add accessible facts.
   std::string _uuidOfLastDomainUsed;
 

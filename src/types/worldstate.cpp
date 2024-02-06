@@ -301,6 +301,31 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
 }
 
 
+bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional) const
+{
+  const auto& accessibleFacts = _cache->accessibleFacts();
+  if (!pFactOptional.isFactNegated)
+    return canFactBecomeTrue(pFactOptional.fact);
+
+  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, _facts))
+    return true;
+  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, accessibleFacts))
+    return true;
+
+  const auto& removableFacts = _cache->removableFacts();
+  if (removableFacts.count(pFactOptional.fact) > 0)
+    return true;
+
+  const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
+  for (const auto& currRemovableFact : removableFactsWithAnyValues)
+    if (pFactOptional.fact.areEqualExceptAnyValues(currRemovableFact))
+      return true;
+
+  if (_facts.count(pFactOptional.fact) > 0)
+    return false;
+  return true;
+}
+
 bool WorldState::canFactBecomeTrue(const Fact& pFact) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
@@ -321,6 +346,15 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact) const
       return true;
     if (_isNegatedFactCompatibleWithFacts(pFact, accessibleFacts))
       return true;
+
+    const auto& removableFacts = _cache->removableFacts();
+    if (removableFacts.count(pFact) > 0)
+      return true;
+
+    const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
+    for (const auto& currRemovableFact : removableFactsWithAnyValues)
+      if (pFact.areEqualExceptAnyValues(currRemovableFact))
+        return true;
   }
   return false;
 }
@@ -335,6 +369,11 @@ bool WorldState::canFactNameBeModified(const std::string& pFactName) const
   const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
   for (const auto& currAccessibleFact : accessibleFactsWithAnyValues)
     if (currAccessibleFact.name == pFactName)
+      return true;
+
+  const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
+  for (const auto& currRemovableFact : removableFactsWithAnyValues)
+    if (currRemovableFact.name == pFactName)
       return true;
   return false;
 }

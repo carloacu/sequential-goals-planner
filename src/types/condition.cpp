@@ -724,18 +724,7 @@ bool ConditionFact::isTrue(const WorldState& pWorldState,
 
 bool ConditionFact::canBecomeTrue(const WorldState& pWorldState) const
 {
-  if (factOptional.isFactNegated)
-  {
-    if (pWorldState.removableFacts().count(factOptional.fact) == 0)
-    {
-      if (factOptional.fact.value == Fact::anyValue)
-        return true;
-      if (pWorldState.facts().count(factOptional.fact) > 0)
-        return false;
-    }
-    return true;
-  }
-  return pWorldState.canFactBecomeTrue(factOptional.fact);
+  return pWorldState.canFactOptBecomeTrue(factOptional);
 }
 
 bool ConditionFact::operator==(const Condition& pOther) const

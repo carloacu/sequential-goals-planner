@@ -150,6 +150,13 @@ struct CONTEXTUALPLANNER_API WorldState
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
+   * @brief Can an optional fact become true, according to the world and the accessible facts stored internally in this object.
+   * @param[in] pFactOptional Optional fact to check if it can become true.
+   * @return True if the optional fact can become true, false otherwise.
+   */
+  bool canFactOptBecomeTrue(const FactOptional& pFactOptional) const;
+
+  /**
    * @brief Can a fact become true, according to the world and the accessible facts stored internally in this object.
    * @param[in] pFact Fact to check if it can become true.
    * @return True if the fact can become true, false otherwise.

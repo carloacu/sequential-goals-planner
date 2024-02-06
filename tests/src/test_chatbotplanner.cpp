@@ -2899,10 +2899,11 @@ void _actionToSatisfyANotExists()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
+  const std::string action3 = "action3";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(cp::Condition::fromStr("not(exists(l, " + _fact_a + "(self, l)))"),
+  cp::Action actionObj1(cp::Condition::fromStr("not(busy(spec_rec)) & not(exists(l, " + _fact_a + "(self, l)))"),
                         cp::WorldStateModification::fromStr(_fact_b));
   actions.emplace(action1, actionObj1);
 
@@ -2910,11 +2911,17 @@ void _actionToSatisfyANotExists()
   actionObj2.parameters.emplace_back("loc");
   actions.emplace(action2, actionObj2);
 
+  cp::Action actionObj3({}, cp::WorldStateModification::fromStr("not(busy(r))"));
+  actionObj3.parameters.emplace_back("r");
+  actions.emplace(action3, actionObj3);
+
   cp::Domain domain(std::move(actions));
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
+  problem.worldState.addFact(cp::Fact("busy(spec_rec)"), problem.goalStack, setOfInferencesMap, now);
 
+  assert_eq(action3 + "(r -> spec_rec)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
   problem.worldState.addFact(cp::Fact(_fact_a + "(self, kitchen)"), problem.goalStack, setOfInferencesMap, now);
   assert_eq(action2 + "(loc -> kitchen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
