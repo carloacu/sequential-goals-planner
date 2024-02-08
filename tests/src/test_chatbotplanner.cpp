@@ -253,8 +253,8 @@ void _test_wsModificationToStr()
   assert_eq<std::string>("location(me)=target", cp::WorldStateModification::fromStr("location(me)=target")->toStr());
   assert_eq<std::string>("location(me)=target & grab(sweets)", cp::WorldStateModification::fromStr("location(me)=target & grab(sweets)")->toStr());
   assert_eq<std::string>("location(me)=target & grab(sweets)", cp::WorldStateModification::fromStr("and(location(me)=target, grab(sweets))")->toStr());
-  assert_eq<std::string>("set(a, b + 3)", cp::WorldStateModification::fromStr("set(a, b + 3)")->toStr());
-  assert_eq<std::string>("set(a, b + 4 - 1)", cp::WorldStateModification::fromStr("set(a, b + 4 - 1)")->toStr());
+  assert_eq<std::string>("assign(a, b + 3)", cp::WorldStateModification::fromStr("assign(a, b + 3)")->toStr());
+  assert_eq<std::string>("assign(a, b + 4 - 1)", cp::WorldStateModification::fromStr("set(a, b + 4 - 1)")->toStr()); // set is depecated
   assert_eq<std::string>("increase(a, 1)", cp::WorldStateModification::fromStr("add(a, 1)")->toStr());
   assert_eq<std::string>("increase(a, 1)", cp::WorldStateModification::fromStr("increase(a, 1)")->toStr());
   assert_eq<std::string>("decrease(a, 2)", cp::WorldStateModification::fromStr("decrease(a, 2)")->toStr());
@@ -263,6 +263,8 @@ void _test_wsModificationToStr()
   assert_eq<std::string>("forall(a, f(a), d(a, c))", cp::WorldStateModification::fromStr("forall(a, f(a), d(a, c))")->toStr());
   assert_eq<std::string>("forall(a, f(a), d(a, c))", cp::WorldStateModification::fromStr("forall(a, when(f(a), d(a, c)))")->toStr());
   assert_eq<std::string>("forall(a, f(a), !d(a, c))", cp::WorldStateModification::fromStr("forall(a, when(f(a), not(d(a, c))))")->toStr());
+  assert_eq<std::string>("assign(a(b), c(d))", cp::WorldStateModification::fromStr("assign(a(b), c(d))")->toStr());
+  assert_eq<std::string>("assign(a(b), c(d))", cp::WorldStateModification::fromStr("set(a(b), c(d))")->toStr()); // set is depecated
 }
 
 void _test_checkCondition()

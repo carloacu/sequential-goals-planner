@@ -8,6 +8,7 @@ namespace cp
 {
 namespace
 {
+const char* _assignFunctionName = "assign";
 const char* _setFunctionName = "set";
 const char* _forAllFunctionName = "forall";
 const char* _forAllOldFunctionName = "forAll";
@@ -34,7 +35,7 @@ bool _areEqual(
 enum class WorldStateModificationNodeType
 {
   AND,
-  SET,
+  ASSIGN,
   FOR_ALL,
   INCREASE,
   DECREASE,
@@ -70,8 +71,8 @@ struct WorldStateModificationNode : public WorldStateModification
     {
     case WorldStateModificationNodeType::AND:
       return leftOperandStr + " & " + rightOperandStr;
-    case WorldStateModificationNodeType::SET:
-      return std::string(_setFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+    case WorldStateModificationNodeType::ASSIGN:
+      return std::string(_assignFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
     case WorldStateModificationNodeType::FOR_ALL:
       return std::string(_forAllFunctionName) + "(" + parameterName + ", " + leftOperandStr + ", " + rightOperandStr + ")";
     case WorldStateModificationNodeType::INCREASE:
@@ -100,7 +101,7 @@ struct WorldStateModificationNode : public WorldStateModification
 
   bool isOnlyASetOfFacts() const override
   {
-    if (nodeType == WorldStateModificationNodeType::SET ||
+    if (nodeType == WorldStateModificationNodeType::ASSIGN ||
         nodeType == WorldStateModificationNodeType::FOR_ALL ||
         nodeType == WorldStateModificationNodeType::INCREASE ||
         nodeType == WorldStateModificationNodeType::DECREASE ||
@@ -311,7 +312,7 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     if (rightOperand)
       rightOperand->forAll(pFactCallback, pWorldState);
   }
-  else if (nodeType == WorldStateModificationNodeType::SET && leftOperand && rightOperand)
+  else if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand)
   {
     auto* leftFactPtr = _toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
@@ -360,7 +361,7 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     return (leftOperand && leftOperand->forAllUntilTrue(pFactCallback, pWorldState)) ||
         (rightOperand && rightOperand->forAllUntilTrue(pFactCallback, pWorldState));
 
-  if (nodeType == WorldStateModificationNodeType::SET && leftOperand && rightOperand)
+  if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand)
   {
     auto* leftFactPtr = _toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
@@ -461,10 +462,10 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
 {
   std::unique_ptr<WorldStateModification> res;
 
-  if (pExpressionParsed.name == _setFunctionName &&
+  if ((pExpressionParsed.name == _assignFunctionName || pExpressionParsed.name == _setFunctionName) &&
       pExpressionParsed.arguments.size() == 2)
   {
-    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::SET,
+    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::ASSIGN,
                                                        _expressionParsedToWsModification(pExpressionParsed.arguments.front()),
                                                        _expressionParsedToWsModification(*(++pExpressionParsed.arguments.begin())));
   }
