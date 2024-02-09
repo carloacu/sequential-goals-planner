@@ -19,6 +19,7 @@ struct CONTEXTUALPLANNER_API Inference
   /// Construct an inference.
   Inference(std::unique_ptr<Condition> pCondition,
             std::unique_ptr<WorldStateModification> pFactsToModify,
+            const std::vector<std::string>& pParameters = {},
             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
 
   /// Construct a copy.

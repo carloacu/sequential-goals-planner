@@ -1,4 +1,5 @@
 #include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/types/derivedpredicate.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
@@ -64,6 +65,7 @@ const std::string _action_navigate = "navigate";
 const std::string _action_welcome = "welcome";
 const std::string _action_grab = "grab";
 const std::string _action_ungrab = "ungrab";
+static const std::vector<std::string> _emptyParameters;
 
 template <typename TYPE>
 void assert_eq(const TYPE& pExpected,
@@ -1226,7 +1228,6 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
   actions.emplace(_action_checkIn, cp::Action({}, cp::WorldStateModification::fromStr(_fact_checkedIn)));
   actions.emplace(_action_goodBoy, cp::Action({}, cp::WorldStateModification::fromStr(_fact_beHappy)));
   actions.emplace(_action_presentation, cp::Action({}, cp::WorldStateModification::fromStr(_fact_presented)));
-  cp::Domain domain(std::move(actions));
 
   // Even if _fact_checkedIn has maxTimeToKeepInactive equal to 0, it is not removed because the goal with a higher priority is inactive.
   cp::Problem problem;
@@ -1421,10 +1422,9 @@ void _checkInferences()
   cp::Problem problem;
   assert_eq<std::string>("", _solveStr(problem, domain, now));
   // Inference: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
-  cp::SetOfInferences setOfInferences;
   domain.addSetOfInferences(cp::Inference(cp::Condition::fromStr(_fact_headTouched),
                                           cp::WorldStateModification::fromStr("!" + _fact_headTouched),
-                                          {{{9, {_fact_checkedIn}}}}));
+                                          _emptyParameters, {{{9, {_fact_checkedIn}}}}));
   assert_eq<std::string>("", _solveStr(problem, domain, now));
   auto& setOfInferencesMap = domain.getSetOfInferences();
   problem.worldState.addFact(_fact_headTouched, problem.goalStack, setOfInferencesMap, now);
@@ -1564,7 +1564,7 @@ void _checkInferenceThatAddAGoal()
   cp::SetOfInferences setOfInferences;
   setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_a),
                                              cp::WorldStateModification::fromStr(_fact_b),
-                                             {{cp::GoalStack::defaultPriority, {_fact_e}}}));
+                                             _emptyParameters, {{cp::GoalStack::defaultPriority, {_fact_e}}}));
   setOfInferences.addInference(cp::Inference(cp::Condition::fromStr(_fact_b),
                                              cp::WorldStateModification::fromStr(_fact_c)));
   cp::Domain domain(std::move(actions), std::move(setOfInferences));
@@ -1801,7 +1801,8 @@ void _infrenceLinksFromManyInferencesSets()
   assert_true(cp::GoalStack::defaultPriority >= 1);
   auto lowPriority = cp::GoalStack::defaultPriority - 1;
   domain.addSetOfInferences(cp::Inference(cp::Condition::fromStr(_fact_punctual_p2),
-                                          {}, {{lowPriority, {"oneStepTowards(" + _fact_d + ")"}}}));
+                                          {}, _emptyParameters,
+                                          {{lowPriority, {"oneStepTowards(" + _fact_d + ")"}}}));
   cp::Problem problem;
   problem.goalStack.setGoals({{lowPriority, {cp::Goal("oneStepTowards(" + _fact_d + ")", 0)}}}, problem.worldState, {});
 
@@ -1810,7 +1811,8 @@ void _infrenceLinksFromManyInferencesSets()
     setOfInferences2.addInference(cp::Inference(cp::Condition::fromStr(_fact_punctual_p1),
                                                 cp::WorldStateModification::fromStr(_fact_b + "&" + _fact_punctual_p2)));
     setOfInferences2.addInference(cp::Inference(cp::Condition::fromStr(_fact_b),
-                                                {}, {{cp::GoalStack::defaultPriority, {"oneStepTowards(" + _fact_c + ")"}}}));
+                                                {}, _emptyParameters,
+                                                {{cp::GoalStack::defaultPriority, {"oneStepTowards(" + _fact_c + ")"}}}));
     domain.addSetOfInferences(setOfInferences2);
   }
 
@@ -2941,7 +2943,6 @@ void _actionToSatisfyANotExists()
 }
 
 
-
 void _orInCondition()
 {
   const std::string action1 = "action1";
@@ -2971,6 +2972,48 @@ void _orInCondition()
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
+
+
+void _derivedPredicate()
+{
+  std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
+  std::map<std::string, cp::Action> actions;
+
+  cp::SetOfInferences setOfInferences;
+  cp::DerivedPredicate derivedPredicate1(cp::Condition::fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)"), _fact_c + "(?o)", {"?o"});
+  for (auto& currInference : derivedPredicate1.toInferences())
+    setOfInferences.addInference(currInference);
+
+  cp::DerivedPredicate derivedPredicate2(cp::Condition::fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)"), _fact_d + "(?o)", {"?o"});
+  for (auto& currInference : derivedPredicate2.toInferences())
+    setOfInferences.addInference(currInference);
+
+  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact(_fact_e), problem.goalStack, setOfInferencesMap, now);
+
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_c + "(book)")));
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_d + "(book)")));
+  problem.worldState.addFact(cp::Fact(_fact_a + "(book)"), problem.goalStack, setOfInferencesMap, now);
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_c + "(book)")));
+  assert_true(problem.worldState.hasFact(cp::Fact(_fact_d + "(book)")));
+  problem.worldState.addFact(cp::Fact(_fact_b + "(book)"), problem.goalStack, setOfInferencesMap, now);
+  assert_true(problem.worldState.hasFact(cp::Fact(_fact_c + "(book)")));
+  assert_true(problem.worldState.hasFact(cp::Fact(_fact_d + "(book)")));
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_c + "(titi)")));
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_d + "(titi)")));
+  problem.worldState.removeFact(cp::Fact(_fact_a + "(book)"), problem.goalStack, setOfInferencesMap, now);
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_c + "(book)")));
+  assert_true(problem.worldState.hasFact(cp::Fact(_fact_d + "(book)")));
+  problem.worldState.addFact(cp::Fact(_fact_a + "(titi)"), problem.goalStack, setOfInferencesMap, now);
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_c + "(book)")));
+  assert_true(problem.worldState.hasFact(cp::Fact(_fact_d + "(book)")));
+  assert_false(problem.worldState.hasFact(cp::Fact(_fact_c + "(titi)")));
+  assert_true(problem.worldState.hasFact(cp::Fact(_fact_d + "(titi)")));
+}
+
 
 
 }
@@ -3087,6 +3130,7 @@ int main(int argc, char *argv[])
   _notExists();
   _actionToSatisfyANotExists();
   _orInCondition();
+  _derivedPredicate();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

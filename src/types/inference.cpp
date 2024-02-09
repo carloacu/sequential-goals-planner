@@ -6,8 +6,9 @@ namespace cp
 
 Inference::Inference(std::unique_ptr<Condition> pCondition,
                      std::unique_ptr<WorldStateModification> pFactsToModify,
+                     const std::vector<std::string>& pParameters,
                      const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd)
-  : parameters(),
+  : parameters(pParameters),
     condition(pCondition ? std::move(pCondition) : std::unique_ptr<Condition>()),
     factsToModify(pFactsToModify ? std::move(pFactsToModify) : std::unique_ptr<WorldStateModification>()),
     goalsToAdd(pGoalsToAdd),
