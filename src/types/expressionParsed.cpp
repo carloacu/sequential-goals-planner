@@ -85,12 +85,20 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
   {
     if (pStr[pPos] == '(')
     {
-      do
+      res.isAFunction = true;
+      if (pPos + 1 < strSize && pStr[pPos + 1] != ')')
+      {
+        do
+        {
+          ++pPos;
+          res.arguments.emplace_back(fromStr(pStr, pPos));
+        }
+        while (pStr[pPos] == ',');
+      }
+      else
       {
         ++pPos;
-        res.arguments.emplace_back(fromStr(pStr, pPos));
       }
-      while (pStr[pPos] == ',');
 
       if (pStr[pPos] == ')')
         ++pPos;
@@ -104,6 +112,7 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
   {
     if (pStr[pPos] == '=')
     {
+      res.isAFunction = true;
       ++pPos;
       std::size_t beginOfValuePos = pPos;
 

@@ -9,7 +9,7 @@ namespace cp
 namespace
 {
 const char* _assignFunctionName = "assign";
-const char* _setFunctionName = "set";
+const char* _setFunctionName = "set"; // deprecated
 const char* _forAllFunctionName = "forall";
 const char* _forAllOldFunctionName = "forAll";
 const char* _addFunctionName = "add";
@@ -58,34 +58,7 @@ struct WorldStateModificationNode : public WorldStateModification
   {
   }
 
-  std::string toStr() const override
-  {
-    std::string leftOperandStr;
-    if (leftOperand)
-      leftOperandStr = leftOperand->toStr();
-    std::string rightOperandStr;
-    if (rightOperand)
-      rightOperandStr = rightOperand->toStr();
-
-    switch (nodeType)
-    {
-    case WorldStateModificationNodeType::AND:
-      return leftOperandStr + " & " + rightOperandStr;
-    case WorldStateModificationNodeType::ASSIGN:
-      return std::string(_assignFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
-    case WorldStateModificationNodeType::FOR_ALL:
-      return std::string(_forAllFunctionName) + "(" + parameterName + ", " + leftOperandStr + ", " + rightOperandStr + ")";
-    case WorldStateModificationNodeType::INCREASE:
-      return std::string(_increaseFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
-    case WorldStateModificationNodeType::DECREASE:
-      return std::string(_decreaseFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
-    case WorldStateModificationNodeType::PLUS:
-      return leftOperandStr + " + " + rightOperandStr;
-    case WorldStateModificationNodeType::MINUS:
-      return leftOperandStr + " - " + rightOperandStr;
-    }
-    return "";
-  }
+  std::string toStr() const override;
 
   bool hasFact(const Fact& pFact) const override
   {
@@ -302,6 +275,47 @@ const WorldStateModificationNumber* _toWmNumber(const WorldStateModification& pO
   return static_cast<const WorldStateModificationNumber*>(&pOther);
 }
 
+
+std::string WorldStateModificationNode::toStr() const
+{
+  std::string leftOperandStr;
+  if (leftOperand)
+    leftOperandStr = leftOperand->toStr();
+  std::string rightOperandStr;
+  bool isRightOperandAFactWithoutParameter = false;
+  if (rightOperand)
+  {
+    const auto* rightOperandFactPtr = _toWmFact(*rightOperand);
+    if (rightOperandFactPtr != nullptr && rightOperandFactPtr->factOptional.fact.arguments.empty() &&
+        rightOperandFactPtr->factOptional.fact.value == "")
+      isRightOperandAFactWithoutParameter = true;
+    rightOperandStr = rightOperand->toStr();
+  }
+
+  switch (nodeType)
+  {
+  case WorldStateModificationNodeType::AND:
+    return leftOperandStr + " & " + rightOperandStr;
+  case WorldStateModificationNodeType::ASSIGN:
+  {
+    if (isRightOperandAFactWithoutParameter)
+      rightOperandStr += "()"; // To significate it is a fact
+    return std::string(_assignFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  }
+  case WorldStateModificationNodeType::FOR_ALL:
+    return std::string(_forAllFunctionName) + "(" + parameterName + ", " + leftOperandStr + ", " + rightOperandStr + ")";
+  case WorldStateModificationNodeType::INCREASE:
+    return std::string(_increaseFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  case WorldStateModificationNodeType::DECREASE:
+    return std::string(_decreaseFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+  case WorldStateModificationNodeType::PLUS:
+    return leftOperandStr + " + " + rightOperandStr;
+  case WorldStateModificationNodeType::MINUS:
+    return leftOperandStr + " - " + rightOperandStr;
+  }
+  return "";
+}
+
 void WorldStateModificationNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                                         const WorldState& pWorldState) const
 {
@@ -462,30 +476,39 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
 {
   std::unique_ptr<WorldStateModification> res;
 
-  if ((pExpressionParsed.name == _assignFunctionName || pExpressionParsed.name == _setFunctionName) &&
+  if ((pExpressionParsed.name == _assignFunctionName ||
+       pExpressionParsed.name == _setFunctionName) && // set is deprecated
       pExpressionParsed.arguments.size() == 2)
   {
     auto leftOperand = _expressionParsedToWsModification(pExpressionParsed.arguments.front());
-    auto righttOperand = _expressionParsedToWsModification(*(++pExpressionParsed.arguments.begin()));
+    const auto& rightOperandExp = *(++pExpressionParsed.arguments.begin());
+    auto rightOperand = _expressionParsedToWsModification(rightOperandExp);
 
-    auto* leftFactPtr = dynamic_cast<WorldStateModificationFact*>(&*leftOperand);
+    auto* leftFactPtr = static_cast<WorldStateModificationFact*>(&*leftOperand);
     if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
     {
-      const auto* rightFactPtr = dynamic_cast<const WorldStateModificationFact*>(&*righttOperand);
+      const auto* rightFactPtr = static_cast<const WorldStateModificationFact*>(&*rightOperand);
       if (rightFactPtr != nullptr &&
-          rightFactPtr->factOptional.fact.name == Fact::undefinedValue &&
           rightFactPtr->factOptional.fact.arguments.empty() &&
           rightFactPtr->factOptional.fact.value == "")
       {
-        leftFactPtr->factOptional.isFactNegated = true;
-        leftFactPtr->factOptional.fact.value = Fact::anyValue;
-        res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
+        if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue)
+        {
+          leftFactPtr->factOptional.isFactNegated = true;
+          leftFactPtr->factOptional.fact.value = Fact::anyValue;
+          res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
+        }
+        else if (pExpressionParsed.name == _assignFunctionName && !rightOperandExp.isAFunction)
+        {
+          leftFactPtr->factOptional.fact.value = rightFactPtr->factOptional.fact.name;
+          res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
+        }
       }
     }
 
     if (!res)
       res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::ASSIGN,
-                                                         std::move(leftOperand), std::move(righttOperand));
+                                                         std::move(leftOperand), std::move(rightOperand));
   }
   else if (pExpressionParsed.name == _notFunctionName &&
            pExpressionParsed.arguments.size() == 1)

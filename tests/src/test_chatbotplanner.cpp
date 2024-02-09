@@ -250,6 +250,14 @@ void _test_conditionParameters()
   assert_eq<std::string>("!a(b)=*", cp::Condition::fromStr("=(a(b), undefined)")->toStr());
   assert_eq<std::string>("!a=*", cp::Condition::fromStr("a=undefined")->toStr());
   assert_eq<std::string>("!a(b)=*", cp::Condition::fromStr("a(b)=undefined")->toStr());
+  assert_eq<std::string>("a=c", cp::Condition::fromStr("=(a, c)")->toStr());
+  assert_eq<std::string>("a(b)=c", cp::Condition::fromStr("=(a(b), c)")->toStr());
+  assert_eq<std::string>("equals(a, c)", cp::Condition::fromStr("=(a, c())")->toStr());
+  assert_eq<std::string>("equals(a(b), c)", cp::Condition::fromStr("=(a(b), c())")->toStr());
+  assert_eq<std::string>("equals(a, c)", cp::Condition::fromStr("equals(a, c)")->toStr());
+  assert_eq<std::string>("equals(a(b), c)", cp::Condition::fromStr("equals(a(b), c)")->toStr());
+  assert_eq<std::string>("equals(a, c)", cp::Condition::fromStr("equals(a, c())")->toStr());
+  assert_eq<std::string>("equals(a(b), c)", cp::Condition::fromStr("equals(a(b), c())")->toStr());
   assert_eq<std::string>("exists(l, at(self, l))", cp::Condition::fromStr("exists(l, at(self, l))")->toStr());
   assert_eq<std::string>("exists(l, at(self, l) & at(pen, l))", cp::Condition::fromStr("exists(l, at(self, l) & at(pen, l))")->toStr());
   assert_eq<std::string>("!exists(l, at(self, l))", cp::Condition::fromStr("not(exists(l, at(self, l)))")->toStr());
@@ -277,6 +285,10 @@ void _test_wsModificationToStr()
   assert_eq<std::string>("forall(a, f(a), !d(a, c))", cp::WorldStateModification::fromStr("forall(a, when(f(a), not(d(a, c))))")->toStr());
   assert_eq<std::string>("assign(a(b), c(d))", cp::WorldStateModification::fromStr("assign(a(b), c(d))")->toStr());
   assert_eq<std::string>("assign(a(b), c(d))", cp::WorldStateModification::fromStr("set(a(b), c(d))")->toStr()); // set is depecated
+  assert_eq<std::string>("assign(a(b), c())", cp::WorldStateModification::fromStr("assign(a(b), c())")->toStr()); // c() means that c is a predicate
+  assert_eq<std::string>("a(b)=c", cp::WorldStateModification::fromStr("assign(a(b), c)")->toStr());
+  assert_eq<std::string>("assign(a(b), c())", cp::WorldStateModification::fromStr("set(a(b), c())")->toStr()); // set is depecated
+  assert_eq<std::string>("assign(a(b), c())", cp::WorldStateModification::fromStr("set(a(b), c)")->toStr()); // set is depecated
 }
 
 void _test_invertCondition()

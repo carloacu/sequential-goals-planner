@@ -82,26 +82,34 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
       pExpressionParsed.arguments.size() == 2)
   {
     auto leftOperand = _expressionParsedToCondition(pExpressionParsed.arguments.front());
-    auto righttOperand = _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()));
+    const auto& rightOperandExp = *(++pExpressionParsed.arguments.begin());
+    auto rightOperand = _expressionParsedToCondition(rightOperandExp);
 
     auto* leftFactPtr = leftOperand->fcFactPtr();
     if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
     {
-      auto* rightFactPtr = righttOperand->fcFactPtr();
+      auto* rightFactPtr = rightOperand->fcFactPtr();
       if (rightFactPtr != nullptr &&
-          rightFactPtr->factOptional.fact.name == Fact::undefinedValue &&
           rightFactPtr->factOptional.fact.arguments.empty() &&
           rightFactPtr->factOptional.fact.value == "")
       {
-        leftFactPtr->factOptional.isFactNegated = true;
-        leftFactPtr->factOptional.fact.value = Fact::anyValue;
-        res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
+        if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue)
+        {
+          leftFactPtr->factOptional.isFactNegated = true;
+          leftFactPtr->factOptional.fact.value = Fact::anyValue;
+          res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
+        }
+        else if (pExpressionParsed.name == _equalsCharFunctionName && !rightOperandExp.isAFunction)
+        {
+          leftFactPtr->factOptional.fact.value = rightFactPtr->factOptional.fact.name;
+          res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
+        }
       }
     }
 
     if (!res)
       res = std::make_unique<ConditionNode>(ConditionNodeType::EQUALITY,
-                                            std::move(leftOperand), std::move(righttOperand));
+                                            std::move(leftOperand), std::move(rightOperand));
   }
   else if (pExpressionParsed.name == _existsFunctionName &&
            pExpressionParsed.arguments.size() == 2)

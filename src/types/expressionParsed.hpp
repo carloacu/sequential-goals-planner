@@ -16,6 +16,7 @@ struct ExpressionParsed
   std::string name;
   std::list<ExpressionParsed> arguments;
   std::string value;
+  bool isAFunction = false;
 
   char separatorToFollowingExp;
   std::unique_ptr<ExpressionParsed> followingExpression;
