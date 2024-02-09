@@ -416,7 +416,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   auto doesSatisfyObjective = [&](const FactOptional& pFactOptional)
   {
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
-      return false;
+      return pFactOptionalToSatisfy.fact.areEqualWithoutValueConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.value != pFactOptional.fact.value;
+
     const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
     ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
     bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;

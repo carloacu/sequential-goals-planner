@@ -81,9 +81,27 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
   if ((pExpressionParsed.name == _equalsFunctionName || pExpressionParsed.name == _equalsCharFunctionName) &&
       pExpressionParsed.arguments.size() == 2)
   {
-    res = std::make_unique<ConditionNode>(ConditionNodeType::EQUALITY,
-                                          _expressionParsedToCondition(pExpressionParsed.arguments.front()),
-                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin())));
+    auto leftOperand = _expressionParsedToCondition(pExpressionParsed.arguments.front());
+    auto righttOperand = _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()));
+
+    auto* leftFactPtr = leftOperand->fcFactPtr();
+    if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
+    {
+      auto* rightFactPtr = righttOperand->fcFactPtr();
+      if (rightFactPtr != nullptr &&
+          rightFactPtr->factOptional.fact.name == Fact::undefinedValue &&
+          rightFactPtr->factOptional.fact.arguments.empty() &&
+          rightFactPtr->factOptional.fact.value == "")
+      {
+        leftFactPtr->factOptional.isFactNegated = true;
+        leftFactPtr->factOptional.fact.value = Fact::anyValue;
+        res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
+      }
+    }
+
+    if (!res)
+      res = std::make_unique<ConditionNode>(ConditionNodeType::EQUALITY,
+                                            std::move(leftOperand), std::move(righttOperand));
   }
   else if (pExpressionParsed.name == _existsFunctionName &&
            pExpressionParsed.arguments.size() == 2)

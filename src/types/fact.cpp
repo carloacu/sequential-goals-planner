@@ -46,6 +46,7 @@ bool _isInside(const std::string& pStr,
 
 const std::string Fact::anyValue = "*";
 const FactOptional Fact::anyValueFact(Fact::anyValue);
+const std::string Fact::undefinedValue = "undefined";
 std::string Fact::punctualPrefix = "~punctual~";
 
 Fact::Fact(const std::string& pStr,
@@ -445,7 +446,8 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   std::map<std::string, std::set<std::string>> newPotentialParameters;
   std::map<std::string, std::set<std::string>> newParametersInPlace;
   auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
-    if (pFactValue == pValueToLookFor)
+    if (pFactValue == pValueToLookFor ||
+        pFactValue == Fact::anyValue)
       return true;
 
     if (pParametersPtr != nullptr)

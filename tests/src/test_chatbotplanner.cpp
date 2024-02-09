@@ -246,6 +246,10 @@ void _test_conditionParameters()
   assert_eq<std::string>("a>3", cp::Condition::fromStr("a>3")->toStr());
   assert_eq<std::string>("a>3", cp::Condition::fromStr(">(a, 3)")->toStr());
   assert_eq<std::string>("a<3", cp::Condition::fromStr("<(a, 3)")->toStr());
+  assert_eq<std::string>("!a=*", cp::Condition::fromStr("=(a, undefined)")->toStr());
+  assert_eq<std::string>("!a(b)=*", cp::Condition::fromStr("=(a(b), undefined)")->toStr());
+  assert_eq<std::string>("!a=*", cp::Condition::fromStr("a=undefined")->toStr());
+  assert_eq<std::string>("!a(b)=*", cp::Condition::fromStr("a(b)=undefined")->toStr());
   assert_eq<std::string>("exists(l, at(self, l))", cp::Condition::fromStr("exists(l, at(self, l))")->toStr());
   assert_eq<std::string>("exists(l, at(self, l) & at(pen, l))", cp::Condition::fromStr("exists(l, at(self, l) & at(pen, l))")->toStr());
   assert_eq<std::string>("!exists(l, at(self, l))", cp::Condition::fromStr("not(exists(l, at(self, l)))")->toStr());
@@ -266,6 +270,8 @@ void _test_wsModificationToStr()
   assert_eq<std::string>("decrease(a, 2)", cp::WorldStateModification::fromStr("decrease(a, 2)")->toStr());
   assert_eq<std::string>("!a", cp::WorldStateModification::fromStr("!a")->toStr());
   assert_eq<std::string>("!a", cp::WorldStateModification::fromStr("not(a)")->toStr());
+  assert_eq<std::string>("!a=*", cp::WorldStateModification::fromStr("a=undefined")->toStr());
+  assert_eq<std::string>("!a=*", cp::WorldStateModification::fromStr("assign(a, undefined)")->toStr());
   assert_eq<std::string>("forall(a, f(a), d(a, c))", cp::WorldStateModification::fromStr("forall(a, f(a), d(a, c))")->toStr());
   assert_eq<std::string>("forall(a, f(a), d(a, c))", cp::WorldStateModification::fromStr("forall(a, when(f(a), d(a, c)))")->toStr());
   assert_eq<std::string>("forall(a, f(a), !d(a, c))", cp::WorldStateModification::fromStr("forall(a, when(f(a), not(d(a, c))))")->toStr());
@@ -3015,6 +3021,50 @@ void _derivedPredicate()
 }
 
 
+void _assignAnotherValueToSatisfyNotGoal()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1({}, cp::WorldStateModification::fromStr(_fact_a + "=toto"));
+  actions.emplace(action1, actionObj1);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("!" + _fact_a + "=titi")});
+
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_a + "=titi"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+}
+
+
+
+void _assignUndefined()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", undefined)"));
+  actions.emplace(action1, actionObj1);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("!" + _fact_a + "=titi")});
+
+
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_a + "=titi"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq<std::size_t>(1u, problem.worldState.facts().size());
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::size_t>(0u, problem.worldState.facts().size()); // because assign undefined is done like a fact removal
+}
+
+
 
 }
 
@@ -3131,6 +3181,8 @@ int main(int argc, char *argv[])
   _actionToSatisfyANotExists();
   _orInCondition();
   _derivedPredicate();
+  _assignAnotherValueToSatisfyNotGoal();
+  _assignUndefined();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

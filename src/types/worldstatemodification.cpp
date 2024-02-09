@@ -465,9 +465,27 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
   if ((pExpressionParsed.name == _assignFunctionName || pExpressionParsed.name == _setFunctionName) &&
       pExpressionParsed.arguments.size() == 2)
   {
-    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::ASSIGN,
-                                                       _expressionParsedToWsModification(pExpressionParsed.arguments.front()),
-                                                       _expressionParsedToWsModification(*(++pExpressionParsed.arguments.begin())));
+    auto leftOperand = _expressionParsedToWsModification(pExpressionParsed.arguments.front());
+    auto righttOperand = _expressionParsedToWsModification(*(++pExpressionParsed.arguments.begin()));
+
+    auto* leftFactPtr = dynamic_cast<WorldStateModificationFact*>(&*leftOperand);
+    if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
+    {
+      const auto* rightFactPtr = dynamic_cast<const WorldStateModificationFact*>(&*righttOperand);
+      if (rightFactPtr != nullptr &&
+          rightFactPtr->factOptional.fact.name == Fact::undefinedValue &&
+          rightFactPtr->factOptional.fact.arguments.empty() &&
+          rightFactPtr->factOptional.fact.value == "")
+      {
+        leftFactPtr->factOptional.isFactNegated = true;
+        leftFactPtr->factOptional.fact.value = Fact::anyValue;
+        res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
+      }
+    }
+
+    if (!res)
+      res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::ASSIGN,
+                                                         std::move(leftOperand), std::move(righttOperand));
   }
   else if (pExpressionParsed.name == _notFunctionName &&
            pExpressionParsed.arguments.size() == 1)

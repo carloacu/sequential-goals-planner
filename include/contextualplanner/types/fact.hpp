@@ -199,6 +199,8 @@ struct CONTEXTUALPLANNER_API Fact
   const static std::string anyValue;
   /// Constant defining the "any value" special fact.
   const static FactOptional anyValueFact;
+  /// Constant defining the "undefined" special value.
+  const static std::string undefinedValue;
   /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)
   static std::string punctualPrefix;
 };

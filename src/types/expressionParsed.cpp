@@ -29,7 +29,15 @@ FactOptional ExpressionParsed::toFact() const
   FactOptional res(name);
   for (auto& currArg : arguments)
     res.fact.arguments.emplace_back(currArg.toFact());
-  res.fact.value = value;
+  if (value == Fact::undefinedValue && !res.isFactNegated)
+  {
+    res.isFactNegated = true;
+    res.fact.value = Fact::anyValue;
+  }
+  else
+  {
+    res.fact.value = value;
+  }
   return res;
 }
 
