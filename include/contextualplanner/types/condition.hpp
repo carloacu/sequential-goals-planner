@@ -155,6 +155,7 @@ enum class ConditionNodeType
   SUPERIOR,
   INFERIOR,
   AND,
+  OR,
   PLUS,
   MINUS
 };

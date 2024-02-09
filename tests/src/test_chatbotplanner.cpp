@@ -234,6 +234,8 @@ void _test_conditionParameters()
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::Condition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::Condition::fromStr("and(location(me)=target, grab(me, object))")->clone(&parameters)->toStr());
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair) & i", cp::Condition::fromStr("and(location(me)=target, grab(me, object), i)")->clone(&parameters)->toStr());
+  assert_eq<std::string>("location(me)=kitchen | grab(me, chair) | i", cp::Condition::fromStr("location(me)=target | grab(me, object) | i")->clone(&parameters)->toStr());
+  assert_eq<std::string>("location(me)=kitchen | grab(me, chair) | i", cp::Condition::fromStr("or(location(me)=target, grab(me, object), i)")->clone(&parameters)->toStr());
   assert_eq<std::string>("equals(a, b + 3)", cp::Condition::fromStr("equals(a, b + 3)")->toStr());
   assert_eq<std::string>("!a", cp::Condition::fromStr("!a")->toStr());
   assert_eq<std::string>("!a", cp::Condition::fromStr("not(a)")->toStr());
@@ -2929,6 +2931,38 @@ void _actionToSatisfyANotExists()
 }
 
 
+
+void _orInCondition()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::Action actionObj1(cp::Condition::fromStr(_fact_a + " & " + _fact_b),
+                        cp::WorldStateModification::fromStr(_fact_c));
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2(cp::Condition::fromStr(_fact_a + " | " + _fact_b),
+                        cp::WorldStateModification::fromStr(_fact_c));
+  actions.emplace(action2, actionObj2);
+
+  cp::Action actionObj3(cp::Condition::fromStr(_fact_a + " & " + _fact_b),
+                        cp::WorldStateModification::fromStr(_fact_c));
+  actions.emplace(action3, actionObj3);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
+  problem.worldState.addFact(cp::Fact(_fact_a), problem.goalStack, setOfInferencesMap, now);
+
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -3041,6 +3075,7 @@ int main(int argc, char *argv[])
   _existsWithValue();
   _notExists();
   _actionToSatisfyANotExists();
+  _orInCondition();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

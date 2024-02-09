@@ -14,6 +14,7 @@ const char* _notFunctionName = "not";
 const char* _superiorFunctionName = ">";
 const char* _inferiorFunctionName = "<";
 const char* _andFunctionName = "and";
+const char* _orFunctionName = "or";
 
 
 bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCallback,
@@ -121,20 +122,21 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
                                           _expressionParsedToCondition(pExpressionParsed.arguments.front()),
                                           _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin())));
   }
-  else if (pExpressionParsed.name == _andFunctionName &&
+  else if ((pExpressionParsed.name == _andFunctionName || pExpressionParsed.name == _orFunctionName) &&
            pExpressionParsed.arguments.size() >= 2)
   {
+    auto listNodeType = pExpressionParsed.name == _andFunctionName ? ConditionNodeType::AND : ConditionNodeType::OR;
     std::list<std::unique_ptr<Condition>> elts;
     for (auto& currExp : pExpressionParsed.arguments)
       elts.emplace_back(_expressionParsedToCondition(currExp));
 
-    res = std::make_unique<ConditionNode>(ConditionNodeType::AND, std::move(*(--(--elts.end()))), std::move(elts.back()));
+    res = std::make_unique<ConditionNode>(listNodeType, std::move(*(--(--elts.end()))), std::move(elts.back()));
     elts.pop_back();
     elts.pop_back();
 
     while (!elts.empty())
     {
-      res = std::make_unique<ConditionNode>(ConditionNodeType::AND, std::move(elts.back()), std::move(res));
+      res = std::make_unique<ConditionNode>(listNodeType, std::move(elts.back()), std::move(res));
       elts.pop_back();
     }
   }
@@ -162,6 +164,8 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
       nodeType = ConditionNodeType::SUPERIOR;
     else if (pExpressionParsed.separatorToFollowingExp == '<')
       nodeType = ConditionNodeType::INFERIOR;
+    else if (pExpressionParsed.separatorToFollowingExp == '|')
+      nodeType = ConditionNodeType::OR;
     res = std::make_unique<ConditionNode>(nodeType,
                                           std::move(res),
                                           _expressionParsedToCondition(*pExpressionParsed.followingExpression));
@@ -191,11 +195,15 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
   }
 
   auto* nodeOfConditionPtr = pCondition.fcNodePtr();
-  if (nodeOfConditionPtr != nullptr && nodeOfConditionPtr->nodeType == ConditionNodeType::AND &&
+  if (nodeOfConditionPtr != nullptr &&
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
   {
-    return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts) &&
-        _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
+    if (nodeOfConditionPtr->nodeType == ConditionNodeType::AND)
+      return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts) &&
+          _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
+    if (nodeOfConditionPtr->nodeType == ConditionNodeType::OR)
+      return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts) ||
+          _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
   }
   return false;
 }
@@ -223,8 +231,9 @@ void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalP
   }
 
   auto* nodeOfConditionPtr = pCondition.fcNodePtr();
-  if (nodeOfConditionPtr != nullptr && nodeOfConditionPtr->nodeType == ConditionNodeType::AND &&
-      nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
+  if (nodeOfConditionPtr != nullptr &&
+      nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand &&
+      (nodeOfConditionPtr->nodeType == ConditionNodeType::AND || nodeOfConditionPtr->nodeType == ConditionNodeType::OR))
   {
     _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pFactFromEffect, pObject, pIsNegated);
     _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pFactFromEffect, pObject, pIsNegated);
@@ -256,6 +265,8 @@ std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>*
   {
   case ConditionNodeType::AND:
     return leftOperandStr + " & " + rightOperandStr;
+  case ConditionNodeType::OR:
+    return leftOperandStr + " | " + rightOperandStr;
   case ConditionNodeType::EQUALITY:
     return std::string(_equalsFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
   case ConditionNodeType::PLUS:
@@ -324,7 +335,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
     const Fact& pFactFromEffect,
     const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
 {
-  if (nodeType == ConditionNodeType::AND)
+  if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR)
   {
     if (leftOperand && leftOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments))
       return true;
@@ -361,7 +372,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
 bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const WorldState& pWorldState) const
 {
-  if (nodeType == ConditionNodeType::AND)
+  if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR)
   {
     if (leftOperand && !leftOperand->untilFalse(pFactCallback, pWorldState))
       return false;
@@ -419,6 +430,18 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
     if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
       return false;
   }
+  else if (nodeType == ConditionNodeType::OR)
+  {
+    bool canBecomeTrue = false;
+    if (pCanBecomeTruePtr == nullptr)
+      pCanBecomeTruePtr = &canBecomeTrue;
+
+    if (leftOperand && leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+      return true;
+    if (rightOperand && rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+      return true;
+    return false;
+  }
   else if (leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
@@ -471,6 +494,14 @@ bool ConditionNode::canBecomeTrue(const WorldState& pWorldState) const
       return false;
     if (rightOperand && !rightOperand->canBecomeTrue(pWorldState))
       return false;
+  }
+  else if (nodeType == ConditionNodeType::OR)
+  {
+    if (leftOperand && leftOperand->canBecomeTrue(pWorldState))
+      return true;
+    if (rightOperand && rightOperand->canBecomeTrue(pWorldState))
+      return true;
+    return false;
   }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
   {

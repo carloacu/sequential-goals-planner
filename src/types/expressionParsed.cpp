@@ -10,7 +10,7 @@ namespace
 
 bool _isASeparatorForTheBeginOfAFollowingExpression(char pChar)
 {
-  return pChar == '&' || pChar == '+' || pChar == '-' || pChar == '<' || pChar == '>';
+  return pChar == '&' || pChar == '|' || pChar == '+' || pChar == '-' || pChar == '<' || pChar == '>';
 }
 
 bool _isASeparator(char pChar)
