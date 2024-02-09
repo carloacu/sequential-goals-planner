@@ -1,4 +1,5 @@
 #include <contextualplanner/types/condition.hpp>
+#include <optional>
 #include <sstream>
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -9,6 +10,7 @@ namespace cp
 namespace
 {
 const char* _equalsFunctionName = "equals";
+const char* _equalsCharFunctionName = "=";
 const char* _existsFunctionName = "exists";
 const char* _notFunctionName = "not";
 const char* _superiorFunctionName = ">";
@@ -76,7 +78,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
 {
   std::unique_ptr<Condition> res;
 
-  if (pExpressionParsed.name == _equalsFunctionName &&
+  if ((pExpressionParsed.name == _equalsFunctionName || pExpressionParsed.name == _equalsCharFunctionName) &&
       pExpressionParsed.arguments.size() == 2)
   {
     res = std::make_unique<ConditionNode>(ConditionNodeType::EQUALITY,
@@ -94,18 +96,14 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
   {
     auto& expNegationned = pExpressionParsed.arguments.front();
 
-    if (expNegationned.name == _existsFunctionName &&
-        expNegationned.arguments.size() == 2)
+    res = _expressionParsedToCondition(expNegationned);
+    if (res)
     {
-      res = std::make_unique<ConditionExists>(expNegationned.arguments.front().name,
-                                              _expressionParsedToCondition(*(++expNegationned.arguments.begin())),
-                                              true);
-    }
-    else
-    {
-      auto factNegationed = expNegationned.toFact();
-      factNegationed.isFactNegated = !factNegationed.isFactNegated;
-      res = std::make_unique<ConditionFact>(factNegationed);
+       auto* factPtr = res->fcFactPtr();
+       if (factPtr != nullptr)
+         factPtr->factOptional.isFactNegated = !factPtr->factOptional.isFactNegated;
+       else
+         res = std::make_unique<ConditionNot>(std::move(res));
     }
   }
   else if (pExpressionParsed.name == _superiorFunctionName &&
@@ -333,13 +331,14 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
     const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
     const WorldState& pWorldState,
     const Fact& pFactFromEffect,
-    const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
+    const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
+    bool pIsWrappingExprssionNegated) const
 {
   if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR)
   {
-    if (leftOperand && leftOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments))
+    if (leftOperand && leftOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments, pIsWrappingExprssionNegated))
       return true;
-    if (rightOperand && rightOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments))
+    if (rightOperand && rightOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments, pIsWrappingExprssionNegated))
       return true;
   }
   else if (leftOperand && rightOperand)
@@ -405,7 +404,8 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,
                            const std::set<Fact>& pRemovedFacts,
                            std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
-                           bool* pCanBecomeTruePtr) const
+                           bool* pCanBecomeTruePtr,
+                           bool pIsWrappingExprssionNegated) const
 {
   if (nodeType == ConditionNodeType::AND)
   {
@@ -413,21 +413,21 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
     if (pCanBecomeTruePtr == nullptr)
       pCanBecomeTruePtr = &canBecomeTrue;
 
-    if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+    if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExprssionNegated))
     {
       // Sometimes for negation of fact with parameter we need to check in the inverse order
       if (pCanBecomeTruePtr != nullptr && *pCanBecomeTruePtr)
       {
-        if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+        if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExprssionNegated))
           return false;
 
-        if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+        if (leftOperand && !leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExprssionNegated))
           return false;
         return true;
       }
       return false;
     }
-    if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+    if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExprssionNegated))
       return false;
   }
   else if (nodeType == ConditionNodeType::OR)
@@ -436,9 +436,9 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
     if (pCanBecomeTruePtr == nullptr)
       pCanBecomeTruePtr = &canBecomeTrue;
 
-    if (leftOperand && leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+    if (leftOperand && leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExprssionNegated))
       return true;
-    if (rightOperand && rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr))
+    if (rightOperand && rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExprssionNegated))
       return true;
     return false;
   }
@@ -466,7 +466,9 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
 
         if (pConditionParametersToPossibleArguments != nullptr)
           applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
-        return res;
+        if (!pIsWrappingExprssionNegated)
+          return res;
+        return !res;
       }
       else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
       {
@@ -476,32 +478,42 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
           const auto& factNamesToFacts = pWorldState.factNamesToFacts();
           auto itWsFacts = factNamesToFacts.find(leftFact.name);
           if (itWsFacts != factNamesToFacts.end())
+          {
             for (const auto& currWsFact : itWsFacts->second)
+            {
               if (leftFact.areEqualWithoutValueConsideration(currWsFact))
-                return compIntNb(currWsFact.value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
+              {
+                bool res = compIntNb(currWsFact.value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
+                if (!pIsWrappingExprssionNegated)
+                  return res;
+                return !res;
+              }
+            }
+          }
         }
       }
     }
   }
-  return true;
+  return !pIsWrappingExprssionNegated;
 }
 
-bool ConditionNode::canBecomeTrue(const WorldState& pWorldState) const
+bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
+                                  bool pIsWrappingExprssionNegated) const
 {
   if (nodeType == ConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState))
-      return false;
-    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState))
-      return false;
+    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+      return pIsWrappingExprssionNegated;
+    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+      return pIsWrappingExprssionNegated;
   }
   else if (nodeType == ConditionNodeType::OR)
   {
-    if (leftOperand && leftOperand->canBecomeTrue(pWorldState))
-      return true;
-    if (rightOperand && rightOperand->canBecomeTrue(pWorldState))
-      return true;
-    return false;
+    if (leftOperand && leftOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+      return !pIsWrappingExprssionNegated;
+    if (rightOperand && rightOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+      return !pIsWrappingExprssionNegated;
+    return pIsWrappingExprssionNegated;
   }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
   {
@@ -544,14 +556,36 @@ std::string ConditionNode::getValue(const WorldState& pWorldState) const
 }
 
 
-std::unique_ptr<Condition> ConditionNode::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
+std::unique_ptr<Condition> ConditionNode::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
+                                                bool pInvert) const
 {
-  return std::make_unique<ConditionNode>(
-        nodeType,
-        leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>(),
-        rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>());
-}
+  if (!pInvert)
+    return std::make_unique<ConditionNode>(
+          nodeType,
+          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>(),
+          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>());
 
+  std::optional<ConditionNodeType> invertedNodeOpt;
+  switch (nodeType) {
+  case ConditionNodeType::AND:
+    invertedNodeOpt.emplace(ConditionNodeType::OR);
+    break;
+  case ConditionNodeType::OR:
+    invertedNodeOpt.emplace(ConditionNodeType::AND);
+    break;
+  }
+  if (invertedNodeOpt)
+    return std::make_unique<ConditionNode>(
+          *invertedNodeOpt,
+          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, true) : std::unique_ptr<Condition>(),
+          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, true) : std::unique_ptr<Condition>());
+
+  return std::make_unique<ConditionNot>(
+        std::make_unique<ConditionNode>(
+          nodeType,
+          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>(),
+          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>()));
+}
 
 
 
@@ -561,19 +595,14 @@ std::string ConditionExists::toStr(const std::function<std::string (const Fact&)
   std::string conditionStr;
   if (condition)
     conditionStr = condition->toStr(pFactWriterPtr);
-  auto res = std::string(_existsFunctionName) + "(" + object + ", " + conditionStr + ")";
-  if (isNegated)
-    res = "!" + res;
-  return res;
+  return std::string(_existsFunctionName) + "(" + object + ", " + conditionStr + ")";
 }
 
 ConditionExists::ConditionExists(const std::string& pObject,
-                                 std::unique_ptr<Condition> pCondition,
-                                 bool pIsNegated)
+                                 std::unique_ptr<Condition> pCondition)
   : Condition(),
     object(pObject),
-    condition(std::move(pCondition)),
-    isNegated(pIsNegated)
+    condition(std::move(pCondition))
 {
 }
 
@@ -588,8 +617,6 @@ bool ConditionExists::containsFactOpt(const FactOptional& pFactOptional,
                                       const std::vector<std::string>& pConditionParameters,
                                       bool pIsWrappingExprssionNegated) const
 {
-  if (isNegated)
-    pIsWrappingExprssionNegated = !pIsWrappingExprssionNegated;
   return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, pIsWrappingExprssionNegated);
 }
 
@@ -605,11 +632,7 @@ void ConditionExists::forAll(const std::function<void (const FactOptional&)>& pF
 {
 
   if (condition)
-  {
-    if (isNegated)
-      pIsWrappingExprssionNegated = !pIsWrappingExprssionNegated;
     condition->forAll(pFactCallback, pIsWrappingExprssionNegated);
-  }
 }
 
 
@@ -617,21 +640,22 @@ bool ConditionExists::findConditionCandidateFromFactFromEffect(
     const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
     const WorldState& pWorldState,
     const Fact& pFactFromEffect,
-    const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments) const
+    const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
+    bool pIsWrappingExprssionNegated) const
 {
   if (condition)
   {
     const auto& facts = pWorldState.facts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pFactFromEffect, object, isNegated);
+    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pFactFromEffect, object, pIsWrappingExprssionNegated);
 
     return condition->findConditionCandidateFromFactFromEffect([&](const FactOptional& pConditionFact) {
       auto factToConsider = pConditionFact.fact;
       factToConsider.replaceArguments(localParamToValue);
-      return pDoesConditionFactMatchFactFromEffect(FactOptional(factToConsider)) == !isNegated;
-    }, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments);
+      return pDoesConditionFactMatchFactFromEffect(FactOptional(factToConsider)) == !pIsWrappingExprssionNegated;
+    }, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments, pIsWrappingExprssionNegated);
   }
-  return isNegated;
+  return pIsWrappingExprssionNegated;
 }
 
 
@@ -639,19 +663,21 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
                              const std::set<Fact>& pPunctualFacts,
                              const std::set<Fact>& pRemovedFacts,
                              std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
-                             bool* pCanBecomeTruePtr) const
+                             bool* pCanBecomeTruePtr,
+                             bool pIsWrappingExprssionNegated) const
 {
   if (condition)
   {
     const auto& facts = pWorldState.facts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts) == !isNegated;
+    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts) == !pIsWrappingExprssionNegated;
   }
-  return !isNegated;
+  return !pIsWrappingExprssionNegated;
 }
 
 
-bool ConditionExists::canBecomeTrue(const WorldState& pWorldState) const
+bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
+                                    bool pIsWrappingExprssionNegated) const
 {
   if (condition)
   {
@@ -672,7 +698,7 @@ bool ConditionExists::canBecomeTrue(const WorldState& pWorldState) const
             return true;
         }
       }
-      return isNegated;
+      return pIsWrappingExprssionNegated;
     }
   }
   return true;
@@ -683,17 +709,119 @@ bool ConditionExists::operator==(const Condition& pOther) const
   auto* otherExistsPtr = pOther.fcExistsPtr();
   return otherExistsPtr != nullptr &&
       object == otherExistsPtr->object &&
-      _areEqual(condition, otherExistsPtr->condition) &&
-      isNegated == otherExistsPtr->isNegated;
+      _areEqual(condition, otherExistsPtr->condition);
 }
 
-std::unique_ptr<Condition> ConditionExists::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
+std::unique_ptr<Condition> ConditionExists::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
+                                                  bool pInvert) const
 {
-  return std::make_unique<ConditionExists>(
+  auto res = std::make_unique<ConditionExists>(
         object,
-        condition ? condition->clone(pConditionParametersToArgumentPtr) : std::unique_ptr<Condition>(),
-        isNegated);
+        condition ? condition->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>());
+  if (pInvert)
+    return std::make_unique<ConditionNot>(std::move(res));
+  return res;
 }
+
+
+
+
+std::string ConditionNot::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
+{
+  std::string conditionStr;
+  if (condition)
+    conditionStr = condition->toStr(pFactWriterPtr);
+  if (condition->fcExistsPtr() != nullptr)
+    return "!" + conditionStr;
+  return "!(" + conditionStr + ")";
+}
+
+ConditionNot::ConditionNot(std::unique_ptr<Condition> pCondition)
+  : Condition(),
+    condition(std::move(pCondition))
+{
+}
+
+bool ConditionNot::hasFact(const Fact& pFact) const
+{
+  return condition && condition->hasFact(pFact);
+}
+
+
+bool ConditionNot::containsFactOpt(const FactOptional& pFactOptional,
+                                   const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                   const std::vector<std::string>& pConditionParameters,
+                                   bool pIsWrappingExprssionNegated) const
+{
+  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, !pIsWrappingExprssionNegated);
+}
+
+void ConditionNot::replaceFact(const Fact& pOldFact,
+                               const Fact& pNewFact)
+{
+  if (condition)
+    condition->replaceFact(pOldFact, pNewFact);
+}
+
+void ConditionNot::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
+                          bool pIsWrappingExprssionNegated) const
+{
+
+  if (condition)
+    condition->forAll(pFactCallback, !pIsWrappingExprssionNegated);
+}
+
+
+bool ConditionNot::findConditionCandidateFromFactFromEffect(
+    const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+    const WorldState& pWorldState,
+    const Fact& pFactFromEffect,
+    const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
+    bool pIsWrappingExprssionNegated) const
+{
+  if (condition)
+    return condition->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect,
+                                                               pConditionParametersToPossibleArguments, !pIsWrappingExprssionNegated);
+  return pIsWrappingExprssionNegated;
+}
+
+
+bool ConditionNot::isTrue(const WorldState& pWorldState,
+                          const std::set<Fact>& pPunctualFacts,
+                          const std::set<Fact>& pRemovedFacts,
+                          std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
+                          bool* pCanBecomeTruePtr,
+                          bool pIsWrappingExprssionNegated) const
+{
+  if (condition)
+    return condition->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, !pIsWrappingExprssionNegated);
+  return !pIsWrappingExprssionNegated;
+}
+
+
+bool ConditionNot::canBecomeTrue(const WorldState& pWorldState,
+                                 bool pIsWrappingExprssionNegated) const
+{
+  if (condition)
+    return condition->canBecomeTrue(pWorldState, !pIsWrappingExprssionNegated);
+  return true;
+}
+
+bool ConditionNot::operator==(const Condition& pOther) const
+{
+  auto* otherNotPtr = pOther.fcNotPtr();
+  return otherNotPtr != nullptr &&
+      _areEqual(condition, otherNotPtr->condition);
+}
+
+std::unique_ptr<Condition> ConditionNot::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
+                                               bool pInvert) const
+{
+  if (pInvert)
+    return condition ? condition->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>();
+  return std::make_unique<ConditionNot>(condition ? condition->clone(pConditionParametersToArgumentPtr, pInvert) : std::unique_ptr<Condition>());
+}
+
 
 
 
@@ -737,6 +865,22 @@ void ConditionFact::forAll(const std::function<void (const FactOptional&)>& pFac
 }
 
 
+bool ConditionFact::findConditionCandidateFromFactFromEffect(
+    const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
+    const WorldState&,
+    const Fact&,
+    const std::map<std::string, std::set<std::string>>&,
+    bool pIsWrappingExprssionNegated) const
+{
+  bool res = pDoesConditionFactMatchFactFromEffect(factOptional);
+  if (pIsWrappingExprssionNegated)
+    return !res;
+  return res;
+}
+
+
+
+
 void ConditionFact::replaceFact(const Fact& pOldFact,
                                 const Fact& pNewFact)
 {
@@ -748,14 +892,22 @@ bool ConditionFact::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,
                            const std::set<Fact>& pRemovedFacts,
                            std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
-                           bool* pCanBecomeTruePtr) const
+                           bool* pCanBecomeTruePtr,
+                           bool pIsWrappingExprssionNegated) const
 {
-  return pWorldState.isOptionalFactSatisfiedInASpecificContext(factOptional, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr);
+  bool res = pWorldState.isOptionalFactSatisfiedInASpecificContext(factOptional, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr);
+  if (!pIsWrappingExprssionNegated)
+    return res;
+  return !res;
 }
 
-bool ConditionFact::canBecomeTrue(const WorldState& pWorldState) const
+bool ConditionFact::canBecomeTrue(const WorldState& pWorldState,
+                                  bool pIsWrappingExprssionNegated) const
 {
-  return pWorldState.canFactOptBecomeTrue(factOptional);
+  bool res =  pWorldState.canFactOptBecomeTrue(factOptional);
+  if (!pIsWrappingExprssionNegated)
+    return res;
+  return !res;
 }
 
 bool ConditionFact::operator==(const Condition& pOther) const
@@ -770,15 +922,16 @@ std::string ConditionFact::getValue(const WorldState& pWorldState) const
   return pWorldState.getFactValue(factOptional.fact);
 }
 
-std::unique_ptr<Condition> ConditionFact::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
+std::unique_ptr<Condition> ConditionFact::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
+                                                bool pInvert) const
 {
   auto res = std::make_unique<ConditionFact>(factOptional);
   if (pConditionParametersToArgumentPtr != nullptr)
     res->factOptional.fact.replaceArguments(*pConditionParametersToArgumentPtr);
+  if (pInvert)
+    res->factOptional.isFactNegated = !res->factOptional.isFactNegated;
   return res;
 }
-
-
 
 
 std::string ConditionNumber::toStr(const std::function<std::string (const Fact&)>*) const
@@ -806,7 +959,8 @@ std::string ConditionNumber::getValue(const WorldState& pWorldState) const
   return toStr(nullptr);
 }
 
-std::unique_ptr<Condition> ConditionNumber::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr) const
+std::unique_ptr<Condition> ConditionNumber::clone(const std::map<std::string, std::string>*,
+                                                  bool) const
 {
   return std::make_unique<ConditionNumber>(nb);
 }

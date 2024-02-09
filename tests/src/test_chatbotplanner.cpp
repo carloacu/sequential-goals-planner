@@ -247,6 +247,8 @@ void _test_conditionParameters()
   assert_eq<std::string>("exists(l, at(self, l))", cp::Condition::fromStr("exists(l, at(self, l))")->toStr());
   assert_eq<std::string>("exists(l, at(self, l) & at(pen, l))", cp::Condition::fromStr("exists(l, at(self, l) & at(pen, l))")->toStr());
   assert_eq<std::string>("!exists(l, at(self, l))", cp::Condition::fromStr("not(exists(l, at(self, l)))")->toStr());
+  assert_eq<std::string>("!(equals(at(i, o), at(self, l)))", cp::Condition::fromStr("not(equals(at(i, o), at(self, l)))")->toStr());
+  assert_eq<std::string>("!(equals(at(i, o), at(self, l)))", cp::Condition::fromStr("not(=(at(i, o), at(self, l)))")->toStr());
 }
 
 void _test_wsModificationToStr()
@@ -268,6 +270,14 @@ void _test_wsModificationToStr()
   assert_eq<std::string>("assign(a(b), c(d))", cp::WorldStateModification::fromStr("assign(a(b), c(d))")->toStr());
   assert_eq<std::string>("assign(a(b), c(d))", cp::WorldStateModification::fromStr("set(a(b), c(d))")->toStr()); // set is depecated
 }
+
+void _test_invertCondition()
+{
+  assert_eq<std::string>("!location(me)=kitchen | grab(me, chair) | !i", cp::Condition::fromStr("location(me)=kitchen & !grab(me, chair) & i)")->clone(nullptr, true)->toStr());
+  assert_eq<std::string>("!location(me)=kitchen & !grab(me, chair) & i", cp::Condition::fromStr("location(me)=kitchen | grab(me, chair) | !i")->clone(nullptr, true)->toStr());
+  assert_eq<std::string>("equals(at(i, o), at(self, l))", cp::Condition::fromStr("not(=(at(i, o), at(self, l)))")->clone(nullptr, true)->toStr());
+}
+
 
 void _test_checkCondition()
 {
@@ -2978,6 +2988,7 @@ int main(int argc, char *argv[])
   _test_goalToStr();
   _test_conditionParameters();
   _test_wsModificationToStr();
+  _test_invertCondition();
   _test_checkCondition();
   _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0();
   _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal();
