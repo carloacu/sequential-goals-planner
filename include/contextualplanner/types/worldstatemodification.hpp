@@ -57,9 +57,18 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state.
    * @param[in] pFactCallback Callback called for each optional fact of this object.
+   * @param[in] pWorldState World state use to extract value of the facts.
    */
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                       const WorldState& pWorldState) const = 0;
+
+  /**
+   * @brief Iterate over all the optional facts that can be accessible.
+   * @param[in] pFactCallback Callback called for each optional fact that can be accessible.
+   * @param[in] pWorldState World state use to extract value of the facts.
+   */
+  virtual void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
+                                             const WorldState& pWorldState) const = 0;
 
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state until the callback returns true.

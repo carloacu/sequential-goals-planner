@@ -208,6 +208,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pPunctualFacts Punctual fact of the context.
    * @param[in] pRemovedFacts Facts currently removed in the context.
    * @param[in, out] pParametersToPossibleArgumentsPtr Map of parameters to possible values to extract.
+   * @param[in, out] pParametersToModifyInPlacePtr Another map of parameters to possible values to extract.
    * @param[out] pCanBecomeTruePtr If this optional fact can become true according to the facts that can become true.
    * @return True if the optional fact is satisfied, false otherwise.
    */
@@ -215,6 +216,7 @@ struct CONTEXTUALPLANNER_API WorldState
                                                  const std::set<Fact>& pPunctualFacts,
                                                  const std::set<Fact>& pRemovedFacts,
                                                  std::map<std::string, std::set<std::string>>* pParametersToPossibleArgumentsPtr,
+                                                 std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
                                                  bool* pCanBecomeTruePtr) const;
 
   /**

@@ -325,11 +325,12 @@ bool ConditionNode::hasFact(const Fact& pFact) const
 
 bool ConditionNode::containsFactOpt(const FactOptional& pFactOptional,
                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                    const std::map<std::string, std::set<std::string> >* pOtherFactParametersPtr,
                                     const std::vector<std::string>& pConditionParameters,
                                     bool pIsWrappingExprssionNegated) const
 {
-  return (leftOperand && leftOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, pIsWrappingExprssionNegated)) ||
-      (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, pIsWrappingExprssionNegated));
+  return (leftOperand && leftOperand->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, pIsWrappingExprssionNegated)) ||
+      (rightOperand && rightOperand->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, pIsWrappingExprssionNegated));
 }
 
 
@@ -640,10 +641,11 @@ bool ConditionExists::hasFact(const Fact& pFact) const
 
 bool ConditionExists::containsFactOpt(const FactOptional& pFactOptional,
                                       const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                      const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                                       const std::vector<std::string>& pConditionParameters,
                                       bool pIsWrappingExprssionNegated) const
 {
-  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, pIsWrappingExprssionNegated);
+  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, pIsWrappingExprssionNegated);
 }
 
 void ConditionExists::replaceFact(const Fact& pOldFact,
@@ -776,10 +778,11 @@ bool ConditionNot::hasFact(const Fact& pFact) const
 
 bool ConditionNot::containsFactOpt(const FactOptional& pFactOptional,
                                    const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                   const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                                    const std::vector<std::string>& pConditionParameters,
                                    bool pIsWrappingExprssionNegated) const
 {
-  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pConditionParameters, !pIsWrappingExprssionNegated);
+  return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, !pIsWrappingExprssionNegated);
 }
 
 void ConditionNot::replaceFact(const Fact& pOldFact,
@@ -866,12 +869,13 @@ bool ConditionFact::hasFact(const Fact& pFact) const
 
 bool ConditionFact::containsFactOpt(const FactOptional& pFactOptional,
                                     const std::map<std::string, std::set<std::string>>& pFactParameters,
+                                    const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                                     const std::vector<std::string>& pConditionParameters,
                                     bool pIsWrappingExprssionNegated) const
 {
   if ((!pIsWrappingExprssionNegated && pFactOptional.isFactNegated == factOptional.isFactNegated) ||
       (pIsWrappingExprssionNegated && pFactOptional.isFactNegated != factOptional.isFactNegated))
-    return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, &pConditionParameters);
+    return factOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pFactParameters, pOtherFactParametersPtr, &pConditionParameters);
   return false;
 }
 
@@ -921,7 +925,7 @@ bool ConditionFact::isTrue(const WorldState& pWorldState,
                            bool* pCanBecomeTruePtr,
                            bool pIsWrappingExprssionNegated) const
 {
-  bool res = pWorldState.isOptionalFactSatisfiedInASpecificContext(factOptional, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr);
+  bool res = pWorldState.isOptionalFactSatisfiedInASpecificContext(factOptional, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, nullptr, pCanBecomeTruePtr);
   if (!pIsWrappingExprssionNegated)
     return res;
   return !res;

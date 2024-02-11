@@ -136,28 +136,42 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Co
     std::set<Fact> removableFactsToAdd;
     std::vector<Fact> removableFactsToAddWithAnyValues;
 
-    pEffect.forAll([&](const cp::FactOptional& pFactOpt) {
+    pEffect.iterateOverAllAccessibleFacts([&](const cp::FactOptional& pFactOpt) {
       if (!pFactOpt.isFactNegated)
       {
         if (_worldState.facts().count(pFactOpt.fact) == 0 &&
             _accessibleFacts.count(pFactOpt.fact) == 0)
         {
-          auto factToInsert = pFactOpt.fact;
-          if (factToInsert.replaceSomeArgumentsByAny(pParameters))
-            accessibleFactsToAddWithAnyValues.push_back(std::move(factToInsert));
+          if (pFactOpt.fact.value == Fact::anyValue)
+          {
+            accessibleFactsToAddWithAnyValues.push_back(pFactOpt.fact);
+          }
           else
-            accessibleFactsToAdd.insert(std::move(factToInsert));
+          {
+            auto factToInsert = pFactOpt.fact;
+            if (factToInsert.replaceSomeArgumentsByAny(pParameters))
+              accessibleFactsToAddWithAnyValues.push_back(std::move(factToInsert));
+            else
+              accessibleFactsToAdd.insert(std::move(factToInsert));
+          }
         }
       }
       else
       {
         if (_removableFacts.count(pFactOpt.fact) == 0)
         {
-          auto factToRemove = pFactOpt.fact;
-          if (factToRemove.replaceSomeArgumentsByAny(pParameters))
-            removableFactsToAddWithAnyValues.push_back(std::move(factToRemove));
+          if (pFactOpt.fact.value == Fact::anyValue)
+          {
+            removableFactsToAddWithAnyValues.push_back(pFactOpt.fact);
+          }
           else
-            removableFactsToAdd.insert(std::move(factToRemove));
+          {
+            auto factToRemove = pFactOpt.fact;
+            if (factToRemove.replaceSomeArgumentsByAny(pParameters))
+              removableFactsToAddWithAnyValues.push_back(std::move(factToRemove));
+            else
+              removableFactsToAdd.insert(std::move(factToRemove));
+          }
         }
       }
     }, _worldState);

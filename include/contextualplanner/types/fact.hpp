@@ -50,13 +50,15 @@ struct CONTEXTUALPLANNER_API Fact
 
   /**
    * @brief Is equal to another Fact or if any of the 2 Facts have an "any value" that can match.
-   * @param pOther[in] Other fact to compare.
-   * @param pOtherFactArgumentsToConsiderAsAnyValuePtr[in] Arguments of the other fact to consider as "any value".
-   * @param pThisArgumentsToConsiderAsAnyValuePtr[in] Arguments of the this fact to consider as "any value".
+   * @param[in] pOther Other fact to compare.
+   * @param[in] pOtherFactArgumentsToConsiderAsAnyValuePtr Arguments to consider as "any value".
+   * @param[in] pOtherFactParametersToConsiderAsAnyValuePtr2 Another set of arguments to consider as "any value".
+   * @param[in] pThisArgumentsToConsiderAsAnyValuePtr Arguments of the this fact to consider as "any value".
    * @return True if the 2 facts match, false otherwise.
    */
   bool areEqualExceptAnyValues(const Fact& pOther,
                                const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
+                               const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr,
                                const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
 
   /**

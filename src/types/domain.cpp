@@ -32,7 +32,7 @@ bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorld
   {
       return !pSatisfiedConditionPtr ||
         !pSatisfiedConditionPtr->containsFactOpt(pFactOptional,
-                                                 _emptyParametersWithValues,
+                                                 _emptyParametersWithValues, nullptr,
                                                  _emptyParameters);
 }, _emptyWorldState))
   {

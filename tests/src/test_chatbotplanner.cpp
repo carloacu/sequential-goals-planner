@@ -3092,6 +3092,31 @@ void _assignAFact()
 }
 
 
+void _assignAFactToAction()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action action1Obj({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
+  action1Obj.parameters.emplace_back("?p");
+  actions.emplace(action1, action1Obj);
+  actions.emplace(action2, cp::Action(cp::Condition::fromStr(_fact_a + "=valGoal"),
+                                      cp::WorldStateModification::fromStr(_fact_c)));
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_c)});
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p1)=aVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p3)=anotherVal"), problem.goalStack, setOfInferencesMap, now);
+
+  assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
+
+
+
 
 }
 
@@ -3211,6 +3236,7 @@ int main(int argc, char *argv[])
   _assignAnotherValueToSatisfyNotGoal();
   _assignUndefined();
   _assignAFact();
+  _assignAFactToAction();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

@@ -451,6 +451,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
     const std::set<Fact>& pPunctualFacts,
     const std::set<Fact>& pRemovedFacts,
     std::map<std::string, std::set<std::string>>* pParametersToPossibleArgumentsPtr,
+    std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
     bool* pCanBecomeTruePtr) const
 {
   if (pFactOptional.fact.isPunctual() && !pFactOptional.isFactNegated)
@@ -459,7 +460,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
   std::map<std::string, std::set<std::string>> newParameters;
   if (pFactOptional.isFactNegated)
   {
-    bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pParametersToPossibleArgumentsPtr);
+    bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pParametersToPossibleArgumentsPtr, pParametersToModifyInPlacePtr);
     if (res)
     {
       if (pParametersToPossibleArgumentsPtr != nullptr)

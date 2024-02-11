@@ -88,20 +88,22 @@ struct CONTEXTUALPLANNER_API ProblemModification
                    const cp::Fact& pNewFact);
 
   /**
-   * @brief Iterate over all the optional facts, with some resolution according to the world, until the callback returns true.
-   * @param[in] pCallback Callback called for each optional fact until one call returns true.
+   * @brief Iterate over all the optional facts until one can satisfy the objective.
+   * @param[in] pCallback Callback called for each optional fact of this object to check if it can satisfy the objective.
+   * @param[in, out] pParameters Parameters of the holding action.
    * @param[in] pWorldState World state to consider.
    * @return True if one callback returned true, false otherwise.
    */
-  bool forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
-                       const WorldState& pWorldState) const;
+  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pCallback,
+                           std::map<std::string, std::set<std::string>>& pParameters,
+                           const WorldState& pWorldState) const;
   /**
-   * @brief Iterate over all the optional facts with some resolution according to the world.
-   * @param[in] pCallback Callback called for each optional fact.
-   * @param[in] pWorldState World state to consider.
+   * @brief Iterate over all the optional facts that can be accessible.
+   * @param[in] pCallback Callback called for each optional fact that can be accessible.
+   * @param[in] pWorldState World state use to extract value of the facts.
    */
-  void forAll(const std::function<void(const cp::FactOptional&)>& pCallback,
-              const WorldState& pWorldState) const;
+  void iterateOverAllAccessibleFacts(const std::function<void(const cp::FactOptional&)>& pCallback,
+                                     const WorldState& pWorldState) const;
 
   /// Convert the worldStateModification to a string or to an empty string if it is not defined.
   std::string worldStateModification_str() const { return worldStateModification ? worldStateModification->toStr() : ""; }
@@ -187,27 +189,24 @@ inline void ProblemModification::replaceFact(const cp::Fact& pOldFact,
     currGoal.objective().replaceFact(pOldFact, pNewFact);
 }
 
-inline bool ProblemModification::forAllUntilTrue(const std::function<bool(const cp::FactOptional&)>& pCallback,
-                                                 const WorldState& pWorldState) const
+inline bool ProblemModification::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pCallback,
+                                                     std::map<std::string, std::set<std::string>>& pParameters,
+                                                     const WorldState& pWorldState) const
 {
-  if (worldStateModification && worldStateModification->forAllUntilTrue(pCallback, pWorldState))
+  if (worldStateModification && worldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState))
     return true;
-  if (potentialWorldStateModification && potentialWorldStateModification->forAllUntilTrue(pCallback, pWorldState))
-    return true;
-  if (worldStateModificationAtStart && worldStateModificationAtStart->forAllUntilTrue(pCallback, pWorldState))
+  if (potentialWorldStateModification && potentialWorldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState))
     return true;
   return false;
 }
 
-inline void ProblemModification::forAll(const std::function<void(const cp::FactOptional&)>& pCallback,
-                                        const WorldState& pWorldState) const
+inline void ProblemModification::iterateOverAllAccessibleFacts(const std::function<void(const cp::FactOptional&)>& pCallback,
+                                                               const WorldState& pWorldState) const
 {
   if (worldStateModification)
-    worldStateModification->forAll(pCallback, pWorldState);
+    worldStateModification->iterateOverAllAccessibleFacts(pCallback, pWorldState);
   if (potentialWorldStateModification)
-    potentialWorldStateModification->forAll(pCallback, pWorldState);
-  if (worldStateModificationAtStart)
-    worldStateModificationAtStart->forAll(pCallback, pWorldState);
+    potentialWorldStateModification->iterateOverAllAccessibleFacts(pCallback, pWorldState);
 }
 
 

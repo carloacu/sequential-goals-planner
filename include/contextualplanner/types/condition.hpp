@@ -50,12 +50,14 @@ struct CONTEXTUALPLANNER_API Condition
    * @brief Check if this condition contains an optional fact with parameters compatibility.
    * @param[in] pFactOptional Optional fact to consider.
    * @param[in] pFactParameters Optional fact parameters to possible values. The possible value will not be considered here.
+   * @param[in] pOtherFactParametersPtr Another map of fact parameters to possible values.
    * @param[in] pConditionParameters Parameters of the condition.
    * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
    * @return True if this condition contains an optional fact with parameters compatibility.
    */
   virtual bool containsFactOpt(const FactOptional& pFactOptional,
                                const std::map<std::string, std::set<std::string>>& pFactParameters,
+                               const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                                const std::vector<std::string>& pConditionParameters,
                                bool pIsWrappingExprssionNegated = false) const = 0;
 
@@ -188,6 +190,7 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                    const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
+                       const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                        const std::vector<std::string>& pConditionParameters,
                        bool pIsWrappingExprssionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -245,6 +248,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                    const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
+                       const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                        const std::vector<std::string>& pConditionParameters,
                        bool pIsWrappingExprssionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -304,6 +308,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
                    const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
+                       const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                        const std::vector<std::string>& pConditionParameters,
                        bool pIsWrappingExprssionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -363,6 +368,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                    const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<std::string>>& pFactParameters,
+                       const std::map<std::string, std::set<std::string>>* pOtherFactParametersPtr,
                        const std::vector<std::string>& pConditionParameters,
                        bool pIsWrappingExprssionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -418,6 +424,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
                    const Fact& pNewFact) override {}
   bool containsFactOpt(const FactOptional&,
                        const std::map<std::string, std::set<std::string>>&,
+                       const std::map<std::string, std::set<std::string>>*,
                        const std::vector<std::string>&,
                        bool) const override { return false; }
   void forAll(const std::function<void (const FactOptional&)>&, bool) const override {}
