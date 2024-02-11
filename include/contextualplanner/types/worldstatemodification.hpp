@@ -64,9 +64,20 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state until the callback returns true.
    * @param[in] pFactCallback Callback called for each optional fact of this object.
+   * @param[in] pWorldState World state use to extract value of the facts.
    */
   virtual bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const WorldState& pWorldState) const = 0;
+
+  /**
+   * @brief Iterate over all the optional facts until one can satisfy the objective.
+   * @param[in] pFactCallback Callback called for each optional fact of this object to check if it can satisfy the objective.
+   * @param[in, out] pParameters Parameters of the holding action.
+   * @param[in] pWorldState World state use to extract value of the facts.
+   */
+  virtual bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pFactCallback,
+                                   std::map<std::string, std::set<std::string>>& pParameters,
+                                   const WorldState& pWorldState) const = 0;
 
   /// Equality operators.
   virtual bool operator==(const WorldStateModification& pOther) const = 0;

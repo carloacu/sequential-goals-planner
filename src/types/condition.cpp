@@ -202,7 +202,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
 bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamToValue,
                       std::map<std::string, std::set<std::string>>* pConditionParametersToPossibleArguments,
                       const Condition& pCondition,
-                      const std::set<Fact>& pFacts)
+                      const std::map<std::string, std::set<Fact>>& pFactNamesToFacts)
 {
   auto* factOfConditionPtr = pCondition.fcFactPtr();
   if (factOfConditionPtr != nullptr)
@@ -211,7 +211,7 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
     std::map<std::string, std::set<std::string>> newParameters;
 
     const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-    res = factToOfCondition.isInOtherFacts(pFacts, true, &newParameters, pConditionParametersToPossibleArguments, &pLocalParamToValue) || res;
+    res = factToOfCondition.isInOtherFactsMap(pFactNamesToFacts, true, &newParameters, pConditionParametersToPossibleArguments, &pLocalParamToValue) || res;
 
     if (pConditionParametersToPossibleArguments != nullptr)
       applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
@@ -223,11 +223,11 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand)
   {
     if (nodeOfConditionPtr->nodeType == ConditionNodeType::AND)
-      return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts) &&
-          _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
+      return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFactNamesToFacts) &&
+          _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFactNamesToFacts);
     if (nodeOfConditionPtr->nodeType == ConditionNodeType::OR)
-      return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts) ||
-          _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts);
+      return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFactNamesToFacts) ||
+          _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFactNamesToFacts);
   }
   return false;
 }
@@ -236,7 +236,7 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
 void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalParamToValue,
                            const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
                            const Condition& pCondition,
-                           const std::set<Fact>& pFacts,
+                           const std::map<std::string, std::set<Fact>>& pFactNamesToFacts,
                            const Fact& pFactFromEffect,
                            const std::string& pObject,
                            bool pIsNegated)
@@ -249,7 +249,7 @@ void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalP
         !factOfConditionOpt.fact.areEqualWithoutAnArgConsideration(pFactFromEffect, pObject))
     {
       std::map<std::string, std::set<std::string>> newParameters;
-      factOfConditionOpt.fact.isInOtherFacts(pFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
+      factOfConditionOpt.fact.isInOtherFactsMap(pFactNamesToFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
     }
     return;
   }
@@ -259,8 +259,8 @@ void _existsExtractPossRec(std::map<std::string, std::set<std::string>>& pLocalP
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand &&
       (nodeOfConditionPtr->nodeType == ConditionNodeType::AND || nodeOfConditionPtr->nodeType == ConditionNodeType::OR))
   {
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pFactFromEffect, pObject, pIsNegated);
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pFactFromEffect, pObject, pIsNegated);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFactNamesToFacts, pFactFromEffect, pObject, pIsNegated);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFactNamesToFacts, pFactFromEffect, pObject, pIsNegated);
   }
 }
 
@@ -477,17 +477,17 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
 
       if (nodeType == ConditionNodeType::EQUALITY)
       {
+        const auto& factNamesToFacts = pWorldState.factNamesToFacts();
         bool res = false;
         std::map<std::string, std::set<std::string>> newParameters;
         _forEach([&](const std::string& pValue)
         {
           auto factToCheck = leftFactPtr->factOptional.fact;
           factToCheck.value = pValue;
-          const auto& facts = pWorldState.facts();
           if (factToCheck.isPunctual())
             res = pPunctualFacts.count(factToCheck) != 0 || res;
           else
-            res = factToCheck.isInOtherFacts(facts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
+            res = factToCheck.isInOtherFactsMap(factNamesToFacts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
         }, *rightOperand, pWorldState, pConditionParametersToPossibleArguments);
 
         if (pConditionParametersToPossibleArguments != nullptr)
@@ -671,9 +671,9 @@ bool ConditionExists::findConditionCandidateFromFactFromEffect(
 {
   if (condition)
   {
-    const auto& facts = pWorldState.facts();
+    const auto& factNamesToFacts = pWorldState.factNamesToFacts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts, pFactFromEffect, object, pIsWrappingExprssionNegated);
+    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, factNamesToFacts, pFactFromEffect, object, pIsWrappingExprssionNegated);
 
     return condition->findConditionCandidateFromFactFromEffect([&](const FactOptional& pConditionFact) {
       auto factToConsider = pConditionFact.fact;
@@ -694,9 +694,9 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
 {
   if (condition)
   {
-    const auto& facts = pWorldState.facts();
+    const auto& factNamesToFacts = pWorldState.factNamesToFacts();
     std::map<std::string, std::set<std::string>> localParamToValue{{object, {}}};
-    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, facts) == !pIsWrappingExprssionNegated;
+    return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, factNamesToFacts) == !pIsWrappingExprssionNegated;
   }
   return !pIsWrappingExprssionNegated;
 }

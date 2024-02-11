@@ -161,6 +161,23 @@ struct CONTEXTUALPLANNER_API Fact
                       bool* pTriedToModifyParametersPtr = nullptr) const;
 
   /**
+   * @brief Does the fact matches any of the other facts.
+   * @param[in] pOtherFacts Map of fact names to other facts.
+   * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the set of other facts.
+   * @param[out] pNewParametersPtr New parameter possibilities corresponding of the found match.
+   * @param[in] pParametersPtr Already known parameters.
+   * @param[in, out] pParametersToModifyInPlacePtr Parameters to modify in place.
+   * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
+   * @return True if the fact matches any of the other facts.
+   */
+  bool isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOtherFacts,
+                         bool pParametersAreForTheFact,
+                         std::map<std::string, std::set<std::string>>* pNewParametersPtr,
+                         const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                         std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr = nullptr,
+                         bool* pTriedToModifyParametersPtr = nullptr) const;
+
+  /**
    * @brief Does the fact matches the other fact.
    * @param[in] pOtherFact The other facts.
    * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the other fact.

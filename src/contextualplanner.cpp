@@ -413,7 +413,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              const Domain& pDomain,
                              FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional)
+  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr)
   {
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
       return pFactOptionalToSatisfy.fact.areEqualWithoutValueConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.value != pFactOptional.fact.value;
@@ -422,7 +422,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
     bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
     std::map<std::string, std::set<std::string>> newParameters;
-    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters, nullptr, nullptr, objIsAComparison);
+    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
+                                                         pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
     if (res && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
     {
       const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
@@ -434,13 +435,13 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   };
 
   if (pEffectToCheck.worldStateModification &&
-      pEffectToCheck.worldStateModification->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
+      pEffectToCheck.worldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState))
   {
     pSatisfyObjective = true;
     return true;
   }
   if (pEffectToCheck.potentialWorldStateModification &&
-      pEffectToCheck.potentialWorldStateModification->forAllUntilTrue(doesSatisfyObjective, pProblem.worldState))
+      pEffectToCheck.potentialWorldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState))
   {
     pSatisfyObjective = true;
     return true;

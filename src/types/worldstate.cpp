@@ -205,6 +205,7 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
 {
   for (const auto& currFact : pFacts)
   {
+    bool factRemoved = false;
     auto it = _facts.find(currFact);
     if (it == _facts.end())
     {
@@ -214,13 +215,20 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
         auto itFromFactName = _factNamesToFacts.find(currFact.name);
         if (itFromFactName != _factNamesToFacts.end())
         {
-          for (auto& currFactFromName : itFromFactName->second)
+          for (const auto& currFactFromName : itFromFactName->second)
           {
             if (currFactFromName.areEqualExceptAnyValues(currFact))
             {
               it = _facts.find(currFactFromName);
               if (it != _facts.end())
+              {
+                _facts.erase(it);
+                itFromFactName->second.erase(currFactFromName);
+                if (itFromFactName->second.empty())
+                  _factNamesToFacts.erase(itFromFactName);
+                factRemoved = true;
                 break;
+              }
             }
           }
         }
@@ -229,8 +237,9 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
         continue;
     }
     pWhatChanged.removedFacts.insert(currFact);
-    _facts.erase(it);
+    if (!factRemoved)
     {
+      _facts.erase(it);
       auto itFactName = _factNamesToFacts.find(currFact.name);
       if (itFactName == _factNamesToFacts.end())
         assert(false);
@@ -502,7 +511,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
     }
 
     bool triedToMidfyParameters = false;
-    if (pFactOptional.fact.isInOtherFacts(_facts, true, nullptr, pParametersToPossibleArgumentsPtr, nullptr, &triedToMidfyParameters))
+    if (pFactOptional.fact.isInOtherFactsMap(_factNamesToFacts, true, nullptr, pParametersToPossibleArgumentsPtr, nullptr, &triedToMidfyParameters))
     {
       if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
         *pCanBecomeTruePtr = true;
@@ -511,7 +520,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
     return true;
   }
 
-  auto res = pFactOptional.fact.isInOtherFacts(_facts, true, &newParameters, pParametersToPossibleArgumentsPtr);
+  auto res = pFactOptional.fact.isInOtherFactsMap(_factNamesToFacts, true, &newParameters, pParametersToPossibleArgumentsPtr);
   if (pParametersToPossibleArgumentsPtr != nullptr)
     applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
   return res;

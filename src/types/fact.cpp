@@ -431,6 +431,24 @@ bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
 }
 
 
+bool Fact::isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOtherFacts,
+                             bool pParametersAreForTheFact,
+                             std::map<std::string, std::set<std::string>>* pNewParametersPtr,
+                             const std::map<std::string, std::set<std::string>>* pParametersPtr,
+                             std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
+                             bool* pTriedToModifyParametersPtr) const
+{
+  bool res = false;
+  auto it = pOtherFacts.find(name);
+  if (it != pOtherFacts.end())
+    for (const auto& currOtherFact : it->second)
+      if (isInOtherFact(currOtherFact, pParametersAreForTheFact, pNewParametersPtr, pParametersPtr,
+                        pParametersToModifyInPlacePtr, pTriedToModifyParametersPtr))
+        res = true;
+  return res;
+}
+
+
 bool Fact::isInOtherFact(const Fact& pOtherFact,
                          bool pParametersAreForTheFact,
                          std::map<std::string, std::set<std::string>>* pNewParametersPtr,

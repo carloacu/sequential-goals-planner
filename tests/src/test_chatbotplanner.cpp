@@ -3038,9 +3038,7 @@ void _assignAnotherValueToSatisfyNotGoal()
   const std::string action1 = "action1";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-
-  cp::Action actionObj1({}, cp::WorldStateModification::fromStr(_fact_a + "=toto"));
-  actions.emplace(action1, actionObj1);
+  actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr(_fact_a + "=toto")));
 
   cp::Domain domain(std::move(actions));
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -3053,27 +3051,44 @@ void _assignAnotherValueToSatisfyNotGoal()
 }
 
 
-
 void _assignUndefined()
 {
   const std::string action1 = "action1";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-
-  cp::Action actionObj1({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", undefined)"));
-  actions.emplace(action1, actionObj1);
+  actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", undefined)")));
 
   cp::Domain domain(std::move(actions));
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("!" + _fact_a + "=titi")});
 
-
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
   problem.worldState.addFact(cp::Fact(_fact_a + "=titi"), problem.goalStack, setOfInferencesMap, now);
   assert_eq<std::size_t>(1u, problem.worldState.facts().size());
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::size_t>(0u, problem.worldState.facts().size()); // because assign undefined is done like a fact removal
+}
+
+
+void _assignAFact()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action action1Obj({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
+  action1Obj.parameters.emplace_back("?p");
+  actions.emplace(action1, action1Obj);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_a + "=valGoal")});
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p1)=aVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p3)=anotherVal"), problem.goalStack, setOfInferencesMap, now);
+
+  assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -3195,6 +3210,7 @@ int main(int argc, char *argv[])
   _derivedPredicate();
   _assignAnotherValueToSatisfyNotGoal();
   _assignUndefined();
+  _assignAFact();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
