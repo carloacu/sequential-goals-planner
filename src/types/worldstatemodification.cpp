@@ -122,6 +122,10 @@ struct WorldStateModificationNode : public WorldStateModification
     return "";
   }
 
+  const FactOptional* getOptionalFact() const override
+  {
+    return nullptr;
+  }
 
   std::unique_ptr<WorldStateModification> clone(const std::map<std::string, std::string>* pParametersToArgumentPtr) const override
   {
@@ -210,6 +214,11 @@ struct WorldStateModificationFact : public WorldStateModification
     return pWorldState.getFactValue(factOptional.fact);
   }
 
+  const FactOptional* getOptionalFact() const override
+  {
+    return &factOptional;
+  }
+
   std::unique_ptr<WorldStateModification> clone(const std::map<std::string, std::string>* pParametersToArgumentPtr) const override
   {
     auto res = std::make_unique<WorldStateModificationFact>(factOptional);
@@ -265,6 +274,11 @@ struct WorldStateModificationNumber : public WorldStateModification
   std::string getValue(const WorldState&) const override
   {
     return toStr();
+  }
+
+  const FactOptional* getOptionalFact() const override
+  {
+    return nullptr;
   }
 
   std::unique_ptr<WorldStateModification> clone(const std::map<std::string, std::string>*) const override

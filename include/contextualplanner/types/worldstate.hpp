@@ -232,10 +232,24 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pCallback Callback of each matching facts. If it returns true we break the iteration.
    * @param[in] pFact Fact to consider.
    * @param[in] pParametersToConsiderAsAnyValue Parameters to consider as "any value" if there possible values (set of string) is empty.
+   * @param[in] pParametersToConsiderAsAnyValuePtr Other parameters to consider as "any value" if there possible values (set of string) is empty.
    */
   void iterateOnMatchingFactsWithoutFluentConsideration(const std::function<bool (const Fact&)>& pCallback,
                                                         const Fact& pFact,
-                                                        const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue) const;
+                                                        const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue,
+                                                        const std::map<std::string, std::set<std::string>>* pParametersToConsiderAsAnyValuePtr = nullptr) const;
+
+  /**
+   * @brief Iterate over all matching facts.
+   * @param[in] pCallback Callback of each matching facts. If it returns true we break the iteration.
+   * @param[in] pFact Fact to consider.
+   * @param[in] pParametersToConsiderAsAnyValue Parameters to consider as "any value" if there possible values (set of string) is empty.
+   * @param[in] pParametersToConsiderAsAnyValuePtr Other parameters to consider as "any value" if there possible values (set of string) is empty.
+   */
+  void iterateOnMatchingFacts(const std::function<bool (const Fact&)>& pValueCallback,
+                              const Fact& pFact,
+                              const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue,
+                              const std::map<std::string, std::set<std::string>>* pParametersToConsiderAsAnyValuePtr = nullptr) const;
 
 
   void refreshCacheIfNeeded(const Domain& pDomain);

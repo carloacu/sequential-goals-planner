@@ -261,7 +261,7 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
 
     if (nodeOfConditionPtr->nodeType == ConditionNodeType::EQUALITY)
     {
-      std::set<std::string> leftOpPossibleValues;
+      std::map<std::string, std::map<std::string, std::set<std::string>>> leftOpPossibleValuesToParams;
       auto* leftOpFactPtr = nodeOfConditionPtr->leftOperand->fcFactPtr();
       if (leftOpFactPtr != nullptr)
       {
@@ -269,9 +269,20 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
 
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
           if (pFact.value != "")
-            leftOpPossibleValues.insert(pFact.value);
+          {
+            auto& newParams = leftOpPossibleValuesToParams[pFact.value];
+            if (pConditionParametersToPossibleArguments != nullptr)
+            {
+              for (auto& currArg : *pConditionParametersToPossibleArguments)
+              {
+                auto argValue = leftOpFact.factOptional.fact.tryToExtractArgumentFromExampleWithoutFluentConsideration(currArg.first, pFact);
+                if (argValue != "")
+                  newParams[currArg.first].insert(argValue);
+              }
+            }
+          }
           return false;
-        }, leftOpFact.factOptional.fact, pLocalParamToValue);
+        }, leftOpFact.factOptional.fact, pLocalParamToValue, pConditionParametersToPossibleArguments);
       }
 
       bool res = false;
@@ -280,11 +291,38 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
       {
         auto& rightOpFact = *rightOpFactPtr;
 
+        std::map<std::string, std::set<std::string>> newParameters;
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
-          if (pFact.value != "" && leftOpPossibleValues.count(pFact.value) > 0)
-            res = true;
-          return res;
-        }, rightOpFact.factOptional.fact, pLocalParamToValue);
+          if (pFact.value != "")
+          {
+            auto itToLeftPoss = leftOpPossibleValuesToParams.find(pFact.value);
+            if (itToLeftPoss != leftOpPossibleValuesToParams.end())
+            {
+              if (pConditionParametersToPossibleArguments != nullptr)
+              {
+                if (!itToLeftPoss->second.empty())
+                {
+                  for (auto& currArg : itToLeftPoss->second)
+                    newParameters[currArg.first].insert(currArg.second.begin(), currArg.second.end());
+                }
+                else
+                {
+                  for (auto& currArg : *pConditionParametersToPossibleArguments)
+                  {
+                    auto argValue = rightOpFact.factOptional.fact.tryToExtractArgumentFromExampleWithoutFluentConsideration(currArg.first, pFact);
+                    if (argValue != "")
+                      newParameters[currArg.first].insert(argValue);
+                  }
+                }
+              }
+              res = true;
+            }
+          }
+          return res && pConditionParametersToPossibleArguments == nullptr;
+        }, rightOpFact.factOptional.fact, pLocalParamToValue, pConditionParametersToPossibleArguments);
+
+        if (pConditionParametersToPossibleArguments != nullptr)
+          applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
       }
 
       return res;

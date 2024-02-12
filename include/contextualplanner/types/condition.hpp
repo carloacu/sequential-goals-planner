@@ -296,7 +296,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
 };
 
 
-/// Condition tree node that holds the negation of a sub-condition.
+/// Condition tree node that holds the negation of a condition.
 struct CONTEXTUALPLANNER_API ConditionNot : public Condition
 {
   std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
@@ -349,9 +349,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
   const ConditionNumber* fcNbPtr() const override { return nullptr; }
   ConditionNumber* fcNbPtr() override { return nullptr; }
 
-  /// Variable to check the existance in the condition
-  std::string object;
-  /// Expression to check
+  /// Negated condition
   std::unique_ptr<Condition> condition;
 };
 

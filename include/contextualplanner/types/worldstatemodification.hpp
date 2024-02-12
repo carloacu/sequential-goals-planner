@@ -99,6 +99,9 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    */
   virtual std::string getValue(const WorldState& pWorldState) const = 0;
 
+  /// Convert this world state modification to an optional fact if possible.
+  virtual const FactOptional* getOptionalFact() const = 0;
+
   /**
    * @brief Create a copy of this object with arguments filling (or not if pParametersToArgumentPtr is nullptr).
    * @param pParametersToArgumentPtr Parameters to replace by their argument in the new object to create.

@@ -3202,6 +3202,87 @@ void _assignAFactThenCheckExistWithAnotherFact()
 }
 
 
+void _existWithEqualityInInference()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action action1Obj(cp::Condition::fromStr(_fact_b + "(?o)"),
+                        cp::WorldStateModification::fromStr(_fact_d + "(?o)"));
+  action1Obj.parameters.emplace_back("?o");
+  actions.emplace(action1, action1Obj);
+
+  cp::SetOfInferences setOfInferences;
+  cp::DerivedPredicate derivedPredicate1(cp::Condition::fromStr("exists(?pc, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))"), _fact_b + "(?o)", {"?o"});
+  for (auto& currInference : derivedPredicate1.toInferences())
+    setOfInferences.addInference(currInference);
+
+
+  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d + "(p2)")});
+  problem.worldState.addFact(cp::Fact(_fact_a + "(p1)=aVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_a + "(p2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_a + "(p3)=anotherVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc1)=v1"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc3)=v3"), problem.goalStack, setOfInferencesMap, now);
+
+  assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.removeFact(cp::Fact(_fact_c + "(pc1)=v1"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.removeFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc1)=aVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d + "(p1)")});
+  assert_eq(action1 + "(?o -> p1)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+}
+
+
+void _existWithEqualityInInference_withEqualityInverted()
+{
+  const std::string action1 = "action1";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action action1Obj(cp::Condition::fromStr(_fact_b + "(?o)"),
+                        cp::WorldStateModification::fromStr(_fact_d + "(?o)"));
+  action1Obj.parameters.emplace_back("?o");
+  actions.emplace(action1, action1Obj);
+
+  cp::SetOfInferences setOfInferences;
+  cp::DerivedPredicate derivedPredicate1(cp::Condition::fromStr("exists(?pc, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))"), _fact_b + "(?o)", {"?o"});
+  for (auto& currInference : derivedPredicate1.toInferences())
+    setOfInferences.addInference(currInference);
+
+
+  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d + "(p2)")});
+  problem.worldState.addFact(cp::Fact(_fact_a + "(p1)=aVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_a + "(p2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_a + "(p3)=anotherVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc1)=v1"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc3)=v3"), problem.goalStack, setOfInferencesMap, now);
+
+  assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.removeFact(cp::Fact(_fact_c + "(pc1)=v1"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.removeFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc1)=aVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d + "(p1)")});
+  assert_eq(action1 + "(?o -> p1)", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
+}
+
+
+
 }
 
 
@@ -3324,6 +3405,8 @@ int main(int argc, char *argv[])
   _assignAFactToAction();
   _assignAFactThenCheckEqualityWithAnotherFact();
   _assignAFactThenCheckExistWithAnotherFact();
+  _existWithEqualityInInference();
+  _existWithEqualityInInference_withEqualityInverted();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

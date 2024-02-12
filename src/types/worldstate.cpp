@@ -540,12 +540,28 @@ bool WorldState::isGoalSatisfied(const Goal& pGoal) const
 void WorldState::iterateOnMatchingFactsWithoutFluentConsideration
 (const std::function<bool (const Fact&)>& pValueCallback,
  const Fact& pFact,
- const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue) const
+ const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue,
+ const std::map<std::string, std::set<std::string>>* pParametersToConsiderAsAnyValuePtr) const
 {
   auto it = _factNamesToFacts.find(pFact.name);
   if (it != _factNamesToFacts.end())
     for (const Fact& currFact : it->second)
-      if (currFact.areEqualExceptAnyValuesAndFluent(pFact, &pParametersToConsiderAsAnyValue))
+      if (currFact.areEqualExceptAnyValuesAndFluent(pFact, &pParametersToConsiderAsAnyValue, pParametersToConsiderAsAnyValuePtr))
+        if (pValueCallback(currFact))
+          break;
+}
+
+
+void WorldState::iterateOnMatchingFacts
+(const std::function<bool (const Fact&)>& pValueCallback,
+ const Fact& pFact,
+ const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue,
+ const std::map<std::string, std::set<std::string>>* pParametersToConsiderAsAnyValuePtr) const
+{
+  auto it = _factNamesToFacts.find(pFact.name);
+  if (it != _factNamesToFacts.end())
+    for (const Fact& currFact : it->second)
+      if (currFact.areEqualExceptAnyValues(pFact, &pParametersToConsiderAsAnyValue, pParametersToConsiderAsAnyValuePtr))
         if (pValueCallback(currFact))
           break;
 }
@@ -581,7 +597,7 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
       auto itInference = pInferences.find(currInferenceId);
       if (itInference != pInferences.end())
       {
-        auto& currInference = itInference->second;
+        const Inference& currInference = itInference->second;
 
         std::map<std::string, std::set<std::string>> parametersToValues;
         for (const auto& currParam : currInference.parameters)
@@ -595,10 +611,29 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
             {
               std::list<std::map<std::string, std::string>> parametersToValuePoss;
               unfoldMapWithSet(parametersToValuePoss, parametersToValues);
-              for (const auto& currParamsPoss : parametersToValuePoss)
+              if (!parametersToValuePoss.empty())
               {
-                auto factsToModify = currInference.factsToModify->clone(&currParamsPoss);
-                _modify(pWhatChanged, factsToModify, pGoalStack, pNow);
+                for (const auto& currParamsPoss : parametersToValuePoss)
+                {
+                  auto factsToModify = currInference.factsToModify->clone(&currParamsPoss);
+                  _modify(pWhatChanged, factsToModify, pGoalStack, pNow);
+                }
+              }
+              else
+              {
+                const auto* optFactPtr = currInference.factsToModify->getOptionalFact();
+                // If there is no parameter possible value and if the effect is to remove a fact then we remove of the matching facts
+                if (optFactPtr != nullptr && optFactPtr->isFactNegated)
+                {
+                  std::list<const Fact*> factsToRemove;
+                  iterateOnMatchingFacts([&](const Fact& pMatchedFact) {
+                    factsToRemove.emplace_back(&pMatchedFact);
+                    return false;
+                  }, optFactPtr->fact, parametersToValues);
+                  for (auto& currFactToRemove : factsToRemove)
+                    _modify(pWhatChanged, WorldStateModification::fromStr("!" + currFactToRemove->toStr()), // Optimize to construct WorldStateModification without passing by a string
+                            pGoalStack, pNow);
+                }
               }
             }
             else
