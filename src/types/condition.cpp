@@ -457,14 +457,20 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
     const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
     const WorldState& pWorldState,
     const Fact& pFactFromEffect,
+    const std::map<std::string, std::set<std::string>>& pFactFromEffectParameters,
+    const std::map<std::string, std::set<std::string>>* pFactFromEffectTmpParametersPtr,
     const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
     bool pIsWrappingExprssionNegated) const
 {
   if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR)
   {
-    if (leftOperand && leftOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments, pIsWrappingExprssionNegated))
+    if (leftOperand && leftOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect,
+                                                                             pFactFromEffectParameters, pFactFromEffectTmpParametersPtr,
+                                                                             pConditionParametersToPossibleArguments, pIsWrappingExprssionNegated))
       return true;
-    if (rightOperand && rightOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect, pConditionParametersToPossibleArguments, pIsWrappingExprssionNegated))
+    if (rightOperand && rightOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect,
+                                                                               pFactFromEffectParameters, pFactFromEffectTmpParametersPtr,
+                                                                               pConditionParametersToPossibleArguments, pIsWrappingExprssionNegated))
       return true;
   }
   else if (leftOperand && rightOperand)
@@ -475,7 +481,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
       const auto& leftFact = *leftFactPtr;
       if (nodeType == ConditionNodeType::EQUALITY)
       {
-        if (leftFact.factOptional.fact.areEqualWithoutValueConsideration(pFactFromEffect))
+        if (leftFact.factOptional.fact.areEqualWithoutFluentConsideration(pFactFromEffect, &pFactFromEffectParameters, pFactFromEffectTmpParametersPtr))
         {
           return _forEachValueUntil(
                 [&](const std::string& pValue)
@@ -491,7 +497,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
           if (rightFactPtr != nullptr)
           {
             const auto& rightFact = *rightFactPtr;
-            if (rightFact.factOptional.fact.areEqualWithoutValueConsideration(pFactFromEffect))
+            if (rightFact.factOptional.fact.areEqualWithoutFluentConsideration(pFactFromEffect, &pFactFromEffectParameters, pFactFromEffectTmpParametersPtr))
             {
               return _forEachValueUntil(
                     [&](const std::string& pValue)
@@ -649,7 +655,7 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
           {
             for (const auto& currWsFact : itWsFacts->second)
             {
-              if (leftFact.areEqualWithoutValueConsideration(currWsFact))
+              if (leftFact.areEqualWithoutFluentConsideration(currWsFact))
               {
                 bool res = compIntNb(currWsFact.value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
                 if (!pIsWrappingExprssionNegated)
@@ -810,6 +816,8 @@ bool ConditionExists::findConditionCandidateFromFactFromEffect(
     const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
     const WorldState& pWorldState,
     const Fact& pFactFromEffect,
+    const std::map<std::string, std::set<std::string>>& pFactFromEffectParameters,
+    const std::map<std::string, std::set<std::string>>* pFactFromEffectTmpParametersPtr,
     const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
     bool pIsWrappingExprssionNegated) const
 {
@@ -825,7 +833,8 @@ bool ConditionExists::findConditionCandidateFromFactFromEffect(
       auto factToConsider = pConditionFact.fact;
       factToConsider.replaceArguments(localParamToValue);
       return pDoesConditionFactMatchFactFromEffect(FactOptional(factToConsider)) == !pIsWrappingExprssionNegated;
-    }, pWorldState, pFactFromEffect, parameters, pIsWrappingExprssionNegated);
+    }, pWorldState, pFactFromEffect, pFactFromEffectParameters, pFactFromEffectTmpParametersPtr,
+    parameters, pIsWrappingExprssionNegated);
   }
   return pIsWrappingExprssionNegated;
 }
@@ -949,11 +958,14 @@ bool ConditionNot::findConditionCandidateFromFactFromEffect(
     const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
     const WorldState& pWorldState,
     const Fact& pFactFromEffect,
+    const std::map<std::string, std::set<std::string>>& pFactFromEffectParameters,
+    const std::map<std::string, std::set<std::string>>* pFactFromEffectTmpParametersPtr,
     const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
     bool pIsWrappingExprssionNegated) const
 {
   if (condition)
     return condition->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect,
+                                                               pFactFromEffectParameters, pFactFromEffectTmpParametersPtr,
                                                                pConditionParametersToPossibleArguments, !pIsWrappingExprssionNegated);
   return pIsWrappingExprssionNegated;
 }
@@ -1044,6 +1056,8 @@ bool ConditionFact::findConditionCandidateFromFactFromEffect(
     const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
     const WorldState&,
     const Fact&,
+    const std::map<std::string, std::set<std::string>>&,
+    const std::map<std::string, std::set<std::string>>*,
     const std::map<std::string, std::set<std::string>>&,
     bool pIsWrappingExprssionNegated) const
 {

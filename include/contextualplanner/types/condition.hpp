@@ -75,6 +75,8 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pDoesConditionFactMatchFactFromEffect Callback called for each optional fact until the callback returns true.
    * @param[in] pWorldState World state to consider.
    * @param[in] pFactFromEffect Fact that is in the effect of the preceding action.
+   * @param[in] pFactFromEffectParameters pFactFromEffect parameters.
+   * @param[in] pFactFromEffectTmpParametersPtr pFactFromEffect other parameters.
    * @param[in] pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments.
    * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
    * @return True if one callback returned true, false otherwise.
@@ -83,6 +85,8 @@ struct CONTEXTUALPLANNER_API Condition
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState& pWorldState,
       const Fact& pFactFromEffect,
+      const std::map<std::string, std::set<std::string>>& pFactFromEffectParameters,
+      const std::map<std::string, std::set<std::string>>* pFactFromEffectTmpParametersPtr,
       const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
       bool pIsWrappingExprssionNegated = false) const = 0;
 
@@ -201,6 +205,8 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState& pWorldState,
       const Fact& pFactFromEffect,
+      const std::map<std::string, std::set<std::string>>& pFactFromEffectParameters,
+      const std::map<std::string, std::set<std::string>>* pFactFromEffectTmpParametersPtr,
       const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
       bool pIsWrappingExprssionNegated) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
@@ -261,6 +267,8 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState& pWorldState,
       const Fact& pFactFromEffect,
+      const std::map<std::string, std::set<std::string>>& pFactFromEffectParameters,
+      const std::map<std::string, std::set<std::string>>* pFactFromEffectTmpParametersPtr,
       const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
       bool pIsWrappingExprssionNegated) const override;
 
@@ -322,6 +330,8 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState& pWorldState,
       const Fact& pFactFromEffect,
+      const std::map<std::string, std::set<std::string>>& pFactFromEffectParameters,
+      const std::map<std::string, std::set<std::string>>* pFactFromEffectTmpParametersPtr,
       const std::map<std::string, std::set<std::string>>& pConditionParametersToPossibleArguments,
       bool pIsWrappingExprssionNegated) const override;
 
@@ -381,6 +391,8 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
       const WorldState&,
       const Fact&,
       const std::map<std::string, std::set<std::string>>&,
+      const std::map<std::string, std::set<std::string>>*,
+      const std::map<std::string, std::set<std::string>>&,
       bool pIsWrappingExprssionNegated) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState&) const override { return pFactCallback(factOptional); }
@@ -436,6 +448,8 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
       const std::function<bool (const FactOptional&)>&,
       const WorldState&,
       const Fact&,
+      const std::map<std::string, std::set<std::string>>&,
+      const std::map<std::string, std::set<std::string>>*,
       const std::map<std::string, std::set<std::string>>&,
       bool) const override { return true; }
   bool untilFalse(const std::function<bool (const FactOptional&)>&,

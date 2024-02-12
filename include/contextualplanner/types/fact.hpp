@@ -41,8 +41,16 @@ struct CONTEXTUALPLANNER_API Fact
   /// Check not equality with another fact.
   bool operator!=(const Fact& pOther) const { return !operator==(pOther); }
 
-  /// Check equality with another fact without considering the values.
-  bool areEqualWithoutValueConsideration(const Fact& pFact) const;
+  /**
+   * @brief Check equality with another fact without considering the values.
+   * @param[in] pFact Other fact to compare.
+   * @param[in] pOtherFactParametersToConsiderAsAnyValuePtr Other fact arguments to consider as "any value".
+   * @param[in] pOtherFactParametersToConsiderAsAnyValuePtr2 Another set of other fact rguments to consider as "any value".
+   * @return True if the equality check succeeded.
+   */
+  bool areEqualWithoutFluentConsideration(const Fact& pFact,
+                                          const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
+                                          const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr) const;
 
   /// Check equality with another fact without considering an argument.
   bool areEqualWithoutAnArgConsideration(const Fact& pFact,
@@ -94,11 +102,15 @@ struct CONTEXTUALPLANNER_API Fact
    * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).
    * @param pArgument[in] Argument of this fact.
    * @param pExampleFact[in] Example Fact.
+   * @param[in] pThisFactParametersToConsiderAsAnyValuePtr This fact arguments to consider as "any value".
+   * @param[in] pThisFactParametersToConsiderAsAnyValuePtr2 Another set of this fact rguments to consider as "any value".
    * @return Argument of the other fact corresponding to the pArgument of this fact.
    */
   std::string tryToExtractArgumentFromExample(
       const std::string& pArgument,
-      const Fact& pExampleFact) const;
+      const Fact& pExampleFact,
+      const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr,
+      const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr2 = nullptr) const;
 
   /**
    * @brief Extract an argument from another instance of this fact.<br/>

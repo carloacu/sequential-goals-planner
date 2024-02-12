@@ -239,45 +239,50 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
         bool actionIsAPossibleFollowUp = true;
 
         auto fillParameter = [&](const std::string& pParameterName,
-                                 std::set<std::string>& pParameterValues)
+                                 std::set<std::string>& pParameterValues,
+                                 std::map<std::string, std::set<std::string>>& pNewParentParameters)
         {
           if (pParameterValues.empty() &&
               pFactOptional.fact.hasArgumentOrValue(pParameterName))
           {
+            auto& newParamValues = pNewParentParameters[pParameterName];
+
             pCondition->findConditionCandidateFromFactFromEffect(
                   [&](const FactOptional& pConditionFactOptional)
             {
-              auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameterName, pConditionFactOptional.fact);
+              auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameterName, pConditionFactOptional.fact,
+                                                                                         &pParentParameters, pTmpParentParametersPtr);
               if (parentParamValue.empty())
                 return false;
+
               // Maybe the extracted parameter is also a parameter so we replace by it's value
               auto itParam = parametersToValues.find(parentParamValue);
               if (itParam != parametersToValues.end())
-                pParameterValues = itParam->second;
+                newParamValues = itParam->second;
               else
-                pParameterValues.insert(parentParamValue);
-              return !pParameterValues.empty();
-            }, pProblem.worldState, pFactOptional.fact, parametersToValues);
+                newParamValues.insert(parentParamValue);
+              return !newParamValues.empty();
+            }, pProblem.worldState, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersToValues);
 
-            if (!pParameterValues.empty())
-              return true;
-            if (pParameterValues.empty())
-            {
+            if (newParamValues.empty())
               actionIsAPossibleFollowUp = false;
-             return true;
-            }
           }
-          return false;
         };
 
         // fill parent parameters
+        std::map<std::string, std::set<std::string>> newParentParameters;
         for (auto& currParentParam : pParentParameters)
-          if (fillParameter(currParentParam.first, currParentParam.second))
-            break;
+          fillParameter(currParentParam.first, currParentParam.second, newParentParameters);
+
         if (pTmpParentParametersPtr != nullptr)
+        {
+          std::map<std::string, std::set<std::string>> newTmpParentParameters;
           for (auto& currParentParam : *pTmpParentParametersPtr)
-            if (fillParameter(currParentParam.first, currParentParam.second))
-              break;
+            fillParameter(currParentParam.first, currParentParam.second, newTmpParentParameters);
+          applyNewParams(*pTmpParentParametersPtr, newTmpParentParameters);
+        }
+        applyNewParams(pParentParameters, newParentParameters);
+
 
         // Check that the new fact pattern is not already satisfied
         if (actionIsAPossibleFollowUp)
@@ -444,7 +449,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr)
   {
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
-      return pFactOptionalToSatisfy.fact.areEqualWithoutValueConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.value != pFactOptional.fact.value;
+      return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.value != pFactOptional.fact.value;
 
     const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
     ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;

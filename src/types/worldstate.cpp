@@ -18,7 +18,7 @@ bool _isNegatedFactCompatibleWithFacts(
     const std::set<Fact>& pFacts)
 {
   for (const auto& currFact : pFacts)
-    if (currFact.areEqualWithoutValueConsideration(pNegatedFact) &&
+    if (currFact.areEqualWithoutFluentConsideration(pNegatedFact) &&
         ((currFact.isValueNegated && currFact.value == pNegatedFact.value) ||
          (!currFact.isValueNegated && currFact.value != pNegatedFact.value)))
       return true;

@@ -91,7 +91,9 @@ bool Fact::operator==(const Fact& pOther) const
 }
 
 
-bool Fact::areEqualWithoutValueConsideration(const Fact& pFact) const
+bool Fact::areEqualWithoutFluentConsideration(const Fact& pFact,
+                                              const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
+                                              const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2) const
 {
   if (pFact.name != name ||
       pFact.arguments.size() != arguments.size())
@@ -101,7 +103,9 @@ bool Fact::areEqualWithoutValueConsideration(const Fact& pFact) const
   auto itOtherParam = pFact.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact)
+    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
+        !(_isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+          _isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr2)))
       return false;
     ++itParam;
     ++itOtherParam;
@@ -166,9 +170,9 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
 
 
 bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
-                                           const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
-                                           const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
-                                           const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr) const
+                                            const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
+                                            const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
+                                            const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr) const
 {
   if (name != pOther.name || arguments.size() != pOther.arguments.size())
     return false;
@@ -217,7 +221,9 @@ bool Fact::hasArgumentOrValue(
 
 std::string Fact::tryToExtractArgumentFromExample(
     const std::string& pArgument,
-    const Fact& pExampleFact) const
+    const Fact& pExampleFact,
+    const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr,
+    const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr2) const
 {
   if (name != pExampleFact.name ||
       isValueNegated != pExampleFact.isValueNegated ||
@@ -227,7 +233,9 @@ std::string Fact::tryToExtractArgumentFromExample(
   std::string res;
   if (value == pArgument)
     res = pExampleFact.value;
-   else if (value != pExampleFact.value)
+   else if (value != pExampleFact.value &&
+            !(_isInside(value, pThisFactParametersToConsiderAsAnyValuePtr) ||
+              _isInside(value, pThisFactParametersToConsiderAsAnyValuePtr2)))
     return "";
 
   auto itParam = arguments.begin();
@@ -237,8 +245,11 @@ std::string Fact::tryToExtractArgumentFromExample(
     if (itParam->fact.name == pArgument)
       res = itOtherParam->fact.name;
 
-    auto subRes = itParam->fact.tryToExtractArgumentFromExample(pArgument, itOtherParam->fact);
-    if (subRes != "")
+    auto subRes = itParam->fact.tryToExtractArgumentFromExample(pArgument, itOtherParam->fact,
+                                                                pThisFactParametersToConsiderAsAnyValuePtr, pThisFactParametersToConsiderAsAnyValuePtr2);
+    if (subRes != "" &&
+        !(_isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr) ||
+          _isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr2)))
       return subRes;
     ++itParam;
     ++itOtherParam;
