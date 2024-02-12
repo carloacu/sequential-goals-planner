@@ -62,6 +62,19 @@ struct CONTEXTUALPLANNER_API Fact
                                const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
 
   /**
+   * @brief Is equal to another Fact or if any of the 2 Facts have an "any value" that can match and without looking at the fluents.
+   * @param[in] pOther Other fact to compare.
+   * @param[in] pOtherFactArgumentsToConsiderAsAnyValuePtr Arguments to consider as "any value".
+   * @param[in] pOtherFactParametersToConsiderAsAnyValuePtr2 Another set of arguments to consider as "any value".
+   * @param[in] pThisArgumentsToConsiderAsAnyValuePtr Arguments of the this fact to consider as "any value".
+   * @return True if the 2 facts match, false otherwise.
+   */
+  bool areEqualExceptAnyValuesAndFluent(const Fact& pOther,
+                                        const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
+                                        const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr,
+                                        const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
+
+  /**
    * @brief Is it a punctual fact.<br/>
    * A punctual fact is a fact that is considered punctually but never stored in the world.
    * @return True if the fact is punctual.
@@ -80,12 +93,25 @@ struct CONTEXTUALPLANNER_API Fact
    * @brief Extract an argument from another instance of this fact.<br/>
    * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).
    * @param pArgument[in] Argument of this fact.
-   * @param pOther[in] Other Fact.
+   * @param pExampleFact[in] Example Fact.
    * @return Argument of the other fact corresponding to the pArgument of this fact.
    */
   std::string tryToExtractArgumentFromExample(
       const std::string& pArgument,
-      const Fact& pOther) const;
+      const Fact& pExampleFact) const;
+
+  /**
+   * @brief Extract an argument from another instance of this fact.<br/>
+   * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).<br/>
+   * This function ignores the fluents.
+   * @param pArgument[in] Argument of this fact.
+   * @param pExampleFact[in] Example Fact.
+   * @return Argument of the other fact corresponding to the pArgument of this fact.
+   */
+  std::string tryToExtractArgumentFromExampleWithoutFluentConsideration(
+      const std::string& pArgument,
+      const Fact& pExampleFact) const;
+
 
   /**
    * @brief isPatternOf Does this fact is a generic form of the fact example according to the possible arguments.

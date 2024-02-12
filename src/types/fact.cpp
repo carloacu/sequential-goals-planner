@@ -38,7 +38,8 @@ bool _isInside(const std::string& pStr,
 {
   if (pEltsPtr == nullptr)
     return false;
-  return pEltsPtr->count(pStr) > 0;
+  auto it = pEltsPtr->find(pStr);
+  return it != pEltsPtr->end() && it->second.empty();
 }
 
 
@@ -164,6 +165,31 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
 }
 
 
+bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
+                                           const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
+                                           const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
+                                           const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr) const
+{
+  if (name != pOther.name || arguments.size() != pOther.arguments.size())
+    return false;
+
+  auto itParam = arguments.begin();
+  auto itOtherParam = pOther.arguments.begin();
+  while (itParam != arguments.end())
+  {
+    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
+        !(_isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr)) &&
+        !(_isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+          _isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+      return false;
+    ++itParam;
+    ++itOtherParam;
+  }
+
+  return isValueNegated == pOther.isValueNegated;
+}
+
+
 bool Fact::isPunctual() const
 {
   return name.compare(0, punctualPrefix.size(), punctualPrefix) == 0;
@@ -191,21 +217,21 @@ bool Fact::hasArgumentOrValue(
 
 std::string Fact::tryToExtractArgumentFromExample(
     const std::string& pArgument,
-    const Fact& pOther) const
+    const Fact& pExampleFact) const
 {
-  if (name != pOther.name ||
-      isValueNegated != pOther.isValueNegated ||
-      arguments.size() != pOther.arguments.size())
+  if (name != pExampleFact.name ||
+      isValueNegated != pExampleFact.isValueNegated ||
+      arguments.size() != pExampleFact.arguments.size())
     return "";
 
   std::string res;
   if (value == pArgument)
-    res = pOther.value;
-   else if (value != pOther.value)
+    res = pExampleFact.value;
+   else if (value != pExampleFact.value)
     return "";
 
   auto itParam = arguments.begin();
-  auto itOtherParam = pOther.arguments.begin();
+  auto itOtherParam = pExampleFact.arguments.begin();
   while (itParam != arguments.end())
   {
     if (itParam->fact.name == pArgument)
@@ -219,6 +245,33 @@ std::string Fact::tryToExtractArgumentFromExample(
   }
   return res;
 }
+
+std::string Fact::tryToExtractArgumentFromExampleWithoutFluentConsideration(
+    const std::string& pArgument,
+    const Fact& pExampleFact) const
+{
+  if (name != pExampleFact.name ||
+      isValueNegated != pExampleFact.isValueNegated ||
+      arguments.size() != pExampleFact.arguments.size())
+    return "";
+
+  std::string res;
+  auto itParam = arguments.begin();
+  auto itOtherParam = pExampleFact.arguments.begin();
+  while (itParam != arguments.end())
+  {
+    if (itParam->fact.name == pArgument)
+      res = itOtherParam->fact.name;
+
+    auto subRes = itParam->fact.tryToExtractArgumentFromExample(pArgument, itOtherParam->fact);
+    if (subRes != "")
+      return subRes;
+    ++itParam;
+    ++itOtherParam;
+  }
+  return res;
+}
+
 
 
 bool Fact::isPatternOf(

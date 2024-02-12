@@ -526,15 +526,23 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
         const auto* wSMFPtr = static_cast<const WorldStateModificationFact*>(&*rightOperand);
         if (wSMFPtr != nullptr)
         {
-          auto factWithValueToAssign = wSMFPtr->factOptional.fact;
-          factWithValueToAssign.replaceArguments(localParameterToFind);
-          factWithValueToAssign.value = *localParameterToFind.begin()->second.begin();
+          std::set<std::string>& parameterPossibilities = localParameterToFind.begin()->second;
 
-          const auto& factNamesToFacts = pWorldState.factNamesToFacts();
-          std::map<std::string, std::set<std::string>> newParameters;
-          if (factWithValueToAssign.isInOtherFactsMap(factNamesToFacts, true, &newParameters, &pParameters))
+          while (!parameterPossibilities.empty())
           {
-            applyNewParams(pParameters, newParameters);
+            auto factWithValueToAssign = wSMFPtr->factOptional.fact;
+            factWithValueToAssign.replaceArguments(localParameterToFind);
+            auto itBeginOfParamPoss = parameterPossibilities.begin();
+            factWithValueToAssign.value = *itBeginOfParamPoss;
+
+            const auto& factNamesToFacts = pWorldState.factNamesToFacts();
+            std::map<std::string, std::set<std::string>> newParameters;
+            if (factWithValueToAssign.isInOtherFactsMap(factNamesToFacts, true, &newParameters, &pParameters))
+            {
+              applyNewParams(pParameters, newParameters);
+              break;
+            }
+            parameterPossibilities.erase(itBeginOfParamPoss);
           }
         }
       }

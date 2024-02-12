@@ -536,6 +536,21 @@ bool WorldState::isGoalSatisfied(const Goal& pGoal) const
       pGoal.objective().isTrue(*this);
 }
 
+
+void WorldState::iterateOnMatchingFactsWithoutFluentConsideration
+(const std::function<void (const Fact&)>& pValueCallback,
+ const Fact& pFact,
+ const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue) const
+{
+  auto it = _factNamesToFacts.find(pFact.name);
+  if (it != _factNamesToFacts.end())
+    for (const Fact& currFact : it->second)
+      if (currFact.areEqualExceptAnyValuesAndFluent(pFact, &pParametersToConsiderAsAnyValue))
+        pValueCallback(currFact);
+}
+
+
+
 void WorldState::refreshCacheIfNeeded(const Domain& pDomain)
 {
   _cache->refreshIfNeeded(pDomain, _facts);

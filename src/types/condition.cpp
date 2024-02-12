@@ -38,18 +38,29 @@ bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCa
     if (pValueCallback(condToExtractValue->getValue(pWorldState)) == pUntilValue)
       return pUntilValue;
   }
+
+  auto* factCondPtr = pCondition.fcFactPtr();
+  if (factCondPtr != nullptr &&
+      factCondPtr->factOptional.fact.value == "")
+  {
+    pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
+          [&pValueCallback](const Fact& pFact) { if (pFact.value != "") pValueCallback(pFact.value); },
+          factCondPtr->factOptional.fact, // pFact
+          *pParametersPtr); // Parameters to consider as any value of set is empty, otherwise it is a filter
+  }
+
   return !pUntilValue;
 }
 
 
-void _forEach(const std::function<void (const std::string&)>& pValueCallback,
+void _forEach(const std::function<void (const std::string&, const Fact*)>& pValueCallback,
               const Condition& pCondition,
               const WorldState& pWorldState,
               const std::map<std::string, std::set<std::string>>* pParametersPtr)
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    pValueCallback(pCondition.getValue(pWorldState));
+    pValueCallback(pCondition.getValue(pWorldState), nullptr);
     return;
   }
 
@@ -58,7 +69,17 @@ void _forEach(const std::function<void (const std::string&)>& pValueCallback,
   for (auto& currParamPoss : paramPossibilities)
   {
     auto factToExtractValue = pCondition.clone(&currParamPoss);
-    pValueCallback(factToExtractValue->getValue(pWorldState));
+    pValueCallback(factToExtractValue->getValue(pWorldState), nullptr);
+  }
+
+  auto* factCondPtr = pCondition.fcFactPtr();
+  if (factCondPtr != nullptr &&
+      factCondPtr->factOptional.fact.value == "")
+  {
+    pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
+          [&pValueCallback](const Fact& pFact) { if (pFact.value != "") pValueCallback(pFact.value, &pFact); },
+          factCondPtr->factOptional.fact, // pFact
+          *pParametersPtr); // Parameters to consider as any value of set is empty, otherwise it is a filter
   }
 }
 
@@ -481,14 +502,35 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
         const auto& factNamesToFacts = pWorldState.factNamesToFacts();
         bool res = false;
         std::map<std::string, std::set<std::string>> newParameters;
-        _forEach([&](const std::string& pValue)
+        _forEach([&](const std::string& pValue, const Fact* pFromFactPtr)
         {
           auto factToCheck = leftFactPtr->factOptional.fact;
           factToCheck.value = pValue;
+          bool subRes = false;
           if (factToCheck.isPunctual())
-            res = pPunctualFacts.count(factToCheck) != 0 || res;
+            subRes = pPunctualFacts.count(factToCheck) != 0;
           else
-            res = factToCheck.isInOtherFactsMap(factNamesToFacts, true, &newParameters, pConditionParametersToPossibleArguments) || res;
+            subRes = factToCheck.isInOtherFactsMap(factNamesToFacts, true, &newParameters, pConditionParametersToPossibleArguments);
+
+          // Try to resolve the parameters
+          if (subRes && pFromFactPtr != nullptr &&
+              pConditionParametersToPossibleArguments != nullptr &&
+              !pConditionParametersToPossibleArguments->empty())
+          {
+            auto* rightFactPtr = rightOperand->fcFactPtr();
+            if (rightFactPtr != nullptr)
+            {
+              for (auto& currArg : *pConditionParametersToPossibleArguments)
+                if (currArg.second.empty())
+                {
+                  auto value = rightFactPtr->factOptional.fact.tryToExtractArgumentFromExampleWithoutFluentConsideration(currArg.first, *pFromFactPtr);
+                  if (value != "")
+                    currArg.second.insert(value);
+                }
+            }
+          }
+
+          res = subRes || res;
         }, *rightOperand, pWorldState, pConditionParametersToPossibleArguments);
 
         if (pConditionParametersToPossibleArguments != nullptr)

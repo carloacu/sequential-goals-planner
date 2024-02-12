@@ -8,7 +8,7 @@ namespace
 {
 
 void _unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
-                      std::map<std::string, std::set<std::string>>& pInMap)
+                       std::map<std::string, std::set<std::string>>& pInMap)
 {
   if (pInMap.size() == 1)
   {
