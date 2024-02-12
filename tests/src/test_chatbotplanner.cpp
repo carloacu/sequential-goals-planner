@@ -1953,6 +1953,30 @@ void _actionNavigationAndGrabObjectWithParameters()
   assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
 }
 
+
+void _actionNavigationAndGrabObjectWithParameters2()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action navAction({}, cp::WorldStateModification::fromStr("location(me)=targetLocation"));
+  navAction.parameters.emplace_back("targetLocation");
+  actions.emplace(_action_navigate, navAction);
+
+  cp::Action grabAction(cp::Condition::fromStr("equals(location(object), location(me))"),
+                        cp::WorldStateModification::fromStr("grab(me, object)"));
+  grabAction.parameters.emplace_back("object");
+  actions.emplace(_action_grab, grabAction);
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact("location(me)=corridor"), problem.goalStack, _emptySetOfInferences, now);
+  problem.worldState.addFact(cp::Fact("location(sweets)=kitchen"), problem.goalStack, _emptySetOfInferences, now);
+  assert_eq<std::string>("kitchen", problem.worldState.getFactValue(cp::Fact("location(sweets)")));
+  _setGoalsForAPriority(problem, {cp::Goal("grab(me, sweets)")});
+  assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
+}
+
+
+
 void _moveObject()
 {
   const std::string actionNavigate2 = "actionNavigate2";
@@ -3148,6 +3172,36 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
 
 
 
+void _assignAFactThenCheckExistWithAnotherFact()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action action1Obj({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
+  action1Obj.parameters.emplace_back("?p");
+  actions.emplace(action1, action1Obj);
+  cp::Action action2Obj(cp::Condition::fromStr("exists(pc, =(" + _fact_a + ", " + _fact_c + "(pc)))"),
+                        cp::WorldStateModification::fromStr(_fact_d));
+  actions.emplace(action2, action2Obj);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p1)=aVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p3)=anotherVal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc1)=v1"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc3)=v3"), problem.goalStack, setOfInferencesMap, now);
+
+  assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -3230,6 +3284,7 @@ int main(int argc, char *argv[])
   _setWsModification();
   _forAllWsModification();
   _actionNavigationAndGrabObjectWithParameters();
+  _actionNavigationAndGrabObjectWithParameters2();
   _moveObject();
   _moveAndUngrabObject();
   _failToMoveAnUnknownObject();
@@ -3268,6 +3323,7 @@ int main(int argc, char *argv[])
   _assignAFact();
   _assignAFactToAction();
   _assignAFactThenCheckEqualityWithAnotherFact();
+  _assignAFactThenCheckExistWithAnotherFact();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

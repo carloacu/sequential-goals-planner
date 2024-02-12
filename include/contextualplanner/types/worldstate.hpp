@@ -229,14 +229,13 @@ struct CONTEXTUALPLANNER_API WorldState
 
   /**
    * @brief Iterate over all matching facts without fluent consideration.
-   * @param[in] pCallback Callback of each matching facts.
+   * @param[in] pCallback Callback of each matching facts. If it returns true we break the iteration.
    * @param[in] pFact Fact to consider.
    * @param[in] pParametersToConsiderAsAnyValue Parameters to consider as "any value" if there possible values (set of string) is empty.
    */
-  void iterateOnMatchingFactsWithoutFluentConsideration(const std::function<void (const Fact&)>& pCallback,
+  void iterateOnMatchingFactsWithoutFluentConsideration(const std::function<bool (const Fact&)>& pCallback,
                                                         const Fact& pFact,
                                                         const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue) const;
-
 
 
   void refreshCacheIfNeeded(const Domain& pDomain);

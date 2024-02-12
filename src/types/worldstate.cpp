@@ -538,7 +538,7 @@ bool WorldState::isGoalSatisfied(const Goal& pGoal) const
 
 
 void WorldState::iterateOnMatchingFactsWithoutFluentConsideration
-(const std::function<void (const Fact&)>& pValueCallback,
+(const std::function<bool (const Fact&)>& pValueCallback,
  const Fact& pFact,
  const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue) const
 {
@@ -546,7 +546,8 @@ void WorldState::iterateOnMatchingFactsWithoutFluentConsideration
   if (it != _factNamesToFacts.end())
     for (const Fact& currFact : it->second)
       if (currFact.areEqualExceptAnyValuesAndFluent(pFact, &pParametersToConsiderAsAnyValue))
-        pValueCallback(currFact);
+        if (pValueCallback(currFact))
+          break;
 }
 
 
