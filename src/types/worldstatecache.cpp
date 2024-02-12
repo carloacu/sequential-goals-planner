@@ -97,9 +97,16 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const std::set<Action
     auto itAction = actions.find(currAction);
     if (itAction != actions.end())
     {
-      auto& action = itAction->second;
-      _feedAccessibleFactsFromDeduction(action.precondition, action.effect, action.parameters,
-                                        pDomain, pFactsAlreadychecked);
+      const Action& action = itAction->second;
+      if (!action.precondition || action.precondition->canBecomeTrue(_worldState))
+      {
+        if (action.effect.worldStateModification)
+          _feedAccessibleFactsFromDeduction(*action.effect.worldStateModification, action.parameters,
+                                            pDomain, pFactsAlreadychecked);
+        if (action.effect.potentialWorldStateModification)
+          _feedAccessibleFactsFromDeduction(*action.effect.potentialWorldStateModification, action.parameters,
+                                            pDomain, pFactsAlreadychecked);
+      }
     }
   }
 }
@@ -115,81 +122,78 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfInferences(const std::set<Inf
     auto itInference = pAllInferences.find(currInference);
     if (itInference != pAllInferences.end())
     {
-      auto& inference = itInference->second;
-      std::vector<std::string> parameters;
-      _feedAccessibleFactsFromDeduction(inference.condition, inference.factsToModify->clone(nullptr),
-                                        parameters, pDomain, pFactsAlreadychecked);
+      const Inference& inference = itInference->second;
+      if (!inference.condition || inference.condition->canBecomeTrue(_worldState))
+        _feedAccessibleFactsFromDeduction(*inference.factsToModify, inference.parameters,
+                                          pDomain, pFactsAlreadychecked);
     }
   }
 }
 
-void WorldStateCache::_feedAccessibleFactsFromDeduction(const std::unique_ptr<Condition>& pCondition,
-                                                        const ProblemModification& pEffect,
+
+void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModification& pEffect,
                                                         const std::vector<std::string>& pParameters,
                                                         const Domain& pDomain,
                                                         FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  if (!pCondition || pCondition->canBecomeTrue(_worldState))
-  {
-    std::set<Fact> accessibleFactsToAdd;
-    std::vector<Fact> accessibleFactsToAddWithAnyValues;
-    std::set<Fact> removableFactsToAdd;
-    std::vector<Fact> removableFactsToAddWithAnyValues;
+  std::set<Fact> accessibleFactsToAdd;
+  std::vector<Fact> accessibleFactsToAddWithAnyValues;
+  std::set<Fact> removableFactsToAdd;
+  std::vector<Fact> removableFactsToAddWithAnyValues;
 
-    pEffect.iterateOverAllAccessibleFacts([&](const cp::FactOptional& pFactOpt) {
-      if (!pFactOpt.isFactNegated)
-      {
-        if (_worldState.facts().count(pFactOpt.fact) == 0 &&
-            _accessibleFacts.count(pFactOpt.fact) == 0)
-        {
-          if (pFactOpt.fact.value == Fact::anyValue)
-          {
-            accessibleFactsToAddWithAnyValues.push_back(pFactOpt.fact);
-          }
-          else
-          {
-            auto factToInsert = pFactOpt.fact;
-            if (factToInsert.replaceSomeArgumentsByAny(pParameters))
-              accessibleFactsToAddWithAnyValues.push_back(std::move(factToInsert));
-            else
-              accessibleFactsToAdd.insert(std::move(factToInsert));
-          }
-        }
-      }
-      else
-      {
-        if (_removableFacts.count(pFactOpt.fact) == 0)
-        {
-          if (pFactOpt.fact.value == Fact::anyValue)
-          {
-            removableFactsToAddWithAnyValues.push_back(pFactOpt.fact);
-          }
-          else
-          {
-            auto factToRemove = pFactOpt.fact;
-            if (factToRemove.replaceSomeArgumentsByAny(pParameters))
-              removableFactsToAddWithAnyValues.push_back(std::move(factToRemove));
-            else
-              removableFactsToAdd.insert(std::move(factToRemove));
-          }
-        }
-      }
-    }, _worldState);
-
-    if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() ||
-        !removableFactsToAdd.empty() || !removableFactsToAddWithAnyValues.empty())
+  pEffect.iterateOverAllAccessibleFacts([&](const cp::FactOptional& pFactOpt) {
+    if (!pFactOpt.isFactNegated)
     {
-      _accessibleFacts.insert(accessibleFactsToAdd.begin(), accessibleFactsToAdd.end());
-      _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
-      _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
-      _removableFactsWithAnyValues.insert(removableFactsToAddWithAnyValues.begin(), removableFactsToAddWithAnyValues.end());
-      for (const auto& currNewFact : accessibleFactsToAdd)
-        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
-      for (const auto& currNewFact : accessibleFactsToAddWithAnyValues)
-        _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
-      for (const auto& currNewFact : removableFactsToAdd)
-        _feedAccessibleFactsFromNotFact(currNewFact, pDomain, pFactsAlreadychecked);
+      if (_worldState.facts().count(pFactOpt.fact) == 0 &&
+          _accessibleFacts.count(pFactOpt.fact) == 0)
+      {
+        if (pFactOpt.fact.value == Fact::anyValue)
+        {
+          accessibleFactsToAddWithAnyValues.push_back(pFactOpt.fact);
+        }
+        else
+        {
+          auto factToInsert = pFactOpt.fact;
+          if (factToInsert.replaceSomeArgumentsByAny(pParameters))
+            accessibleFactsToAddWithAnyValues.push_back(std::move(factToInsert));
+          else
+            accessibleFactsToAdd.insert(std::move(factToInsert));
+        }
+      }
     }
+    else
+    {
+      if (_removableFacts.count(pFactOpt.fact) == 0)
+      {
+        if (pFactOpt.fact.value == Fact::anyValue)
+        {
+          removableFactsToAddWithAnyValues.push_back(pFactOpt.fact);
+        }
+        else
+        {
+          auto factToRemove = pFactOpt.fact;
+          if (factToRemove.replaceSomeArgumentsByAny(pParameters))
+            removableFactsToAddWithAnyValues.push_back(std::move(factToRemove));
+          else
+            removableFactsToAdd.insert(std::move(factToRemove));
+        }
+      }
+    }
+  }, _worldState);
+
+  if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() ||
+      !removableFactsToAdd.empty() || !removableFactsToAddWithAnyValues.empty())
+  {
+    _accessibleFacts.insert(accessibleFactsToAdd.begin(), accessibleFactsToAdd.end());
+    _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
+    _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
+    _removableFactsWithAnyValues.insert(removableFactsToAddWithAnyValues.begin(), removableFactsToAddWithAnyValues.end());
+    for (const auto& currNewFact : accessibleFactsToAdd)
+      _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
+    for (const auto& currNewFact : accessibleFactsToAddWithAnyValues)
+      _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
+    for (const auto& currNewFact : removableFactsToAdd)
+      _feedAccessibleFactsFromNotFact(currNewFact, pDomain, pFactsAlreadychecked);
   }
 }
 

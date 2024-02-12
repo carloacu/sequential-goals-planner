@@ -10,12 +10,11 @@
 
 namespace cp
 {
-struct Condition;
 struct Domain;
 struct Inference;
-struct ProblemModification;
 struct FactsAlreadyChecked;
 struct WorldState;
+struct WorldStateModification;
 
 
 struct CONTEXTUALPLANNER_API WorldStateCache
@@ -78,14 +77,12 @@ private:
 
   /**
    * @brief Feed accessible facts from a condition and an effect.
-   * @param[in] pCondition condition to check.
    * @param[in] pEffect Effect to apply.
    * @param[in] pParameters Parameters of the condition and effect.
    * @param[in] pDomain Domain containing all the possible actions and inferences.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
-  void _feedAccessibleFactsFromDeduction(const std::unique_ptr<Condition>& pCondition,
-                                         const ProblemModification& pEffect,
+  void _feedAccessibleFactsFromDeduction(const WorldStateModification& pEffect,
                                          const std::vector<std::string>& pParameters,
                                          const Domain& pDomain,
                                          FactsAlreadyChecked& pFactsAlreadychecked);

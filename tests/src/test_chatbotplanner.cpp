@@ -3283,6 +3283,37 @@ void _existWithEqualityInInference_withEqualityInverted()
 
 
 
+void _fixInferenceWithFluentInParameter()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+  cp::Action action1Obj({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
+  action1Obj.parameters.emplace_back("?p");
+  actions.emplace(action1, action1Obj);
+  cp::Action action2Obj(cp::Condition::fromStr("=(" + _fact_e + ", " + _fact_c + "(?pc))"),
+                        cp::WorldStateModification::fromStr(_fact_d));
+  action2Obj.parameters.emplace_back("?pc");
+  actions.emplace(action2, action2Obj);
+
+  cp::SetOfInferences setOfInferences;
+  cp::DerivedPredicate derivedPredicate1(cp::Condition::fromStr(_fact_a + "=?v"), _fact_e + "=?v", {"?v"});
+  for (auto& currInference : derivedPredicate1.toInferences())
+    setOfInferences.addInference(currInference);
+
+
+  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_d)});
+  problem.worldState.addFact(cp::Fact(_fact_b + "(p2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact(_fact_c + "(pc2)=valGoal"), problem.goalStack, setOfInferencesMap, now);
+
+  assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -3407,6 +3438,7 @@ int main(int argc, char *argv[])
   _assignAFactThenCheckExistWithAnotherFact();
   _existWithEqualityInInference();
   _existWithEqualityInInference_withEqualityInverted();
+  _fixInferenceWithFluentInParameter();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;

@@ -97,13 +97,7 @@ struct CONTEXTUALPLANNER_API ProblemModification
   bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pCallback,
                            std::map<std::string, std::set<std::string>>& pParameters,
                            const WorldState& pWorldState) const;
-  /**
-   * @brief Iterate over all the optional facts that can be accessible.
-   * @param[in] pCallback Callback called for each optional fact that can be accessible.
-   * @param[in] pWorldState World state use to extract value of the facts.
-   */
-  void iterateOverAllAccessibleFacts(const std::function<void(const cp::FactOptional&)>& pCallback,
-                                     const WorldState& pWorldState) const;
+
 
   /// Convert the worldStateModification to a string or to an empty string if it is not defined.
   std::string worldStateModification_str() const { return worldStateModification ? worldStateModification->toStr() : ""; }
@@ -199,16 +193,6 @@ inline bool ProblemModification::canSatisfyObjective(const std::function<bool (c
     return true;
   return false;
 }
-
-inline void ProblemModification::iterateOverAllAccessibleFacts(const std::function<void(const cp::FactOptional&)>& pCallback,
-                                                               const WorldState& pWorldState) const
-{
-  if (worldStateModification)
-    worldStateModification->iterateOverAllAccessibleFacts(pCallback, pWorldState);
-  if (potentialWorldStateModification)
-    potentialWorldStateModification->iterateOverAllAccessibleFacts(pCallback, pWorldState);
-}
-
 
 
 } // !cp
