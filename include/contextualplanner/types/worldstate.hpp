@@ -152,16 +152,20 @@ struct CONTEXTUALPLANNER_API WorldState
   /**
    * @brief Can an optional fact become true, according to the world and the accessible facts stored internally in this object.
    * @param[in] pFactOptional Optional fact to check if it can become true.
+   * @param[in] pParameters Parameter of the fact.
    * @return True if the optional fact can become true, false otherwise.
    */
-  bool canFactOptBecomeTrue(const FactOptional& pFactOptional) const;
+  bool canFactOptBecomeTrue(const FactOptional& pFactOptional,
+                            const std::vector<std::string>& pParameters) const;
 
   /**
    * @brief Can a fact become true, according to the world and the accessible facts stored internally in this object.
    * @param[in] pFact Fact to check if it can become true.
+   * @param[in] pParameters Parameter of the fact.
    * @return True if the fact can become true, false otherwise.
    */
-  bool canFactBecomeTrue(const Fact& pFact) const;
+  bool canFactBecomeTrue(const Fact& pFact,
+                         const std::vector<std::string>& pParameters) const;
 
   /**
    * @brief Can a fact be modified according to the cache of accessible facts.

@@ -666,20 +666,21 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
 }
 
 bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
+                                  const std::vector<std::string>& pParameters,
                                   bool pIsWrappingExprssionNegated) const
 {
   if (nodeType == ConditionNodeType::AND)
   {
-    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExprssionNegated))
       return pIsWrappingExprssionNegated;
-    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExprssionNegated))
       return pIsWrappingExprssionNegated;
   }
   else if (nodeType == ConditionNodeType::OR)
   {
-    if (leftOperand && leftOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+    if (leftOperand && leftOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExprssionNegated))
       return !pIsWrappingExprssionNegated;
-    if (rightOperand && rightOperand->canBecomeTrue(pWorldState, pIsWrappingExprssionNegated))
+    if (rightOperand && rightOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExprssionNegated))
       return !pIsWrappingExprssionNegated;
     return pIsWrappingExprssionNegated;
   }
@@ -691,7 +692,7 @@ bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
       factToCheck.value = pWorldState.getFactValue(rightFactPtr->factOptional.fact);
-      return pWorldState.canFactBecomeTrue(factToCheck);
+      return pWorldState.canFactBecomeTrue(factToCheck, pParameters);
     }
   }
   return true;
@@ -847,6 +848,7 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
 
 
 bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
+                                    const std::vector<std::string>& pParameters,
                                     bool pIsWrappingExprssionNegated) const
 {
   if (condition)
@@ -864,7 +866,7 @@ bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
         {
           auto factToCheck = factToOfCondition;
           factToCheck.replaceArguments({{object, currPot.name}});
-          if (pWorldState.canFactBecomeTrue(factToCheck))
+          if (pWorldState.canFactBecomeTrue(factToCheck, pParameters))
             return true;
         }
       }
@@ -971,10 +973,11 @@ bool ConditionNot::isTrue(const WorldState& pWorldState,
 
 
 bool ConditionNot::canBecomeTrue(const WorldState& pWorldState,
+                                 const std::vector<std::string>& pParameters,
                                  bool pIsWrappingExprssionNegated) const
 {
   if (condition)
-    return condition->canBecomeTrue(pWorldState, !pIsWrappingExprssionNegated);
+    return condition->canBecomeTrue(pWorldState, pParameters, !pIsWrappingExprssionNegated);
   return true;
 }
 
@@ -1074,9 +1077,10 @@ bool ConditionFact::isTrue(const WorldState& pWorldState,
 }
 
 bool ConditionFact::canBecomeTrue(const WorldState& pWorldState,
+                                  const std::vector<std::string>& pParameters,
                                   bool pIsWrappingExprssionNegated) const
 {
-  bool res =  pWorldState.canFactOptBecomeTrue(factOptional);
+  bool res =  pWorldState.canFactOptBecomeTrue(factOptional, pParameters);
   if (!pIsWrappingExprssionNegated)
     return res;
   return !res;

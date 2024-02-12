@@ -223,7 +223,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
 {
   if (!pCondition ||
       (pCondition->containsFactOpt(pFactOptional, pParentParameters, pTmpParentParametersPtr, pParameters) &&
-       pCondition->canBecomeTrue(pProblem.worldState)))
+       pCondition->canBecomeTrue(pProblem.worldState, pParameters)))
   {
     std::map<std::string, std::set<std::string>> parametersToValues;
     for (const auto& currParam : pParameters)

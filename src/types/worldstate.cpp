@@ -310,11 +310,12 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
 }
 
 
-bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional) const
+bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
+                                      const std::vector<std::string>& pParameters) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
   if (!pFactOptional.isFactNegated)
-    return canFactBecomeTrue(pFactOptional.fact);
+    return canFactBecomeTrue(pFactOptional.fact, pParameters);
 
   if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, _facts))
     return true;
@@ -327,7 +328,7 @@ bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional) const
 
   const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
   for (const auto& currRemovableFact : removableFactsWithAnyValues)
-    if (pFactOptional.fact.areEqualExceptAnyValues(currRemovableFact))
+    if (pFactOptional.fact.areEqualExceptAnyValues(currRemovableFact, nullptr, nullptr, &pParameters))
       return true;
 
   if (_facts.count(pFactOptional.fact) > 0)
@@ -335,7 +336,8 @@ bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional) const
   return true;
 }
 
-bool WorldState::canFactBecomeTrue(const Fact& pFact) const
+bool WorldState::canFactBecomeTrue(const Fact& pFact,
+                                   const std::vector<std::string>& pParameters) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
   if (!pFact.isValueNegated)
@@ -346,7 +348,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact) const
 
     const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
     for (const auto& currAccessibleFact : accessibleFactsWithAnyValues)
-      if (pFact.areEqualExceptAnyValues(currAccessibleFact))
+      if (pFact.areEqualExceptAnyValues(currAccessibleFact, nullptr, nullptr, &pParameters))
         return true;
   }
   else
@@ -362,7 +364,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact) const
 
     const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
     for (const auto& currRemovableFact : removableFactsWithAnyValues)
-      if (pFact.areEqualExceptAnyValues(currRemovableFact))
+      if (pFact.areEqualExceptAnyValues(currRemovableFact, nullptr, nullptr, &pParameters))
         return true;
   }
   return false;

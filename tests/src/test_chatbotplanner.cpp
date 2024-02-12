@@ -3289,7 +3289,7 @@ void _fixInferenceWithFluentInParameter()
   const std::string action2 = "action2";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
+  cp::Action action1Obj({}, cp::WorldStateModification::fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))"));
   action1Obj.parameters.emplace_back("?p");
   actions.emplace(action1, action1Obj);
   cp::Action action2Obj(cp::Condition::fromStr("=(" + _fact_e + ", " + _fact_c + "(?pc))"),
@@ -3298,7 +3298,7 @@ void _fixInferenceWithFluentInParameter()
   actions.emplace(action2, action2Obj);
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(cp::Condition::fromStr(_fact_a + "=?v"), _fact_e + "=?v", {"?v"});
+  cp::DerivedPredicate derivedPredicate1(cp::Condition::fromStr(_fact_a + "(?a)=?v"), _fact_e + "=?v", {"?a", "?v"});
   for (auto& currInference : derivedPredicate1.toInferences())
     setOfInferences.addInference(currInference);
 

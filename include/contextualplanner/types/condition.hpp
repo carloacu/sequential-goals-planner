@@ -116,10 +116,12 @@ struct CONTEXTUALPLANNER_API Condition
   /**
    * @brief Check if the condition can become true according to the facts that can become true in a world state.
    * @param[in] pWorldState World state to consider.
+   * @param[in] pParameters Parameter of the condition.
    * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
    * @return True if this condition can be satisfied.
    */
   virtual bool canBecomeTrue(const WorldState& pWorldState,
+                             const std::vector<std::string>& pParameters,
                              bool pIsWrappingExprssionNegated = false) const = 0;
 
   /// Equality operators.
@@ -210,6 +212,7 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExprssionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
+                     const std::vector<std::string>& pParameters,
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
@@ -270,6 +273,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExprssionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
+                     const std::vector<std::string>& pParameters,
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
@@ -330,6 +334,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExprssionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
+                     const std::vector<std::string>& pParameters,
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
@@ -386,6 +391,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExprssionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
+                     const std::vector<std::string>& pParameters,
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
@@ -440,8 +446,9 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
               std::map<std::string, std::set<std::string>>*,
               bool*,
               bool pIsWrappingExprssionNegated) const override { return !pIsWrappingExprssionNegated; }
-  bool canBecomeTrue(const WorldState& pWorldState,
-                     bool pIsWrappingExprssionNegated) const override  { return true; }
+  bool canBecomeTrue(const WorldState&,
+                     const std::vector<std::string>&,
+                     bool) const override  { return true; }
   bool operator==(const Condition& pOther) const override;
 
   std::string getValue(const WorldState& pWorldState) const override;

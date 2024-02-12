@@ -98,7 +98,7 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const std::set<Action
     if (itAction != actions.end())
     {
       const Action& action = itAction->second;
-      if (!action.precondition || action.precondition->canBecomeTrue(_worldState))
+      if (!action.precondition || action.precondition->canBecomeTrue(_worldState, action.parameters))
       {
         if (action.effect.worldStateModification)
           _feedAccessibleFactsFromDeduction(*action.effect.worldStateModification, action.parameters,
@@ -123,7 +123,7 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfInferences(const std::set<Inf
     if (itInference != pAllInferences.end())
     {
       const Inference& inference = itInference->second;
-      if (!inference.condition || inference.condition->canBecomeTrue(_worldState))
+      if (!inference.condition || inference.condition->canBecomeTrue(_worldState, inference.parameters))
         _feedAccessibleFactsFromDeduction(*inference.factsToModify, inference.parameters,
                                           pDomain, pFactsAlreadychecked);
     }
