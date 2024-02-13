@@ -102,7 +102,8 @@ struct WorldStateModificationNode : public WorldStateModification
                        const WorldState& pWorldState) const override;
   bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pFactCallback,
                            std::map<std::string, std::set<std::string>>& pParameters,
-                           const WorldState& pWorldState) const override;
+                           const WorldState& pWorldState,
+                           const std::string& pFromDeductionId) const override;
   bool operator==(const WorldStateModification& pOther) const override;
 
   std::string getValue(const WorldState& pWorldState) const override
@@ -202,7 +203,8 @@ struct WorldStateModificationFact : public WorldStateModification
 
   bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pFactCallback,
                            std::map<std::string, std::set<std::string>>&,
-                           const WorldState&) const override
+                           const WorldState&,
+                           const std::string&) const override
   {
     return pFactCallback(factOptional, nullptr);
   }
@@ -268,7 +270,8 @@ struct WorldStateModificationNumber : public WorldStateModification
                        const WorldState&) const override { return false; }
   bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>&,
                            std::map<std::string, std::set<std::string>>&,
-                           const WorldState&) const override { return false; }
+                           const WorldState&,
+                           const std::string&) const override { return false; }
   bool operator==(const WorldStateModification& pOther) const override;
 
   std::string getValue(const WorldState&) const override
@@ -513,11 +516,12 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
 
 bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pFactCallback,
                                                      std::map<std::string, std::set<std::string>>& pParameters,
-                                                     const WorldState& pWorldState) const
+                                                     const WorldState& pWorldState,
+                                                     const std::string& pFromDeductionId) const
 {
   if (nodeType == WorldStateModificationNodeType::AND)
-    return (leftOperand && leftOperand->canSatisfyObjective(pFactCallback, pParameters, pWorldState)) ||
-        (rightOperand && rightOperand->canSatisfyObjective(pFactCallback, pParameters, pWorldState));
+    return (leftOperand && leftOperand->canSatisfyObjective(pFactCallback, pParameters, pWorldState, pFromDeductionId)) ||
+        (rightOperand && rightOperand->canSatisfyObjective(pFactCallback, pParameters, pWorldState, pFromDeductionId));
 
   if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand)
   {
@@ -530,7 +534,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
 
       if (factToCheck.fact.value == "")
       {
-        factToCheck.fact.value = "??tmpValueFromSet";
+        factToCheck.fact.value = "??tmpValueFromSet_" + pFromDeductionId;
         localParameterToFind[factToCheck.fact.value];
       }
       bool res = pFactCallback(factToCheck, &localParameterToFind);
@@ -573,7 +577,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
           [&](const WorldStateModification& pWsModification)
     {
       if (!res)
-        res = pWsModification.canSatisfyObjective(pFactCallback, pParameters, pWorldState);
+        res = pWsModification.canSatisfyObjective(pFactCallback, pParameters, pWorldState, pFromDeductionId);
     }, pWorldState);
     return res;
   }

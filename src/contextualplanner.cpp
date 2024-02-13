@@ -205,7 +205,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              const Problem& pProblem,
                              const FactOptional& pFactOptionalToSatisfy,
                              const Domain& pDomain,
-                             FactsAlreadyChecked& pFactsAlreadychecked);
+                             FactsAlreadyChecked& pFactsAlreadychecked,
+                             const std::string& pFromDeductionId);
 
 
 PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
@@ -219,7 +220,8 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
                                           const Problem& pProblem,
                                           const FactOptional& pFactOptionalToSatisfy,
                                           const Domain& pDomain,
-                                          FactsAlreadyChecked& pFactsAlreadychecked)
+                                          FactsAlreadyChecked& pFactsAlreadychecked,
+                                          const std::string& pFromDeductionId)
 {
   if (!pCondition ||
       (pCondition->containsFactOpt(pFactOptional, pParentParameters, pTmpParentParametersPtr, pParameters) &&
@@ -231,7 +233,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
 
     bool satisfyObjective = false;
     if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, false, pTreeOfAlreadyDonePath, pEffect,
-                                pGoal, pProblem, pFactOptionalToSatisfy, pDomain, pFactsAlreadychecked))
+                                pGoal, pProblem, pFactOptionalToSatisfy, pDomain, pFactsAlreadychecked, pFromDeductionId))
     {
       bool tryToMatchWothFactOfTheWorld = false;
       while (true)
@@ -361,7 +363,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
           res = _merge(_lookForAPossibleDeduction(*newTreePtr, action.parameters, action.precondition,
                                                   action.effect, pFactOptional, cpParentParameters, &cpTmpParameters,
                                                   pGoal, pProblem, pFactOptionalToSatisfy,
-                                                  pDomain, pFactsAlreadychecked), res);
+                                                  pDomain, pFactsAlreadychecked, currActionId), res);
         if (res == PossibleEffect::SATISFIED)
         {
           if (!pTryToGetAllPossibleParentParameterValues)
@@ -424,7 +426,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
                                                     inference.factsToModify->clone(nullptr), pFactOptional,
                                                     pParentParameters, pTmpParentParametersPtr,
                                                     pGoal, pProblem, pFactOptionalToSatisfy,
-                                                    pDomain, pFactsAlreadychecked), res);
+                                                    pDomain, pFactsAlreadychecked, currInferenceId), res);
           if (res == PossibleEffect::SATISFIED && !pTryToGetAllPossibleParentParameterValues)
             return res;
         }
@@ -444,7 +446,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              const Problem& pProblem,
                              const FactOptional& pFactOptionalToSatisfy,
                              const Domain& pDomain,
-                             FactsAlreadyChecked& pFactsAlreadychecked)
+                             FactsAlreadyChecked& pFactsAlreadychecked,
+                             const std::string& pFromDeductionId)
 {
   auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr)
   {
@@ -468,13 +471,13 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   };
 
   if (pEffectToCheck.worldStateModification &&
-      pEffectToCheck.worldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState))
+      pEffectToCheck.worldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState, pFromDeductionId))
   {
     pSatisfyObjective = true;
     return true;
   }
   if (pEffectToCheck.potentialWorldStateModification &&
-      pEffectToCheck.potentialWorldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState))
+      pEffectToCheck.potentialWorldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState, pFromDeductionId))
   {
     pSatisfyObjective = true;
     return true;
@@ -544,7 +547,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
       return possibleEffect == PossibleEffect::SATISFIED;
     }
     return false;
-  }, pParameters, pProblem.worldState);
+  }, pParameters, pProblem.worldState, pFromDeductionId);
 }
 
 
@@ -675,7 +678,7 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
       if (newTreePtr != nullptr && // To skip leaf of already seen path
           _lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, pTryToDoMoreOptimalSolution, *newTreePtr,
                                   action.effect, pGoal, pProblem, pFactOptionalToSatisfy,
-                                  pDomain, factsAlreadyChecked) &&
+                                  pDomain, factsAlreadyChecked, currAction) &&
           (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parameters)))
       {
         while (true)

@@ -92,11 +92,13 @@ struct CONTEXTUALPLANNER_API ProblemModification
    * @param[in] pCallback Callback called for each optional fact of this object to check if it can satisfy the objective.
    * @param[in, out] pParameters Parameters of the holding action.
    * @param[in] pWorldState World state to consider.
+   * @param[in] pFromDeductionId Identifier of the deduction holding the problem modification.
    * @return True if one callback returned true, false otherwise.
    */
   bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pCallback,
                            std::map<std::string, std::set<std::string>>& pParameters,
-                           const WorldState& pWorldState) const;
+                           const WorldState& pWorldState,
+                           const std::string& pFromDeductionId) const;
 
 
   /// Convert the worldStateModification to a string or to an empty string if it is not defined.
@@ -185,11 +187,12 @@ inline void ProblemModification::replaceFact(const cp::Fact& pOldFact,
 
 inline bool ProblemModification::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pCallback,
                                                      std::map<std::string, std::set<std::string>>& pParameters,
-                                                     const WorldState& pWorldState) const
+                                                     const WorldState& pWorldState,
+                                                     const std::string& pFromDeductionId) const
 {
-  if (worldStateModification && worldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState))
+  if (worldStateModification && worldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState, pFromDeductionId))
     return true;
-  if (potentialWorldStateModification && potentialWorldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState))
+  if (potentialWorldStateModification && potentialWorldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState, pFromDeductionId))
     return true;
   return false;
 }
