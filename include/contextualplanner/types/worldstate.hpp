@@ -291,6 +291,7 @@ private:
    * @param[in] pFacts Facts to add.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
+   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
    * @param[in] pNow Current time.
    * @return True if some facts were added, false otherwise.
    */
@@ -298,6 +299,7 @@ private:
   void _addFacts(WhatChanged& pWhatChanged,
                  const FACTS& pFacts,
                  GoalStack& pGoalStack,
+                 const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -321,11 +323,13 @@ private:
    * @param[in] pWsModif Modification to do.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
+   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
    * @param[in] pNow Current time.
    */
   void _modify(WhatChanged& pWhatChanged,
                const std::unique_ptr<WorldStateModification>& pWsModif,
                GoalStack& pGoalStack,
+               const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -344,6 +348,7 @@ private:
                              GoalStack& pGoalStack,
                              const std::set<InferenceId>& pInferenceIds,
                              const std::map<InferenceId, Inference>& pInferences,
+                             const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**

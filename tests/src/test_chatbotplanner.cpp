@@ -3389,6 +3389,54 @@ void _checkTwoTimesTheEqualityOfAFact()
 }
 
 
+
+void _inferenceToRemoveAFactWithoutFluent()
+{
+  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+  std::map<std::string, cp::Action> actions;
+
+  cp::SetOfInferences setOfInferences;
+  cp::Inference inference1(cp::Condition::fromStr("locationOfRobot(me)=?l"),
+                          cp::WorldStateModification::fromStr("robotAt(me, ?l)"));
+  inference1.parameters.emplace_back("?l");
+  setOfInferences.addInference(inference1);
+
+  cp::Inference inference2(cp::Condition::fromStr("exists(loc, locationOfRobot(me)=loc & within(loc)=?l)"),
+                          cp::WorldStateModification::fromStr("robotAt(me, ?l)"));
+  inference2.parameters.emplace_back("?l");
+  setOfInferences.addInference(inference2);
+
+  cp::Inference inference(cp::Condition::fromStr("!locationOfRobot(me)=?l"),
+                          cp::WorldStateModification::fromStr("forall(ll, robotAt(me, ll), !robotAt(me, ll))"));
+
+  inference.parameters.emplace_back("?l");
+  setOfInferences.addInference(inference);
+  cp::Domain domain(std::move(actions), std::move(setOfInferences));
+
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact("within(house1)=city"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact("within(house2)=city"), problem.goalStack, setOfInferencesMap, now);
+  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=house1"), problem.goalStack, setOfInferencesMap, now);
+  assert_true(problem.worldState.hasFact(cp::Fact("robotAt(me, house1)")));
+  assert_true(problem.worldState.hasFact(cp::Fact("robotAt(me, city)")));
+  problem.worldState.removeFact(cp::Fact("locationOfRobot(me)=house1"), problem.goalStack, setOfInferencesMap, now);
+  assert_false(problem.worldState.hasFact(cp::Fact("robotAt(me, house1)")));
+  assert_false(problem.worldState.hasFact(cp::Fact("robotAt(me, city)")));
+  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=house1"), problem.goalStack, setOfInferencesMap, now);
+  assert_true(problem.worldState.hasFact(cp::Fact("robotAt(me, house1)")));
+  assert_true(problem.worldState.hasFact(cp::Fact("robotAt(me, city)")));
+  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=city"), problem.goalStack, setOfInferencesMap, now);
+  assert_false(problem.worldState.hasFact(cp::Fact("robotAt(me, house1)")));
+  assert_true(problem.worldState.hasFact(cp::Fact("robotAt(me, city)")));
+  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=anotherCity"), problem.goalStack, setOfInferencesMap, now);
+  assert_false(problem.worldState.hasFact(cp::Fact("robotAt(me, house1)")));
+  assert_false(problem.worldState.hasFact(cp::Fact("robotAt(me, city)")));
+}
+
+
+
 }
 
 
@@ -3516,6 +3564,7 @@ int main(int argc, char *argv[])
   _fixInferenceWithFluentInParameter();
   _assignAFactTwoTimesInTheSamePlan();
   _checkTwoTimesTheEqualityOfAFact();
+  _inferenceToRemoveAFactWithoutFluent();
 
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
