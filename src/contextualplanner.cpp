@@ -449,7 +449,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              FactsAlreadyChecked& pFactsAlreadychecked,
                              const std::string& pFromDeductionId)
 {
-  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr)
+  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<std::string, std::set<std::string>>&)>& pCheckValidity)
   {
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
       return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.value != pFactOptional.fact.value;
@@ -460,6 +460,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     std::map<std::string, std::set<std::string>> newParameters;
     bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
                                                          pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
+
+    if (res && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+      res = false;
+
     if (res && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
     {
       const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
@@ -484,7 +488,9 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   }
 
   auto& setOfInferences = pDomain.getSetOfInferences();
-  return pEffectToCheck.canSatisfyObjective([&](const cp::FactOptional& pFactOptional, std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr) {
+  return pEffectToCheck.canSatisfyObjective([&](const cp::FactOptional& pFactOptional,
+                                            std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
+                                            const std::function<bool (const std::map<std::string, std::set<std::string>>&)>& pCheckValidity) {
     // Condition only for optimization
     if (pParameters.empty())
     {
@@ -514,6 +520,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                                                                                     pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
                                                                                     preconditionToActions, pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                     pDomain, subFactsAlreadychecked);
+
+      if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+        possibleEffect = PossibleEffect::NOT_SATISFIED;
+
       if (possibleEffect != PossibleEffect::SATISFIED)
       {
         for (auto& currSetOfInferences : setOfInferences)
@@ -541,6 +551,9 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
             break;
         }
       }
+
+      if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+        possibleEffect = PossibleEffect::NOT_SATISFIED;
 
       if (possibleEffect != PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD)
         pFactsAlreadychecked.swap(subFactsAlreadychecked);

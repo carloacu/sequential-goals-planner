@@ -85,7 +85,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pWorldState World state use to extract value of the facts.
    * @param[in] pFromDeductionId Identifier of the deduction holding the world state modification.
    */
-  virtual bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*)>& pFactCallback,
+  virtual bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*, const std::function<bool (const std::map<std::string, std::set<std::string>>&)>&)>& pFactCallback,
                                    std::map<std::string, std::set<std::string>>& pParameters,
                                    const WorldState& pWorldState,
                                    const std::string& pFromDeductionId) const = 0;
