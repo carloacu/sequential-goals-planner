@@ -537,6 +537,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
       if (!localParameterToFind.empty() &&
           !localParameterToFind.begin()->second.empty())
       {
+        res = false;
         const auto* wSMFPtr = static_cast<const WorldStateModificationFact*>(&*rightOperand);
         if (wSMFPtr != nullptr)
         {
@@ -553,6 +554,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
             std::map<std::string, std::set<std::string>> newParameters;
             if (factWithValueToAssign.isInOtherFactsMap(factNamesToFacts, true, &newParameters, &pParameters))
             {
+              res = true;
               applyNewParams(pParameters, newParameters);
               break;
             }
