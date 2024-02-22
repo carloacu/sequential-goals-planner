@@ -27,7 +27,9 @@ bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCa
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    return pValueCallback(pCondition.getValue(pWorldState));
+    auto fluentOpt = pCondition.getFluent(pWorldState);
+    if (fluentOpt)
+      return pValueCallback(*fluentOpt);
   }
 
   std::list<std::map<std::string, std::string>> paramPossibilities;
@@ -35,18 +37,19 @@ bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCa
   for (auto& currParamPoss : paramPossibilities)
   {
     auto condToExtractValue = pCondition.clone(&currParamPoss);
-    if (pValueCallback(condToExtractValue->getValue(pWorldState)) == pUntilValue)
+    auto fluentOpt = condToExtractValue->getFluent(pWorldState);
+    if (fluentOpt && pValueCallback(*fluentOpt) == pUntilValue)
       return pUntilValue;
   }
 
   auto* factCondPtr = pCondition.fcFactPtr();
   if (factCondPtr != nullptr &&
-      factCondPtr->factOptional.fact.fluent == "")
+      !factCondPtr->factOptional.fact.fluent)
   {
     pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
           [&pValueCallback](const Fact& pFact) {
-      if (pFact.fluent != "")
-        pValueCallback(pFact.fluent);
+      if (pFact.fluent)
+        pValueCallback(*pFact.fluent);
       return false;
     },
     factCondPtr->factOptional.fact, // pFact
@@ -64,7 +67,9 @@ void _forEach(const std::function<void (const std::string&, const Fact*)>& pValu
 {
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    pValueCallback(pCondition.getValue(pWorldState), nullptr);
+    auto fluentOpt = pCondition.getFluent(pWorldState);
+    if (fluentOpt)
+      pValueCallback(*fluentOpt, nullptr);
     return;
   }
 
@@ -73,17 +78,19 @@ void _forEach(const std::function<void (const std::string&, const Fact*)>& pValu
   for (auto& currParamPoss : paramPossibilities)
   {
     auto factToExtractValue = pCondition.clone(&currParamPoss);
-    pValueCallback(factToExtractValue->getValue(pWorldState), nullptr);
+    auto fluentOpt = factToExtractValue->getFluent(pWorldState);
+    if (fluentOpt)
+      pValueCallback(*fluentOpt, nullptr);
   }
 
   auto* factCondPtr = pCondition.fcFactPtr();
   if (factCondPtr != nullptr &&
-      factCondPtr->factOptional.fact.fluent == "")
+      !factCondPtr->factOptional.fact.fluent)
   {
     pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
           [&pValueCallback](const Fact& pFact) {
-      if (pFact.fluent != "")
-        pValueCallback(pFact.fluent, &pFact);
+      if (pFact.fluent)
+        pValueCallback(*pFact.fluent, &pFact);
       return false;
     },
     factCondPtr->factOptional.fact, // pFact
@@ -120,7 +127,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
       auto* rightFactPtr = rightOperand->fcFactPtr();
       if (rightFactPtr != nullptr &&
           rightFactPtr->factOptional.fact.arguments.empty() &&
-          rightFactPtr->factOptional.fact.fluent == "")
+          !rightFactPtr->factOptional.fact.fluent)
       {
         if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue)
         {
@@ -268,9 +275,9 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
         auto& leftOpFact = *leftOpFactPtr;
 
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
-          if (pFact.fluent != "")
+          if (pFact.fluent)
           {
-            auto& newParams = leftOpPossibleValuesToParams[pFact.fluent];
+            auto& newParams = leftOpPossibleValuesToParams[*pFact.fluent];
             if (pConditionParametersToPossibleArguments != nullptr)
             {
               for (auto& currArg : *pConditionParametersToPossibleArguments)
@@ -293,9 +300,9 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
 
         std::map<std::string, std::set<std::string>> newParameters;
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
-          if (pFact.fluent != "")
+          if (pFact.fluent)
           {
-            auto itToLeftPoss = leftOpPossibleValuesToParams.find(pFact.fluent);
+            auto itToLeftPoss = leftOpPossibleValuesToParams.find(*pFact.fluent);
             if (itToLeftPoss != leftOpPossibleValuesToParams.end())
             {
               if (pConditionParametersToPossibleArguments != nullptr)
@@ -540,7 +547,7 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
       if (nodeType == ConditionNodeType::EQUALITY)
       {
         auto factToCheck = leftFact.factOptional.fact;
-        factToCheck.fluent = rightOperand->getValue(pWorldState);
+        factToCheck.fluent = rightOperand->getFluent(pWorldState);
         return pFactCallback(FactOptional(factToCheck));
       }
       else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
@@ -655,9 +662,10 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
           {
             for (const auto& currWsFact : itWsFacts->second)
             {
-              if (leftFact.areEqualWithoutFluentConsideration(currWsFact))
+              if (currWsFact.fluent &&
+                  leftFact.areEqualWithoutFluentConsideration(currWsFact))
               {
-                bool res = compIntNb(currWsFact.fluent, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
+                bool res = compIntNb(*currWsFact.fluent, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
                 if (!pIsWrappingExprssionNegated)
                   return res;
                 return !res;
@@ -697,7 +705,7 @@ bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.fluent = pWorldState.getFactValue(rightFactPtr->factOptional.fact);
+      factToCheck.fluent = pWorldState.getFactFluent(rightFactPtr->factOptional.fact);
       return pWorldState.canFactBecomeTrue(factToCheck, pParameters);
     }
   }
@@ -713,21 +721,23 @@ bool ConditionNode::operator==(const Condition& pOther) const
       _areEqual(rightOperand, otherNodePtr->rightOperand);
 }
 
-std::string ConditionNode::getValue(const WorldState& pWorldState) const
+std::optional<std::string> ConditionNode::getFluent(const WorldState& pWorldState) const
 {
   if (nodeType == ConditionNodeType::PLUS)
   {
-    auto leftValue = leftOperand->getValue(pWorldState);
-    auto rightValue = rightOperand->getValue(pWorldState);
-    return plusIntOrStr(leftValue, rightValue);
+    auto leftValue = leftOperand->getFluent(pWorldState);
+    auto rightValue = rightOperand->getFluent(pWorldState);
+    if (leftValue && rightValue)
+      return plusIntOrStr(*leftValue, *rightValue);
   }
   if (nodeType == ConditionNodeType::MINUS)
   {
-    auto leftValue = leftOperand->getValue(pWorldState);
-    auto rightValue = rightOperand->getValue(pWorldState);
-    return minusIntOrStr(leftValue, rightValue);
+    auto leftValue = leftOperand->getFluent(pWorldState);
+    auto rightValue = rightOperand->getFluent(pWorldState);
+    if (leftValue && rightValue)
+      return minusIntOrStr(*leftValue, *rightValue);
   }
-  return "";
+  return {};
 }
 
 
@@ -1104,9 +1114,9 @@ bool ConditionFact::operator==(const Condition& pOther) const
       factOptional == otherFactPtr->factOptional;
 }
 
-std::string ConditionFact::getValue(const WorldState& pWorldState) const
+std::optional<std::string> ConditionFact::getFluent(const WorldState& pWorldState) const
 {
-  return pWorldState.getFactValue(factOptional.fact);
+  return pWorldState.getFactFluent(factOptional.fact);
 }
 
 std::unique_ptr<Condition> ConditionFact::clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
@@ -1141,7 +1151,7 @@ bool ConditionNumber::operator==(const Condition& pOther) const
       nb == otherNbPtr->nb;
 }
 
-std::string ConditionNumber::getValue(const WorldState& pWorldState) const
+std::optional<std::string> ConditionNumber::getFluent(const WorldState&) const
 {
   return toStr(nullptr);
 }

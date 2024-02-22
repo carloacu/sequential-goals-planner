@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <optional>
 #include <set>
 #include "../util/api.hpp"
 
@@ -221,6 +222,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[in] pParametersPtr Already known parameters.
    * @param[in, out] pParametersToModifyInPlacePtr Parameters to modify in place.
    * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
+   * @param[in] pIgnoreFluents If we should ignore the fluents.
    * @return True if the fact matches the other fact.
    */
   bool isInOtherFact(const Fact& pOtherFact,
@@ -229,7 +231,7 @@ struct CONTEXTUALPLANNER_API Fact
                      const std::map<std::string, std::set<std::string>>* pParametersPtr,
                      std::map<std::string, std::set<std::string> >* pParametersToModifyInPlacePtr,
                      bool* pTriedToModifyParametersPtr = nullptr,
-                     bool pIgnoreValues = false) const;
+                     bool pIgnoreFluents = false) const;
 
   /**
    * @brief Replace, in the arguments of this fact, a fact by another fact.
@@ -244,7 +246,7 @@ struct CONTEXTUALPLANNER_API Fact
   /// Arguments of the fact.
   std::vector<std::string> arguments;
   /// Fluent of the fact.
-  std::string fluent;
+  std::optional<std::string> fluent;
   /// Is the value of the fact negated.
   bool isValueNegated;
 

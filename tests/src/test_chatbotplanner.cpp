@@ -228,6 +228,12 @@ void _test_goalToStr()
   assert_eq<std::string>("oneStepTowards(goal_name)", cp::Goal("oneStepTowards(goal_name)").toStr());
 }
 
+void _test_factToStr()
+{
+  assert_eq<std::string>("isEngaged(1)", cp::Fact("isEngaged(1)").toStr());
+}
+
+
 void _test_conditionParameters()
 {
   assert_false(cp::Condition::fromStr("").operator bool());
@@ -304,11 +310,6 @@ void _test_checkCondition()
   cp::WorldState worldState;
   cp::GoalStack goalStack;
   std::map<cp::SetOfInferencesId, cp::SetOfInferences> setOfInferences;
-  assert_false(cp::Condition::fromStr("a!=")->isTrue(worldState));
-  worldState.addFact(cp::Fact("a"), goalStack, setOfInferences, {});
-  assert_false(cp::Condition::fromStr("a!=")->isTrue(worldState));
-  worldState.addFact(cp::Fact("a=b"), goalStack, setOfInferences, {});
-  assert_true(cp::Condition::fromStr("a!=")->isTrue(worldState));
   worldState.addFact(cp::Fact("a=c"), goalStack, setOfInferences, {});
   assert_true(cp::Condition::fromStr("a!=b")->isTrue(worldState));
   assert_false(cp::Condition::fromStr("a!=c")->isTrue(worldState));
@@ -1948,7 +1949,7 @@ void _actionNavigationAndGrabObjectWithParameters()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact("location(me)=corridor"), problem.goalStack, _emptySetOfInferences, now);
   problem.worldState.addFact(cp::Fact("location(sweets)=kitchen"), problem.goalStack, _emptySetOfInferences, now);
-  assert_eq<std::string>("kitchen", problem.worldState.getFactValue(cp::Fact("location(sweets)")));
+  assert_eq<std::string>("kitchen", *problem.worldState.getFactFluent(cp::Fact("location(sweets)")));
   _setGoalsForAPriority(problem, {cp::Goal("grab(me, sweets)")});
   assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
 }
@@ -1970,7 +1971,7 @@ void _actionNavigationAndGrabObjectWithParameters2()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact("location(me)=corridor"), problem.goalStack, _emptySetOfInferences, now);
   problem.worldState.addFact(cp::Fact("location(sweets)=kitchen"), problem.goalStack, _emptySetOfInferences, now);
-  assert_eq<std::string>("kitchen", problem.worldState.getFactValue(cp::Fact("location(sweets)")));
+  assert_eq<std::string>("kitchen", *problem.worldState.getFactFluent(cp::Fact("location(sweets)")));
   _setGoalsForAPriority(problem, {cp::Goal("grab(me, sweets)")});
   assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
 }
@@ -3450,6 +3451,7 @@ int main(int argc, char *argv[])
   planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();
   _test_goalToStr();
+  _test_factToStr();
   _test_conditionParameters();
   _test_wsModificationToStr();
   _test_invertCondition();

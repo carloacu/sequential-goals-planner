@@ -463,11 +463,11 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     if (res && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
       res = false;
 
-    if (res && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
+    if (res && pFactOptional.fact.fluent && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
     {
       const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
       if (objValPtr != nullptr)
-        res = compIntNb(pFactOptional.fact.fluent, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
+        res = compIntNb(*pFactOptional.fact.fluent, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
     }
     applyNewParams(pParameters, newParameters);
     return res;

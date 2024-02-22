@@ -106,21 +106,23 @@ struct WorldStateModificationNode : public WorldStateModification
                            const std::string& pFromDeductionId) const override;
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::string getValue(const WorldState& pWorldState) const override
+  std::optional<std::string> getFluent(const WorldState& pWorldState) const override
   {
     if (nodeType == WorldStateModificationNodeType::PLUS)
     {
-      auto leftValue = leftOperand->getValue(pWorldState);
-      auto rightValue = rightOperand->getValue(pWorldState);
-      return plusIntOrStr(leftValue, rightValue);
+      auto leftValue = leftOperand->getFluent(pWorldState);
+      auto rightValue = rightOperand->getFluent(pWorldState);
+      if (leftValue && rightValue)
+        return plusIntOrStr(*leftValue, *rightValue);
     }
     if (nodeType == WorldStateModificationNodeType::MINUS)
     {
-      auto leftValue = leftOperand->getValue(pWorldState);
-      auto rightValue = rightOperand->getValue(pWorldState);
-      return minusIntOrStr(leftValue, rightValue);
+      auto leftValue = leftOperand->getFluent(pWorldState);
+      auto rightValue = rightOperand->getFluent(pWorldState);
+      if (leftValue && rightValue)
+        return minusIntOrStr(*leftValue, *rightValue);
     }
-    return "";
+    return {};
   }
 
   const FactOptional* getOptionalFact() const override
@@ -211,9 +213,9 @@ struct WorldStateModificationFact : public WorldStateModification
 
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::string getValue(const WorldState& pWorldState) const override
+  std::optional<std::string> getFluent(const WorldState& pWorldState) const override
   {
-    return pWorldState.getFactValue(factOptional.fact);
+    return pWorldState.getFactFluent(factOptional.fact);
   }
 
   const FactOptional* getOptionalFact() const override
@@ -274,7 +276,7 @@ struct WorldStateModificationNumber : public WorldStateModification
                            const std::string&) const override { return false; }
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::string getValue(const WorldState&) const override
+  std::optional<std::string> getFluent(const WorldState&) const override
   {
     return toStr();
   }
@@ -299,17 +301,18 @@ struct WorldStateModificationNumber : public WorldStateModification
 
 const WorldStateModificationNode* _toWmNode(const WorldStateModification& pOther)
 {
-  return static_cast<const WorldStateModificationNode*>(&pOther);
+  return dynamic_cast<const WorldStateModificationNode*>(&pOther);
 }
 
 const WorldStateModificationFact* _toWmFact(const WorldStateModification& pOther)
 {
-  return static_cast<const WorldStateModificationFact*>(&pOther);
+  const WorldStateModificationFact* wmFactPtr = dynamic_cast<const WorldStateModificationFact*>(&pOther);
+  return wmFactPtr;
 }
 
 const WorldStateModificationNumber* _toWmNumber(const WorldStateModification& pOther)
 {
-  return static_cast<const WorldStateModificationNumber*>(&pOther);
+  return dynamic_cast<const WorldStateModificationNumber*>(&pOther);
 }
 
 
@@ -324,7 +327,7 @@ std::string WorldStateModificationNode::toStr() const
   {
     const auto* rightOperandFactPtr = _toWmFact(*rightOperand);
     if (rightOperandFactPtr != nullptr && rightOperandFactPtr->factOptional.fact.arguments.empty() &&
-        rightOperandFactPtr->factOptional.fact.fluent == "")
+        !rightOperandFactPtr->factOptional.fact.fluent)
       isRightOperandAFactWithoutParameter = true;
     rightOperandStr = rightOperand->toStr();
   }
@@ -369,7 +372,7 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = rightOperand->getValue(pWorldState);
+      factToCheck.fact.fluent = rightOperand->getFluent(pWorldState);
       return pFactCallback(factToCheck);
     }
   }
@@ -387,7 +390,7 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -397,7 +400,7 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -421,8 +424,8 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = rightOperand->getValue(pWorldState);
-      if (factToCheck.fact.fluent == "")
+      factToCheck.fact.fluent = rightOperand->getFluent(pWorldState);
+      if (!factToCheck.fact.fluent)
         factToCheck.fact.fluent = Fact::anyValue;
       return pFactCallback(factToCheck);
     }
@@ -441,7 +444,7 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -451,7 +454,7 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -471,7 +474,7 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = rightOperand->getValue(pWorldState);
+      factToCheck.fact.fluent = rightOperand->getFluent(pWorldState);
       return pFactCallback(factToCheck);
     }
   }
@@ -494,7 +497,7 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -505,7 +508,7 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck);
     }
   }
@@ -529,13 +532,13 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = rightOperand->getValue(pWorldState);
+      factToCheck.fact.fluent = rightOperand->getFluent(pWorldState);
       std::map<std::string, std::set<std::string>> localParameterToFind;
 
-      if (factToCheck.fact.fluent == "")
+      if (!factToCheck.fact.fluent)
       {
         factToCheck.fact.fluent = "??tmpValueFromSet_" + pFromDeductionId;
-        localParameterToFind[factToCheck.fact.fluent];
+        localParameterToFind[*factToCheck.fact.fluent];
       }
       bool res = pFactCallback(factToCheck, &localParameterToFind, [&](const std::map<std::string, std::set<std::string>>& pLocalParameterToFind){
         if (!localParameterToFind.empty() &&
@@ -591,7 +594,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck, nullptr, [](const std::map<std::string, std::set<std::string>>&){ return true; });
     }
   }
@@ -602,7 +605,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getValue(pWorldState), rightOperand->getValue(pWorldState));
+      factToCheck.fact.fluent = minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
       return pFactCallback(factToCheck, nullptr, [](const std::map<std::string, std::set<std::string>>&){ return true; });
     }
   }
@@ -678,7 +681,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       const auto* rightFactPtr = static_cast<const WorldStateModificationFact*>(&*rightOperand);
       if (rightFactPtr != nullptr &&
           rightFactPtr->factOptional.fact.arguments.empty() &&
-          rightFactPtr->factOptional.fact.fluent == "")
+          !rightFactPtr->factOptional.fact.fluent)
       {
         if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue)
         {

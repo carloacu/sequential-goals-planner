@@ -5,6 +5,7 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -25,14 +26,14 @@ void applyNewParams(
 
 
 CONTEXTUALPLANNER_API
-std::string plusIntOrStr(
-    const std::string& pNb1Str,
-    const std::string& pNb2Str);
+std::optional<std::string> plusIntOrStr(
+    const std::optional<std::string>& pNb1Str,
+    const std::optional<std::string>& pNb2Str);
 
 CONTEXTUALPLANNER_API
-std::string minusIntOrStr(
-    const std::string& pNb1Str,
-    const std::string& pNb2Str);
+std::optional<std::string> minusIntOrStr(
+    const std::optional<std::string>& pNb1Str,
+    const std::optional<std::string>& pNb2Str);
 
 CONTEXTUALPLANNER_API
 bool compIntNb(

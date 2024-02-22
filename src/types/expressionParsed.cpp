@@ -34,7 +34,7 @@ FactOptional ExpressionParsed::toFact() const
     res.isFactNegated = true;
     res.fact.fluent = Fact::anyValue;
   }
-  else
+  else if (value != "" || res.fact.isValueNegated)
   {
     res.fact.fluent = value;
   }

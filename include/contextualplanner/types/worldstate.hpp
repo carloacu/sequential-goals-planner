@@ -179,7 +179,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFact Fact to extract the value.
    * @return The value of the fact in the world state, an empty string if the fact is not in the world state.
    */
-  std::string getFactValue(const Fact& pFact) const;
+  std::optional<std::string> getFactFluent(const Fact& pFact) const;
 
   /**
    * @brief Extract the potential arguments of a fact parameter.

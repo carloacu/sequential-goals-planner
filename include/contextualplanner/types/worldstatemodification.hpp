@@ -99,7 +99,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pWorldState World state use to extract value of the facts.
    * @return The world state modification converted to a string value.
    */
-  virtual std::string getValue(const WorldState& pWorldState) const = 0;
+  virtual std::optional<std::string> getFluent(const WorldState& pWorldState) const = 0;
 
   /// Convert this world state modification to an optional fact if possible.
   virtual const FactOptional* getOptionalFact() const = 0;

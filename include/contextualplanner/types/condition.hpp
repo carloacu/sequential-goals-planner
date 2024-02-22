@@ -137,7 +137,7 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pWorldState World state use to extract value of the facts.
    * @return The condition converted to a string value.
    */
-  virtual std::string getValue(const WorldState& pWorldState) const = 0;
+  virtual std::optional<std::string> getFluent(const WorldState& pWorldState) const = 0;
 
   /**
    * @brief Create a copy of this condition with arguments filling (or not if pConditionParametersToArgumentPtr is nullptr).
@@ -222,7 +222,7 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const WorldState& pWorldState) const override;
+  std::optional<std::string> getFluent(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
                                    bool pInvert) const override;
@@ -285,7 +285,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const WorldState&) const override { return ""; }
+  std::optional<std::string> getFluent(const WorldState&) const override { return {}; }
 
   std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
                                    bool pInvert) const override;
@@ -348,7 +348,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const WorldState&) const override { return ""; }
+  std::optional<std::string> getFluent(const WorldState&) const override { return {}; }
 
   std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
                                    bool pInvert) const override;
@@ -407,7 +407,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                      bool pIsWrappingExprssionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const WorldState& pWorldState) const override;
+  std::optional<std::string> getFluent(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
                                    bool pInvert) const override;
@@ -465,7 +465,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
                      bool) const override  { return true; }
   bool operator==(const Condition& pOther) const override;
 
-  std::string getValue(const WorldState& pWorldState) const override;
+  std::optional<std::string> getFluent(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<std::string, std::string>* pConditionParametersToArgumentPtr,
                                    bool pInvert) const override;

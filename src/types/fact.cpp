@@ -158,10 +158,19 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
     ++itOtherParam;
   }
 
-  if (!(fluent == pOther.fluent || fluent == anyValue || pOther.fluent == anyValue ||
-        _isInside(fluent, pThisFactParametersToConsiderAsAnyValuePtr) ||
-        _isInside(pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr) ||
-        _isInside(pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+  if (!fluent && !pOther.fluent)
+    return isValueNegated == pOther.isValueNegated;
+  if (fluent &&
+      (*fluent == anyValue ||
+       _isInside(*fluent, pThisFactParametersToConsiderAsAnyValuePtr)))
+    return isValueNegated == pOther.isValueNegated;
+  if (pOther.fluent &&
+      (*pOther.fluent == anyValue ||
+       _isInside(*pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+       _isInside(*pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+    return isValueNegated == pOther.isValueNegated;
+
+  if ((fluent && !pOther.fluent) || (!fluent && pOther.fluent) || *fluent != *pOther.fluent)
     return isValueNegated != pOther.isValueNegated;
 
   return isValueNegated == pOther.isValueNegated;
@@ -226,8 +235,8 @@ std::string Fact::tryToExtractArgumentFromExample(
     return "";
 
   std::string res;
-  if (fluent == pArgument)
-    res = pExampleFact.fluent;
+  if (fluent && pExampleFact.fluent && *fluent == pArgument)
+    res = *pExampleFact.fluent;
 
   auto itParam = arguments.begin();
   auto itOtherParam = pExampleFact.arguments.begin();
@@ -286,7 +295,11 @@ bool Fact::isPatternOf(
     return true;
   };
 
-  if (!isOk(fluent, pFactExample.fluent))
+  if (fluent && !pFactExample.fluent)
+    return false;
+  if (!fluent && pFactExample.fluent)
+    return false;
+  if (fluent && pFactExample.fluent && !isOk(*fluent, *pFactExample.fluent))
     return false;
 
   auto itParam = arguments.begin();
@@ -305,9 +318,12 @@ bool Fact::isPatternOf(
 
 void Fact::replaceArguments(const std::map<std::string, std::string>& pCurrentArgumentsToNewArgument)
 {
-  auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent);
-  if (itValueParam != pCurrentArgumentsToNewArgument.end())
-    fluent = itValueParam->second;
+  if (fluent)
+  {
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(*fluent);
+    if (itValueParam != pCurrentArgumentsToNewArgument.end())
+      fluent = itValueParam->second;
+  }
 
   for (auto& currParam : arguments)
   {
@@ -319,9 +335,12 @@ void Fact::replaceArguments(const std::map<std::string, std::string>& pCurrentAr
 
 void Fact::replaceArguments(const std::map<std::string, std::set<std::string>>& pCurrentArgumentsToNewArgument)
 {
-  auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent);
-  if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
-    fluent = *itValueParam->second.begin();
+  if (fluent)
+  {
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(*fluent);
+    if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
+      fluent = *itValueParam->second.begin();
+  }
 
   for (auto& currParam : arguments)
   {
@@ -340,10 +359,13 @@ std::string Fact::toStr() const
     _parametersToStr(res, arguments);
     res += ")";
   }
-  if (isValueNegated)
-    res += "!=" + fluent;
-  else if (!fluent.empty())
-    res += "=" + fluent;
+  if (fluent)
+  {
+    if (isValueNegated)
+      res += "!=" + *fluent;
+    else
+      res += "=" + *fluent;
+  }
   return res;
 }
 
@@ -418,7 +440,7 @@ std::size_t Fact::fillFactFromStr(
     }
     if (name.empty())
       name = pStr.substr(beginPos, pos - beginPos);
-    else
+    else if (pos > beginPos)
       fluent = pStr.substr(beginPos, pos - beginPos);
   }
   return pos;
@@ -488,7 +510,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
                          const std::map<std::string, std::set<std::string>>* pParametersPtr,
                          std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
                          bool* pTriedToModifyParametersPtr,
-                         bool pIgnoreValues) const
+                         bool pIgnoreFluents) const
 {
   if (pOtherFact.name != name ||
       pOtherFact.arguments.size() != arguments.size())
@@ -549,16 +571,24 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   }
 
   std::optional<bool> resOpt;
-  if (pParametersAreForTheFact)
+  if (pIgnoreFluents || (!fluent && !pOtherFact.fluent))
   {
-    if (pIgnoreValues || doesItMatch(fluent, pOtherFact.fluent))
-      resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
+    resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
   }
-  else
+  else if (fluent && pOtherFact.fluent)
   {
-    if (pIgnoreValues || doesItMatch(pOtherFact.fluent, fluent))
-      resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
+    if (pParametersAreForTheFact)
+    {
+      if (doesItMatch(*fluent, *pOtherFact.fluent))
+        resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
+    }
+    else
+    {
+      if (doesItMatch(*pOtherFact.fluent, *fluent))
+        resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
+    }
   }
+
   if (!resOpt)
     resOpt.emplace(pOtherFact.isValueNegated != isValueNegated);
 

@@ -394,7 +394,7 @@ bool WorldState::canFactNameBeModified(const std::string& pFactName) const
   return false;
 }
 
-std::string WorldState::getFactValue(const cp::Fact& pFact) const
+std::optional<std::string> WorldState::getFactFluent(const cp::Fact& pFact) const
 {
   auto itFact = _factNamesToFacts.find(pFact.name);
   if (itFact != _factNamesToFacts.end())
@@ -403,7 +403,7 @@ std::string WorldState::getFactValue(const cp::Fact& pFact) const
       if (currFact.arguments == pFact.arguments)
         return currFact.fluent;
   }
-  return "";
+  return {};
 }
 
 
@@ -495,8 +495,9 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
               {
                 if (pFactOptional.fact.fluent != Fact::anyValue)
                 {
-                  std::map<std::string, std::set<std::string>> newParameters =
-                  {{pFactOptional.fact.fluent, {currFact.fluent}}};
+                  std::map<std::string, std::set<std::string>> newParameter;
+                  if (pFactOptional.fact.fluent && currFact.fluent)
+                    newParameters = {{*pFactOptional.fact.fluent, {*currFact.fluent}}};
                   applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
                 }
                 return false;
