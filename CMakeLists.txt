@@ -11,6 +11,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/condition.hpp
     include/contextualplanner/types/derivedpredicate.hpp
     include/contextualplanner/types/domain.hpp
+    include/contextualplanner/types/entity.hpp
     include/contextualplanner/types/fact.hpp
     include/contextualplanner/types/factoptional.hpp
     include/contextualplanner/types/goal.hpp
@@ -47,6 +48,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/condition.cpp
     src/types/derivedpredicate.cpp
     src/types/domain.cpp
+    src/types/entity.cpp
     src/types/expressionParsed.hpp
     src/types/expressionParsed.cpp
     src/types/fact.cpp
