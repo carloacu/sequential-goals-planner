@@ -252,8 +252,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
             pCondition->findConditionCandidateFromFactFromEffect(
                   [&](const FactOptional& pConditionFactOptional)
             {
-              auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameterName, pConditionFactOptional.fact,
-                                                                                         &pParentParameters, pTmpParentParametersPtr);
+              auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameterName, pConditionFactOptional.fact);
               if (parentParamValue.empty())
                 return false;
 

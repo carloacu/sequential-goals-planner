@@ -102,15 +102,11 @@ struct CONTEXTUALPLANNER_API Fact
    * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).
    * @param pArgument[in] Argument of this fact.
    * @param pExampleFact[in] Example Fact.
-   * @param[in] pThisFactParametersToConsiderAsAnyValuePtr This fact arguments to consider as "any value".
-   * @param[in] pThisFactParametersToConsiderAsAnyValuePtr2 Another set of this fact rguments to consider as "any value".
    * @return Argument of the other fact corresponding to the pArgument of this fact.
    */
   std::string tryToExtractArgumentFromExample(
       const std::string& pArgument,
-      const Fact& pExampleFact,
-      const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr,
-      const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr2 = nullptr) const;
+      const Fact& pExampleFact) const;
 
   /**
    * @brief Extract an argument from another instance of this fact.<br/>
@@ -246,7 +242,7 @@ struct CONTEXTUALPLANNER_API Fact
   /// Name of the fact.
   std::string name;
   /// Arguments of the fact.
-  std::vector<FactOptional> arguments;
+  std::vector<std::string> arguments;
   /// Fluent of the fact.
   std::string fluent;
   /// Is the value of the fact negated.
@@ -254,8 +250,6 @@ struct CONTEXTUALPLANNER_API Fact
 
   /// Constant defining the "any value" special value.
   const static std::string anyValue;
-  /// Constant defining the "any value" special fact.
-  const static FactOptional anyValueFact;
   /// Constant defining the "undefined" special value.
   const static std::string undefinedValue;
   /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)

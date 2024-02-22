@@ -188,7 +188,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pParameter Parameter to consider in the fact.
    */
   void extractPotentialArgumentsOfAFactParameter(
-      std::set<Fact>& pPotentialArgumentsOfTheParameter,
+      std::set<std::string>& pPotentialArgumentsOfTheParameter,
       const Fact& pFact,
       const std::string& pParameter) const;
 

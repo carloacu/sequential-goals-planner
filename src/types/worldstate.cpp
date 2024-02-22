@@ -408,7 +408,7 @@ std::string WorldState::getFactValue(const cp::Fact& pFact) const
 
 
 void WorldState::extractPotentialArgumentsOfAFactParameter(
-    std::set<Fact>& pPotentialArgumentsOfTheParameter,
+    std::set<std::string>& pPotentialArgumentsOfTheParameter,
     const Fact& pFact,
     const std::string& pParameter) const
 {
@@ -419,13 +419,13 @@ void WorldState::extractPotentialArgumentsOfAFactParameter(
     {
       if (currFact.arguments.size() == pFact.arguments.size())
       {
-        std::set<Fact> potentialNewValues;
+        std::set<std::string> potentialNewValues;
         bool doesItMatch = true;
         for (auto i = 0; i < pFact.arguments.size(); ++i)
         {
           if (pFact.arguments[i] == pParameter)
           {
-            potentialNewValues.insert(currFact.arguments[i].fact);
+            potentialNewValues.insert(currFact.arguments[i]);
             continue;
           }
           if (pFact.arguments[i] == currFact.arguments[i])

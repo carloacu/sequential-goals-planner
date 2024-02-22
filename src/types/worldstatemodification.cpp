@@ -629,7 +629,7 @@ void WorldStateModificationNode::_forAllInstruction(const std::function<void (co
     auto* leftFactPtr = _toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
     {
-      std::set<cp::Fact> parameterValues;
+      std::set<std::string> parameterValues;
       pWorldState.extractPotentialArgumentsOfAFactParameter(parameterValues, leftFactPtr->factOptional.fact, parameterName);
       if (!parameterValues.empty())
       {

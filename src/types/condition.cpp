@@ -866,18 +866,15 @@ bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
     if (factOfConditionPtr != nullptr)
     {
       const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-      std::set<Fact> potentialArgumentsOfTheParameter;
+      std::set<std::string> potentialArgumentsOfTheParameter;
       pWorldState.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter,
                                                             factToOfCondition, object);
       for (auto& currPot : potentialArgumentsOfTheParameter)
       {
-        if (currPot.arguments.empty() && currPot.fluent == "")
-        {
-          auto factToCheck = factToOfCondition;
-          factToCheck.replaceArguments({{object, currPot.name}});
-          if (pWorldState.canFactBecomeTrue(factToCheck, pParameters))
-            return true;
-        }
+        auto factToCheck = factToOfCondition;
+        factToCheck.replaceArguments({{object, currPot}});
+        if (pWorldState.canFactBecomeTrue(factToCheck, pParameters))
+          return true;
       }
       return pIsWrappingExprssionNegated;
     }

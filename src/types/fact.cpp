@@ -11,7 +11,7 @@ namespace cp
 namespace {
 
 void _parametersToStr(std::string& pStr,
-                      const std::vector<FactOptional>& pParameters)
+                      const std::vector<std::string>& pParameters)
 {
   bool firstIteration = true;
   for (auto& param : pParameters)
@@ -20,7 +20,7 @@ void _parametersToStr(std::string& pStr,
       firstIteration = false;
     else
       pStr += ", ";
-    pStr += param.toStr();
+    pStr += param;
   }
 }
 
@@ -46,7 +46,6 @@ bool _isInside(const std::string& pStr,
 }
 
 const std::string Fact::anyValue = "*";
-const FactOptional Fact::anyValueFact(Fact::anyValue);
 const std::string Fact::undefinedValue = "undefined";
 std::string Fact::punctualPrefix = "~punctual~";
 
@@ -103,9 +102,9 @@ bool Fact::areEqualWithoutFluentConsideration(const Fact& pFact,
   auto itOtherParam = pFact.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
-        !(_isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr) ||
-          _isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
+        !(_isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+          _isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr2)))
       return false;
     ++itParam;
     ++itOtherParam;
@@ -126,7 +125,7 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
   auto itOtherParam = pFact.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
+    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
         *itParam != pArgToIgnore)
       return false;
     ++itParam;
@@ -150,10 +149,10 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
   auto itOtherParam = pOther.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
-        !(_isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr)) &&
-        !(_isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr) ||
-          _isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
+        !(_isInside(*itParam, pThisFactParametersToConsiderAsAnyValuePtr)) &&
+        !(_isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+          _isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr2)))
       return false;
     ++itParam;
     ++itOtherParam;
@@ -181,10 +180,10 @@ bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
   auto itOtherParam = pOther.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValueFact && *itOtherParam != anyValueFact &&
-        !(_isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr)) &&
-        !(_isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr) ||
-          _isInside(itOtherParam->fact.name, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
+        !(_isInside(*itParam, pThisFactParametersToConsiderAsAnyValuePtr)) &&
+        !(_isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+          _isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr2)))
       return false;
     ++itParam;
     ++itOtherParam;
@@ -209,9 +208,7 @@ bool Fact::hasArgumentOrValue(
   auto itParam = arguments.begin();
   while (itParam != arguments.end())
   {
-    if (itParam->fact.name == pArgumentOrValue)
-      return true;
-    if (itParam->fact.hasArgumentOrValue(pArgumentOrValue))
+    if (*itParam == pArgumentOrValue)
       return true;
     ++itParam;
   }
@@ -221,9 +218,7 @@ bool Fact::hasArgumentOrValue(
 
 std::string Fact::tryToExtractArgumentFromExample(
     const std::string& pArgument,
-    const Fact& pExampleFact,
-    const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr,
-    const std::map<std::string, std::set<std::string>>* pThisFactParametersToConsiderAsAnyValuePtr2) const
+    const Fact& pExampleFact) const
 {
   if (name != pExampleFact.name ||
       isValueNegated != pExampleFact.isValueNegated ||
@@ -233,24 +228,13 @@ std::string Fact::tryToExtractArgumentFromExample(
   std::string res;
   if (fluent == pArgument)
     res = pExampleFact.fluent;
-   else if (fluent != pExampleFact.fluent &&
-            !(_isInside(fluent, pThisFactParametersToConsiderAsAnyValuePtr) ||
-              _isInside(fluent, pThisFactParametersToConsiderAsAnyValuePtr2)))
-    return "";
 
   auto itParam = arguments.begin();
   auto itOtherParam = pExampleFact.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (itParam->fact.name == pArgument)
-      res = itOtherParam->fact.name;
-
-    auto subRes = itParam->fact.tryToExtractArgumentFromExample(pArgument, itOtherParam->fact,
-                                                                pThisFactParametersToConsiderAsAnyValuePtr, pThisFactParametersToConsiderAsAnyValuePtr2);
-    if (subRes != "" &&
-        !(_isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr) ||
-          _isInside(itParam->fact.name, pThisFactParametersToConsiderAsAnyValuePtr2)))
-      return subRes;
+    if (*itParam == pArgument)
+      res = *itOtherParam;
     ++itParam;
     ++itOtherParam;
   }
@@ -271,12 +255,8 @@ std::string Fact::tryToExtractArgumentFromExampleWithoutFluentConsideration(
   auto itOtherParam = pExampleFact.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (itParam->fact.name == pArgument)
-      res = itOtherParam->fact.name;
-
-    auto subRes = itParam->fact.tryToExtractArgumentFromExample(pArgument, itOtherParam->fact);
-    if (subRes != "")
-      return subRes;
+    if (*itParam == pArgument)
+      res = *itOtherParam;
     ++itParam;
     ++itOtherParam;
   }
@@ -313,7 +293,7 @@ bool Fact::isPatternOf(
   auto itOtherParam = pFactExample.arguments.begin();
   while (itParam != arguments.end())
   {
-    if (!isOk(itParam->fact.name, itOtherParam->fact.name))
+    if (!isOk(*itParam, *itOtherParam))
       return false;
     ++itParam;
     ++itOtherParam;
@@ -331,17 +311,9 @@ void Fact::replaceArguments(const std::map<std::string, std::string>& pCurrentAr
 
   for (auto& currParam : arguments)
   {
-    auto& currFactParam = currParam.fact;
-    if (currFactParam.fluent.empty() && currFactParam.arguments.empty())
-    {
-      auto itValueParam = pCurrentArgumentsToNewArgument.find(currFactParam.name);
-      if (itValueParam != pCurrentArgumentsToNewArgument.end())
-        currFactParam.name = itValueParam->second;
-    }
-    else
-    {
-      currFactParam.replaceArguments(pCurrentArgumentsToNewArgument);
-    }
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam);
+    if (itValueParam != pCurrentArgumentsToNewArgument.end())
+      currParam = itValueParam->second;
   }
 }
 
@@ -353,17 +325,9 @@ void Fact::replaceArguments(const std::map<std::string, std::set<std::string>>& 
 
   for (auto& currParam : arguments)
   {
-    auto& currFactParam = currParam.fact;
-    if (currFactParam.fluent.empty() && currFactParam.arguments.empty())
-    {
-      auto itValueParam = pCurrentArgumentsToNewArgument.find(currFactParam.name);
-      if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
-        currFactParam.name = *itValueParam->second.begin();
-    }
-    else
-    {
-      currFactParam.replaceArguments(pCurrentArgumentsToNewArgument);
-    }
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam);
+    if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
+      currParam = *itValueParam->second.begin();
   }
 }
 
@@ -436,7 +400,8 @@ std::size_t Fact::fillFactFromStr(
         if (name.empty())
           name = pStr.substr(beginPos, pos - beginPos);
         ++pos;
-        arguments.emplace_back(pStr, &separatorOfParameters, pos, &pos);
+        auto argumentName = cp::Fact(pStr, &separatorOfParameters, &isValueNegated, pos, &pos).toStr();
+        arguments.emplace_back(argumentName);
         beginPos = pos;
         continue;
       }
@@ -469,7 +434,7 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<std::string>& pArgumentsT
     {
       if (currFactParam == currParam)
       {
-        currFactParam = anyValueFact;
+        currFactParam = anyValue;
         res = true;
       }
     }
@@ -572,16 +537,10 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
     auto itLookForParameters = arguments.begin();
     while (itFactParameters != pOtherFact.arguments.end())
     {
-      if (*itFactParameters != *itLookForParameters)
-      {
-        if (!itFactParameters->fact.arguments.empty() ||
-            !itFactParameters->fact.fluent.empty() ||
-            !itLookForParameters->fact.arguments.empty() ||
-            !itLookForParameters->fact.fluent.empty() ||
-            (!pParametersAreForTheFact && !doesItMatch(itFactParameters->fact.name, itLookForParameters->fact.name)) ||
-            (pParametersAreForTheFact && !doesItMatch(itLookForParameters->fact.name, itFactParameters->fact.name)))
-          doesParametersMatches = false;
-      }
+      if (*itFactParameters != *itLookForParameters &&
+          ((!pParametersAreForTheFact && !doesItMatch(*itFactParameters, *itLookForParameters)) ||
+           (pParametersAreForTheFact && !doesItMatch(*itLookForParameters, *itFactParameters))))
+        doesParametersMatches = false;
       ++itFactParameters;
       ++itLookForParameters;
     }
@@ -641,12 +600,8 @@ void Fact::replaceFactInArguments(const Fact& pCurrentFact,
                                   const Fact& pNewFact)
 {
   for (auto& currParameter : arguments)
-  {
-    if (currParameter.fact == pCurrentFact)
-      currParameter.fact = pNewFact;
-    else
-      currParameter.fact.replaceFactInArguments(pCurrentFact, pNewFact);
-  }
+    if (currParameter == pCurrentFact.name)
+      currParameter = pNewFact.name;
 }
 
 
