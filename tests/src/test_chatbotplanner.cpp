@@ -1,5 +1,6 @@
 #include <contextualplanner/contextualplanner.hpp>
 #include <contextualplanner/types/derivedpredicate.hpp>
+#include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
@@ -212,6 +213,14 @@ void _setGoalsForAPriority(cp::Problem& pProblem,
                            int pPriority = cp::GoalStack::defaultPriority)
 {
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
+}
+
+
+void _test_predicateToStr()
+{
+  assert_eq<std::string>("pred_name(my_type)", cp::Predicate("pred_name(?v - my_type)").toStr());
+  assert_eq<std::string>("pred_name(my_type, my_type2)", cp::Predicate("pred_name(?v - my_type, ?o - my_type2)").toStr());
+  assert_eq<std::string>("pred_name(my_type, my_type2) - return_type", cp::Predicate("pred_name(?v - my_type, ?o - my_type2) - return_type").toStr());
 }
 
 
@@ -3449,6 +3458,7 @@ int main(int argc, char *argv[])
   test_util();
   planningDummyExample();
   planningExampleWithAPreconditionSolve();
+  _test_predicateToStr();
   _test_createEmptyGoal();
   _test_goalToStr();
   _test_factToStr();
