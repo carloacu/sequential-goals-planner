@@ -41,12 +41,12 @@ bool _forEachValueUntil(const std::function<bool (const std::string&)>& pValueCa
 
   auto* factCondPtr = pCondition.fcFactPtr();
   if (factCondPtr != nullptr &&
-      factCondPtr->factOptional.fact.value == "")
+      factCondPtr->factOptional.fact.fluent == "")
   {
     pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
           [&pValueCallback](const Fact& pFact) {
-      if (pFact.value != "")
-        pValueCallback(pFact.value);
+      if (pFact.fluent != "")
+        pValueCallback(pFact.fluent);
       return false;
     },
     factCondPtr->factOptional.fact, // pFact
@@ -78,12 +78,12 @@ void _forEach(const std::function<void (const std::string&, const Fact*)>& pValu
 
   auto* factCondPtr = pCondition.fcFactPtr();
   if (factCondPtr != nullptr &&
-      factCondPtr->factOptional.fact.value == "")
+      factCondPtr->factOptional.fact.fluent == "")
   {
     pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
           [&pValueCallback](const Fact& pFact) {
-      if (pFact.value != "")
-        pValueCallback(pFact.value, &pFact);
+      if (pFact.fluent != "")
+        pValueCallback(pFact.fluent, &pFact);
       return false;
     },
     factCondPtr->factOptional.fact, // pFact
@@ -120,17 +120,17 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
       auto* rightFactPtr = rightOperand->fcFactPtr();
       if (rightFactPtr != nullptr &&
           rightFactPtr->factOptional.fact.arguments.empty() &&
-          rightFactPtr->factOptional.fact.value == "")
+          rightFactPtr->factOptional.fact.fluent == "")
       {
         if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue)
         {
           leftFactPtr->factOptional.isFactNegated = true;
-          leftFactPtr->factOptional.fact.value = Fact::anyValue;
+          leftFactPtr->factOptional.fact.fluent = Fact::anyValue;
           res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
         }
         else if (pExpressionParsed.name == _equalsCharFunctionName && !rightOperandExp.isAFunction)
         {
-          leftFactPtr->factOptional.fact.value = rightFactPtr->factOptional.fact.name;
+          leftFactPtr->factOptional.fact.fluent = rightFactPtr->factOptional.fact.name;
           res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
         }
       }
@@ -268,9 +268,9 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
         auto& leftOpFact = *leftOpFactPtr;
 
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
-          if (pFact.value != "")
+          if (pFact.fluent != "")
           {
-            auto& newParams = leftOpPossibleValuesToParams[pFact.value];
+            auto& newParams = leftOpPossibleValuesToParams[pFact.fluent];
             if (pConditionParametersToPossibleArguments != nullptr)
             {
               for (auto& currArg : *pConditionParametersToPossibleArguments)
@@ -293,9 +293,9 @@ bool _existsIsTrueRec(std::map<std::string, std::set<std::string>>& pLocalParamT
 
         std::map<std::string, std::set<std::string>> newParameters;
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
-          if (pFact.value != "")
+          if (pFact.fluent != "")
           {
-            auto itToLeftPoss = leftOpPossibleValuesToParams.find(pFact.value);
+            auto itToLeftPoss = leftOpPossibleValuesToParams.find(pFact.fluent);
             if (itToLeftPoss != leftOpPossibleValuesToParams.end())
             {
               if (pConditionParametersToPossibleArguments != nullptr)
@@ -487,7 +487,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
                 [&](const std::string& pValue)
           {
             auto factToCheck = leftFact.factOptional.fact;
-            factToCheck.value = pValue;
+            factToCheck.fluent = pValue;
             return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
           }, true, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
         }
@@ -503,7 +503,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
                     [&](const std::string& pValue)
               {
                 auto factToCheck = rightFact.factOptional.fact;
-                factToCheck.value = pValue;
+                factToCheck.fluent = pValue;
                 return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
               }, true, *leftOperand, pWorldState, &pConditionParametersToPossibleArguments);
             }
@@ -540,7 +540,7 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
       if (nodeType == ConditionNodeType::EQUALITY)
       {
         auto factToCheck = leftFact.factOptional.fact;
-        factToCheck.value = rightOperand->getValue(pWorldState);
+        factToCheck.fluent = rightOperand->getValue(pWorldState);
         return pFactCallback(FactOptional(factToCheck));
       }
       else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
@@ -610,7 +610,7 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
         _forEach([&](const std::string& pValue, const Fact* pFromFactPtr)
         {
           auto factToCheck = leftFactPtr->factOptional.fact;
-          factToCheck.value = pValue;
+          factToCheck.fluent = pValue;
           bool subRes = false;
           if (factToCheck.isPunctual())
             subRes = pPunctualFacts.count(factToCheck) != 0;
@@ -657,7 +657,7 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
             {
               if (leftFact.areEqualWithoutFluentConsideration(currWsFact))
               {
-                bool res = compIntNb(currWsFact.value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
+                bool res = compIntNb(currWsFact.fluent, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
                 if (!pIsWrappingExprssionNegated)
                   return res;
                 return !res;
@@ -697,7 +697,7 @@ bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.value = pWorldState.getFactValue(rightFactPtr->factOptional.fact);
+      factToCheck.fluent = pWorldState.getFactValue(rightFactPtr->factOptional.fact);
       return pWorldState.canFactBecomeTrue(factToCheck, pParameters);
     }
   }
@@ -871,7 +871,7 @@ bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
                                                             factToOfCondition, object);
       for (auto& currPot : potentialArgumentsOfTheParameter)
       {
-        if (currPot.arguments.empty() && currPot.value == "")
+        if (currPot.arguments.empty() && currPot.fluent == "")
         {
           auto factToCheck = factToOfCondition;
           factToCheck.replaceArguments({{object, currPot.name}});

@@ -32,11 +32,11 @@ FactOptional ExpressionParsed::toFact() const
   if (value == Fact::undefinedValue && !res.isFactNegated)
   {
     res.isFactNegated = true;
-    res.fact.value = Fact::anyValue;
+    res.fact.fluent = Fact::anyValue;
   }
   else
   {
-    res.fact.value = value;
+    res.fact.fluent = value;
   }
   return res;
 }

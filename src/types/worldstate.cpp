@@ -19,8 +19,8 @@ bool _isNegatedFactCompatibleWithFacts(
 {
   for (const auto& currFact : pFacts)
     if (currFact.areEqualWithoutFluentConsideration(pNegatedFact) &&
-        ((currFact.isValueNegated && currFact.value == pNegatedFact.value) ||
-         (!currFact.isValueNegated && currFact.value != pNegatedFact.value)))
+        ((currFact.isValueNegated && currFact.fluent == pNegatedFact.fluent) ||
+         (!currFact.isValueNegated && currFact.fluent != pNegatedFact.fluent)))
       return true;
   return false;
 }
@@ -166,8 +166,8 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
       {
         auto& currExistingFact = *itExistingFact;
         if (currFact.arguments == currExistingFact.arguments &&
-            ((!currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.value != currExistingFact.value) ||
-             (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.value == currExistingFact.value) ||
+            ((!currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.fluent != currExistingFact.fluent) ||
+             (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.fluent == currExistingFact.fluent) ||
              (!currFact.isValueNegated && currExistingFact.isValueNegated)))
         {
           ++itExistingFact;
@@ -178,7 +178,7 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
           continue;
         }
 
-        if (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.value != currExistingFact.value)
+        if (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.fluent != currExistingFact.fluent)
         {
           skipThisFact = true;
           break;
@@ -214,7 +214,7 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
     if (it == _facts.end())
     {
       // If the fact is not found, we try to find the fact with another value
-      if (currFact.value == Fact::anyValue)
+      if (currFact.fluent == Fact::anyValue)
       {
         auto itFromFactName = _factNamesToFacts.find(currFact.name);
         if (itFromFactName != _factNamesToFacts.end())
@@ -401,7 +401,7 @@ std::string WorldState::getFactValue(const cp::Fact& pFact) const
   {
     for (auto& currFact : itFact->second)
       if (currFact.arguments == pFact.arguments)
-        return currFact.value;
+        return currFact.fluent;
   }
   return "";
 }
@@ -487,16 +487,16 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
         {
           auto factToCompare = pFactOptional.fact;
           factToCompare.replaceArguments(currParamPoss);
-          if (factToCompare.value == Fact::anyValue)
+          if (factToCompare.fluent == Fact::anyValue)
           {
             for (auto& currFact : itFacts->second)
             {
               if (currFact.areEqualExceptAnyValues(factToCompare))
               {
-                if (pFactOptional.fact.value != Fact::anyValue)
+                if (pFactOptional.fact.fluent != Fact::anyValue)
                 {
                   std::map<std::string, std::set<std::string>> newParameters =
-                  {{pFactOptional.fact.value, {currFact.value}}};
+                  {{pFactOptional.fact.fluent, {currFact.fluent}}};
                   applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
                 }
                 return false;
@@ -505,11 +505,11 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
             return true;
           }
         }
-        if (pFactOptional.fact.value == Fact::anyValue)
+        if (pFactOptional.fact.fluent == Fact::anyValue)
           return false;
       }
 
-      if (pFactOptional.fact.value == Fact::anyValue)
+      if (pFactOptional.fact.fluent == Fact::anyValue)
       {
         for (auto& currFact : itFacts->second)
           if (currFact.areEqualExceptAnyValues(pFactOptional.fact))

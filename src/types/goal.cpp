@@ -45,7 +45,7 @@ Goal::Goal(const std::string& pStr,
   {
     if (factPtr->factOptional.fact.name == oneStepTowardsFunctionName &&
         factPtr->factOptional.fact.arguments.size() == 1 &&
-        factPtr->factOptional.fact.value.empty())
+        factPtr->factOptional.fact.fluent.empty())
     {
       _oneStepTowards = true;
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
@@ -55,7 +55,7 @@ Goal::Goal(const std::string& pStr,
 
     if (factPtr->factOptional.fact.name == implyFunctionName &&
         factPtr->factOptional.fact.arguments.size() == 2 &&
-        factPtr->factOptional.fact.value.empty())
+        factPtr->factOptional.fact.fluent.empty())
     {
       _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.arguments[0]);
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)

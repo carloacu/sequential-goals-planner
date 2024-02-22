@@ -247,8 +247,8 @@ struct CONTEXTUALPLANNER_API Fact
   std::string name;
   /// Arguments of the fact.
   std::vector<FactOptional> arguments;
-  /// Value of the fact.
-  std::string value;
+  /// Fluent of the fact.
+  std::string fluent;
   /// Is the value of the fact negated.
   bool isValueNegated;
 

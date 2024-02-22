@@ -452,7 +452,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<std::string, std::set<std::string>>&)>& pCheckValidity)
   {
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
-      return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.value != pFactOptional.fact.value;
+      return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.fluent != pFactOptional.fact.fluent;
 
     const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
     ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
@@ -468,7 +468,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     {
       const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
       if (objValPtr != nullptr)
-        res = compIntNb(pFactOptional.fact.value, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
+        res = compIntNb(pFactOptional.fact.fluent, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
     }
     applyNewParams(pParameters, newParameters);
     return res;

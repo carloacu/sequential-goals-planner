@@ -57,7 +57,7 @@ Fact::Fact(const std::string& pStr,
            std::size_t* pResPos)
   : name(),
     arguments(),
-    value(),
+    fluent(),
     isValueNegated(false)
 {
   auto resPos = fillFactFromStr(pStr, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
@@ -73,8 +73,8 @@ bool Fact::operator<(const Fact& pOther) const
 {
   if (name != pOther.name)
     return name < pOther.name;
-  if (value != pOther.value)
-    return value < pOther.value;
+  if (fluent != pOther.fluent)
+    return fluent < pOther.fluent;
   if (isValueNegated != pOther.isValueNegated)
     return isValueNegated < pOther.isValueNegated;
   std::string paramStr;
@@ -87,7 +87,7 @@ bool Fact::operator<(const Fact& pOther) const
 bool Fact::operator==(const Fact& pOther) const
 {
   return name == pOther.name && arguments == pOther.arguments &&
-      value == pOther.value && isValueNegated == pOther.isValueNegated;
+      fluent == pOther.fluent && isValueNegated == pOther.isValueNegated;
 }
 
 
@@ -119,7 +119,7 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
 {
   if (pFact.name != name ||
       pFact.arguments.size() != arguments.size() ||
-      pFact.value != value)
+      pFact.fluent != fluent)
     return false;
 
   auto itParam = arguments.begin();
@@ -159,10 +159,10 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
     ++itOtherParam;
   }
 
-  if (!(value == pOther.value || value == anyValue || pOther.value == anyValue ||
-        _isInside(value, pThisFactParametersToConsiderAsAnyValuePtr) ||
-        _isInside(pOther.value, pOtherFactParametersToConsiderAsAnyValuePtr) ||
-        _isInside(pOther.value, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+  if (!(fluent == pOther.fluent || fluent == anyValue || pOther.fluent == anyValue ||
+        _isInside(fluent, pThisFactParametersToConsiderAsAnyValuePtr) ||
+        _isInside(pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+        _isInside(pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr2)))
     return isValueNegated != pOther.isValueNegated;
 
   return isValueNegated == pOther.isValueNegated;
@@ -203,7 +203,7 @@ bool Fact::isPunctual() const
 bool Fact::hasArgumentOrValue(
     const std::string& pArgumentOrValue) const
 {
-  if (value == pArgumentOrValue)
+  if (fluent == pArgumentOrValue)
     return true;
 
   auto itParam = arguments.begin();
@@ -231,11 +231,11 @@ std::string Fact::tryToExtractArgumentFromExample(
     return "";
 
   std::string res;
-  if (value == pArgument)
-    res = pExampleFact.value;
-   else if (value != pExampleFact.value &&
-            !(_isInside(value, pThisFactParametersToConsiderAsAnyValuePtr) ||
-              _isInside(value, pThisFactParametersToConsiderAsAnyValuePtr2)))
+  if (fluent == pArgument)
+    res = pExampleFact.fluent;
+   else if (fluent != pExampleFact.fluent &&
+            !(_isInside(fluent, pThisFactParametersToConsiderAsAnyValuePtr) ||
+              _isInside(fluent, pThisFactParametersToConsiderAsAnyValuePtr2)))
     return "";
 
   auto itParam = arguments.begin();
@@ -306,7 +306,7 @@ bool Fact::isPatternOf(
     return true;
   };
 
-  if (!isOk(value, pFactExample.value))
+  if (!isOk(fluent, pFactExample.fluent))
     return false;
 
   auto itParam = arguments.begin();
@@ -325,14 +325,14 @@ bool Fact::isPatternOf(
 
 void Fact::replaceArguments(const std::map<std::string, std::string>& pCurrentArgumentsToNewArgument)
 {
-  auto itValueParam = pCurrentArgumentsToNewArgument.find(value);
+  auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent);
   if (itValueParam != pCurrentArgumentsToNewArgument.end())
-    value = itValueParam->second;
+    fluent = itValueParam->second;
 
   for (auto& currParam : arguments)
   {
     auto& currFactParam = currParam.fact;
-    if (currFactParam.value.empty() && currFactParam.arguments.empty())
+    if (currFactParam.fluent.empty() && currFactParam.arguments.empty())
     {
       auto itValueParam = pCurrentArgumentsToNewArgument.find(currFactParam.name);
       if (itValueParam != pCurrentArgumentsToNewArgument.end())
@@ -347,14 +347,14 @@ void Fact::replaceArguments(const std::map<std::string, std::string>& pCurrentAr
 
 void Fact::replaceArguments(const std::map<std::string, std::set<std::string>>& pCurrentArgumentsToNewArgument)
 {
-  auto itValueParam = pCurrentArgumentsToNewArgument.find(value);
+  auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent);
   if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
-    value = *itValueParam->second.begin();
+    fluent = *itValueParam->second.begin();
 
   for (auto& currParam : arguments)
   {
     auto& currFactParam = currParam.fact;
-    if (currFactParam.value.empty() && currFactParam.arguments.empty())
+    if (currFactParam.fluent.empty() && currFactParam.arguments.empty())
     {
       auto itValueParam = pCurrentArgumentsToNewArgument.find(currFactParam.name);
       if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
@@ -377,9 +377,9 @@ std::string Fact::toStr() const
     res += ")";
   }
   if (isValueNegated)
-    res += "!=" + value;
-  else if (!value.empty())
-    res += "=" + value;
+    res += "!=" + fluent;
+  else if (!fluent.empty())
+    res += "=" + fluent;
   return res;
 }
 
@@ -454,7 +454,7 @@ std::size_t Fact::fillFactFromStr(
     if (name.empty())
       name = pStr.substr(beginPos, pos - beginPos);
     else
-      value = pStr.substr(beginPos, pos - beginPos);
+      fluent = pStr.substr(beginPos, pos - beginPos);
   }
   return pos;
 }
@@ -473,9 +473,9 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<std::string>& pArgumentsT
         res = true;
       }
     }
-    if (value == currParam)
+    if (fluent == currParam)
     {
-      value = anyValue;
+      fluent = anyValue;
       res = true;
     }
   }
@@ -575,9 +575,9 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       if (*itFactParameters != *itLookForParameters)
       {
         if (!itFactParameters->fact.arguments.empty() ||
-            !itFactParameters->fact.value.empty() ||
+            !itFactParameters->fact.fluent.empty() ||
             !itLookForParameters->fact.arguments.empty() ||
-            !itLookForParameters->fact.value.empty() ||
+            !itLookForParameters->fact.fluent.empty() ||
             (!pParametersAreForTheFact && !doesItMatch(itFactParameters->fact.name, itLookForParameters->fact.name)) ||
             (pParametersAreForTheFact && !doesItMatch(itLookForParameters->fact.name, itFactParameters->fact.name)))
           doesParametersMatches = false;
@@ -592,12 +592,12 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   std::optional<bool> resOpt;
   if (pParametersAreForTheFact)
   {
-    if (pIgnoreValues || doesItMatch(value, pOtherFact.value))
+    if (pIgnoreValues || doesItMatch(fluent, pOtherFact.fluent))
       resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
   }
   else
   {
-    if (pIgnoreValues || doesItMatch(pOtherFact.value, value))
+    if (pIgnoreValues || doesItMatch(pOtherFact.fluent, fluent))
       resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
   }
   if (!resOpt)
