@@ -293,7 +293,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
           return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
         }
 
-        // If we did not succedded to fill the parameters from effet we try to resolve according to the constant facts in the world
+        // If we did not succedded to fill the parameters from effect we try to resolve according to the constant facts in the world
         if (tryToMatchWothFactOfTheWorld)
           break;
         tryToMatchWothFactOfTheWorld = true;
