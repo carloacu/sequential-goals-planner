@@ -1,7 +1,7 @@
 #include "test_arithmeticevaluator.hpp"
 #include <assert.h>
 #include <iostream>
-#include <contextualplanner/types/ontology.hpp>
+#include <contextualplanner/types/setoftypes.hpp>
 
 namespace
 {
@@ -12,30 +12,49 @@ void assert_eq(const TYPE& pExpected,
   if (pExpected != pValue)
     assert(false);
 }
-}
 
 
-
-
-int test_ontology()
+void _test_setOfTypes()
 {
-  cp::Ontology ontology;
-  assert_eq<std::string>("", ontology.typesToStr());
-  ontology.addType("object");
-  ontology.addType("voiture", "object");
-  ontology.addType("maison", "object");
-  ontology.addType("citroen", "voiture");
-  ontology.addType("ferrari", "voiture");
-  ontology.addType("peugeot", "voiture");
-  ontology.addType("c3", "citroen");
-  ontology.addType("location");
+  cp::SetOfTypes setOfTypes;
+  assert_eq<std::string>("", setOfTypes.typesToStr());
+  setOfTypes.addType("object");
+  setOfTypes.addType("voiture", "object");
+  setOfTypes.addType("maison", "object");
+  setOfTypes.addType("citroen", "voiture");
+  setOfTypes.addType("ferrari", "voiture");
+  setOfTypes.addType("peugeot", "voiture");
+  setOfTypes.addType("c3", "citroen");
+  setOfTypes.addType("location");
 
   assert_eq<std::string>("voiture maison - object\n"
                          "citroen ferrari peugeot - voiture\n"
                          "c3 - citroen\n"
                          "location",
-                         ontology.typesToStr());
+                         setOfTypes.typesToStr());
+}
 
+
+void _test_setOfTypes_fromStr()
+{
+  std::string typesStr = "voiture maison - object\n"
+                         "citroen ferrari peugeot - voiture\n"
+                         "c3 - citroen\n"
+                         "location";
+  cp::SetOfTypes setOfTypes = cp::SetOfTypes::fromStr(typesStr + " ");
+  assert_eq<std::string>(typesStr, setOfTypes.typesToStr());
+}
+
+
+
+}
+
+
+
+
+void test_ontology()
+{
+  _test_setOfTypes();
+  _test_setOfTypes_fromStr();
   std::cout << "ontology is ok !!!!" << std::endl;
-  return 0;
 }

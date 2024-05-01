@@ -46,6 +46,10 @@ std::string incrementLastNumberUntilAConditionIsSatisfied(
     const std::string& pStr,
     const std::function<bool(const std::string&)>& pCondition);
 
+CONTEXTUALPLANNER_API
+void split(std::vector<std::string>& pStrs,
+           const std::string& pStr,
+           const std::string& pSeparator);
 
 template <typename T>
 T lexical_cast(const std::string& pStr)

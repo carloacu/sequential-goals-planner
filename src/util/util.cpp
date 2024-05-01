@@ -152,4 +152,21 @@ std::string incrementLastNumberUntilAConditionIsSatisfied(
 
 
 
+void split(std::vector<std::string>& pStrs,
+           const std::string& pStr,
+           const std::string& pSeparator)
+{
+  std::string::size_type lastPos = 0u;
+  std::string::size_type pos = lastPos;
+  std::size_t separatorSize = pSeparator.size();
+  while ((pos = pStr.find(pSeparator, pos)) != std::string::npos)
+  {
+    pStrs.emplace_back(pStr.substr(lastPos, pos - lastPos));
+    pos += separatorSize;
+    lastPos = pos;
+  }
+  pStrs.emplace_back(pStr.substr(lastPos, pStr.size() - lastPos));
+}
+
+
 }
