@@ -13,6 +13,8 @@ add_executable(
   contextualplanner_tests
 
   src/test_chatbotplanner.cpp
+  src/test_ontology.hpp
+  src/test_ontology.cpp
   src/test_arithmeticevaluator.hpp
   src/test_arithmeticevaluator.cpp
   src/docexamples/test_planningDummyExample.hpp

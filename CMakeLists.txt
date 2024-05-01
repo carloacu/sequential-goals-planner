@@ -19,10 +19,12 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/historical.hpp
     include/contextualplanner/types/inference.hpp
     include/contextualplanner/types/lookforanactionoutputinfos.hpp
+    include/contextualplanner/types/ontology.hpp
     include/contextualplanner/types/predicate.hpp
     include/contextualplanner/types/problem.hpp
     include/contextualplanner/types/problemmodification.hpp
     include/contextualplanner/types/setofinferences.hpp
+    include/contextualplanner/types/type.hpp
     include/contextualplanner/types/worldstate.hpp
     include/contextualplanner/types/worldstatemodification.hpp
     include/contextualplanner/util/exportsymbols/macro.hpp
@@ -60,11 +62,13 @@ set(CHATBOTPLANNER_SRCS
     src/types/historical.cpp
     src/types/inference.cpp
     src/types/lookforanactionoutputinfos.cpp
+    src/types/ontology.cpp
     src/types/predicate.cpp
     src/types/problemmodification.cpp
     src/types/setofinferences.cpp
     src/types/treeofalreadydonepaths.hpp
     src/types/treeofalreadydonepaths.cpp
+    src/types/type.cpp
     src/types/worldstate.cpp
     src/types/worldstatecache.hpp
     src/types/worldstatecache.cpp

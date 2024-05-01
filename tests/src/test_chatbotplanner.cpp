@@ -7,6 +7,7 @@
 #include <iostream>
 #include <assert.h>
 #include "test_arithmeticevaluator.hpp"
+#include "test_ontology.hpp"
 #include "test_util.hpp"
 #include "docexamples/test_planningDummyExample.hpp"
 #include "docexamples/test_planningExampleWithAPreconditionSolve.hpp"
@@ -3455,6 +3456,7 @@ void _inferenceToRemoveAFactWithoutFluent()
 int main(int argc, char *argv[])
 {
   test_arithmeticEvaluator();
+  test_ontology();
   test_util();
   planningDummyExample();
   planningExampleWithAPreconditionSolve();
