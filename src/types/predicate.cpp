@@ -1,12 +1,14 @@
 #include <contextualplanner/types/predicate.hpp>
+#include <contextualplanner/types/setoftypes.hpp>
 #include "expressionParsed.hpp"
+
 
 namespace cp
 {
 namespace
 {
 void _parametersToStr(std::string& pStr,
-                      const std::vector<std::string>& pParameters)
+                      const std::vector<Entity>& pParameters)
 {
   bool firstIteration = true;
   for (auto& param : pParameters)
@@ -15,13 +17,14 @@ void _parametersToStr(std::string& pStr,
       firstIteration = false;
     else
       pStr += ", ";
-    pStr += param;
+    pStr += param.toStr();
   }
 }
 
 }
 
-Predicate::Predicate(const std::string& pStr)
+Predicate::Predicate(const std::string& pStr,
+                     const SetOfTypes& pSetOfTypes)
   : name(),
     parameters(),
     fluent()
@@ -32,9 +35,15 @@ Predicate::Predicate(const std::string& pStr)
   name = expressionParsed.name;
   for (auto& currArg : expressionParsed.arguments)
     if (currArg.followingExpression)
-      parameters.emplace_back(currArg.followingExpression->name);
-  if (expressionParsed.followingExpression)
-    fluent = expressionParsed.followingExpression->name;
+    {
+      auto type = pSetOfTypes.nameToType(currArg.followingExpression->name);
+      parameters.emplace_back(Entity(currArg.name, type));
+    }
+            //Entity::fromStr(currArg.followingExpression->name, pSetOfTypes));
+  if (expressionParsed.followingExpression) {
+    fluent.emplace(pSetOfTypes.nameToType(expressionParsed.followingExpression->name));
+          //Entity::fromStr(expressionParsed.followingExpression->name, pSetOfTypes));
+  }
 }
 
 
@@ -44,7 +53,7 @@ Predicate::Predicate(const std::string& pStr)
    _parametersToStr(res, parameters);
    res += ")";
    if (fluent)
-     res += " - " + *fluent;
+     res += " - " + fluent->name;
    return res;
  }
 
