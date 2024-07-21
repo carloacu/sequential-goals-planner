@@ -8,7 +8,7 @@ namespace cp
 namespace
 {
 void _parametersToStr(std::string& pStr,
-                      const std::vector<Entity>& pParameters)
+                      const std::vector<Parameter>& pParameters)
 {
   bool firstIteration = true;
   for (auto& param : pParameters)
@@ -37,12 +37,10 @@ Predicate::Predicate(const std::string& pStr,
     if (currArg.followingExpression)
     {
       auto type = pSetOfTypes.nameToType(currArg.followingExpression->name);
-      parameters.emplace_back(Entity(currArg.name, type));
+      parameters.emplace_back(Parameter(currArg.name, type));
     }
-            //Entity::fromStr(currArg.followingExpression->name, pSetOfTypes));
   if (expressionParsed.followingExpression) {
-    fluent.emplace(pSetOfTypes.nameToType(expressionParsed.followingExpression->name));
-          //Entity::fromStr(expressionParsed.followingExpression->name, pSetOfTypes));
+    fluent = pSetOfTypes.nameToType(expressionParsed.followingExpression->name);
   }
 }
 

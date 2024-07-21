@@ -16,7 +16,7 @@ struct CONTEXTUALPLANNER_API ActionInvocationWithGoal
 {
   /// Construct ActionInvocationWithGoal.
   ActionInvocationWithGoal(const std::string& pActionId,
-                           const std::map<std::string, std::set<std::string>>& pParameters,
+                           const std::map<std::string, std::set<Entity>>& pParameters,
                            std::unique_ptr<cp::Goal> pFromGoal,
                            int pFromGoalPriority);
 

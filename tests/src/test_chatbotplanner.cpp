@@ -240,7 +240,7 @@ void _test_conditionParameters()
 {
   assert_false(cp::Condition::fromStr("").operator bool());
 
-  std::map<std::string, std::string> parameters = {{"target", "kitchen"}, {"object", "chair"}};
+  std::map<std::string, cp::Entity> parameters = {{"target", cp::Entity("kitchen")}, {"object", cp::Entity("chair")}};
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::Condition::fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", cp::Condition::fromStr("and(location(me)=target, grab(me, object))")->clone(&parameters)->toStr());
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair) & i", cp::Condition::fromStr("and(location(me)=target, grab(me, object), i)")->clone(&parameters)->toStr());
@@ -1951,7 +1951,7 @@ void _actionNavigationAndGrabObjectWithParameters()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact("location(me)=corridor"), problem.goalStack, _emptySetOfInferences, now);
   problem.worldState.addFact(cp::Fact("location(sweets)=kitchen"), problem.goalStack, _emptySetOfInferences, now);
-  assert_eq<std::string>("kitchen", *problem.worldState.getFactFluent(cp::Fact("location(sweets)")));
+  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(cp::Fact("location(sweets)"))->toStr());
   _setGoalsForAPriority(problem, {cp::Goal("grab(me, sweets)")});
   assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
 }
@@ -1973,7 +1973,7 @@ void _actionNavigationAndGrabObjectWithParameters2()
   cp::Problem problem;
   problem.worldState.addFact(cp::Fact("location(me)=corridor"), problem.goalStack, _emptySetOfInferences, now);
   problem.worldState.addFact(cp::Fact("location(sweets)=kitchen"), problem.goalStack, _emptySetOfInferences, now);
-  assert_eq<std::string>("kitchen", *problem.worldState.getFactFluent(cp::Fact("location(sweets)")));
+  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(cp::Fact("location(sweets)"))->toStr());
   _setGoalsForAPriority(problem, {cp::Goal("grab(me, sweets)")});
   assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
 }

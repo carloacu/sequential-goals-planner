@@ -5,7 +5,7 @@ namespace cp
 {
 
 Type::Type(const std::string& pName,
-           const Type* pParent)
+           const std::shared_ptr<Type>& pParent)
     : name(pName),
       parent(pParent),
       subTypes()
@@ -28,15 +28,22 @@ void Type::toStrs(std::list<std::string>& pStrs) const
     {
       if (!subTypesStr.empty())
         subTypesStr += " ";
-      subTypesStr += currType.name;
+      subTypesStr += currType->name;
     }
     pStrs.emplace_back(subTypesStr + " - " + name);
 
     for (auto& currType : subTypes)
-      currType.toStrs(pStrs);
+      currType->toStrs(pStrs);
   }
 }
 
+
+bool Type::operator<(const Type& pOther) const
+{
+  if (name != pOther.name)
+    return name < pOther.name;
+  return false;
+}
 
 
 } // !cp

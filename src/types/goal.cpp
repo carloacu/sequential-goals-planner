@@ -50,17 +50,17 @@ Goal::Goal(const std::string& pStr,
       _oneStepTowards = true;
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
       auto factFirstParameters = std::move(factPtr->factOptional.fact.arguments.front());
-      factPtr->factOptional = std::move(factFirstParameters);
+      factPtr->factOptional = std::move(factFirstParameters.value);
     }
 
     if (factPtr->factOptional.fact.name == implyFunctionName &&
         factPtr->factOptional.fact.arguments.size() == 2 &&
         !factPtr->factOptional.fact.fluent)
     {
-      _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.arguments[0]);
+      _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.arguments[0].value);
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
       auto factSecondParameters = std::move(factPtr->factOptional.fact.arguments[1]);
-      factPtr->factOptional = std::move(factSecondParameters);
+      factPtr->factOptional = std::move(factSecondParameters.value);
     }
 
     assert(!factPtr->factOptional.fact.name.empty());
@@ -68,7 +68,7 @@ Goal::Goal(const std::string& pStr,
 }
 
 Goal::Goal(const Goal& pOther,
-           const std::map<std::string, std::string>* pParametersPtr,
+           const std::map<std::string, Entity>* pParametersPtr,
            const std::string* pGoalGroupIdPtr)
   : _objective(pOther._objective->clone(pParametersPtr)),
     _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),

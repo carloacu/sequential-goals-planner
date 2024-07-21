@@ -10,7 +10,7 @@ const SetOfInferencesId Domain::setOfInferencesIdFromConstructor = "soi_from_con
 namespace
 {
 static const WorldState _emptyWorldState;
-static const std::map<std::string, std::set<std::string>> _emptyParametersWithValues;
+static const std::map<std::string, std::set<Entity>> _emptyParametersWithValues;
 static const std::vector<std::string> _emptyParameters;
 
 /**

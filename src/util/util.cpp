@@ -1,5 +1,6 @@
 #include <contextualplanner/util/util.hpp>
 #include <sstream>
+#include <contextualplanner/types/entity.hpp>
 
 namespace cp
 {
@@ -7,14 +8,14 @@ namespace cp
 namespace
 {
 
-void _unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
-                       std::map<std::string, std::set<std::string>>& pInMap)
+void _unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
+                       std::map<std::string, std::set<Entity>>& pInMap)
 {
   if (pInMap.size() == 1)
   {
     auto itFirstElt = pInMap.begin();
     for (auto& currValue : itFirstElt->second)
-      pOutMap.emplace_back(std::map<std::string, std::string>{{itFirstElt->first, currValue}});
+      pOutMap.emplace_back(std::map<std::string, Entity>{{itFirstElt->first, currValue}});
     return;
   }
 
@@ -26,7 +27,7 @@ void _unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
     auto values = std::move(itFirstElt->second);
     pInMap.erase(itFirstElt);
 
-    std::list<std::map<std::string, std::string>> subRes;
+    std::list<std::map<std::string, Entity>> subRes;
     unfoldMapWithSet(subRes, pInMap);
 
     for (auto& currValue : values)
@@ -34,7 +35,7 @@ void _unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
       auto newRes = subRes;
       for (auto& currSubResValue : newRes)
       {
-        currSubResValue[key] = currValue;
+        currSubResValue.emplace(key, currValue);
         pOutMap.emplace_back(std::move(currSubResValue));
       }
     }
@@ -44,8 +45,8 @@ void _unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
 }
 
 
-void unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
-                      const std::map<std::string, std::set<std::string>>& pInMap)
+void unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
+                      const std::map<std::string, std::set<Entity>>& pInMap)
 {
   auto inMap = pInMap;
   _unfoldMapWithSet(pOutMap, inMap);
@@ -53,8 +54,8 @@ void unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
 
 
 void applyNewParams(
-    std::map<std::string, std::set<std::string>>& pParameters,
-    std::map<std::string, std::set<std::string>>& pNewParameters)
+    std::map<std::string, std::set<Entity>>& pParameters,
+    std::map<std::string, std::set<Entity>>& pNewParameters)
 {
   for (auto& currNewParam : pNewParameters)
     pParameters[currNewParam.first] = std::move(currNewParam.second);
@@ -62,39 +63,37 @@ void applyNewParams(
 
 
 
-std::optional<std::string> plusIntOrStr(
-    const std::optional<std::string>& pNb1Str,
-    const std::optional<std::string>& pNb2Str)
+std::optional<std::string> plusIntOrStr(const std::optional<Entity>& pNb1,
+                                        const std::optional<Entity>& pNb2)
 {
-  if (!pNb1Str || !pNb2Str)
+  if (!pNb1 || !pNb2)
     return {};
   try
   {
-    int nb1 = lexical_cast<int>(*pNb1Str);
-    int nb2 = lexical_cast<int>(*pNb2Str);
+    int nb1 = lexical_cast<int>(pNb1->value);
+    int nb2 = lexical_cast<int>(pNb2->value);
     std::stringstream ss;
     ss << nb1 + nb2;
     return ss.str();
   } catch (...) {}
-  return *pNb1Str + *pNb2Str;
+  return pNb1->value + pNb2->value;
 }
 
 
-std::optional<std::string> minusIntOrStr(
-    const std::optional<std::string>& pNb1Str,
-    const std::optional<std::string>& pNb2Str)
+std::optional<std::string> minusIntOrStr(const std::optional<Entity>& pNb1,
+                                         const std::optional<Entity>& pNb2)
 {
-  if (!pNb1Str || !pNb2Str)
+  if (!pNb1 || !pNb2)
     return {};
   try
   {
-    int nb1 = lexical_cast<int>(*pNb1Str);
-    int nb2 = lexical_cast<int>(*pNb2Str);
+    int nb1 = lexical_cast<int>(pNb1->value);
+    int nb2 = lexical_cast<int>(pNb2->value);
     std::stringstream ss;
     ss << nb1 - nb2;
     return ss.str();
   } catch (...) {}
-  return *pNb1Str + "-" + *pNb2Str;
+  return pNb1->value + "-" + pNb2->value;
 }
 
 

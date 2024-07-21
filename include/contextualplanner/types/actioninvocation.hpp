@@ -9,14 +9,15 @@
 
 namespace cp
 {
+struct Entity;
 
 /// Struct gathering the identifier of an action with some parameter values.
 struct CONTEXTUALPLANNER_API ActionInvocation
 {
   /// Construct ActionInstance.
   ActionInvocation(const std::string& pActionId,
-                   const std::map<std::string, std::set<std::string>>& pParameters);
-
+                   const std::map<std::string, std::set<Entity>>& pParameters);
+  ~ActionInvocation();
 
   /**
    * @brief Serialize in a string.
@@ -27,7 +28,7 @@ struct CONTEXTUALPLANNER_API ActionInvocation
   /// Identifer of the action.
   std::string actionId;
   /// Action parameter values.
-  std::map<std::string, std::set<std::string>> parameters;
+  std::map<std::string, std::set<Entity>> parameters;
 };
 
 

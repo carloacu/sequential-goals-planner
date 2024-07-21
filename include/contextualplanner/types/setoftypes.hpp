@@ -19,14 +19,14 @@ struct CONTEXTUALPLANNER_API SetOfTypes
   void addType(const std::string& pTypeToAdd,
                const std::string& pParentType = "");
 
-  Type nameToType(const std::string& pName) const;
+  std::shared_ptr<Type> nameToType(const std::string& pName) const;
 
   std::list<std::string> typesToStrs() const;
   std::string typesToStr() const;
 
 private:
-  std::list<Type> _types;
-  std::map<std::string, Type*> _nameToType;
+  std::list<std::shared_ptr<Type>> _types;
+  std::map<std::string, std::shared_ptr<Type>> _nameToType;
 };
 
 } // namespace cp

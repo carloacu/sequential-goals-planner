@@ -179,7 +179,7 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFact Fact to extract the value.
    * @return The value of the fact in the world state, an empty string if the fact is not in the world state.
    */
-  std::optional<std::string> getFactFluent(const Fact& pFact) const;
+  std::optional<Entity> getFactFluent(const Fact& pFact) const;
 
   /**
    * @brief Extract the potential arguments of a fact parameter.
@@ -187,10 +187,9 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFact Fact to consider for the parameter.
    * @param[in] pParameter Parameter to consider in the fact.
    */
-  void extractPotentialArgumentsOfAFactParameter(
-      std::set<std::string>& pPotentialArgumentsOfTheParameter,
-      const Fact& pFact,
-      const std::string& pParameter) const;
+  void extractPotentialArgumentsOfAFactParameter(std::set<Entity>& pPotentialArgumentsOfTheParameter,
+                                                 const Fact& pFact,
+                                                 const std::string& pParameter) const;
 
   /// Facts of the world.
   const std::set<Fact>& facts() const { return _facts; }
@@ -219,8 +218,8 @@ struct CONTEXTUALPLANNER_API WorldState
   bool isOptionalFactSatisfiedInASpecificContext(const FactOptional& pFactOptional,
                                                  const std::set<Fact>& pPunctualFacts,
                                                  const std::set<Fact>& pRemovedFacts,
-                                                 std::map<std::string, std::set<std::string>>* pParametersToPossibleArgumentsPtr,
-                                                 std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
+                                                 std::map<std::string, std::set<Entity>>* pParametersToPossibleArgumentsPtr,
+                                                 std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr,
                                                  bool* pCanBecomeTruePtr) const;
 
   /**
@@ -240,8 +239,8 @@ struct CONTEXTUALPLANNER_API WorldState
    */
   void iterateOnMatchingFactsWithoutFluentConsideration(const std::function<bool (const Fact&)>& pCallback,
                                                         const Fact& pFact,
-                                                        const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue,
-                                                        const std::map<std::string, std::set<std::string>>* pParametersToConsiderAsAnyValuePtr = nullptr) const;
+                                                        const std::map<std::string, std::set<Entity>>& pParametersToConsiderAsAnyValue,
+                                                        const std::map<std::string, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr = nullptr) const;
 
   /**
    * @brief Iterate over all matching facts.
@@ -252,8 +251,8 @@ struct CONTEXTUALPLANNER_API WorldState
    */
   void iterateOnMatchingFacts(const std::function<bool (const Fact&)>& pValueCallback,
                               const Fact& pFact,
-                              const std::map<std::string, std::set<std::string>>& pParametersToConsiderAsAnyValue,
-                              const std::map<std::string, std::set<std::string>>* pParametersToConsiderAsAnyValuePtr = nullptr) const;
+                              const std::map<std::string, std::set<Entity>>& pParametersToConsiderAsAnyValue,
+                              const std::map<std::string, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr = nullptr) const;
 
 
   void refreshCacheIfNeeded(const Domain& pDomain);

@@ -100,27 +100,27 @@ struct WorldStateModificationNode : public WorldStateModification
                                      const WorldState& pWorldState) const;
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
                        const WorldState& pWorldState) const override;
-  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*, const std::function<bool (const std::map<std::string, std::set<std::string>>&)>&)>& pFactCallback,
-                           std::map<std::string, std::set<std::string>>& pParameters,
+  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pFactCallback,
+                           std::map<std::string, std::set<Entity>>& pParameters,
                            const WorldState& pWorldState,
                            const std::string& pFromDeductionId) const override;
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::optional<std::string> getFluent(const WorldState& pWorldState) const override
+  std::optional<Entity> getFluent(const WorldState& pWorldState) const override
   {
     if (nodeType == WorldStateModificationNodeType::PLUS)
     {
       auto leftValue = leftOperand->getFluent(pWorldState);
       auto rightValue = rightOperand->getFluent(pWorldState);
       if (leftValue && rightValue)
-        return plusIntOrStr(*leftValue, *rightValue);
+        return plusIntOrStr(leftValue->value, rightValue->value);
     }
     if (nodeType == WorldStateModificationNodeType::MINUS)
     {
       auto leftValue = leftOperand->getFluent(pWorldState);
       auto rightValue = rightOperand->getFluent(pWorldState);
       if (leftValue && rightValue)
-        return minusIntOrStr(*leftValue, *rightValue);
+        return minusIntOrStr(leftValue->value, rightValue->value);
     }
     return {};
   }
@@ -130,7 +130,7 @@ struct WorldStateModificationNode : public WorldStateModification
     return nullptr;
   }
 
-  std::unique_ptr<WorldStateModification> clone(const std::map<std::string, std::string>* pParametersToArgumentPtr) const override
+  std::unique_ptr<WorldStateModification> clone(const std::map<std::string, Entity>* pParametersToArgumentPtr) const override
   {
     return std::make_unique<WorldStateModificationNode>(
           nodeType,
@@ -140,7 +140,7 @@ struct WorldStateModificationNode : public WorldStateModification
   }
 
 
-  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParametersToPossibleArgumentPtr) const override
+  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<std::string, std::set<Entity>>& pParametersToPossibleArgumentPtr) const override
   {
     return std::make_unique<WorldStateModificationNode>(
           nodeType,
@@ -203,17 +203,17 @@ struct WorldStateModificationFact : public WorldStateModification
     return pFactCallback(factOptional);
   }
 
-  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*, const std::function<bool (const std::map<std::string, std::set<std::string>>&)>&)>& pFactCallback,
-                           std::map<std::string, std::set<std::string>>&,
+  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pFactCallback,
+                           std::map<std::string, std::set<Entity>>&,
                            const WorldState&,
                            const std::string&) const override
   {
-    return pFactCallback(factOptional, nullptr, [](const std::map<std::string, std::set<std::string>>&){ return true; });
+    return pFactCallback(factOptional, nullptr, [](const std::map<std::string, std::set<Entity>>&){ return true; });
   }
 
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::optional<std::string> getFluent(const WorldState& pWorldState) const override
+  std::optional<Entity> getFluent(const WorldState& pWorldState) const override
   {
     return pWorldState.getFactFluent(factOptional.fact);
   }
@@ -223,7 +223,7 @@ struct WorldStateModificationFact : public WorldStateModification
     return &factOptional;
   }
 
-  std::unique_ptr<WorldStateModification> clone(const std::map<std::string, std::string>* pParametersToArgumentPtr) const override
+  std::unique_ptr<WorldStateModification> clone(const std::map<std::string, Entity>* pParametersToArgumentPtr) const override
   {
     auto res = std::make_unique<WorldStateModificationFact>(factOptional);
     if (pParametersToArgumentPtr != nullptr)
@@ -231,7 +231,7 @@ struct WorldStateModificationFact : public WorldStateModification
     return res;
   }
 
-  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<std::string, std::set<std::string>>& pParametersToPossibleArgumentPtr) const override
+  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<std::string, std::set<Entity>>& pParametersToPossibleArgumentPtr) const override
   {
     auto res = std::make_unique<WorldStateModificationFact>(factOptional);
     res->factOptional.fact.replaceArguments(pParametersToPossibleArgumentPtr);
@@ -270,13 +270,13 @@ struct WorldStateModificationNumber : public WorldStateModification
                                      const WorldState&) const override {}
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>&,
                        const WorldState&) const override { return false; }
-  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*, const std::function<bool (const std::map<std::string, std::set<std::string>>&)>&)>&,
-                           std::map<std::string, std::set<std::string>>&,
+  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>&,
+                           std::map<std::string, std::set<Entity>>&,
                            const WorldState&,
                            const std::string&) const override { return false; }
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::optional<std::string> getFluent(const WorldState&) const override
+  std::optional<Entity> getFluent(const WorldState&) const override
   {
     return toStr();
   }
@@ -286,12 +286,12 @@ struct WorldStateModificationNumber : public WorldStateModification
     return nullptr;
   }
 
-  std::unique_ptr<WorldStateModification> clone(const std::map<std::string, std::string>*) const override
+  std::unique_ptr<WorldStateModification> clone(const std::map<std::string, Entity>*) const override
   {
     return std::make_unique<WorldStateModificationNumber>(nb);
   }
 
-  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<std::string, std::set<std::string>>&) const override
+  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<std::string, std::set<Entity>>&) const override
   {
     return std::make_unique<WorldStateModificationNumber>(nb);
   }
@@ -517,8 +517,8 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
 }
 
 
-bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<std::string>>*, const std::function<bool (const std::map<std::string, std::set<std::string>>&)>&)>& pFactCallback,
-                                                     std::map<std::string, std::set<std::string>>& pParameters,
+bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pFactCallback,
+                                                     std::map<std::string, std::set<Entity>>& pParameters,
                                                      const WorldState& pWorldState,
                                                      const std::string& pFromDeductionId) const
 {
@@ -533,14 +533,14 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     {
       auto factToCheck = leftFactPtr->factOptional;
       factToCheck.fact.fluent = rightOperand->getFluent(pWorldState);
-      std::map<std::string, std::set<std::string>> localParameterToFind;
+      std::map<std::string, std::set<Entity>> localParameterToFind;
 
       if (!factToCheck.fact.fluent)
       {
         factToCheck.fact.fluent = "??tmpValueFromSet_" + pFromDeductionId;
-        localParameterToFind[*factToCheck.fact.fluent];
+        localParameterToFind[factToCheck.fact.fluent->value];
       }
-      bool res = pFactCallback(factToCheck, &localParameterToFind, [&](const std::map<std::string, std::set<std::string>>& pLocalParameterToFind){
+      bool res = pFactCallback(factToCheck, &localParameterToFind, [&](const std::map<std::string, std::set<Entity>>& pLocalParameterToFind){
         if (!localParameterToFind.empty() &&
             !localParameterToFind.begin()->second.empty())
         {
@@ -548,7 +548,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
           const auto* wSMFPtr = static_cast<const WorldStateModificationFact*>(&*rightOperand);
           if (wSMFPtr != nullptr)
           {
-            std::set<std::string>& parameterPossibilities = localParameterToFind.begin()->second;
+            std::set<Entity>& parameterPossibilities = localParameterToFind.begin()->second;
 
             while (!parameterPossibilities.empty())
             {
@@ -558,7 +558,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
               factWithValueToAssign.fluent = *itBeginOfParamPoss;
 
               const auto& factNamesToFacts = pWorldState.factNamesToFacts();
-              std::map<std::string, std::set<std::string>> newParameters;
+              std::map<std::string, std::set<Entity>> newParameters;
               if (factWithValueToAssign.isInOtherFactsMap(factNamesToFacts, true, &newParameters, &pParameters))
               {
                 res = true;
@@ -595,7 +595,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     {
       auto factToCheck = leftFactPtr->factOptional;
       factToCheck.fact.fluent = plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
-      return pFactCallback(factToCheck, nullptr, [](const std::map<std::string, std::set<std::string>>&){ return true; });
+      return pFactCallback(factToCheck, nullptr, [](const std::map<std::string, std::set<Entity>>&){ return true; });
     }
   }
 
@@ -606,7 +606,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     {
       auto factToCheck = leftFactPtr->factOptional;
       factToCheck.fact.fluent = minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState));
-      return pFactCallback(factToCheck, nullptr, [](const std::map<std::string, std::set<std::string>>&){ return true; });
+      return pFactCallback(factToCheck, nullptr, [](const std::map<std::string, std::set<Entity>>&){ return true; });
     }
   }
 
@@ -624,7 +624,7 @@ bool WorldStateModificationNode::operator==(const WorldStateModification& pOther
       parameterName == otherNodePtr->parameterName;
 }
 
-void WorldStateModificationNode::_forAllInstruction(const std::function<void (const WorldStateModification &)> &pCallback,
+void WorldStateModificationNode::_forAllInstruction(const std::function<void (const WorldStateModification &)>& pCallback,
                                                     const WorldState& pWorldState) const
 {
   if (leftOperand && rightOperand && !parameterName.empty())
@@ -632,7 +632,7 @@ void WorldStateModificationNode::_forAllInstruction(const std::function<void (co
     auto* leftFactPtr = _toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
     {
-      std::set<std::string> parameterValues;
+      std::set<Entity> parameterValues;
       pWorldState.extractPotentialArgumentsOfAFactParameter(parameterValues, leftFactPtr->factOptional.fact, parameterName);
       if (!parameterValues.empty())
       {
@@ -640,7 +640,7 @@ void WorldStateModificationNode::_forAllInstruction(const std::function<void (co
         for (const auto& paramValue : parameterValues)
         {
           auto newWsModif = rightOperand->clone(nullptr);
-          newWsModif->replaceFact(oldFact, paramValue);
+          newWsModif->replaceFact(oldFact, paramValue.value);
           pCallback(*newWsModif);
         }
       }
@@ -683,7 +683,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
           rightFactPtr->factOptional.fact.arguments.empty() &&
           !rightFactPtr->factOptional.fact.fluent)
       {
-        if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue)
+        if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue.value)
         {
           leftFactPtr->factOptional.isFactNegated = true;
           leftFactPtr->factOptional.fact.fluent = Fact::anyValue;

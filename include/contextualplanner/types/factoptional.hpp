@@ -27,7 +27,7 @@ struct CONTEXTUALPLANNER_API FactOptional
    * @param pOther Other optional fact.
    */
   FactOptional(const FactOptional& pOther,
-               const std::map<std::string, std::string>* pParametersPtr = nullptr);
+               const std::map<std::string, Entity>* pParametersPtr = nullptr);
 
   /**
    * @brief Construct an optional fact from a part of a string.

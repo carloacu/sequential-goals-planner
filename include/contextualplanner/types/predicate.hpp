@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include "../util/api.hpp"
-#include "entity.hpp"
+#include "parameter.hpp"
 
 
 namespace cp
@@ -21,9 +21,9 @@ struct CONTEXTUALPLANNER_API Predicate
   /// Name of the predicate.
   std::string name;
   /// Argument types of the predicate.
-  std::vector<Entity> parameters;
+  std::vector<Parameter> parameters;
   /// Fluent type of the predicate.
-  std::optional<Type> fluent;
+  std::shared_ptr<Type> fluent;
 };
 
 } // !cp

@@ -13,27 +13,25 @@
 
 namespace cp
 {
+struct Entity;
 
 CONTEXTUALPLANNER_API
-void unfoldMapWithSet(std::list<std::map<std::string, std::string>>& pOutMap,
-                      const std::map<std::string, std::set<std::string>>& pInMap);
-
-
-CONTEXTUALPLANNER_API
-void applyNewParams(
-    std::map<std::string, std::set<std::string>>& pParameters,
-    std::map<std::string, std::set<std::string>>& pNewParameters);
+void unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
+                      const std::map<std::string, std::set<Entity>>& pInMap);
 
 
 CONTEXTUALPLANNER_API
-std::optional<std::string> plusIntOrStr(
-    const std::optional<std::string>& pNb1Str,
-    const std::optional<std::string>& pNb2Str);
+void applyNewParams(std::map<std::string, std::set<Entity>>& pParameters,
+                    std::map<std::string, std::set<Entity>>& pNewParameters);
+
 
 CONTEXTUALPLANNER_API
-std::optional<std::string> minusIntOrStr(
-    const std::optional<std::string>& pNb1Str,
-    const std::optional<std::string>& pNb2Str);
+std::optional<std::string> plusIntOrStr(const std::optional<Entity>& pNb1,
+                                        const std::optional<Entity>& pNb2);
+
+CONTEXTUALPLANNER_API
+std::optional<std::string> minusIntOrStr(const std::optional<Entity>& pNb1,
+                                         const std::optional<Entity>& pNb2);
 
 CONTEXTUALPLANNER_API
 bool compIntNb(

@@ -13,7 +13,17 @@ struct SetOfTypes;
 struct CONTEXTUALPLANNER_API Entity
 {
   Entity(const std::string& pValue,
-         const Type& pType = Type(""));
+         const std::shared_ptr<Type>& pType = {});
+
+  Entity(const Entity& pOther) = default;
+  Entity(Entity&& pOther) noexcept;
+  Entity& operator=(const Entity& pOther) = default;
+  Entity& operator=(Entity&& pOther) noexcept;
+
+  bool operator<(const Entity& pOther) const;
+
+  bool operator==(const Entity& pOther) const;
+  bool operator!=(const Entity& pOther) const { return !operator==(pOther); }
 
   static Entity createAnyEntity();
   static Entity fromStr(const std::string& pStr,
@@ -21,7 +31,7 @@ struct CONTEXTUALPLANNER_API Entity
   std::string toStr() const;
 
   std::string value;
-  Type type;
+  std::shared_ptr<Type> type;
 };
 
 } // !cp

@@ -11,7 +11,7 @@ namespace cp
 namespace {
 
 void _parametersToStr(std::string& pStr,
-                      const std::vector<std::string>& pParameters)
+                      const std::vector<Entity>& pParameters)
 {
   bool firstIteration = true;
   for (auto& param : pParameters)
@@ -20,33 +20,33 @@ void _parametersToStr(std::string& pStr,
       firstIteration = false;
     else
       pStr += ", ";
-    pStr += param;
+    pStr += param.toStr();
   }
 }
 
-bool _isInside(const std::string& pStr,
+bool _isInside(const Entity& pEntity,
                const std::vector<std::string>* pEltsPtr)
 {
   if (pEltsPtr == nullptr)
     return false;
   auto lastElt = pEltsPtr->end();
-  return std::find(pEltsPtr->begin(), lastElt, pStr) != lastElt;
+  return std::find(pEltsPtr->begin(), lastElt, pEntity.value) != lastElt;
 }
 
-bool _isInside(const std::string& pStr,
-               const std::map<std::string, std::set<std::string>>* pEltsPtr)
+bool _isInside(const Entity& pEntity,
+               const std::map<std::string, std::set<Entity>>* pEltsPtr)
 {
   if (pEltsPtr == nullptr)
     return false;
-  auto it = pEltsPtr->find(pStr);
+  auto it = pEltsPtr->find(pEntity.value);
   return it != pEltsPtr->end() && it->second.empty();
 }
 
 
 }
 
-const std::string Fact::anyValue = "*";
-const std::string Fact::undefinedValue = "undefined";
+const Entity Fact::anyValue = Entity("*");
+const Entity Fact::undefinedValue = Entity("undefined");
 std::string Fact::punctualPrefix = "~punctual~";
 
 Fact::Fact(const std::string& pStr,
@@ -67,6 +67,39 @@ Fact::Fact(const std::string& pStr,
 Fact::~Fact()
 {
 }
+
+Fact::Fact(const Fact& pOther)
+  : name(pOther.name),
+    arguments(pOther.arguments),
+    fluent(pOther.fluent),
+    isValueNegated(pOther.isValueNegated)
+{
+}
+
+Fact::Fact(Fact&& pOther) noexcept
+  : name(std::move(pOther.name)),
+    arguments(std::move(pOther.arguments)),
+    fluent(std::move(pOther.fluent)),
+    isValueNegated(std::move(pOther.isValueNegated))
+{
+}
+
+Fact& Fact::operator=(const Fact& pOther) {
+  name = pOther.name;
+  arguments = pOther.arguments;
+  fluent = pOther.fluent;
+  isValueNegated = pOther.isValueNegated;
+  return *this;
+}
+
+Fact& Fact::operator=(Fact&& pOther) noexcept {
+    name = std::move(pOther.name);
+    arguments = std::move(pOther.arguments);
+    fluent = std::move(pOther.fluent);
+    isValueNegated = std::move(pOther.isValueNegated);
+    return *this;
+}
+
 
 bool Fact::operator<(const Fact& pOther) const
 {
@@ -91,8 +124,8 @@ bool Fact::operator==(const Fact& pOther) const
 
 
 bool Fact::areEqualWithoutFluentConsideration(const Fact& pFact,
-                                              const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
-                                              const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2) const
+                                              const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr,
+                                              const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2) const
 {
   if (pFact.name != name ||
       pFact.arguments.size() != arguments.size())
@@ -138,8 +171,8 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
 
 
 bool Fact::areEqualExceptAnyValues(const Fact& pOther,
-                                   const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
-                                   const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
+                                   const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr,
+                                   const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
                                    const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr) const
 {
   if (name != pOther.name || arguments.size() != pOther.arguments.size())
@@ -178,8 +211,8 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
 
 
 bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
-                                            const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr,
-                                            const std::map<std::string, std::set<std::string>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
+                                            const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr,
+                                            const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
                                             const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr) const
 {
   if (name != pOther.name || arguments.size() != pOther.arguments.size())
@@ -225,16 +258,16 @@ bool Fact::hasArgumentOrValue(
 }
 
 
-std::string Fact::tryToExtractArgumentFromExample(
+std::optional<Entity> Fact::tryToExtractArgumentFromExample(
     const std::string& pArgument,
     const Fact& pExampleFact) const
 {
   if (name != pExampleFact.name ||
       isValueNegated != pExampleFact.isValueNegated ||
       arguments.size() != pExampleFact.arguments.size())
-    return "";
+    return {};
 
-  std::string res;
+  std::optional<Entity> res;
   if (fluent && pExampleFact.fluent && *fluent == pArgument)
     res = *pExampleFact.fluent;
 
@@ -250,16 +283,16 @@ std::string Fact::tryToExtractArgumentFromExample(
   return res;
 }
 
-std::string Fact::tryToExtractArgumentFromExampleWithoutFluentConsideration(
+std::optional<Entity> Fact::tryToExtractArgumentFromExampleWithoutFluentConsideration(
     const std::string& pArgument,
     const Fact& pExampleFact) const
 {
   if (name != pExampleFact.name ||
       isValueNegated != pExampleFact.isValueNegated ||
       arguments.size() != pExampleFact.arguments.size())
-    return "";
+    return {};
 
-  std::string res;
+  std::optional<Entity> res;
   auto itParam = arguments.begin();
   auto itOtherParam = pExampleFact.arguments.begin();
   while (itParam != arguments.end())
@@ -275,7 +308,7 @@ std::string Fact::tryToExtractArgumentFromExampleWithoutFluentConsideration(
 
 
 bool Fact::isPatternOf(
-    const std::map<std::string, std::set<std::string>>& pPossibleArguments,
+    const std::map<std::string, std::set<Entity>>& pPossibleArguments,
     const Fact& pFactExample) const
 {
   if (name != pFactExample.name ||
@@ -283,9 +316,9 @@ bool Fact::isPatternOf(
       arguments.size() != pFactExample.arguments.size())
     return false;
 
-  auto isOk = [&](const std::string& pPatternVal,
-                  const std::string& pExempleVal) {
-    auto itVal = pPossibleArguments.find(pPatternVal);
+  auto isOk = [&](const Entity& pPatternVal,
+                  const Entity& pExempleVal) {
+    auto itVal = pPossibleArguments.find(pPatternVal.value);
     if (itVal != pPossibleArguments.end())
     {
       if (!itVal->second.empty() &&
@@ -316,35 +349,35 @@ bool Fact::isPatternOf(
 
 
 
-void Fact::replaceArguments(const std::map<std::string, std::string>& pCurrentArgumentsToNewArgument)
+void Fact::replaceArguments(const std::map<std::string, Entity>& pCurrentArgumentsToNewArgument)
 {
   if (fluent)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(*fluent);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent->value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end())
       fluent = itValueParam->second;
   }
 
   for (auto& currParam : arguments)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end())
       currParam = itValueParam->second;
   }
 }
 
-void Fact::replaceArguments(const std::map<std::string, std::set<std::string>>& pCurrentArgumentsToNewArgument)
+void Fact::replaceArguments(const std::map<std::string, std::set<Entity>>& pCurrentArgumentsToNewArgument)
 {
   if (fluent)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(*fluent);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent->value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
       fluent = *itValueParam->second.begin();
   }
 
   for (auto& currParam : arguments)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
       currParam = *itValueParam->second.begin();
   }
@@ -362,9 +395,9 @@ std::string Fact::toStr() const
   if (fluent)
   {
     if (isValueNegated)
-      res += "!=" + *fluent;
+      res += "!=" + fluent->value;
     else
-      res += "=" + *fluent;
+      res += "=" + fluent->value;
   }
   return res;
 }
@@ -472,9 +505,9 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<std::string>& pArgumentsT
 
 bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
                           bool pParametersAreForTheFact,
-                          std::map<std::string, std::set<std::string>>* pNewParametersPtr,
-                          const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                          std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
+                          std::map<std::string, std::set<Entity>>* pNewParametersPtr,
+                          const std::map<std::string, std::set<Entity>>* pParametersPtr,
+                          std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr,
                           bool* pTriedToModifyParametersPtr) const
 {
   bool res = false;
@@ -488,9 +521,9 @@ bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
 
 bool Fact::isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOtherFacts,
                              bool pParametersAreForTheFact,
-                             std::map<std::string, std::set<std::string>>* pNewParametersPtr,
-                             const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                             std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
+                             std::map<std::string, std::set<Entity>>* pNewParametersPtr,
+                             const std::map<std::string, std::set<Entity>>* pParametersPtr,
+                             std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr,
                              bool* pTriedToModifyParametersPtr) const
 {
   bool res = false;
@@ -506,9 +539,9 @@ bool Fact::isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOther
 
 bool Fact::isInOtherFact(const Fact& pOtherFact,
                          bool pParametersAreForTheFact,
-                         std::map<std::string, std::set<std::string>>* pNewParametersPtr,
-                         const std::map<std::string, std::set<std::string>>* pParametersPtr,
-                         std::map<std::string, std::set<std::string>>* pParametersToModifyInPlacePtr,
+                         std::map<std::string, std::set<Entity>>* pNewParametersPtr,
+                         const std::map<std::string, std::set<Entity>>* pParametersPtr,
+                         std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr,
                          bool* pTriedToModifyParametersPtr,
                          bool pIgnoreFluents) const
 {
@@ -516,22 +549,22 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       pOtherFact.arguments.size() != arguments.size())
     return false;
 
-  std::map<std::string, std::set<std::string>> newPotentialParameters;
-  std::map<std::string, std::set<std::string>> newParametersInPlace;
-  auto doesItMatch = [&](const std::string& pFactValue, const std::string& pValueToLookFor) {
+  std::map<std::string, std::set<Entity>> newPotentialParameters;
+  std::map<std::string, std::set<Entity>> newParametersInPlace;
+  auto doesItMatch = [&](const Entity& pFactValue, const Entity& pValueToLookFor) {
     if (pFactValue == pValueToLookFor ||
         pFactValue == Fact::anyValue)
       return true;
 
     if (pParametersPtr != nullptr)
     {
-      auto itParam = pParametersPtr->find(pFactValue);
+      auto itParam = pParametersPtr->find(pFactValue.value);
       if (itParam != pParametersPtr->end())
       {
         if (!itParam->second.empty())
           return itParam->second.count(pValueToLookFor) > 0;
         if (pNewParametersPtr != nullptr)
-          newPotentialParameters[pFactValue].insert(pValueToLookFor);
+          newPotentialParameters[pFactValue.value].insert(pValueToLookFor);
         else if (pTriedToModifyParametersPtr != nullptr)
           *pTriedToModifyParametersPtr = true;
         return true;
@@ -540,12 +573,12 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 
     if (pParametersToModifyInPlacePtr != nullptr)
     {
-      auto itParam = pParametersToModifyInPlacePtr->find(pFactValue);
+      auto itParam = pParametersToModifyInPlacePtr->find(pFactValue.value);
       if (itParam != pParametersToModifyInPlacePtr->end())
       {
         if (!itParam->second.empty())
           return itParam->second.count(pValueToLookFor) > 0;
-        newParametersInPlace[pFactValue].insert(pValueToLookFor);
+        newParametersInPlace[pFactValue.value].insert(pValueToLookFor);
         return true;
       }
     }

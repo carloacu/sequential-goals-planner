@@ -53,8 +53,8 @@ void SetOfTypes::addType(const std::string& pTypeToAdd,
 {
   if (pParentType == "")
   {
-    _types.push_back(Type(pTypeToAdd));
-    _nameToType[pTypeToAdd] = &_types.back();
+    _types.push_back(std::make_shared<Type>(pTypeToAdd));
+    _nameToType[pTypeToAdd] = _types.back();
     return;
   }
 
@@ -65,16 +65,16 @@ void SetOfTypes::addType(const std::string& pTypeToAdd,
     it = _nameToType.find(pParentType);
   }
 
-  auto type = Type(pTypeToAdd, it->second);
+  auto type = std::make_shared<Type>(pTypeToAdd, it->second);
   it->second->subTypes.push_back(type);
-  _nameToType[pTypeToAdd] = &it->second->subTypes.back();
+  _nameToType[pTypeToAdd] = it->second->subTypes.back();
 }
 
-Type SetOfTypes::nameToType(const std::string& pName) const
+std::shared_ptr<Type> SetOfTypes::nameToType(const std::string& pName) const
 {
   auto it = _nameToType.find(pName);
   if (it != _nameToType.end())
-    return *it->second;
+    return it->second;
   throw std::runtime_error("\"" + pName + "\" isa not a valid type name");
 }
 
@@ -85,7 +85,7 @@ std::list<std::string> SetOfTypes::typesToStrs() const
     return {};
   std::list<std::string> res;
   for (auto& currType : _types)
-    currType.toStrs(res);
+    currType->toStrs(res);
   return res;
 }
 

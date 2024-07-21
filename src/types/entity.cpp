@@ -12,11 +12,42 @@ const std::string _anyValue = "*";
 }
 
 Entity::Entity(const std::string& pValue,
-               const Type& pType)
+               const std::shared_ptr<Type>& pType)
  : value(pValue),
    type(pType)
 {
 }
+
+Entity::Entity(Entity&& pOther) noexcept
+  : value(std::move(pOther.value)),
+    type(pOther.type) {
+}
+
+
+Entity& Entity::operator=(Entity&& pOther) noexcept {
+    value = std::move(pOther.value);
+    type = pOther.type;
+    return *this;
+}
+
+
+bool Entity::operator<(const Entity& pOther) const {
+  if (value != pOther.value)
+    return value < pOther.value;
+  if (type && !pOther.type)
+    return true;
+  if (!type && pOther.type)
+    return false;
+  if (type && pOther.type)
+    return *type < *pOther.type;
+  return false;
+}
+
+
+bool Entity::operator==(const Entity& pOther) const {
+  return value == pOther.value && type == pOther.type;
+}
+
 
 Entity Entity::createAnyEntity()
 {
@@ -46,9 +77,9 @@ Entity Entity::fromStr(const std::string& pStr,
 
 std::string Entity::toStr() const
 {
-  if (type.name.empty())
+  if (!type)
     return value;
-  return value + " - " + type.name;
+  return value + " - " + type->name;
 }
 
 

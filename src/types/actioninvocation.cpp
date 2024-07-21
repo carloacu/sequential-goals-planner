@@ -1,15 +1,18 @@
 #include <contextualplanner/types/actioninvocation.hpp>
-
+#include <contextualplanner/types/entity.hpp>
 
 namespace cp
 {
 
 ActionInvocation::ActionInvocation(const std::string& pActionId,
-    const std::map<std::string, std::set<std::string>>& pParameters)
+    const std::map<std::string, std::set<Entity>>& pParameters)
   : actionId(pActionId),
     parameters(pParameters)
 {
 }
+
+ActionInvocation::~ActionInvocation() {}
+
 
 std::string ActionInvocation::toStr() const
 {
@@ -26,7 +29,7 @@ std::string ActionInvocation::toStr() const
         res += ", ";
       res += currParam.first + " -> ";
       if (!currParam.second.empty())
-        res += *currParam.second.begin();
+        res += currParam.second.begin()->toStr();
     }
     res += ")";
   }
