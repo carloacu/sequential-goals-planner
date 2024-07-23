@@ -440,16 +440,6 @@ bool ConditionNode::containsFactOpt(const FactOptional& pFactOptional,
 }
 
 
-void ConditionNode::replaceFact(const Fact& pOldFact,
-                                const Fact& pNewFact)
-{
-  if (leftOperand)
-    leftOperand->replaceFact(pOldFact, pNewFact);
-  if (rightOperand)
-    rightOperand->replaceFact(pOldFact, pNewFact);
-}
-
-
 void ConditionNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                            bool pIsWrappingExprssionNegated) const
 {
@@ -806,13 +796,6 @@ bool ConditionExists::containsFactOpt(const FactOptional& pFactOptional,
   return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, pIsWrappingExprssionNegated);
 }
 
-void ConditionExists::replaceFact(const Fact& pOldFact,
-                                  const Fact& pNewFact)
-{
-  if (condition)
-    condition->replaceFact(pOldFact, pNewFact);
-}
-
 void ConditionExists::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                              bool pIsWrappingExprssionNegated) const
 {
@@ -945,12 +928,6 @@ bool ConditionNot::containsFactOpt(const FactOptional& pFactOptional,
   return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, !pIsWrappingExprssionNegated);
 }
 
-void ConditionNot::replaceFact(const Fact& pOldFact,
-                               const Fact& pNewFact)
-{
-  if (condition)
-    condition->replaceFact(pOldFact, pNewFact);
-}
 
 void ConditionNot::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                           bool pIsWrappingExprssionNegated) const
@@ -1074,15 +1051,6 @@ bool ConditionFact::findConditionCandidateFromFactFromEffect(
   return res;
 }
 
-
-
-
-void ConditionFact::replaceFact(const Fact& pOldFact,
-                                const Fact& pNewFact)
-{
-  if (factOptional.fact == pOldFact)
-    factOptional.fact = pNewFact;
-}
 
 bool ConditionFact::isTrue(const WorldState& pWorldState,
                            const std::set<Fact>& pPunctualFacts,

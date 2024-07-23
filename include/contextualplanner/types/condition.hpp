@@ -39,14 +39,6 @@ struct CONTEXTUALPLANNER_API Condition
   virtual bool hasFact(const Fact& pFact) const = 0;
 
   /**
-   * @brief Replace a fact or the negation of the fact by another fact.
-   * @param[in] pOldFact Existing fact to replace.
-   * @param[in] pNewFact New fact to set instead.
-   */
-  virtual void replaceFact(const Fact& pOldFact,
-                           const Fact& pNewFact) = 0;
-
-  /**
    * @brief Check if this condition contains an optional fact with parameters compatibility.
    * @param[in] pFactOptional Optional fact to consider.
    * @param[in] pFactParameters Optional fact parameters to possible values. The possible value will not be considered here.
@@ -192,8 +184,6 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                 std::unique_ptr<Condition> pRightOperand);
 
   bool hasFact(const Fact& pFact) const override;
-  void replaceFact(const Fact& pOldFact,
-                   const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<Entity>>& pFactParameters,
                        const std::map<std::string, std::set<Entity>>* pOtherFactParametersPtr,
@@ -252,8 +242,6 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                   std::unique_ptr<Condition> pCondition);
 
   bool hasFact(const Fact& pFact) const override;
-  void replaceFact(const Fact& pOldFact,
-                   const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<Entity>>& pFactParameters,
                        const std::map<std::string, std::set<Entity>>* pOtherFactParametersPtr,
@@ -315,8 +303,6 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
   ConditionNot(std::unique_ptr<Condition> pCondition);
 
   bool hasFact(const Fact& pFact) const override;
-  void replaceFact(const Fact& pOldFact,
-                   const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<Entity>>& pFactParameters,
                        const std::map<std::string, std::set<Entity>>* pOtherFactParametersPtr,
@@ -376,8 +362,6 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
   ConditionFact(const FactOptional& pFactOptional);
 
   bool hasFact(const Fact& pFact) const override;
-  void replaceFact(const Fact& pOldFact,
-                   const Fact& pNewFact) override;
   bool containsFactOpt(const FactOptional& pFactOptional,
                        const std::map<std::string, std::set<Entity>>& pFactParameters,
                        const std::map<std::string, std::set<Entity>>* pOtherFactParametersPtr,
@@ -435,8 +419,6 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
   ConditionNumber(int pNb);
 
   bool hasFact(const Fact&) const override  { return false; }
-  void replaceFact(const Fact& pOldFact,
-                   const Fact& pNewFact) override {}
   bool containsFactOpt(const FactOptional&,
                        const std::map<std::string, std::set<Entity>>&,
                        const std::map<std::string, std::set<Entity>>*,

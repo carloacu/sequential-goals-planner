@@ -25,10 +25,6 @@ bool Action::hasFact(const cp::Fact& pFact) const
 void Action::replaceFact(const cp::Fact& pOldFact,
                          const cp::Fact& pNewFact)
 {
-  if (precondition)
-    precondition->replaceFact(pOldFact, pNewFact);
-  if (preferInContext)
-    preferInContext->replaceFact(pOldFact, pNewFact);
   effect.replaceFact(pOldFact, pNewFact);
 }
 

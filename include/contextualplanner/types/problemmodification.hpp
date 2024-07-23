@@ -177,12 +177,6 @@ inline void ProblemModification::replaceFact(const cp::Fact& pOldFact,
     potentialWorldStateModification->replaceFact(pOldFact, pNewFact);
   if (worldStateModificationAtStart)
     worldStateModificationAtStart->replaceFact(pOldFact, pNewFact);
-
-  for (auto& currGoalWithPriority : goalsToAdd)
-    for (auto& currGoal : currGoalWithPriority.second)
-      currGoal.objective().replaceFact(pOldFact, pNewFact);
-  for (auto& currGoal : goalsToAddInCurrentPriority)
-    currGoal.objective().replaceFact(pOldFact, pNewFact);
 }
 
 inline bool ProblemModification::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pCallback,
