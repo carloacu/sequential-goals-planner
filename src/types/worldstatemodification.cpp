@@ -185,10 +185,7 @@ struct WorldStateModificationFact : public WorldStateModification
   void replaceFact(const cp::Fact& pOldFact,
                    const Fact& pNewFact) override
   {
-    if (factOptional.fact == pOldFact)
-      factOptional.fact = pNewFact;
-    else
-      factOptional.fact.replaceFactInArguments(pOldFact, pNewFact);
+    factOptional.fact.replaceFactInArguments(pOldFact, pNewFact);
   }
 
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,

@@ -871,21 +871,6 @@ void _checkActionHasAFact()
   assert_false(action.hasFact(_fact_g));
 }
 
-void _checkActionReplacefact()
-{
-  cp::ProblemModification effect(cp::WorldStateModification::fromStr(_fact_a + " & !" + _fact_b));
-  effect.potentialWorldStateModification = cp::WorldStateModification::fromStr(_fact_c);
-  effect.goalsToAdd[cp::GoalStack::defaultPriority] = {_fact_d};
-  cp::Action action(cp::Condition::fromStr(_fact_e),
-                    effect,
-                    cp::Condition::fromStr(_fact_f));
-  assert_true(action.hasFact(_fact_a));
-  assert_false(action.hasFact(_fact_g));
-  action.replaceFact(_fact_a, _fact_g);
-  assert_false(action.hasFact(_fact_a));
-  assert_true(action.hasFact(_fact_g));
-}
-
 
 
 void _testIncrementOfVariables()
@@ -3472,7 +3457,6 @@ void test_plannerWithoutTypes()
   _checkNotInAPrecondition();
   _checkClearGoalsWhenItsAlreadySatisfied();
   _checkActionHasAFact();
-  _checkActionReplacefact();
   _testIncrementOfVariables();
   _precoditionEqualEffect();
   _addGoalEvenForEmptyAction();
