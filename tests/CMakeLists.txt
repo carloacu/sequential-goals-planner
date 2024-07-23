@@ -12,7 +12,9 @@ endif()
 add_executable(
   contextualplanner_tests
 
-  src/test_chatbotplanner.cpp
+  src/test_planner.cpp
+  src/test_plannerWithoutTypes.hpp
+  src/test_plannerWithoutTypes.cpp
   src/test_ontology.hpp
   src/test_ontology.cpp
   src/test_arithmeticevaluator.hpp

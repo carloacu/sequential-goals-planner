@@ -75,7 +75,7 @@ std::shared_ptr<Type> SetOfTypes::nameToType(const std::string& pName) const
   auto it = _nameToType.find(pName);
   if (it != _nameToType.end())
     return it->second;
-  throw std::runtime_error("\"" + pName + "\" isa not a valid type name");
+  throw std::runtime_error("\"" + pName + "\" is not a valid type name");
 }
 
 
@@ -90,7 +90,7 @@ std::list<std::string> SetOfTypes::typesToStrs() const
 }
 
 
-std::string SetOfTypes::typesToStr() const
+std::string SetOfTypes::toStr() const
 {
   std::stringstream ss;
   auto strs = typesToStrs();

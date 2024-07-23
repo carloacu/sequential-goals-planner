@@ -1,17 +1,12 @@
+#include "test_plannerWithoutTypes.hpp"
+#include <iostream>
+#include <assert.h>
 #include <contextualplanner/contextualplanner.hpp>
 #include <contextualplanner/types/derivedpredicate.hpp>
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
-#include <iostream>
-#include <assert.h>
-#include "test_arithmeticevaluator.hpp"
-#include "test_ontology.hpp"
-#include "test_util.hpp"
-#include "docexamples/test_planningDummyExample.hpp"
-#include "docexamples/test_planningExampleWithAPreconditionSolve.hpp"
-
 
 namespace
 {
@@ -3438,20 +3433,13 @@ void _inferenceToRemoveAFactWithoutFluent()
   assert_false(problem.worldState.hasFact(cp::Fact("robotAt(me, city)")));
 }
 
-
-
 }
 
 
 
 
-int main(int argc, char *argv[])
+void test_plannerWithoutTypes()
 {
-  test_arithmeticEvaluator();
-  test_ontology();
-  test_util();
-  planningDummyExample();
-  planningExampleWithAPreconditionSolve();
   _test_createEmptyGoal();
   _test_goalToStr();
   _test_factToStr();
@@ -3571,6 +3559,5 @@ int main(int argc, char *argv[])
   _checkTwoTimesTheEqualityOfAFact();
   _inferenceToRemoveAFactWithoutFluent();
 
-  std::cout << "chatbot planner is ok !!!!" << std::endl;
-  return 0;
+  std::cout << "chatbot planner without types is ok !!!!" << std::endl;
 }

@@ -545,7 +545,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
             !localParameterToFind.begin()->second.empty())
         {
           res = false;
-          const auto* wSMFPtr = static_cast<const WorldStateModificationFact*>(&*rightOperand);
+          const auto* wSMFPtr = dynamic_cast<const WorldStateModificationFact*>(&*rightOperand);
           if (wSMFPtr != nullptr)
           {
             std::set<Entity>& parameterPossibilities = localParameterToFind.begin()->second;
@@ -675,10 +675,10 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
     const auto& rightOperandExp = *(++pExpressionParsed.arguments.begin());
     auto rightOperand = _expressionParsedToWsModification(rightOperandExp);
 
-    auto* leftFactPtr = static_cast<WorldStateModificationFact*>(&*leftOperand);
+    auto* leftFactPtr = dynamic_cast<WorldStateModificationFact*>(&*leftOperand);
     if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
     {
-      const auto* rightFactPtr = static_cast<const WorldStateModificationFact*>(&*rightOperand);
+      const auto* rightFactPtr = dynamic_cast<const WorldStateModificationFact*>(&*rightOperand);
       if (rightFactPtr != nullptr &&
           rightFactPtr->factOptional.fact.arguments.empty() &&
           !rightFactPtr->factOptional.fact.fluent)

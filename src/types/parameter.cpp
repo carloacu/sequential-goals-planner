@@ -57,9 +57,11 @@ Parameter Parameter::fromStr(const std::string& pStr,
 
   if (nameWithType.size() > 1)
   {
+    auto nameStr = nameWithType[0];
+    trim(nameStr);
     auto typeStr = nameWithType[1];
     trim(typeStr);
-    return Parameter(nameWithType[0], pSetOfTypes.nameToType(typeStr));
+    return Parameter(nameStr, pSetOfTypes.nameToType(typeStr));
   }
 
   return Parameter(nameWithType[0]);

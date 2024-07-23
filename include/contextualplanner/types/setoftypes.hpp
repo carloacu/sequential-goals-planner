@@ -22,7 +22,7 @@ struct CONTEXTUALPLANNER_API SetOfTypes
   std::shared_ptr<Type> nameToType(const std::string& pName) const;
 
   std::list<std::string> typesToStrs() const;
-  std::string typesToStr() const;
+  std::string toStr() const;
 
 private:
   std::list<std::shared_ptr<Type>> _types;

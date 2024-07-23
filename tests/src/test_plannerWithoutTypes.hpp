@@ -1,0 +1,7 @@
+#ifndef TEST_PLANNER_WITHOUT_TYPES_HPP
+#define TEST_PLANNER_WITHOUT_TYPES_HPP
+
+void test_plannerWithoutTypes();
+
+#endif // TEST_PLANNER_WITHOUT_TYPES_HPP
+

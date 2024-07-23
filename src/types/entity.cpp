@@ -66,9 +66,11 @@ Entity Entity::fromStr(const std::string& pStr,
 
   if (nameWithType.size() > 1)
   {
+    auto valueStr = nameWithType[0];
+    trim(valueStr);
     auto typeStr = nameWithType[1];
     trim(typeStr);
-    return Entity(nameWithType[0], pSetOfTypes.nameToType(typeStr));
+    return Entity(valueStr, pSetOfTypes.nameToType(typeStr));
   }
 
   return Entity(nameWithType[0]);
