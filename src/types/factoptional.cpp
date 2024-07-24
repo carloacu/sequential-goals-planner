@@ -11,6 +11,18 @@ FactOptional::FactOptional(const Fact& pFact,
 {
 }
 
+FactOptional::FactOptional(bool pIsFactNegated,
+                           const std::string& pName,
+                           const std::vector<std::string>& pArgumentStrs,
+                           const std::string& pFluentStr,
+                           const Ontology& pOntology,
+                           const SetOfEntities& pEntities)
+  : isFactNegated(pIsFactNegated),
+    fact(Fact(pName, pArgumentStrs, pFluentStr, pOntology, pEntities))
+{
+}
+
+
 FactOptional::FactOptional(const FactOptional& pOther,
                            const std::map<std::string, Entity>* pParametersPtr)
   : isFactNegated(pOther.isFactNegated),

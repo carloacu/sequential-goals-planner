@@ -29,4 +29,10 @@ void Action::replaceArgument(const std::string& pOld,
 }
 
 
+void Action::limitPredicateTypes()
+{
+
+}
+
+
 } // !cp

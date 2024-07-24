@@ -1,6 +1,6 @@
 #include <contextualplanner/types/goal.hpp>
 #include <assert.h>
-
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -11,6 +11,12 @@ namespace
 {
 const std::string _persistPrefix = Goal::persistFunctionName + "(";
 const std::size_t _persistPrefixSize = _persistPrefix.size();
+
+const std::string _oneStepTowardsPrefix = Goal::oneStepTowardsFunctionName + "(";
+const std::size_t _oneStepTowardsPrefixSize = _oneStepTowardsPrefix.size();
+
+const std::string _implyPrefix = Goal::implyFunctionName + "(";
+const std::size_t _implyPrefixSize = _implyPrefix.size();
 }
 
 Goal::Goal(const std::string& pStr,
@@ -26,47 +32,43 @@ Goal::Goal(const std::string& pStr,
     _conditionFactPtr(),
     _goalGroupId(pGoalGroupId)
 {
-  if (pStr.size() > _persistPrefixSize &&
-      pStr.compare(0, _persistPrefixSize, _persistPrefix) == 0 &&
-      pStr[pStr.size() - 1] == ')')
+  auto goalStr = pStr;
+  trim(goalStr);
+
+  if (goalStr.size() > _persistPrefixSize &&
+      goalStr.compare(0, _persistPrefixSize, _persistPrefix) == 0 &&
+      goalStr[goalStr.size() - 1] == ')')
   {
     _isPersistentIfSkipped = true;
-    auto subStr = pStr.substr(_persistPrefixSize, pStr.size() - _persistPrefixSize - 1);
-    _objective = Condition::fromStr(subStr, pOntology, pEntities);
-  }
-  else
-  {
-    _objective = Condition::fromStr(pStr, pOntology, pEntities);
+    goalStr = goalStr.substr(_persistPrefixSize, goalStr.size() - _persistPrefixSize - 1);
   }
 
+  if (goalStr.size() > _oneStepTowardsPrefixSize &&
+      goalStr.compare(0, _oneStepTowardsPrefixSize, _oneStepTowardsPrefix) == 0 &&
+      goalStr[goalStr.size() - 1] == ')')
+  {
+    _oneStepTowards = true;
+    goalStr = goalStr.substr(_oneStepTowardsPrefixSize, goalStr.size() - _oneStepTowardsPrefixSize - 1);
+  }
+
+  if (goalStr.size() > _implyPrefixSize &&
+      goalStr.compare(0, _implyPrefixSize, _implyPrefix) == 0 &&
+      goalStr[goalStr.size() - 1] == ')')
+  {
+    goalStr = goalStr.substr(_implyPrefixSize, goalStr.size() - _implyPrefixSize - 1);
+
+    char separator = ',';
+    bool isFactNegated = false;
+    std::size_t endPos = 0;
+    auto conditionFact = Fact(goalStr, pOntology, pEntities, &separator, &isFactNegated, 0, &endPos);
+    _conditionFactPtr = std::make_unique<FactOptional>(conditionFact, isFactNegated);
+
+    ++endPos;
+    goalStr = goalStr.substr(endPos, goalStr.size() - endPos);
+  }
+
+   _objective = Condition::fromStr(goalStr, pOntology, pEntities);
   assert(_objective);
-  if (!_objective)
-    return;
-  auto* factPtr = _objective->fcFactPtr();
-  if (factPtr != nullptr)
-  {
-    if (factPtr->factOptional.fact.name == oneStepTowardsFunctionName &&
-        factPtr->factOptional.fact.arguments.size() == 1 &&
-        !factPtr->factOptional.fact.fluent)
-    {
-      _oneStepTowards = true;
-      // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
-      auto factFirstParameters = std::move(factPtr->factOptional.fact.arguments.front());
-      factPtr->factOptional = FactOptional(std::move(factFirstParameters.value), pOntology, pEntities);
-    }
-
-    if (factPtr->factOptional.fact.name == implyFunctionName &&
-        factPtr->factOptional.fact.arguments.size() == 2 &&
-        !factPtr->factOptional.fact.fluent)
-    {
-      _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.arguments[0].value, pOntology, pEntities);
-      // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
-      auto factSecondParameters = std::move(factPtr->factOptional.fact.arguments[1]);
-      factPtr->factOptional = FactOptional(std::move(factSecondParameters.value), pOntology, pEntities);
-    }
-
-    assert(!factPtr->factOptional.fact.name.empty());
-  }
 }
 
 Goal::Goal(const Goal& pOther,

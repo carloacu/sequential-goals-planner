@@ -1,6 +1,7 @@
 #include "test_arithmeticevaluator.hpp"
 #include <assert.h>
 #include <iostream>
+#include <contextualplanner/types/action.hpp>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/ontology.hpp>
 
@@ -98,7 +99,7 @@ void _test_setOfEntities_fromStr()
   assert_eq<std::string>("my_type2", setOfEntities.valueToEntity("titi")->type->name);
 }
 
-void _test_fact_initialization_with_ontology()
+void _test_fact_initialization()
 {
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromStr("my_type my_type2 return_type\n"
@@ -119,7 +120,7 @@ void _test_fact_initialization_with_ontology()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"pred_that_does_not_exist\" is not a predicate name in fact: \"pred_that_does_not_exist(titi)\"", e.what());
+    assert_eq<std::string>("\"pred_that_does_not_exist\" is not a predicate name. The exception was thrown while parsing fact: \"pred_that_does_not_exist(titi)\"", e.what());
   }
   try
   {
@@ -127,7 +128,7 @@ void _test_fact_initialization_with_ontology()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"unknown_value\" is not a entity value in fact: \"pred_name(unknown_value)\"", e.what());
+    assert_eq<std::string>("\"unknown_value\" is not an entity value. The exception was thrown while parsing fact: \"pred_name(unknown_value)\"", e.what());
   }
   try
   {
@@ -135,7 +136,7 @@ void _test_fact_initialization_with_ontology()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"pred_name\" does not have the same number of parameters than the associated predicate \"pred_name(?v - my_type)\"", e.what());
+    assert_eq<std::string>("The fact \"pred_name\" does not have the same number of parameters than the associated predicate \"pred_name(?v - my_type)\". The exception was thrown while parsing fact: \"pred_name\"", e.what());
   }
   try
   {
@@ -143,7 +144,7 @@ void _test_fact_initialization_with_ontology()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"titi - my_type2\" is not a \"my_type\" in fact: \"pred_name(titi)\" with predicate: \"pred_name(?v - my_type)\"", e.what());
+    assert_eq<std::string>("\"titi - my_type2\" is not a \"my_type\" for predicate: \"pred_name(?v - my_type)\". The exception was thrown while parsing fact: \"pred_name(titi)\"", e.what());
   }
   try
   {
@@ -151,7 +152,7 @@ void _test_fact_initialization_with_ontology()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"val\" is not a entity value from fact: \"pred_name(toto)=val\"", e.what());
+    assert_eq<std::string>("\"val\" fluent is not a entity value. The exception was thrown while parsing fact: \"pred_name(toto)=val\"", e.what());
   }
 
   cp::Fact("pred_name2(toto, titi)=res", ontology, {});
@@ -164,7 +165,7 @@ void _test_fact_initialization_with_ontology()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"unknown_val\" is not a entity value from fact: \"pred_name2(toto, titi)=unknown_val\"", e.what());
+    assert_eq<std::string>("\"unknown_val\" fluent is not a entity value. The exception was thrown while parsing fact: \"pred_name2(toto, titi)=unknown_val\"", e.what());
   }
 
 
@@ -173,6 +174,39 @@ void _test_fact_initialization_with_ontology()
   assert_eq<std::string>("pred(, ) - ", cp::Fact("pred(lol, mdr)=dd", {}, {}).predicate.toStr());
 }
 
+
+void _test_action_initialization()
+{
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("my_type my_type2 return_type\n"
+                                           "sub_my_type - my_type");
+  ontology.constants = cp::SetOfEntities::fromStr("toto - my_type\n"
+                                                  "sub_toto - sub_my_type\n"
+                                                  "titi tutu - my_type2\n"
+                                                  "res - return_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?v - my_type)\n"
+                                                     "pred_name2(?v - my_type, ?o - my_type2) - return_type", ontology.types);
+
+  cp::SetOfEntities entities;
+
+  cp::Action action(cp::Condition::fromStr("pred_name(toto)", ontology, entities),
+                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
+  action.limitPredicateTypes();
+
+  /*
+  cp::Action action2(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
+                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
+  try
+  {
+    action2.limitPredicateTypes();
+    assert_true(false);
+  }
+  catch (const std::exception& e)
+  {
+    assert_eq<std::string>("xcccxccc", e.what());
+  }
+  */
+}
 
 
 }
@@ -187,7 +221,8 @@ void test_ontology()
   _test_predicateToStr();
   _test_setOfPredicates_fromStr();
   _test_setOfEntities_fromStr();
-  _test_fact_initialization_with_ontology();
+  _test_fact_initialization();
+  _test_action_initialization();
 
   std::cout << "ontology is ok !!!!" << std::endl;
 }

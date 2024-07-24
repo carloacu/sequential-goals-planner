@@ -27,9 +27,23 @@ bool _isASeparator(char pChar)
 FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
                                       const SetOfEntities& pEntities) const
 {
-  FactOptional res(name, pOntology, pEntities);
+  std::vector<std::string> argumentStrs;
   for (auto& currArg : arguments)
-    res.fact.arguments.emplace_back(currArg.toFact(pOntology, pEntities).toStr());
+    argumentStrs.emplace_back(currArg.name);
+
+  std::string factName;
+  bool isFactNegated = false;
+  if (!name.empty() && name[0] == '!')
+  {
+    isFactNegated = true;
+    factName = name.substr(1, name.size() - 1);
+  }
+  else
+  {
+    factName = name;
+  }
+
+  FactOptional res(isFactNegated, factName, argumentStrs, value, pOntology, pEntities);
   if (value == Fact::undefinedValue.value && !res.isFactNegated)
   {
     res.isFactNegated = true;
@@ -153,7 +167,6 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
 
   return res;
 }
-
 
 
 } // !cp

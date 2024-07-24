@@ -21,7 +21,8 @@ struct CONTEXTUALPLANNER_API SetOfPredicates
 
   void addPredicate(const Predicate& pPredicate);
 
-  const Predicate* nameToPredicate(const std::string& pName) const;
+  const Predicate* nameToPredicatePtr(const std::string& pName) const;
+  Predicate nameToPredicate(const std::string& pName) const;
 
   std::string toStr() const;
   bool empty() const;

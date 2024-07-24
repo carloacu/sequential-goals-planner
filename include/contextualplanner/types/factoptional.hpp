@@ -22,6 +22,14 @@ struct CONTEXTUALPLANNER_API FactOptional
    */
   FactOptional(const Fact& pFact,
                bool pIsFactNegated = false);
+
+  FactOptional(bool pIsFactNegated,
+               const std::string& pName,
+               const std::vector<std::string>& pArgumentStrs,
+               const std::string& pFluentStr,
+               const Ontology& pOntology,
+               const SetOfEntities& pEntities);
+
   /**
    * @brief Construct an optional fact from another one.
    * @param pOther Other optional fact.

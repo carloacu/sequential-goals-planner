@@ -35,6 +35,12 @@ struct CONTEXTUALPLANNER_API Fact
        std::size_t pBeginPos = 0,
        std::size_t* pResPos = nullptr);
 
+  Fact(const std::string& pName,
+       const std::vector<std::string>& pArgumentStrs,
+       const std::string& pFluentStr,
+       const Ontology& pOntology,
+       const SetOfEntities& pEntities);
+
   /// Destruct the fact.
   ~Fact();
 
@@ -267,6 +273,17 @@ struct CONTEXTUALPLANNER_API Fact
   const static Entity undefinedValue;
   /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)
   static std::string punctualPrefix;
+
+private:
+
+  void _addArgument(const std::string& pArgumentName,
+                    const Ontology& pOntology,
+                    const SetOfEntities& pEntities);
+  void _setFluent(const std::string& pFluentStr,
+                  const Ontology& pOntology,
+                  const SetOfEntities& pEntities);
+  void _finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
+                                               const SetOfEntities& pEntities);
 };
 
 } // !cp

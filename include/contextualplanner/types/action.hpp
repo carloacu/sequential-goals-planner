@@ -79,6 +79,8 @@ struct CONTEXTUALPLANNER_API Action
   void replaceArgument(const std::string& pOld,
                        const std::string& pNew);
 
+  void limitPredicateTypes();
+
   /// Print the precondition in string.
   std::string precondition_str() const { return precondition ? precondition->toStr() : ""; }
 

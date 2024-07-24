@@ -1,5 +1,6 @@
 #include <contextualplanner/types/setofpredicates.hpp>
 #include <vector>
+#include <contextualplanner/types/setoftypes.hpp>
 #include <contextualplanner/util/util.hpp>
 
 
@@ -31,12 +32,23 @@ void SetOfPredicates::addPredicate(const Predicate& pPredicate)
   _nameToPredicate[pPredicate.name] = &_predicates.back();
 }
 
-const Predicate* SetOfPredicates::nameToPredicate(const std::string& pName) const
+const Predicate* SetOfPredicates::nameToPredicatePtr(const std::string& pName) const
 {
   auto it = _nameToPredicate.find(pName);
   if (it != _nameToPredicate.end())
     return it->second;
   return nullptr;
+}
+
+Predicate SetOfPredicates::nameToPredicate(const std::string& pName) const
+{
+  auto it = _nameToPredicate.find(pName);
+  if (it != _nameToPredicate.end())
+    return *it->second;
+
+  if (empty()) // For retrocompatibility
+    return Predicate(pName, {});
+  throw std::runtime_error("\"" + pName + "\" is not a predicate name");
 }
 
 

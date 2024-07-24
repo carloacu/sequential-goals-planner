@@ -69,6 +69,32 @@ Fact::Fact(const std::string& pStr,
     *pResPos = resPos;
 }
 
+
+Fact::Fact(const std::string& pName,
+           const std::vector<std::string>& pArgumentStrs,
+           const std::string& pFluentStr,
+           const Ontology& pOntology,
+           const SetOfEntities& pEntities)
+  : name(pName),
+    arguments(),
+    fluent(),
+    isValueNegated(false),
+    predicate("_not_set", pOntology.types)
+{
+  if (!name.empty() && name[name.size() - 1] == '!')
+  {
+    isValueNegated = true;
+    name = name.substr(0, name.size() - 1);
+  }
+
+  predicate = pOntology.predicates.nameToPredicate(name);
+  for (auto& currParam : pArgumentStrs)
+    _addArgument(currParam, pOntology, pEntities);
+  _setFluent(pFluentStr, pOntology, pEntities);
+  _finalizeInisilizationAndValidityChecks(pOntology, pEntities);
+}
+
+
 Fact::~Fact()
 {
 }
@@ -432,147 +458,75 @@ std::size_t Fact::fillFactFromStr(
 {
   static const char separatorOfParameters = ',';
   std::size_t pos = pBeginPos;
-  while (pos < pStr.size())
+  try
   {
-    if (pStr[pos] == ' ')
-    {
-      ++pos;
-      continue;
-    }
-    if (pStr[pos] == '!')
-    {
-      if (pIsFactNegatedPtr != nullptr)
-        *pIsFactNegatedPtr = true;
-      ++pos;
-      continue;
-    }
-    if ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ')')
-      return pos;
-
-    bool insideParenthesis = false;
-    auto beginPos = pos;
     while (pos < pStr.size())
     {
-      if (!insideParenthesis && ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ' ' || pStr[pos] == ')'))
-        break;
+      if (pStr[pos] == ' ')
+      {
+        ++pos;
+        continue;
+      }
       if (pStr[pos] == '!')
       {
-        isValueNegated = true;
-        if (name.empty())
-          name = pStr.substr(beginPos, pos - beginPos);
+        if (pIsFactNegatedPtr != nullptr)
+          *pIsFactNegatedPtr = true;
         ++pos;
         continue;
       }
-      if (pStr[pos] == '(' || pStr[pos] == separatorOfParameters)
+      if ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ')')
+        return pos;
+
+      bool insideParenthesis = false;
+      auto beginPos = pos;
+      while (pos < pStr.size())
       {
-        insideParenthesis = true;
-        if (name.empty())
-          name = pStr.substr(beginPos, pos - beginPos);
-        ++pos;
-        auto argumentName = cp::Fact(pStr, pOntology, pEntities, &separatorOfParameters, &isValueNegated, pos, &pos).toStr();
-        if (!pOntology.empty() && !argumentName.empty() && argumentName[0] != '?')
+        if (!insideParenthesis && ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ' ' || pStr[pos] == ')'))
+          break;
+        if (pStr[pos] == '!')
         {
-          auto* entityPtr = pOntology.constants.valueToEntity(argumentName);
-          if (entityPtr == nullptr)
-            throw std::runtime_error("\"" + argumentName + "\" is not a entity value in fact: \"" + pStr + "\"");
-          arguments.emplace_back(*entityPtr);
+          isValueNegated = true;
+          if (name.empty())
+            name = pStr.substr(beginPos, pos - beginPos);
+          ++pos;
+          continue;
         }
-        else
+        if (pStr[pos] == '(' || pStr[pos] == separatorOfParameters)
         {
-          arguments.emplace_back(argumentName);
+          insideParenthesis = true;
+          if (name.empty())
+            name = pStr.substr(beginPos, pos - beginPos);
+          ++pos;
+          auto argumentName = cp::Fact(pStr, pOntology, pEntities, &separatorOfParameters, &isValueNegated, pos, &pos).toStr();
+          _addArgument(argumentName, pOntology, pEntities);
+          beginPos = pos;
+          continue;
         }
-        beginPos = pos;
-        continue;
-      }
-      if (pStr[pos] == ')' || pStr[pos] == '=')
-      {
-        insideParenthesis = false;
-        if (name.empty())
-          name = pStr.substr(beginPos, pos - beginPos);
+        if (pStr[pos] == ')' || pStr[pos] == '=')
+        {
+          insideParenthesis = false;
+          if (name.empty())
+            name = pStr.substr(beginPos, pos - beginPos);
+          ++pos;
+          beginPos = pos;
+          continue;
+        }
         ++pos;
-        beginPos = pos;
-        continue;
       }
-      ++pos;
+      if (name.empty())
+        name = pStr.substr(beginPos, pos - beginPos);
+      else if (pos > beginPos)
+        _setFluent(pStr.substr(beginPos, pos - beginPos), pOntology, pEntities);
     }
-    if (name.empty())
-    {
-      name = pStr.substr(beginPos, pos - beginPos);
-    }
-    else if (pos > beginPos)
-    {
-      auto fluentStr = pStr.substr(beginPos, pos - beginPos);
 
-      if (!pOntology.empty() && !fluentStr.empty() && fluentStr[0] != '?')
-      {
-        auto* entityPtr = pOntology.constants.valueToEntity(fluentStr);
-        if (entityPtr == nullptr)
-          throw std::runtime_error("\"" + fluentStr + "\" is not a entity value from fact: \"" + pStr + "\"");
-        fluent.emplace(*entityPtr);
-      }
-      else
-      {
-        fluent = fluentStr;
-      }
-    }
+    if (!pOntology.empty())
+      predicate = pOntology.predicates.nameToPredicate(name);
+    _finalizeInisilizationAndValidityChecks(pOntology, pEntities);
   }
-
-  if (!pOntology.empty())
+  catch (const std::exception& e)
   {
-    const auto* predicatePtr = pOntology.predicates.nameToPredicate(name);
-    if (predicatePtr == nullptr)
-      throw std::runtime_error("\"" + name + "\" is not a predicate name in fact: \"" + pStr + "\"");
-    predicate = *predicatePtr;
-    if (predicate.parameters.size() != arguments.size())
-      throw std::runtime_error("\"" + pStr + "\" does not have the same number of parameters than the associated predicate \"" + predicatePtr->toStr() + "\"");
-    for (auto i = 0; i < arguments.size(); ++i)
-    {
-      if (!predicate.parameters[i].type)
-        throw std::runtime_error("\"" + predicate.parameters[i].name + "\" does not have a type, in fact predicate \"" + predicate.toStr() + "\"");
-      if (arguments[i].isAParameterToFill())
-      {
-        arguments[i].type = predicate.parameters[i].type;
-        continue;
-      }
-      if (!arguments[i].type)
-        throw std::runtime_error("\"" + arguments[i].value + "\" does not have a type, in fact \"" + pStr + "\"");
-      if (!arguments[i].type->isA(*predicate.parameters[i].type))
-        throw std::runtime_error("\"" + arguments[i].toStr() + "\" is not a \"" + predicate.parameters[i].type->name + "\" in fact: \"" + pStr +
-                                 "\" with predicate: \"" + predicatePtr->toStr() + "\"");
-    }
-
-    if (predicate.fluent)
-    {
-      if (!fluent)
-        throw std::runtime_error("Fact: \"" + pStr + "\" does not have fluent but the associated predicate: \"" + predicatePtr->toStr() + "\" has a fluent");
-
-      if (fluent->isAParameterToFill())
-      {
-        fluent->type = predicate.fluent;
-      }
-      else
-      {
-        if (!fluent->type)
-          throw std::runtime_error("\"" + fluent->toStr() + "\" does not have type in fact: \"" + pStr + "\"");
-        if (!fluent->type->isA(*predicate.fluent))
-          throw std::runtime_error("\"" + fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" in fact: \"" + pStr +
-                                   "\" with predicate: \"" + predicatePtr->toStr() + "\"");
-      }
-    }
-    else if (fluent)
-    {
-      throw std::runtime_error("Fact: \"" + pStr + "\" has a fluent but the associated predicate: \"" + predicatePtr->toStr() + "\" does not have a fluent");
-    }
+    throw std::runtime_error(std::string(e.what()) + ". The exception was thrown while parsing fact: \"" + pStr + "\"");
   }
-  else
-  {
-    predicate.name = name;
-    for (auto i = 0; i < arguments.size(); ++i)
-      predicate.parameters.emplace_back("");
-    if (fluent)
-      predicate.fluent = std::make_shared<Type>("");
-  }
-
   return pos;
 }
 
@@ -763,6 +717,102 @@ void Fact::replaceArgument(const std::string& pCurrent,
     if (currParameter == pCurrent)
       currParameter = pNew;
 }
+
+
+void Fact::_addArgument(const std::string& pArgumentName,
+                        const Ontology& pOntology,
+                        const SetOfEntities& pEntities)
+{
+  if (pArgumentName.empty())
+    return;
+  if (!pOntology.empty() && pArgumentName[0] != '?')
+  {
+    auto* entityPtr = pOntology.constants.valueToEntity(pArgumentName);
+    if (entityPtr == nullptr)
+      throw std::runtime_error("\"" + pArgumentName + "\" is not an entity value");
+    arguments.emplace_back(*entityPtr);
+  }
+  else
+  {
+    arguments.emplace_back(pArgumentName);
+  }
+}
+
+
+void Fact::_setFluent(const std::string& pFluentStr,
+                      const Ontology& pOntology,
+                      const SetOfEntities& pEntities)
+{
+  if (pFluentStr.empty())
+    return;
+  if (!pOntology.empty() && pFluentStr[0] != '?')
+  {
+    auto* entityPtr = pOntology.constants.valueToEntity(pFluentStr);
+    if (entityPtr == nullptr)
+      throw std::runtime_error("\"" + pFluentStr + "\" fluent is not a entity value");
+    fluent.emplace(*entityPtr);
+  }
+  else
+  {
+    fluent = pFluentStr;
+  }
+}
+
+
+void Fact::_finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
+                                                   const SetOfEntities& pEntities)
+{
+  if (!pOntology.empty())
+  {
+    if (predicate.parameters.size() != arguments.size())
+      throw std::runtime_error("The fact \"" + toStr() + "\" does not have the same number of parameters than the associated predicate \"" + predicate.toStr() + "\"");
+    for (auto i = 0; i < arguments.size(); ++i)
+    {
+      if (!predicate.parameters[i].type)
+        throw std::runtime_error("\"" + predicate.parameters[i].name + "\" does not have a type, in fact predicate \"" + predicate.toStr() + "\"");
+      if (arguments[i].isAParameterToFill())
+      {
+        arguments[i].type = predicate.parameters[i].type;
+        continue;
+      }
+      if (!arguments[i].type)
+        throw std::runtime_error("\"" + arguments[i].value + "\" does not have a type");
+      if (!arguments[i].type->isA(*predicate.parameters[i].type))
+        throw std::runtime_error("\"" + arguments[i].toStr() + "\" is not a \"" + predicate.parameters[i].type->name + "\" for predicate: \"" + predicate.toStr() + "\"");
+    }
+
+    if (predicate.fluent)
+    {
+      if (!fluent)
+        throw std::runtime_error("The fact \"" + toStr() + "\" does not have fluent but the associated predicate: \"" + predicate.toStr() + "\" has a fluent");
+
+      if (fluent->isAParameterToFill())
+      {
+        fluent->type = predicate.fluent;
+      }
+      else
+      {
+        if (!fluent->type)
+          throw std::runtime_error("\"" + fluent->toStr() + "\" does not have type");
+        if (!fluent->type->isA(*predicate.fluent))
+          throw std::runtime_error("\"" + fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" for predicate: \"" + predicate.toStr() + "\"");
+      }
+    }
+    else if (fluent)
+    {
+      throw std::runtime_error("The fact \"" + toStr() + "\" has a fluent but the associated predicate: \"" + predicate.toStr() + "\" does not have a fluent");
+    }
+  }
+  else
+  {
+    predicate.name = name;
+    for (auto i = 0; i < arguments.size(); ++i)
+      predicate.parameters.emplace_back("");
+    if (fluent)
+      predicate.fluent = std::make_shared<Type>("");
+  }
+}
+
 
 
 } // !cp
