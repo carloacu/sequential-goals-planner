@@ -92,11 +92,12 @@ struct CONTEXTUALPLANNER_API Domain
 
   static const SetOfInferencesId setOfInferencesIdFromConstructor;
 
-  const Ontology ontology;
+  const Ontology& getOntology() const { return _ontology; }
 
 private:
   /// Universal unique identifier regenerated each time this object is modified.
   std::string _uuid;
+  Ontology _ontology;
   /// Map of action identifiers to action.
   std::map<ActionId, Action> _actions;
   /// Map of facts in precondition to action identifiers.

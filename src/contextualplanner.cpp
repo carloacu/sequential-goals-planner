@@ -879,8 +879,9 @@ void notifyActionStarted(Problem& pProblem,
     {
       auto worldStateModificationAtStart = itAction->second.effect.worldStateModificationAtStart->cloneParamSet(pActionInvocationWithGoal.actionInvocation.parameters);
       auto& setOfInferences = pDomain.getSetOfInferences();
+      const auto& ontology = pDomain.getOntology();
       pProblem.worldState.modify(worldStateModificationAtStart, pProblem.goalStack, setOfInferences,
-                                 pDomain.ontology, pProblem.entities, pNow);
+                                 ontology, pProblem.entities, pNow);
     }
   }
 }
@@ -897,8 +898,9 @@ void notifyActionDone(Problem& pProblem,
   {
     auto& setOfInferences = pDomain.getSetOfInferences();
     bool goalChanged = false;
+    const auto& ontology = pDomain.getOntology();
     notifyActionInvocationDone(pProblem, goalChanged, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification,
-                               pDomain.ontology, pNow,
+                               ontology, pNow,
                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                                nullptr);
   }

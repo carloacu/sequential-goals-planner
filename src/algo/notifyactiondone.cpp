@@ -46,11 +46,12 @@ void updateProblemForNextPotentialPlannerResult(
       pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
     auto& setOfInferences = pDomain.getSetOfInferences();
 
+    const auto& ontology = pDomain.getOntology();
     pProblem.worldState.modify(itAction->second.effect.worldStateModificationAtStart, pProblem.goalStack, setOfInferences,
-                               pDomain.ontology, pProblem.entities, pNow);
+                               ontology, pProblem.entities, pNow);
 
     notifyActionInvocationDone(pProblem, pGoalChanged, setOfInferences, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification,
-                               pDomain.ontology, pNow,
+                               ontology, pNow,
                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                                pLookForAnActionOutputInfosPtr);
 
@@ -58,7 +59,7 @@ void updateProblemForNextPotentialPlannerResult(
     {
       auto potentialEffect = itAction->second.effect.potentialWorldStateModification->cloneParamSet(pOneStepOfPlannerResult.actionInvocation.parameters);
       pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfInferences,
-                                 pDomain.ontology, pProblem.entities, pNow);
+                                 ontology, pProblem.entities, pNow);
     }
   }
 }

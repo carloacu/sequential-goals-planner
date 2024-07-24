@@ -45,8 +45,8 @@ bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorld
 }
 
 Domain::Domain()
-  : ontology(),
-    _uuid(),
+  : _uuid(),
+    _ontology(),
     _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
@@ -59,8 +59,8 @@ Domain::Domain()
 Domain::Domain(const std::map<ActionId, Action>& pActions,
                const Ontology& pOntology,
                const SetOfInferences& pSetOfInferences)
-  : ontology(pOntology),
-    _uuid(generateUuid()),
+  : _uuid(generateUuid()),
+    _ontology(pOntology),
     _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
@@ -73,6 +73,7 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
   if (!pSetOfInferences.empty())
     _setOfInferences.emplace(setOfInferencesIdFromConstructor, pSetOfInferences);
 }
+
 
 
 void Domain::addAction(const ActionId& pActionId,
