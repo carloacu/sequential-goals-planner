@@ -55,5 +55,9 @@ std::string SetOfPredicates::toStr() const
   return res;
 }
 
+bool SetOfPredicates::empty() const
+{
+  return _predicates.empty() && _nameToPredicate.empty();
+}
 
 } // !cp

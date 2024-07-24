@@ -55,4 +55,11 @@ Predicate::Predicate(const std::string& pStr,
    return res;
  }
 
+
+ bool Predicate::operator==(const Predicate& pOther) const
+ {
+   return name == pOther.name && parameters == pOther.parameters && fluent == pOther.fluent;
+ }
+
+
 } // !cp

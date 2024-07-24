@@ -106,6 +106,10 @@ std::string SetOfTypes::toStr() const
   return ss.str();
 }
 
+bool SetOfTypes::empty() const
+{
+  return _types.empty() && _nameToType.empty();
+}
 
 
 } // !cp

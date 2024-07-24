@@ -21,6 +21,8 @@ struct CONTEXTUALPLANNER_API Type
 
   void toStrs(std::list<std::string>& pStrs) const;
 
+  bool isA(const Type& pOtherType) const;
+
   bool operator<(const Type& pOther) const;
 
   const std::string name;

@@ -23,6 +23,7 @@ struct CONTEXTUALPLANNER_API SetOfTypes
 
   std::list<std::string> typesToStrs() const;
   std::string toStr() const;
+  bool empty() const;
 
 private:
   std::list<std::shared_ptr<Type>> _types;

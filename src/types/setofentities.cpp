@@ -94,5 +94,10 @@ std::string SetOfEntities::toStr() const
   return res;
 }
 
+bool SetOfEntities::empty() const
+{
+  return _entities.empty() && _valueToEntity.empty();
+}
+
 
 } // !cp

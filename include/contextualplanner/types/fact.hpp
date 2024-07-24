@@ -8,6 +8,7 @@
 #include <set>
 #include "../util/api.hpp"
 #include <contextualplanner/types/entity.hpp>
+#include <contextualplanner/types/predicate.hpp>
 
 namespace cp
 {
@@ -258,6 +259,7 @@ struct CONTEXTUALPLANNER_API Fact
   std::optional<Entity> fluent;
   /// Is the value of the fact negated.
   bool isValueNegated;
+  Predicate predicate;
 
   /// Constant defining the "any value" special value.
   const static Entity anyValue;

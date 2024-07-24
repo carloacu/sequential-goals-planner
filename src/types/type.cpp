@@ -38,6 +38,16 @@ void Type::toStrs(std::list<std::string>& pStrs) const
 }
 
 
+bool Type::isA(const Type& pOtherType) const
+{
+  if (name == pOtherType.name)
+    return true;
+  if (parent)
+    return parent->isA(pOtherType);
+  return false;
+}
+
+
 bool Type::operator<(const Type& pOther) const
 {
   if (name != pOther.name)

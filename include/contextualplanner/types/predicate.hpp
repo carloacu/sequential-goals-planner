@@ -18,6 +18,9 @@ struct CONTEXTUALPLANNER_API Predicate
 
   std::string toStr() const;
 
+  bool operator==(const Predicate& pOther) const;
+  bool operator!=(const Predicate& pOther) const { return !operator==(pOther); }
+
   /// Name of the predicate.
   std::string name;
   /// Argument types of the predicate.

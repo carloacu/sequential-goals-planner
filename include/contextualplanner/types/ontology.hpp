@@ -12,9 +12,11 @@ namespace cp
 
 struct CONTEXTUALPLANNER_API Ontology
 {
-  SetOfTypes setOfTypes;
-  SetOfPredicates setOfPredicates;
+  SetOfTypes types;
+  SetOfPredicates predicates;
   SetOfEntities constants;
+
+  bool empty() const;
 };
 
 } // namespace cp
