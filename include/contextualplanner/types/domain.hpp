@@ -6,6 +6,7 @@
 #include "../util/api.hpp"
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/types/action.hpp>
+#include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 
 namespace cp
@@ -22,6 +23,7 @@ struct CONTEXTUALPLANNER_API Domain
    * @param[in] pActions Map of action identifiers to action.
    */
   Domain(const std::map<ActionId, Action>& pActions,
+         const Ontology& pOntology = {},
          const SetOfInferences& pSetOfInferences = {});
 
   // Actions
@@ -89,6 +91,8 @@ struct CONTEXTUALPLANNER_API Domain
   const std::string& getUuid() const { return _uuid; }
 
   static const SetOfInferencesId setOfInferencesIdFromConstructor;
+
+  const Ontology ontology;
 
 private:
   /// Universal unique identifier regenerated each time this object is modified.

@@ -12,7 +12,8 @@
 namespace cp
 {
 struct FactOptional;
-
+struct Ontology;
+struct SetOfEntities;
 
 /// Axiomatic knowledge that can be contained in a world.
 struct CONTEXTUALPLANNER_API Fact
@@ -26,6 +27,8 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[out] pResPos End postion of the fact in pStr after the parsing.
    */
   Fact(const std::string& pStr,
+       const Ontology& pOntology,
+       const SetOfEntities& pEntities,
        const char* pSeparatorPtr = nullptr,
        bool* pIsFactNegatedPtr = nullptr,
        std::size_t pBeginPos = 0,
@@ -160,6 +163,8 @@ struct CONTEXTUALPLANNER_API Fact
    * @return Fact constructed.
    */
   static Fact fromStr(const std::string& pStr,
+                      const Ontology& pOntology,
+                      const SetOfEntities& pEntities,
                       bool* pIsFactNegatedPtr = nullptr);
 
   /**
@@ -171,6 +176,8 @@ struct CONTEXTUALPLANNER_API Fact
    * @return End index of the deserialization.
    */
   std::size_t fillFactFromStr(const std::string& pStr,
+                              const Ontology& pOntology,
+                              const SetOfEntities& pEntities,
                               const char* pSeparatorPtr,
                               std::size_t pBeginPos,
                               bool* pIsFactNegatedPtr);
@@ -237,11 +244,11 @@ struct CONTEXTUALPLANNER_API Fact
 
   /**
    * @brief Replace, in the arguments of this fact, a fact by another fact.
-   * @param pCurrentFact Fact to search in the arguments.
-   * @param pNewFact New fact to set in place of pCurrentFact.
+   * @param pCurrent Fact to search in the arguments.
+   * @param pNew New fact to set in place of pCurrent.
    */
-  void replaceFactInArguments(const Fact& pCurrentFact,
-                              const Fact& pNewFact);
+  void replaceArgument(const std::string& pCurrent,
+                       const std::string& pNew);
 
   /// Name of the fact.
   std::string name;

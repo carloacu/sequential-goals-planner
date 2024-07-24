@@ -22,10 +22,10 @@ bool Action::hasFact(const cp::Fact& pFact) const
       effect.hasFact(pFact);
 }
 
-void Action::replaceFact(const cp::Fact& pOldFact,
-                         const cp::Fact& pNewFact)
+void Action::replaceArgument(const std::string& pOld,
+                             const std::string& pNew)
 {
-  effect.replaceFact(pOldFact, pNewFact);
+  effect.replaceArgument(pOld, pNew);
 }
 
 

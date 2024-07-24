@@ -22,6 +22,8 @@ struct CONTEXTUALPLANNER_API Goal
    * @param pGoalGroupId Identifier of a group of goals.
    */
   Goal(const std::string& pStr,
+       const Ontology& pOntology,
+       const SetOfEntities& pEntities,
        int pMaxTimeToKeepInactive = -1,
        const std::string& pGoalGroupId = "");
 

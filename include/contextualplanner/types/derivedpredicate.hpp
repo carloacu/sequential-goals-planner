@@ -30,7 +30,8 @@ struct CONTEXTUALPLANNER_API DerivedPredicate
   }
 
   /// Convert this derived predicate to 2 inferences.
-  std::list<Inference> toInferences() const;
+  std::list<Inference> toInferences(const Ontology& pOntology,
+                                    const SetOfEntities& pEntities) const;
 
   /// Parameter names of this derived predicate.
   std::vector<std::string> parameters;

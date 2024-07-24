@@ -14,6 +14,8 @@ const std::size_t _persistPrefixSize = _persistPrefix.size();
 }
 
 Goal::Goal(const std::string& pStr,
+           const Ontology& pOntology,
+           const SetOfEntities& pEntities,
            int pMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
   : _objective(),
@@ -30,11 +32,11 @@ Goal::Goal(const std::string& pStr,
   {
     _isPersistentIfSkipped = true;
     auto subStr = pStr.substr(_persistPrefixSize, pStr.size() - _persistPrefixSize - 1);
-    _objective = Condition::fromStr(subStr);
+    _objective = Condition::fromStr(subStr, pOntology, pEntities);
   }
   else
   {
-    _objective = Condition::fromStr(pStr);
+    _objective = Condition::fromStr(pStr, pOntology, pEntities);
   }
 
   assert(_objective);
@@ -50,17 +52,17 @@ Goal::Goal(const std::string& pStr,
       _oneStepTowards = true;
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
       auto factFirstParameters = std::move(factPtr->factOptional.fact.arguments.front());
-      factPtr->factOptional = std::move(factFirstParameters.value);
+      factPtr->factOptional = FactOptional(std::move(factFirstParameters.value), pOntology, pEntities);
     }
 
     if (factPtr->factOptional.fact.name == implyFunctionName &&
         factPtr->factOptional.fact.arguments.size() == 2 &&
         !factPtr->factOptional.fact.fluent)
     {
-      _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.arguments[0].value);
+      _conditionFactPtr = std::make_unique<FactOptional>(factPtr->factOptional.fact.arguments[0].value, pOntology, pEntities);
       // Temporary variable factParameters is needed for Android compilation (to not have the same assignee and value)
       auto factSecondParameters = std::move(factPtr->factOptional.fact.arguments[1]);
-      factPtr->factOptional = std::move(factSecondParameters.value);
+      factPtr->factOptional = FactOptional(std::move(factSecondParameters.value), pOntology, pEntities);
     }
 
     assert(!factPtr->factOptional.fact.name.empty());

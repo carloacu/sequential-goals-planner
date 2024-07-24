@@ -84,8 +84,8 @@ struct CONTEXTUALPLANNER_API ProblemModification
    * @param[in] pOldFact Fact to replace.
    * @param[in] pNewFact New fact to set.
    */
-  void replaceFact(const cp::Fact& pOldFact,
-                   const cp::Fact& pNewFact);
+  void replaceArgument(const std::string& pOldFact,
+                       const std::string& pNewFact);
 
   /**
    * @brief Iterate over all the optional facts until one can satisfy the objective.
@@ -168,15 +168,15 @@ inline void ProblemModification::add(const ProblemModification& pOther)
   goalsToAddInCurrentPriority.insert(goalsToAddInCurrentPriority.end(), pOther.goalsToAddInCurrentPriority.begin(), pOther.goalsToAddInCurrentPriority.end());
 }
 
-inline void ProblemModification::replaceFact(const cp::Fact& pOldFact,
-                                             const cp::Fact& pNewFact)
+inline void ProblemModification::replaceArgument(const std::string& pOld,
+                                                 const std::string& pNew)
 {
   if (worldStateModification)
-    worldStateModification->replaceFact(pOldFact, pNewFact);
+    worldStateModification->replaceArgument(pOld, pNew);
   if (potentialWorldStateModification)
-    potentialWorldStateModification->replaceFact(pOldFact, pNewFact);
+    potentialWorldStateModification->replaceArgument(pOld, pNew);
   if (worldStateModificationAtStart)
-    worldStateModificationAtStart->replaceFact(pOldFact, pNewFact);
+    worldStateModificationAtStart->replaceArgument(pOld, pNew);
 }
 
 inline bool ProblemModification::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pCallback,

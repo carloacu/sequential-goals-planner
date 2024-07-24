@@ -69,6 +69,8 @@ void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlann
                                   bool& pGoalChanged,
                                   GoalStack& pGoalStack,
                                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                                  const Ontology& pOntology,
+                                  const SetOfEntities& pEntities,
                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
@@ -76,42 +78,49 @@ void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlann
   {
     if (pOnStepOfPlannerResult.actionInvocation.parameters.empty())
     {
-      _modify(whatChanged, pEffect, pGoalStack, pSetOfInferences, pNow);
+      _modify(whatChanged, pEffect, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
     }
     else
     {
       auto effect = pEffect->cloneParamSet(pOnStepOfPlannerResult.actionInvocation.parameters);
-      _modify(whatChanged, effect, pGoalStack, pSetOfInferences, pNow);
+      _modify(whatChanged, effect, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
     }
   }
 
-  _notifyWhatChanged(whatChanged, pGoalChanged, pGoalStack, pSetOfInferences, pNow);
+  _notifyWhatChanged(whatChanged, pGoalChanged, pGoalStack, pSetOfInferences,
+                     pOntology, pEntities, pNow);
 }
 
 
 bool WorldState::addFact(const Fact& pFact,
                          GoalStack& pGoalStack,
                          const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                         const Ontology& pOntology,
+                         const SetOfEntities& pEntities,
                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  return addFacts(std::vector<Fact>{pFact}, pGoalStack, pSetOfInferences, pNow);
+  return addFacts(std::vector<Fact>{pFact}, pGoalStack, pSetOfInferences,
+                  pOntology, pEntities, pNow);
 }
 
 template<typename FACTS>
 bool WorldState::addFacts(const FACTS& pFacts,
                           GoalStack& pGoalStack,
                           const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                          const Ontology& pOntology,
+                          const SetOfEntities& pEntities,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
-  _addFacts(whatChanged, pFacts, pGoalStack, pSetOfInferences, pNow);
+  _addFacts(whatChanged, pFacts, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
   bool goalChanged = false;
-  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences,
+                     pOntology, pEntities, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
-template bool WorldState::addFacts<std::set<Fact>>(const std::set<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
-template bool WorldState::addFacts<std::vector<Fact>>(const std::vector<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template bool WorldState::addFacts<std::set<Fact>>(const std::set<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template bool WorldState::addFacts<std::vector<Fact>>(const std::vector<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 
 bool WorldState::hasFact(const Fact& pFact) const
 {
@@ -121,21 +130,25 @@ bool WorldState::hasFact(const Fact& pFact) const
 bool WorldState::removeFact(const Fact& pFact,
                             GoalStack& pGoalStack,
                             const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                            const Ontology& pOntology,
+                            const SetOfEntities& pEntities,
                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  return removeFacts(std::vector<Fact>{pFact}, pGoalStack, pSetOfInferences, pNow);
+  return removeFacts(std::vector<Fact>{pFact}, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
 }
 
 template<typename FACTS>
 bool WorldState::removeFacts(const FACTS& pFacts,
                              GoalStack& pGoalStack,
                              const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                             const Ontology& pOntology,
+                             const SetOfEntities& pEntities,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
   _removeFacts(whatChanged, pFacts, pGoalStack, pNow);
   bool goalChanged = false;
-  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
@@ -145,6 +158,8 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
                            const FACTS& pFacts,
                            GoalStack& pGoalStack,
                            const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                           const Ontology& pOntology,
+                           const SetOfEntities& pEntities,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   for (const auto& currFact : pFacts)
@@ -174,7 +189,8 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
           WhatChanged subWhatChanged;
           _removeFacts(subWhatChanged, std::vector<cp::Fact>{currExistingFact}, pGoalStack, pNow);
           bool goalChanged = false;
-          _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
+          _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfInferences,
+                             pOntology, pEntities, pNow);
           continue;
         }
 
@@ -197,8 +213,8 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
   pGoalStack._refresh(*this, pNow);
 }
 
-template void WorldState::_addFacts<std::set<Fact>>(WhatChanged&, const std::set<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
-template void WorldState::_addFacts<std::vector<Fact>>(WhatChanged&, const std::vector<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template void WorldState::_addFacts<std::set<Fact>>(WhatChanged&, const std::set<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template void WorldState::_addFacts<std::vector<Fact>>(WhatChanged&, const std::vector<Fact>&, GoalStack&, const std::map<SetOfInferencesId, SetOfInferences>&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
 
 
 template<typename FACTS>
@@ -261,6 +277,8 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
                          const std::unique_ptr<WorldStateModification>& pWsModif,
                          GoalStack& pGoalStack,
                          const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                         const Ontology& pOntology,
+                         const SetOfEntities& pEntities,
                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (!pWsModif)
@@ -277,7 +295,7 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
       factsToAdd.emplace_back(pFactOptional.fact);
   }, *this);
 
-  _addFacts(pWhatChanged, factsToAdd, pGoalStack, pSetOfInferences, pNow);
+  _addFacts(pWhatChanged, factsToAdd, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
   _removeFacts(pWhatChanged, factsToRemove, pGoalStack, pNow);
 }
 
@@ -285,12 +303,15 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
 bool WorldState::modify(const std::unique_ptr<WorldStateModification>& pWsModif,
                         GoalStack& pGoalStack,
                         const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                        const Ontology& pOntology,
+                        const SetOfEntities& pEntities,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
-  _modify(whatChanged, pWsModif, pGoalStack, pSetOfInferences, pNow);
+  _modify(whatChanged, pWsModif, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
   bool goalChanged = false;
-  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences,
+                     pOntology, pEntities, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
@@ -298,6 +319,8 @@ bool WorldState::modify(const std::unique_ptr<WorldStateModification>& pWsModif,
 void WorldState::setFacts(const std::set<Fact>& pFacts,
                           GoalStack& pGoalStack,
                           const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                          const Ontology& pOntology,
+                          const SetOfEntities& pEntities,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (_facts != pFacts)
@@ -310,7 +333,8 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
     WhatChanged whatChanged;
     pGoalStack._refresh(*this, pNow);
     bool goalChanged = false;
-    _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences, pNow);
+    _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences,
+                       pOntology, pEntities, pNow);
   }
 }
 
@@ -594,6 +618,8 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
                                        const std::set<InferenceId>& pInferenceIds,
                                        const std::map<InferenceId, Inference>& pInferences,
                                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                                       const Ontology& pOntology,
+                                       const SetOfEntities& pEntities,
                                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   bool somethingChanged = false;
@@ -624,7 +650,7 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
                 for (const auto& currParamsPoss : parametersToValuePoss)
                 {
                   auto factsToModify = currInference.factsToModify->clone(&currParamsPoss);
-                  _modify(pWhatChanged, factsToModify, pGoalStack, pSetOfInferences, pNow);
+                  _modify(pWhatChanged, factsToModify, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
                 }
               }
               else
@@ -639,14 +665,14 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
                     return false;
                   }, optFactPtr->fact, parametersToValues);
                   for (auto& currFactToRemove : factsToRemove)
-                    _modify(pWhatChanged, WorldStateModification::fromStr("!" + currFactToRemove->toStr()), // Optimize to construct WorldStateModification without passing by a string
-                            pGoalStack, pSetOfInferences, pNow);
+                    _modify(pWhatChanged, WorldStateModification::fromStr("!" + currFactToRemove->toStr(), pOntology, pEntities), // Optimize to construct WorldStateModification without passing by a string
+                            pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
                 }
               }
             }
             else
             {
-              _modify(pWhatChanged, currInference.factsToModify, pGoalStack, pSetOfInferences, pNow);
+              _modify(pWhatChanged, currInference.factsToModify, pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
             }
           }
           if (pGoalStack.addGoals(currInference.goalsToAdd, *this, pNow))
@@ -664,6 +690,8 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
                                     bool& pGoalChanged,
                                     GoalStack& pGoalStack,
                                     const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                                    const Ontology& pOntology,
+                                    const SetOfEntities& pEntities,
                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (pWhatChanged.somethingChanged())
@@ -685,21 +713,24 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
         {
           auto it = condToReachableInferences.find(currAddedFact.name);
           if (it != condToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences, pSetOfInferences, pNow))
+              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences,
+                                    pSetOfInferences, pOntology, pEntities, pNow))
             needAnotherLoop = true;
         }
         for (auto& currAddedFact : pWhatChanged.addedFacts)
         {
           auto it = condToReachableInferences.find(currAddedFact.name);
           if (it != condToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences, pSetOfInferences, pNow))
+              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences,
+                                    pSetOfInferences, pOntology, pEntities, pNow))
             needAnotherLoop = true;
         }
         for (auto& currRemovedFact : pWhatChanged.removedFacts)
         {
           auto it = notCondToReachableInferences.find(currRemovedFact.name);
           if (it != notCondToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences, pSetOfInferences, pNow))
+              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences,
+                                    pSetOfInferences, pOntology, pEntities, pNow))
             needAnotherLoop = true;
         }
       }

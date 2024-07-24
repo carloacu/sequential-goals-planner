@@ -50,6 +50,8 @@ const Entity Fact::undefinedValue = Entity("undefined");
 std::string Fact::punctualPrefix = "~punctual~";
 
 Fact::Fact(const std::string& pStr,
+           const Ontology& pOntology,
+           const SetOfEntities& pEntities,
            const char* pSeparatorPtr,
            bool* pIsFactNegatedPtr,
            std::size_t pBeginPos,
@@ -59,7 +61,7 @@ Fact::Fact(const std::string& pStr,
     fluent(),
     isValueNegated(false)
 {
-  auto resPos = fillFactFromStr(pStr, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
+  auto resPos = fillFactFromStr(pStr, pOntology, pEntities, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
   if (pResPos != nullptr)
     *pResPos = resPos;
 }
@@ -404,14 +406,18 @@ std::string Fact::toStr() const
 
 
 Fact Fact::fromStr(const std::string& pStr,
+                   const Ontology& pOntology,
+                   const SetOfEntities& pEntities,
                    bool* pIsFactNegatedPtr)
 {
-  return Fact(pStr, nullptr, pIsFactNegatedPtr);
+  return Fact(pStr, pOntology, pEntities, nullptr, pIsFactNegatedPtr);
 }
 
 
 std::size_t Fact::fillFactFromStr(
     const std::string& pStr,
+    const Ontology& pOntology,
+    const SetOfEntities& pEntities,
     const char* pSeparatorPtr,
     std::size_t pBeginPos,
     bool* pIsFactNegatedPtr)
@@ -455,7 +461,7 @@ std::size_t Fact::fillFactFromStr(
         if (name.empty())
           name = pStr.substr(beginPos, pos - beginPos);
         ++pos;
-        auto argumentName = cp::Fact(pStr, &separatorOfParameters, &isValueNegated, pos, &pos).toStr();
+        auto argumentName = cp::Fact(pStr, pOntology, pEntities, &separatorOfParameters, &isValueNegated, pos, &pos).toStr();
         arguments.emplace_back(argumentName);
         beginPos = pos;
         continue;
@@ -659,12 +665,12 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 }
 
 
-void Fact::replaceFactInArguments(const Fact& pCurrentFact,
-                                  const Fact& pNewFact)
+void Fact::replaceArgument(const std::string& pCurrent,
+                           const std::string& pNew)
 {
   for (auto& currParameter : arguments)
-    if (currParameter == pCurrentFact.name)
-      currParameter = pNewFact.name;
+    if (currParameter == pCurrent)
+      currParameter = pNew;
 }
 
 

@@ -18,6 +18,8 @@ struct Historical;
 struct LookForAnActionOutputInfos;
 struct SetOfInferences;
 struct WorldStateModification;
+struct Ontology;
+struct SetOfEntities;
 
 
 void notifyActionInvocationDone(Problem& pProblem,
@@ -25,6 +27,7 @@ void notifyActionInvocationDone(Problem& pProblem,
                                 const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                                 const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                 const std::unique_ptr<WorldStateModification>& pEffect,
+                                const Ontology& pOntology,
                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                 const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                                 const std::vector<Goal>* pGoalsToAddInCurrentPriority,

@@ -25,7 +25,9 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pStr String to convert as a condition.
    * @return New condition created.
    */
-  static std::unique_ptr<Condition> fromStr(const std::string& pStr);
+  static std::unique_ptr<Condition> fromStr(const std::string& pStr,
+                                            const Ontology& pOntology,
+                                            const SetOfEntities& pEntities);
 
   /**
    * @brief Convert the condition to a string.

@@ -15,11 +15,12 @@ DerivedPredicate::DerivedPredicate(std::unique_ptr<Condition> pCondition,
 }
 
 
-std::list<Inference> DerivedPredicate::toInferences() const
+std::list<Inference> DerivedPredicate::toInferences(const Ontology& pOntology,
+                                                    const SetOfEntities& pEntities) const
 {
   std::list<Inference> res;
-  res.emplace_back(condition->clone(), WorldStateModification::fromStr(fact.toStr()), parameters);
-  res.emplace_back(condition->clone(nullptr, true), WorldStateModification::fromStr("!" + fact.toStr()), parameters);
+  res.emplace_back(condition->clone(), WorldStateModification::fromStr(fact.toStr(), pOntology, pEntities), parameters);
+  res.emplace_back(condition->clone(nullptr, true), WorldStateModification::fromStr("!" + fact.toStr(), pOntology, pEntities), parameters);
   return res;
 }
 

@@ -4,6 +4,7 @@
 #include <contextualplanner/types/goalstack.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/types/historical.hpp>
+#include <contextualplanner/types/setofentities.hpp>
 #include "../util/api.hpp"
 
 
@@ -22,6 +23,8 @@ namespace cp
  */
 struct CONTEXTUALPLANNER_API Problem
 {
+  SetOfEntities entities;
+
   /// Objectives that the bot wants to do.
   GoalStack goalStack;
 

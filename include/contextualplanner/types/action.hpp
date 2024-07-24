@@ -76,8 +76,8 @@ struct CONTEXTUALPLANNER_API Action
    * @param pOldFact[in] Current fact to replace.
    * @param pNewFact[in] New fact to set.
    */
-  void replaceFact(const cp::Fact& pOldFact,
-                   const cp::Fact& pNewFact);
+  void replaceArgument(const std::string& pOld,
+                       const std::string& pNew);
 
   /// Print the precondition in string.
   std::string precondition_str() const { return precondition ? precondition->toStr() : ""; }

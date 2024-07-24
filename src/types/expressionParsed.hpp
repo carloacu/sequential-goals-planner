@@ -8,6 +8,8 @@
 namespace cp
 {
 struct FactOptional;
+struct Ontology;
+struct SetOfEntities;
 
 
 struct ExpressionParsed
@@ -21,7 +23,8 @@ struct ExpressionParsed
   char separatorToFollowingExp;
   std::unique_ptr<ExpressionParsed> followingExpression;
 
-  FactOptional toFact() const;
+  FactOptional toFact(const Ontology& pOntology,
+                      const SetOfEntities& pEntities) const;
 
   static ExpressionParsed fromStr(const std::string& pStr,
                                   std::size_t& pPos);

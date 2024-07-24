@@ -20,14 +20,14 @@ void planningExampleWithAPreconditionSolve()
 
   // Initialize the domain with a set of actions
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::WorldStateModification::fromStr(userIsGreeted)));
-  actions.emplace(askHowICanHelp, cp::Action(cp::Condition::fromStr(userIsGreeted),
-                                             cp::WorldStateModification::fromStr(proposedOurHelpToUser)));
+  actions.emplace(sayHi, cp::Action({}, cp::WorldStateModification::fromStr(userIsGreeted, {}, {})));
+  actions.emplace(askHowICanHelp, cp::Action(cp::Condition::fromStr(userIsGreeted, {}, {}),
+                                             cp::WorldStateModification::fromStr(proposedOurHelpToUser, {}, {})));
   cp::Domain domain(actions);
 
   // Initialize the problem with the goal to satisfy
   cp::Problem problem;
-  problem.goalStack.setGoals({proposedOurHelpToUser}, problem.worldState, now);
+  problem.goalStack.setGoals({cp::Goal(proposedOurHelpToUser, {}, {})}, problem.worldState, now);
 
   // Look for an action to do
   auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);

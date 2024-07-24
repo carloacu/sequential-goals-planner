@@ -20,7 +20,9 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pStr String to convert.
    * @return New world state modification created.
    */
-  static std::unique_ptr<WorldStateModification> fromStr(const std::string& pStr);
+  static std::unique_ptr<WorldStateModification> fromStr(const std::string& pStr,
+                                                         const Ontology& pOntology,
+                                                         const SetOfEntities& pEntities);
 
   /**
    * @brief Create a world state modification by concatenating two existing world state modifications.
@@ -51,8 +53,8 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pOldFact Existing fact to replace.
    * @param[in] pNewFact New fact to set instead.
    */
-  virtual void replaceFact(const cp::Fact& pOldFact,
-                           const Fact& pNewFact) = 0;
+  virtual void replaceArgument(const std::string& pOld,
+                               const std::string& pNew) = 0;
 
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state.

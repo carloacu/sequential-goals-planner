@@ -37,6 +37,8 @@ struct CONTEXTUALPLANNER_API FactOptional
    * @param[out] pResPos Postion in the input string after the parse.
    */
   FactOptional(const std::string& pStr,
+               const Ontology& pOntology,
+               const SetOfEntities& pEntities,
                const char* pSeparatorPtr = nullptr,
                std::size_t pBeginPos = 0,
                std::size_t* pResPos = nullptr);

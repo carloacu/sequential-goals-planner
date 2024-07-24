@@ -85,13 +85,13 @@ struct WorldStateModificationNode : public WorldStateModification
         (rightOperand && rightOperand->isOnlyASetOfFacts());
   }
 
-  void replaceFact(const cp::Fact& pOldFact,
-                   const Fact& pNewFact) override
+  void replaceArgument(const std::string& pOldFact,
+                       const std::string& pNewFact) override
   {
     if (leftOperand)
-      leftOperand->replaceFact(pOldFact, pNewFact);
+      leftOperand->replaceArgument(pOldFact, pNewFact);
     if (rightOperand)
-      rightOperand->replaceFact(pOldFact, pNewFact);
+      rightOperand->replaceArgument(pOldFact, pNewFact);
   }
 
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -182,10 +182,10 @@ struct WorldStateModificationFact : public WorldStateModification
 
   bool isOnlyASetOfFacts() const override { return true; }
 
-  void replaceFact(const cp::Fact& pOldFact,
-                   const Fact& pNewFact) override
+  void replaceArgument(const std::string& pOld,
+                       const std::string& pNew) override
   {
-    factOptional.fact.replaceFactInArguments(pOldFact, pNewFact);
+    factOptional.fact.replaceArgument(pOld, pNew);
   }
 
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
@@ -259,8 +259,8 @@ struct WorldStateModificationNumber : public WorldStateModification
   bool hasFactOptional(const cp::FactOptional&) const override { return false; }
   bool isOnlyASetOfFacts() const override { return false; }
 
-  void replaceFact(const cp::Fact& pOldFact,
-                   const Fact& pNewFact) override {}
+  void replaceArgument(const std::string&,
+                       const std::string&) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
               const WorldState&) const override {}
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>&,
@@ -633,11 +633,10 @@ void WorldStateModificationNode::_forAllInstruction(const std::function<void (co
       pWorldState.extractPotentialArgumentsOfAFactParameter(parameterValues, leftFactPtr->factOptional.fact, parameterName);
       if (!parameterValues.empty())
       {
-        auto oldFact = Fact::fromStr(parameterName);
         for (const auto& paramValue : parameterValues)
         {
           auto newWsModif = rightOperand->clone(nullptr);
-          newWsModif->replaceFact(oldFact, paramValue.value);
+          newWsModif->replaceArgument(parameterName, paramValue.value);
           pCallback(*newWsModif);
         }
       }
@@ -660,7 +659,9 @@ bool WorldStateModificationNumber::operator==(const WorldStateModification& pOth
 
 
 
-std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const ExpressionParsed& pExpressionParsed)
+std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const ExpressionParsed& pExpressionParsed,
+                                                                          const Ontology& pOntology,
+                                                                          const SetOfEntities& pEntities)
 {
   std::unique_ptr<WorldStateModification> res;
 
@@ -668,9 +669,9 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
        pExpressionParsed.name == _setFunctionName) && // set is deprecated
       pExpressionParsed.arguments.size() == 2)
   {
-    auto leftOperand = _expressionParsedToWsModification(pExpressionParsed.arguments.front());
+    auto leftOperand = _expressionParsedToWsModification(pExpressionParsed.arguments.front(), pOntology, pEntities);
     const auto& rightOperandExp = *(++pExpressionParsed.arguments.begin());
-    auto rightOperand = _expressionParsedToWsModification(rightOperandExp);
+    auto rightOperand = _expressionParsedToWsModification(rightOperandExp, pOntology, pEntities);
 
     auto* leftFactPtr = dynamic_cast<WorldStateModificationFact*>(&*leftOperand);
     if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
@@ -701,7 +702,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
   else if (pExpressionParsed.name == _notFunctionName &&
            pExpressionParsed.arguments.size() == 1)
   {
-    auto factNegationed = pExpressionParsed.arguments.front().toFact();
+    auto factNegationed = pExpressionParsed.arguments.front().toFact(pOntology, pEntities);
     factNegationed.isFactNegated = !factNegationed.isFactNegated;
     res = std::make_unique<WorldStateModificationFact>(factNegationed);
   }
@@ -717,8 +718,8 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       ++itArg;
       auto& thridArg = *itArg;
       res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::FOR_ALL,
-                                                         std::make_unique<WorldStateModificationFact>(secondArg.toFact()),
-                                                         _expressionParsedToWsModification(thridArg),
+                                                         std::make_unique<WorldStateModificationFact>(secondArg.toFact(pOntology, pEntities)),
+                                                         _expressionParsedToWsModification(thridArg, pOntology, pEntities),
                                                          firstArg.name);
     }
     else if (secondArg.name == _whenFunctionName &&
@@ -729,8 +730,8 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       ++itWhenArg;
       auto& secondWhenArg = *itWhenArg;
       res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::FOR_ALL,
-                                                         std::make_unique<WorldStateModificationFact>(firstWhenArg.toFact()),
-                                                         _expressionParsedToWsModification(secondWhenArg),
+                                                         std::make_unique<WorldStateModificationFact>(firstWhenArg.toFact(pOntology, pEntities)),
+                                                         _expressionParsedToWsModification(secondWhenArg, pOntology, pEntities),
                                                          firstArg.name);
     }
   }
@@ -739,7 +740,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
   {
     std::list<std::unique_ptr<WorldStateModification>> elts;
     for (auto& currExp : pExpressionParsed.arguments)
-      elts.emplace_back(_expressionParsedToWsModification(currExp));
+      elts.emplace_back(_expressionParsedToWsModification(currExp, pOntology, pEntities));
 
     res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::AND, std::move(*(--(--elts.end()))), std::move(elts.back()));
     elts.pop_back();
@@ -763,10 +764,10 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       rightOpPtr = std::make_unique<WorldStateModificationNumber>(lexical_cast<int>(secondArg.name));
     }  catch (...) {}
     if (!rightOpPtr)
-      rightOpPtr = _expressionParsedToWsModification(secondArg);
+      rightOpPtr = _expressionParsedToWsModification(secondArg, pOntology, pEntities);
 
     res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::INCREASE,
-                                                       _expressionParsedToWsModification(firstArg),
+                                                       _expressionParsedToWsModification(firstArg, pOntology, pEntities),
                                                        std::move(rightOpPtr));
   }
   else if (pExpressionParsed.name == _decreaseFunctionName &&
@@ -781,10 +782,10 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       rightOpPtr = std::make_unique<WorldStateModificationNumber>(lexical_cast<int>(secondArg.name));
     }  catch (...) {}
     if (!rightOpPtr)
-      rightOpPtr = _expressionParsedToWsModification(secondArg);
+      rightOpPtr = _expressionParsedToWsModification(secondArg, pOntology, pEntities);
 
     res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::DECREASE,
-                                                       _expressionParsedToWsModification(firstArg),
+                                                       _expressionParsedToWsModification(firstArg, pOntology, pEntities),
                                                        std::move(rightOpPtr));
   }
   else
@@ -797,7 +798,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
     }
 
     if (!res)
-      res = std::make_unique<WorldStateModificationFact>(pExpressionParsed.toFact());
+      res = std::make_unique<WorldStateModificationFact>(pExpressionParsed.toFact(pOntology, pEntities));
   }
 
   if (pExpressionParsed.followingExpression)
@@ -809,7 +810,8 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       nodeType = WorldStateModificationNodeType::MINUS;
     res = std::make_unique<WorldStateModificationNode>(nodeType,
                                                        std::move(res),
-                                                       _expressionParsedToWsModification(*pExpressionParsed.followingExpression));
+                                                       _expressionParsedToWsModification(*pExpressionParsed.followingExpression,
+                                                                                         pOntology, pEntities));
   }
 
   return res;
@@ -818,13 +820,15 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
 }
 
 
-std::unique_ptr<WorldStateModification> WorldStateModification::fromStr(const std::string& pStr)
+std::unique_ptr<WorldStateModification> WorldStateModification::fromStr(const std::string& pStr,
+                                                                        const Ontology& pOntology,
+                                                                        const SetOfEntities& pEntities)
 {
   if (pStr.empty())
     return {};
   std::size_t pos = 0;
   auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
-  return _expressionParsedToWsModification(expressionParsed);
+  return _expressionParsedToWsModification(expressionParsed, pOntology, pEntities);
 }
 
 

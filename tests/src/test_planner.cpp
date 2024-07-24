@@ -70,15 +70,19 @@ void _simplest_plan_possible()
   const std::string action1 = "action1";
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(cp::Condition::fromStr(_fact_a),
-                        cp::WorldStateModification::fromStr(_fact_b));
+  const cp::Ontology ontology;
+  const cp::SetOfEntities entities;
+
+  cp::Action actionObj1(cp::Condition::fromStr(_fact_a, ontology, entities),
+                        cp::WorldStateModification::fromStr(_fact_b, ontology, entities));
   actions.emplace(action1, actionObj1);
 
   cp::Domain domain(std::move(actions));
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {cp::Goal(_fact_b)});
-  problem.worldState.addFact(cp::Fact(_fact_a), problem.goalStack, setOfInferencesMap, _now);
+  _setGoalsForAPriority(problem, {cp::Goal(_fact_b, ontology, entities)});
+  problem.worldState.addFact(cp::Fact(_fact_a, ontology, entities), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
 
   assert_eq(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }

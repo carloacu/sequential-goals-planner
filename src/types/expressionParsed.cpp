@@ -24,11 +24,12 @@ bool _isASeparator(char pChar)
 
 
 
-FactOptional ExpressionParsed::toFact() const
+FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
+                                      const SetOfEntities& pEntities) const
 {
-  FactOptional res(name);
+  FactOptional res(name, pOntology, pEntities);
   for (auto& currArg : arguments)
-    res.fact.arguments.emplace_back(currArg.toFact().toStr());
+    res.fact.arguments.emplace_back(currArg.toFact(pOntology, pEntities).toStr());
   if (value == Fact::undefinedValue.value && !res.isFactNegated)
   {
     res.isFactNegated = true;

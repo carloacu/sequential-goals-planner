@@ -21,11 +21,13 @@ FactOptional::FactOptional(const FactOptional& pOther,
 }
 
 FactOptional::FactOptional(const std::string& pStr,
+                           const Ontology& pOntology,
+                           const SetOfEntities& pEntities,
                            const char* pSeparatorPtr,
                            std::size_t pBeginPos,
                            std::size_t* pResPos)
   : isFactNegated(false),
-    fact(pStr, pSeparatorPtr, &isFactNegated, pBeginPos, pResPos)
+    fact(pStr, pOntology, pEntities, pSeparatorPtr, &isFactNegated, pBeginPos, pResPos)
 {
 }
 

@@ -54,6 +54,8 @@ struct CONTEXTUALPLANNER_API WorldState
                         bool& pGoalChanged,
                         GoalStack& pGoalStack,
                         const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                        const Ontology& pOntology,
+                        const SetOfEntities& pEntities,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
@@ -77,6 +79,8 @@ struct CONTEXTUALPLANNER_API WorldState
   bool addFact(const Fact& pFact,
                GoalStack& pGoalStack,
                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+               const Ontology& pOntology,
+               const SetOfEntities& pEntities,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -91,6 +95,8 @@ struct CONTEXTUALPLANNER_API WorldState
   bool addFacts(const FACTS& pFacts,
                 GoalStack& pGoalStack,
                 const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                const Ontology& pOntology,
+                const SetOfEntities& pEntities,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /// Check if the world has a fact or the negation of the fact.
@@ -107,6 +113,8 @@ struct CONTEXTUALPLANNER_API WorldState
   bool removeFact(const Fact& pFact,
                   GoalStack& pGoalStack,
                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                  const Ontology& pOntology,
+                  const SetOfEntities& pEntities,
                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -121,6 +129,8 @@ struct CONTEXTUALPLANNER_API WorldState
   bool removeFacts(const FACTS& pFacts,
                    GoalStack& pGoalStack,
                    const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                   const Ontology& pOntology,
+                   const SetOfEntities& pEntities,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -134,6 +144,8 @@ struct CONTEXTUALPLANNER_API WorldState
   bool modify(const std::unique_ptr<WorldStateModification>& pWsModif,
               GoalStack& pGoalStack,
               const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+              const Ontology& pOntology,
+              const SetOfEntities& pEntities,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -147,6 +159,8 @@ struct CONTEXTUALPLANNER_API WorldState
   void setFacts(const std::set<Fact>& pFacts,
                 GoalStack& pGoalStack,
                 const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                const Ontology& pOntology,
+                const SetOfEntities& pEntities,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -299,6 +313,8 @@ private:
                  const FACTS& pFacts,
                  GoalStack& pGoalStack,
                  const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                 const Ontology& pOntology,
+                 const SetOfEntities& pEntities,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -329,6 +345,8 @@ private:
                const std::unique_ptr<WorldStateModification>& pWsModif,
                GoalStack& pGoalStack,
                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+               const Ontology& pOntology,
+               const SetOfEntities& pEntities,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -348,6 +366,8 @@ private:
                              const std::set<InferenceId>& pInferenceIds,
                              const std::map<InferenceId, Inference>& pInferences,
                              const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                             const Ontology& pOntology,
+                             const SetOfEntities& pEntities,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -363,6 +383,8 @@ private:
                           bool& pGoalChanged,
                           GoalStack& pGoalStack,
                           const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                          const Ontology& pOntology,
+                          const SetOfEntities& pEntities,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
