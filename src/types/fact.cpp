@@ -470,7 +470,7 @@ std::size_t Fact::fillFactFromStr(
           name = pStr.substr(beginPos, pos - beginPos);
         ++pos;
         auto argumentName = cp::Fact(pStr, pOntology, pEntities, &separatorOfParameters, &isValueNegated, pos, &pos).toStr();
-        if (!pOntology.empty())
+        if (!pOntology.empty() && !argumentName.empty() && argumentName[0] != '?')
         {
           auto* entityPtr = pOntology.constants.valueToEntity(argumentName);
           if (entityPtr == nullptr)
@@ -503,7 +503,7 @@ std::size_t Fact::fillFactFromStr(
     {
       auto fluentStr = pStr.substr(beginPos, pos - beginPos);
 
-      if (!pOntology.empty())
+      if (!pOntology.empty() && !fluentStr.empty() && fluentStr[0] != '?')
       {
         auto* entityPtr = pOntology.constants.valueToEntity(fluentStr);
         if (entityPtr == nullptr)
@@ -527,10 +527,15 @@ std::size_t Fact::fillFactFromStr(
       throw std::runtime_error("\"" + pStr + "\" does not have the same number of parameters than the associated predicate \"" + predicatePtr->toStr() + "\"");
     for (auto i = 0; i < arguments.size(); ++i)
     {
-      if (!arguments[i].type)
-        throw std::runtime_error("\"" + arguments[i].value + "\" does not have a type, in fact \"" + pStr + "\"");
       if (!predicate.parameters[i].type)
         throw std::runtime_error("\"" + predicate.parameters[i].name + "\" does not have a type, in fact predicate \"" + predicate.toStr() + "\"");
+      if (arguments[i].isAParameterToFill())
+      {
+        arguments[i].type = predicate.parameters[i].type;
+        continue;
+      }
+      if (!arguments[i].type)
+        throw std::runtime_error("\"" + arguments[i].value + "\" does not have a type, in fact \"" + pStr + "\"");
       if (!arguments[i].type->isA(*predicate.parameters[i].type))
         throw std::runtime_error("\"" + arguments[i].toStr() + "\" is not a \"" + predicate.parameters[i].type->name + "\" in fact: \"" + pStr +
                                  "\" with predicate: \"" + predicatePtr->toStr() + "\"");
@@ -540,11 +545,19 @@ std::size_t Fact::fillFactFromStr(
     {
       if (!fluent)
         throw std::runtime_error("Fact: \"" + pStr + "\" does not have fluent but the associated predicate: \"" + predicatePtr->toStr() + "\" has a fluent");
-      if (!fluent->type)
-        throw std::runtime_error("\"" + fluent->toStr() + "\" does not have type in fact: \"" + pStr + "\"");
-      if (!fluent->type->isA(*predicate.fluent))
-        throw std::runtime_error("\"" + fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" in fact: \"" + pStr +
-                                 "\" with predicate: \"" + predicatePtr->toStr() + "\"");
+
+      if (fluent->isAParameterToFill())
+      {
+        fluent->type = predicate.fluent;
+      }
+      else
+      {
+        if (!fluent->type)
+          throw std::runtime_error("\"" + fluent->toStr() + "\" does not have type in fact: \"" + pStr + "\"");
+        if (!fluent->type->isA(*predicate.fluent))
+          throw std::runtime_error("\"" + fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" in fact: \"" + pStr +
+                                   "\" with predicate: \"" + predicatePtr->toStr() + "\"");
+      }
     }
     else if (fluent)
     {

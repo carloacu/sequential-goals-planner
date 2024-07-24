@@ -85,4 +85,11 @@ std::string Entity::toStr() const
 }
 
 
+bool Entity::isAParameterToFill() const
+{
+  return !value.empty() && value[0] == '?';
+}
+
+
+
 } // !cp

@@ -155,6 +155,8 @@ void _test_fact_initialization_with_ontology()
   }
 
   cp::Fact("pred_name2(toto, titi)=res", ontology, {});
+  cp::Fact("pred_name2(toto, ?v)=res", ontology, {});
+  cp::Fact("pred_name2(toto, ?v)=?r", ontology, {});
 
   try
   {

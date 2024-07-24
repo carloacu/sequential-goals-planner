@@ -29,6 +29,7 @@ struct CONTEXTUALPLANNER_API Entity
   static Entity fromStr(const std::string& pStr,
                         const SetOfTypes& pSetOfTypes);
   std::string toStr() const;
+  bool isAParameterToFill() const;
 
   std::string value;
   std::shared_ptr<Type> type;
