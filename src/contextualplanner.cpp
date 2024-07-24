@@ -73,7 +73,7 @@ struct PotentialNextAction
 
   ActionId actionId;
   const Action* actionPtr;
-  std::map<std::string, std::set<Entity>> parameters;
+  std::map<Parameter, std::set<Entity>> parameters;
   bool satisfyObjective;
 
   bool isMoreImportantThan(const PotentialNextAction& pOther,
@@ -197,7 +197,7 @@ bool PotentialNextAction::removeAPossibility()
 
 
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
-                             std::map<std::string, std::set<Entity>>& pParameters,
+                             std::map<Parameter, std::set<Entity>>& pParameters,
                              bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const ProblemModification& pEffectToCheck,
@@ -210,12 +210,12 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 
 
 PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                                          const std::vector<std::string>& pParameters,
+                                          const std::vector<Parameter>& pParameters,
                                           const std::unique_ptr<Condition>& pCondition,
                                           const ProblemModification& pEffect,
                                           const FactOptional& pFactOptional,
-                                          std::map<std::string, std::set<Entity>>& pParentParameters,
-                                          std::map<std::string, std::set<Entity>>* pTmpParentParametersPtr,
+                                          std::map<Parameter, std::set<Entity>>& pParentParameters,
+                                          std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
                                           const Goal& pGoal,
                                           const Problem& pProblem,
                                           const FactOptional& pFactOptionalToSatisfy,
@@ -227,7 +227,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
       (pCondition->containsFactOpt(pFactOptional, pParentParameters, pTmpParentParametersPtr, pParameters) &&
        pCondition->canBecomeTrue(pProblem.worldState, pParameters)))
   {
-    std::map<std::string, std::set<Entity>> parametersToValues;
+    std::map<Parameter, std::set<Entity>> parametersToValues;
     for (const auto& currParam : pParameters)
       parametersToValues[currParam];
 
@@ -240,19 +240,19 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
       {
         bool actionIsAPossibleFollowUp = true;
 
-        auto fillParameter = [&](const std::string& pParameterName,
+        auto fillParameter = [&](const Parameter& pParameter,
                                  std::set<Entity>& pParameterValues,
-                                 std::map<std::string, std::set<Entity>>& pNewParentParameters)
+                                 std::map<Parameter, std::set<Entity>>& pNewParentParameters)
         {
           if (pParameterValues.empty() &&
-              pFactOptional.fact.hasArgumentOrValue(pParameterName))
+              pFactOptional.fact.hasParameterOrFluent(pParameter))
           {
-            auto& newParamValues = pNewParentParameters[pParameterName];
+            auto& newParamValues = pNewParentParameters[pParameter];
 
             pCondition->findConditionCandidateFromFactFromEffect(
                   [&](const FactOptional& pConditionFactOptional)
             {
-              auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameterName, pConditionFactOptional.fact);
+              auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameter, pConditionFactOptional.fact);
               if (!parentParamValue)
                 return false;
 
@@ -271,13 +271,13 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
         };
 
         // fill parent parameters
-        std::map<std::string, std::set<Entity>> newParentParameters;
+        std::map<Parameter, std::set<Entity>> newParentParameters;
         for (auto& currParentParam : pParentParameters)
           fillParameter(currParentParam.first, currParentParam.second, newParentParameters);
 
         if (pTmpParentParametersPtr != nullptr)
         {
-          std::map<std::string, std::set<Entity>> newTmpParentParameters;
+          std::map<Parameter, std::set<Entity>> newTmpParentParameters;
           for (auto& currParentParam : *pTmpParentParametersPtr)
             fillParameter(currParentParam.first, currParentParam.second, newTmpParentParameters);
           applyNewParams(*pTmpParentParametersPtr, newTmpParentParameters);
@@ -328,8 +328,8 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
 
 PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
     const FactOptional& pFactOptional,
-    std::map<std::string, std::set<Entity>>& pParentParameters,
-    std::map<std::string, std::set<Entity>>* pTmpParentParametersPtr,
+    std::map<Parameter, std::set<Entity>>& pParentParameters,
+    std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
     bool pTryToGetAllPossibleParentParameterValues,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
     const std::map<std::string, std::set<ActionId>>& pPreconditionToActions,
@@ -343,8 +343,8 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
   auto it = pPreconditionToActions.find(pFactOptional.fact.name);
   if (it != pPreconditionToActions.end())
   {
-    std::map<std::string, std::set<Entity>> newPossibleParentParameters;
-    std::map<std::string, std::set<Entity>> newPossibleTmpParentParameters;
+    std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
+    std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
     std::size_t nbOfPossiblities = 0;
     auto& actions = pDomain.actions();
     for (const auto& currActionId : it->second)
@@ -353,7 +353,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
       if (itAction != actions.end())
       {
         auto cpParentParameters = pParentParameters;
-        std::map<std::string, std::set<Entity>> cpTmpParameters;
+        std::map<Parameter, std::set<Entity>> cpTmpParameters;
         if (pTmpParentParametersPtr != nullptr)
           cpTmpParameters = *pTmpParentParametersPtr;
         auto& action = itAction->second;
@@ -395,8 +395,8 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
 
 PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
     const FactOptional& pFactOptional,
-    std::map<std::string, std::set<Entity>>& pParentParameters,
-    std::map<std::string, std::set<Entity>>* pTmpParentParametersPtr,
+    std::map<Parameter, std::set<Entity>>& pParentParameters,
+    std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
     bool pTryToGetAllPossibleParentParameterValues,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
     const std::map<std::string, std::set<InferenceId>>& pConditionToInferences,
@@ -437,7 +437,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
 
 
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
-                             std::map<std::string, std::set<Entity>>& pParameters,
+                             std::map<Parameter, std::set<Entity>>& pParameters,
                              bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const ProblemModification& pEffectToCheck,
@@ -448,7 +448,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              FactsAlreadyChecked& pFactsAlreadychecked,
                              const std::string& pFromDeductionId)
 {
-  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>& pCheckValidity)
+  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity)
   {
     if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
       return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.fluent != pFactOptional.fact.fluent;
@@ -456,7 +456,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
     ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
     bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
-    std::map<std::string, std::set<Entity>> newParameters;
+    std::map<Parameter, std::set<Entity>> newParameters;
     bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
                                                          pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
 
@@ -488,8 +488,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 
   auto& setOfInferences = pDomain.getSetOfInferences();
   return pEffectToCheck.canSatisfyObjective([&](const cp::FactOptional& pFactOptional,
-                                            std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr,
-                                            const std::function<bool (const std::map<std::string, std::set<Entity>>&)>& pCheckValidity) {
+                                            std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
+                                            const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) {
     // Condition only for optimization
     if (pParameters.empty())
     {
@@ -716,7 +716,7 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
 
 
 ActionId _nextStepOfTheProblemForAGoal(
-    std::map<std::string, std::set<Entity>>& pParameters,
+    std::map<Parameter, std::set<Entity>>& pParameters,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
     const Goal& pGoal,
     const Problem& pProblem,
@@ -781,7 +781,7 @@ bool _lookForAnActionToDoRec(
 
     if (factOptionalToSatisfyPtr != nullptr)
     {
-      std::map<std::string, std::set<Entity>> parameters;
+      std::map<Parameter, std::set<Entity>> parameters;
       auto actionId =
           _nextStepOfTheProblemForAGoal(parameters, treeOfAlreadyDonePath,
                                         pGoal, pProblem, *factOptionalToSatisfyPtr,

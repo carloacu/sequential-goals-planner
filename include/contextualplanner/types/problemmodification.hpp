@@ -95,8 +95,8 @@ struct CONTEXTUALPLANNER_API ProblemModification
    * @param[in] pFromDeductionId Identifier of the deduction holding the problem modification.
    * @return True if one callback returned true, false otherwise.
    */
-  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pCallback,
-                           std::map<std::string, std::set<Entity>>& pParameters,
+  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
+                           std::map<Parameter, std::set<Entity>>& pParameters,
                            const WorldState& pWorldState,
                            const std::string& pFromDeductionId) const;
 
@@ -179,8 +179,8 @@ inline void ProblemModification::replaceArgument(const std::string& pOld,
     worldStateModificationAtStart->replaceArgument(pOld, pNew);
 }
 
-inline bool ProblemModification::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pCallback,
-                                                     std::map<std::string, std::set<Entity>>& pParameters,
+inline bool ProblemModification::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
+                                                     std::map<Parameter, std::set<Entity>>& pParameters,
                                                      const WorldState& pWorldState,
                                                      const std::string& pFromDeductionId) const
 {

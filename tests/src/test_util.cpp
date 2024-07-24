@@ -2,6 +2,7 @@
 #include <iostream>
 #include <assert.h>
 #include <contextualplanner/types/entity.hpp>
+#include <contextualplanner/types/parameter.hpp>
 #include <contextualplanner/util/util.hpp>
 
 using namespace cp;
@@ -17,7 +18,7 @@ void assert_eq(const TYPE& pExpected,
 }
 
 
-std::string _toStr(const std::list<std::map<std::string, Entity>>& pParams)
+std::string _toStr(const std::list<std::map<Parameter, Entity>>& pParams)
 {
   std::string res;
   for (auto& currParams : pParams)
@@ -30,16 +31,16 @@ std::string _toStr(const std::list<std::map<std::string, Entity>>& pParams)
         firstIeration = false;
       else
         res += ", ";
-      res += currParam.first + " -> " + currParam.second.toStr();
+      res += currParam.first.name + " -> " + currParam.second.toStr();
     }
     res += ")";
   }
   return res;
 }
 
-std::string _unfoldMapWithSet(const std::map<std::string, std::set<cp::Entity>>& pInMap)
+std::string _unfoldMapWithSet(const std::map<Parameter, std::set<cp::Entity>>& pInMap)
 {
-  std::list<std::map<std::string, cp::Entity>> res;
+  std::list<std::map<Parameter, cp::Entity>> res;
   unfoldMapWithSet(res, pInMap);
   return _toStr(res);
 }
@@ -49,15 +50,15 @@ std::string _unfoldMapWithSet(const std::map<std::string, std::set<cp::Entity>>&
 void test_unfoldMapWithSet()
 {
   assert_eq<std::string>("", _unfoldMapWithSet({}));
-  assert_eq<std::string>("(a -> b)", _unfoldMapWithSet({{"a", {cp::Entity("b")}}}));
-  assert_eq<std::string>("(a -> b)(a -> c)", _unfoldMapWithSet({{"a", {cp::Entity("b"), cp::Entity("c")}}}));
+  assert_eq<std::string>("(a -> b)", _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b")}}}));
+  assert_eq<std::string>("(a -> b)(a -> c)", _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b"), cp::Entity("c")}}}));
 
   assert_eq<std::string>("(a -> b, d -> e)",
-                         _unfoldMapWithSet({{"a", {cp::Entity("b")}}, {"d", {cp::Entity("e")}}}));
+                         _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b")}}, {cp::Parameter("d"), {cp::Entity("e")}}}));
   assert_eq<std::string>("(a -> b, d -> e)(a -> c, d -> e)",
-                         _unfoldMapWithSet({{"a", {cp::Entity("b"), cp::Entity("c")}}, {"d", {cp::Entity("e")}}}));
+                         _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b"), cp::Entity("c")}}, {cp::Parameter("d"), {cp::Entity("e")}}}));
   assert_eq<std::string>("(a -> b, d -> e)(a -> b, d -> f)(a -> c, d -> e)(a -> c, d -> f)",
-                         _unfoldMapWithSet({{"a", {cp::Entity("b"), cp::Entity("c")}}, {"d", {cp::Entity("e"), cp::Entity("f")}}}));
+                         _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b"), cp::Entity("c")}}, {cp::Parameter("d"), {cp::Entity("e"), cp::Entity("f")}}}));
 }
 
 void test_autoIncrementOfVersion()

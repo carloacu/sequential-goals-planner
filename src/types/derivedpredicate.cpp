@@ -7,7 +7,7 @@ namespace cp
 
 DerivedPredicate::DerivedPredicate(std::unique_ptr<Condition> pCondition,
                                    const Fact& pFact,
-                                   const std::vector<std::string>& pParameters)
+                                   const std::vector<Parameter>& pParameters)
   : parameters(pParameters),
     condition(pCondition ? std::move(pCondition) : std::unique_ptr<Condition>()),
     fact(pFact)

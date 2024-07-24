@@ -18,7 +18,7 @@ struct CONTEXTUALPLANNER_API DerivedPredicate
   /// Construct a derived predicate.
   DerivedPredicate(std::unique_ptr<Condition> pCondition,
                    const Fact& pFact,
-                   const std::vector<std::string>& pParameters = {});
+                   const std::vector<Parameter>& pParameters = {});
 
   /// Construct a copy.
   DerivedPredicate(const DerivedPredicate& pOther)
@@ -34,7 +34,7 @@ struct CONTEXTUALPLANNER_API DerivedPredicate
                                     const SetOfEntities& pEntities) const;
 
   /// Parameter names of this derived predicate.
-  std::vector<std::string> parameters;
+  std::vector<Parameter> parameters;
   /**
    * Condition to apply the facts and goals modification.
    * The condition is true if the condition is a sub set of a corresponding world state.

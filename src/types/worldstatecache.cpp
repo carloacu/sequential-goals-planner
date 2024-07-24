@@ -132,7 +132,7 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfInferences(const std::set<Inf
 
 
 void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModification& pEffect,
-                                                        const std::vector<std::string>& pParameters,
+                                                        const std::vector<Parameter>& pParameters,
                                                         const Domain& pDomain,
                                                         FactsAlreadyChecked& pFactsAlreadychecked)
 {

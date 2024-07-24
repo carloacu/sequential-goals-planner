@@ -72,7 +72,7 @@ Goal::Goal(const std::string& pStr,
 }
 
 Goal::Goal(const Goal& pOther,
-           const std::map<std::string, Entity>* pParametersPtr,
+           const std::map<Parameter, Entity>* pParametersPtr,
            const std::string* pGoalGroupIdPtr)
   : _objective(pOther._objective->clone(pParametersPtr)),
     _maxTimeToKeepInactive(pOther._maxTimeToKeepInactive),

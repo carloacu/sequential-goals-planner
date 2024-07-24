@@ -19,7 +19,7 @@ struct CONTEXTUALPLANNER_API Inference
   /// Construct an inference.
   Inference(std::unique_ptr<Condition> pCondition,
             std::unique_ptr<WorldStateModification> pFactsToModify,
-            const std::vector<std::string>& pParameters = {},
+            const std::vector<Parameter>& pParameters = {},
             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
 
   /// Construct a copy.
@@ -35,7 +35,7 @@ struct CONTEXTUALPLANNER_API Inference
   }
 
   /// Parameter names of this inference.
-  std::vector<std::string> parameters;
+  std::vector<Parameter> parameters;
   /**
    * Condition to apply the facts and goals modification.
    * The condition is true if the condition is a sub set of a corresponding world state.

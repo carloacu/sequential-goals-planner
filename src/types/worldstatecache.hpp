@@ -83,7 +83,7 @@ private:
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
   void _feedAccessibleFactsFromDeduction(const WorldStateModification& pEffect,
-                                         const std::vector<std::string>& pParameters,
+                                         const std::vector<Parameter>& pParameters,
                                          const Domain& pDomain,
                                          FactsAlreadyChecked& pFactsAlreadychecked);
 

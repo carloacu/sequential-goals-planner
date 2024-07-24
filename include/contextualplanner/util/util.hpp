@@ -14,15 +14,17 @@
 namespace cp
 {
 struct Entity;
-
-CONTEXTUALPLANNER_API
-void unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
-                      const std::map<std::string, std::set<Entity>>& pInMap);
+struct Parameter;
 
 
 CONTEXTUALPLANNER_API
-void applyNewParams(std::map<std::string, std::set<Entity>>& pParameters,
-                    std::map<std::string, std::set<Entity>>& pNewParameters);
+void unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
+                      const std::map<Parameter, std::set<Entity>>& pInMap);
+
+
+CONTEXTUALPLANNER_API
+void applyNewParams(std::map<Parameter, std::set<Entity>>& pParameters,
+                    std::map<Parameter, std::set<Entity>>& pNewParameters);
 
 
 CONTEXTUALPLANNER_API

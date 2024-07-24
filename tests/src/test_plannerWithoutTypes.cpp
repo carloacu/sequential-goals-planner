@@ -63,7 +63,7 @@ const std::string _action_navigate = "navigate";
 const std::string _action_welcome = "welcome";
 const std::string _action_grab = "grab";
 const std::string _action_ungrab = "ungrab";
-static const std::vector<std::string> _emptyParameters;
+static const std::vector<cp::Parameter> _emptyParameters;
 
 template <typename TYPE>
 void assert_eq(const TYPE& pExpected,
@@ -360,7 +360,7 @@ void _test_conditionParameters()
 {
   assert_false(_condition_fromStr("").operator bool());
 
-  std::map<std::string, cp::Entity> parameters = {{"target", cp::Entity("kitchen")}, {"object", cp::Entity("chair")}};
+  std::map<cp::Parameter, cp::Entity> parameters = {{cp::Parameter("target"), cp::Entity("kitchen")}, {cp::Parameter("object"), cp::Entity("chair")}};
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", _condition_fromStr("location(me)=target & grab(me, object)")->clone(&parameters)->toStr());
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", _condition_fromStr("and(location(me)=target, grab(me, object))")->clone(&parameters)->toStr());
   assert_eq<std::string>("location(me)=kitchen & grab(me, chair) & i", _condition_fromStr("and(location(me)=target, grab(me, object), i)")->clone(&parameters)->toStr());
@@ -3124,11 +3124,11 @@ void _derivedPredicate()
   std::map<std::string, cp::Action> actions;
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)"), _fact(_fact_c + "(?o)"), {"?o"});
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)"), _fact(_fact_c + "(?o)"), {cp::Parameter("?o")});
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
-  cp::DerivedPredicate derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)"), _fact(_fact_d + "(?o)"), {"?o"});
+  cp::DerivedPredicate derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)"), _fact(_fact_d + "(?o)"), {cp::Parameter("?o")});
   for (auto& currInference : derivedPredicate2.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
@@ -3315,7 +3315,7 @@ void _existWithEqualityInInference()
   actions.emplace(action1, action1Obj);
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))"), _fact(_fact_b + "(?o)"), {"?o"});
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))"), _fact(_fact_b + "(?o)"), {cp::Parameter("?o")});
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
@@ -3355,7 +3355,7 @@ void _existWithEqualityInInference_withEqualityInverted()
   actions.emplace(action1, action1Obj);
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))"), _fact(_fact_b + "(?o)"), {"?o"});
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))"), _fact(_fact_b + "(?o)"), {cp::Parameter("?o")});
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
@@ -3400,7 +3400,7 @@ void _fixInferenceWithFluentInParameter()
   actions.emplace(action2, action2Obj);
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v"), _fact(_fact_e + "(?a)=?v"), {"?a", "?v"});
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v"), _fact(_fact_e + "(?a)=?v"), {cp::Parameter("?a"), cp::Parameter("?v")});
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 

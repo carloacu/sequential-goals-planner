@@ -1,6 +1,7 @@
 #include <contextualplanner/util/util.hpp>
 #include <sstream>
 #include <contextualplanner/types/entity.hpp>
+#include <contextualplanner/types/parameter.hpp>
 
 namespace cp
 {
@@ -8,14 +9,14 @@ namespace cp
 namespace
 {
 
-void _unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
-                       std::map<std::string, std::set<Entity>>& pInMap)
+void _unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
+                       std::map<Parameter, std::set<Entity>>& pInMap)
 {
   if (pInMap.size() == 1)
   {
     auto itFirstElt = pInMap.begin();
     for (auto& currValue : itFirstElt->second)
-      pOutMap.emplace_back(std::map<std::string, Entity>{{itFirstElt->first, currValue}});
+      pOutMap.emplace_back(std::map<Parameter, Entity>{{itFirstElt->first, currValue}});
     return;
   }
 
@@ -27,7 +28,7 @@ void _unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
     auto values = std::move(itFirstElt->second);
     pInMap.erase(itFirstElt);
 
-    std::list<std::map<std::string, Entity>> subRes;
+    std::list<std::map<Parameter, Entity>> subRes;
     unfoldMapWithSet(subRes, pInMap);
 
     for (auto& currValue : values)
@@ -45,8 +46,8 @@ void _unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
 }
 
 
-void unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
-                      const std::map<std::string, std::set<Entity>>& pInMap)
+void unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
+                      const std::map<Parameter, std::set<Entity>>& pInMap)
 {
   auto inMap = pInMap;
   _unfoldMapWithSet(pOutMap, inMap);
@@ -54,8 +55,8 @@ void unfoldMapWithSet(std::list<std::map<std::string, Entity>>& pOutMap,
 
 
 void applyNewParams(
-    std::map<std::string, std::set<Entity>>& pParameters,
-    std::map<std::string, std::set<Entity>>& pNewParameters)
+    std::map<Parameter, std::set<Entity>>& pParameters,
+    std::map<Parameter, std::set<Entity>>& pNewParameters)
 {
   for (auto& currNewParam : pNewParameters)
     pParameters[currNewParam.first] = std::move(currNewParam.second);

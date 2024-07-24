@@ -87,8 +87,8 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pWorldState World state use to extract value of the facts.
    * @param[in] pFromDeductionId Identifier of the deduction holding the world state modification.
    */
-  virtual bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<std::string, std::set<Entity>>*, const std::function<bool (const std::map<std::string, std::set<Entity>>&)>&)>& pFactCallback,
-                                   std::map<std::string, std::set<Entity>>& pParameters,
+  virtual bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pFactCallback,
+                                   std::map<Parameter, std::set<Entity>>& pParameters,
                                    const WorldState& pWorldState,
                                    const std::string& pFromDeductionId) const = 0;
 
@@ -111,14 +111,14 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param pParametersToArgumentPtr Parameters to replace by their argument in the new object to create.
    * @return A copy of this object with arguments filling.
    */
-  virtual std::unique_ptr<WorldStateModification> clone(const std::map<std::string, Entity>* pParametersToArgumentPtr) const = 0;
+  virtual std::unique_ptr<WorldStateModification> clone(const std::map<Parameter, Entity>* pParametersToArgumentPtr) const = 0;
 
   /**
    * @brief Create a copy of this object with arguments filling (or not if pParametersToPossibleArgumentPtr is nullptr).
    * @param pParametersToPossibleArgumentPtr Parameters to replace by the first of their possible arguments in the new object to create.
    * @return A copy of this object with arguments filling.
    */
-  virtual std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<std::string, std::set<Entity>>& pParametersToPossibleArgumentPtr) const = 0;
+  virtual std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>& pParametersToPossibleArgumentPtr) const = 0;
 };
 
 

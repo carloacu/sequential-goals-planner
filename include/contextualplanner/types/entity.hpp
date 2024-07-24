@@ -8,7 +8,7 @@
 namespace cp
 {
 struct SetOfTypes;
-
+struct Parameter;
 
 struct CONTEXTUALPLANNER_API Entity
 {
@@ -30,6 +30,7 @@ struct CONTEXTUALPLANNER_API Entity
                         const SetOfTypes& pSetOfTypes);
   std::string toStr() const;
   bool isAParameterToFill() const;
+  bool match(const Parameter& pParameter) const;
 
   std::string value;
   std::shared_ptr<Type> type;

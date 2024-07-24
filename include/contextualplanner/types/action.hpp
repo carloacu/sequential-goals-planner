@@ -88,7 +88,7 @@ struct CONTEXTUALPLANNER_API Action
   std::string preferInContext_str() const { return preferInContext ? preferInContext->toStr() : ""; }
 
   /// Parameters of this action.
-  std::vector<std::string> parameters;
+  std::vector<Parameter> parameters;
   /// Condition that should be satisfied in the world to be able to do this action.
   std::unique_ptr<Condition> precondition;
   /// More this condition matches the world higher the priority of this action will be.

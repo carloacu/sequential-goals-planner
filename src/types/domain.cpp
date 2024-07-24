@@ -10,8 +10,8 @@ const SetOfInferencesId Domain::setOfInferencesIdFromConstructor = "soi_from_con
 namespace
 {
 static const WorldState _emptyWorldState;
-static const std::map<std::string, std::set<Entity>> _emptyParametersWithValues;
-static const std::vector<std::string> _emptyParameters;
+static const std::map<Parameter, std::set<Entity>> _emptyParametersWithValues;
+static const std::vector<Parameter> _emptyParameters;
 
 /**
  * @brief Check if a world state modification can do some modification if we assume the world already satisfies a condition.

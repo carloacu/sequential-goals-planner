@@ -1,5 +1,6 @@
 #include <contextualplanner/types/entity.hpp>
 #include <vector>
+#include <contextualplanner/types/parameter.hpp>
 #include <contextualplanner/types/setoftypes.hpp>
 #include <contextualplanner/util/util.hpp>
 
@@ -90,6 +91,16 @@ bool Entity::isAParameterToFill() const
   return !value.empty() && value[0] == '?';
 }
 
+bool Entity::match(const Parameter& pParameter) const
+{
+  if (value == pParameter.name)
+  {
+    if (type && pParameter.type && !type->isA(*pParameter.type))
+      return false;
+    return true;
+  }
+  return false;
+}
 
 
 } // !cp

@@ -65,8 +65,8 @@ struct CONTEXTUALPLANNER_API Fact
    * @return True if the equality check succeeded.
    */
   bool areEqualWithoutFluentConsideration(const Fact& pFact,
-                                          const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
-                                          const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr) const;
+                                          const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
+                                          const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr) const;
 
   /// Check equality with another fact without considering an argument.
   bool areEqualWithoutAnArgConsideration(const Fact& pFact,
@@ -81,9 +81,9 @@ struct CONTEXTUALPLANNER_API Fact
    * @return True if the 2 facts match, false otherwise.
    */
   bool areEqualExceptAnyValues(const Fact& pOther,
-                               const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
-                               const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr,
-                               const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
+                               const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
+                               const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr,
+                               const std::vector<Parameter>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
 
   /**
    * @brief Is equal to another Fact or if any of the 2 Facts have an "any value" that can match and without looking at the fluents.
@@ -94,9 +94,9 @@ struct CONTEXTUALPLANNER_API Fact
    * @return True if the 2 facts match, false otherwise.
    */
   bool areEqualExceptAnyValuesAndFluent(const Fact& pOther,
-                                        const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
-                                        const std::map<std::string, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr,
-                                        const std::vector<std::string>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
+                                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr = nullptr,
+                                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr,
+                                        const std::vector<Parameter>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
 
   /**
    * @brief Is it a punctual fact.<br/>
@@ -106,35 +106,32 @@ struct CONTEXTUALPLANNER_API Fact
   bool isPunctual() const;
 
   /**
-   * @brief hasArgumentOrValue Does this fact contains a specific string in his arguments or in his value.
-   * @param pArgumentOrValue[in] String that can match in the arguments or in the value of this fact.
+   * @brief hasParameterOrFluent Does this fact contains a specific string in his arguments or in his value.
+   * @param pParameter[in] String that can match in the arguments or in the value of this fact.
    * @return True if the string matches in the arguments or in the value of this fact, false otherwise.
    */
-  bool hasArgumentOrValue(
-      const std::string& pArgumentOrValue) const;
+  bool hasParameterOrFluent(const Parameter& pParameter) const;
 
   /**
    * @brief Extract an argument from another instance of this fact.<br/>
    * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).
-   * @param pArgument[in] Argument of this fact.
+   * @param pParameter[in] Argument of this fact.
    * @param pExampleFact[in] Example Fact.
-   * @return Argument of the other fact corresponding to the pArgument of this fact.
+   * @return Argument of the other fact corresponding to the pParameter of this fact.
    */
-  std::optional<Entity> tryToExtractArgumentFromExample(
-      const std::string& pArgument,
-      const Fact& pExampleFact) const;
+  std::optional<Entity> tryToExtractArgumentFromExample(const Parameter& pParameter,
+                                                        const Fact& pExampleFact) const;
 
   /**
    * @brief Extract an argument from another instance of this fact.<br/>
    * Another instance of this fact means that the 2 facts have the same name, the same number of arguments and the same polarity (= negationed or not).<br/>
    * This function ignores the fluents.
-   * @param pArgument[in] Argument of this fact.
+   * @param pParameter[in] Parameter of this fact.
    * @param pExampleFact[in] Example Fact.
-   * @return Argument of the other fact corresponding to the pArgument of this fact.
+   * @return Argument of the other fact corresponding to the Parameter of this fact.
    */
-  std::optional<Entity> tryToExtractArgumentFromExampleWithoutFluentConsideration(
-      const std::string& pArgument,
-      const Fact& pExampleFact) const;
+  std::optional<Entity> tryToExtractArgumentFromExampleWithoutFluentConsideration(const Parameter& pParameter,
+                                                                                  const Fact& pExampleFact) const;
 
 
   /**
@@ -143,21 +140,21 @@ struct CONTEXTUALPLANNER_API Fact
    * @param pFactExample[in] The fact in example.
    * @return True if this fact is a generic form of the fact example according to the possible arguments.
    */
-  bool isPatternOf(const std::map<std::string, std::set<Entity>>& pPossibleArguments,
+  bool isPatternOf(const std::map<Parameter, std::set<Entity>>& pPossibleArguments,
                    const Fact& pFactExample) const;
 
   /**
    * @brief Replace some arguments by other ones.
    * @param pCurrentArgumentsToNewArgument[in] Map of current arguments to new argument to set.
    */
-  void replaceArguments(const std::map<std::string, Entity> &pCurrentArgumentsToNewArgument);
+  void replaceArguments(const std::map<Parameter, Entity>& pCurrentArgumentsToNewArgument);
 
   /**
    * @brief Replace some arguments by other ones.
    * @param pCurrentArgumentsToNewArgument[in] Map of current arguments to new possible arguments to set.<br/>
    * Only the first new possible argument to set will be considered.
    */
-  void replaceArguments(const std::map<std::string, std::set<Entity>>& pCurrentArgumentsToNewArgument);
+  void replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurrentArgumentsToNewArgument);
 
 
   /// Serialize this fact to a string.
@@ -194,7 +191,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param pArgumentsToReplace[in] Arguments to replace by "any value".
    * @return True if at least one "any value" has been set, false otherwise.
    */
-  bool replaceSomeArgumentsByAny(const std::vector<std::string>& pArgumentsToReplace);
+  bool replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToReplace);
 
   /**
    * @brief Does the fact matches any of the other facts.
@@ -208,9 +205,9 @@ struct CONTEXTUALPLANNER_API Fact
    */
   bool isInOtherFacts(const std::set<Fact>& pOtherFacts,
                       bool pParametersAreForTheFact,
-                      std::map<std::string, std::set<Entity>>* pNewParametersPtr,
-                      const std::map<std::string, std::set<Entity>>* pParametersPtr,
-                      std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr = nullptr,
+                      std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                      const std::map<Parameter, std::set<Entity>>* pParametersPtr,
+                      std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr = nullptr,
                       bool* pTriedToModifyParametersPtr = nullptr) const;
 
   /**
@@ -225,9 +222,9 @@ struct CONTEXTUALPLANNER_API Fact
    */
   bool isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOtherFacts,
                          bool pParametersAreForTheFact,
-                         std::map<std::string, std::set<Entity>>* pNewParametersPtr,
-                         const std::map<std::string, std::set<Entity>>* pParametersPtr,
-                         std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr = nullptr,
+                         std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                         const std::map<Parameter, std::set<Entity>>* pParametersPtr,
+                         std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr = nullptr,
                          bool* pTriedToModifyParametersPtr = nullptr) const;
 
   /**
@@ -243,9 +240,9 @@ struct CONTEXTUALPLANNER_API Fact
    */
   bool isInOtherFact(const Fact& pOtherFact,
                      bool pParametersAreForTheFact,
-                     std::map<std::string, std::set<Entity>>* pNewParametersPtr,
-                     const std::map<std::string, std::set<Entity>>* pParametersPtr,
-                     std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr,
+                     std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                     const std::map<Parameter, std::set<Entity>>* pParametersPtr,
+                     std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                      bool* pTriedToModifyParametersPtr = nullptr,
                      bool pIgnoreFluents = false) const;
 

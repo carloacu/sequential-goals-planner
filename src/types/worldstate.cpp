@@ -340,7 +340,7 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
 
 
 bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
-                                      const std::vector<std::string>& pParameters) const
+                                      const std::vector<Parameter>& pParameters) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
   if (!pFactOptional.isFactNegated)
@@ -366,7 +366,7 @@ bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
 }
 
 bool WorldState::canFactBecomeTrue(const Fact& pFact,
-                                   const std::vector<std::string>& pParameters) const
+                                   const std::vector<Parameter>& pParameters) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
   if (!pFact.isValueNegated)
@@ -477,18 +477,17 @@ bool WorldState::isOptionalFactSatisfied(const FactOptional& pFactOptional) cons
 }
 
 
-bool WorldState::isOptionalFactSatisfiedInASpecificContext(
-    const FactOptional& pFactOptional,
-    const std::set<Fact>& pPunctualFacts,
-    const std::set<Fact>& pRemovedFacts,
-    std::map<std::string, std::set<Entity>>* pParametersToPossibleArgumentsPtr,
-    std::map<std::string, std::set<Entity>>* pParametersToModifyInPlacePtr,
-    bool* pCanBecomeTruePtr) const
+bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& pFactOptional,
+                                                           const std::set<Fact>& pPunctualFacts,
+                                                           const std::set<Fact>& pRemovedFacts,
+                                                           std::map<Parameter, std::set<Entity>>* pParametersToPossibleArgumentsPtr,
+                                                           std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
+                                                           bool* pCanBecomeTruePtr) const
 {
   if (pFactOptional.fact.isPunctual() && !pFactOptional.isFactNegated)
     return pPunctualFacts.count(pFactOptional.fact) != 0;
 
-  std::map<std::string, std::set<Entity>> newParameters;
+  std::map<Parameter, std::set<Entity>> newParameters;
   if (pFactOptional.isFactNegated)
   {
     bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pParametersToPossibleArgumentsPtr, pParametersToModifyInPlacePtr);
@@ -504,7 +503,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(
     {
       if (pParametersToPossibleArgumentsPtr != nullptr)
       {
-        std::list<std::map<std::string, Entity>> paramPossibilities;
+        std::list<std::map<Parameter, Entity>> paramPossibilities;
         unfoldMapWithSet(paramPossibilities, *pParametersToPossibleArgumentsPtr);
 
         for (auto& currParamPoss : paramPossibilities)
@@ -571,8 +570,8 @@ bool WorldState::isGoalSatisfied(const Goal& pGoal) const
 void WorldState::iterateOnMatchingFactsWithoutFluentConsideration
 (const std::function<bool (const Fact&)>& pValueCallback,
  const Fact& pFact,
- const std::map<std::string, std::set<Entity>>& pParametersToConsiderAsAnyValue,
- const std::map<std::string, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr) const
+ const std::map<Parameter, std::set<Entity>>& pParametersToConsiderAsAnyValue,
+ const std::map<Parameter, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr) const
 {
   auto it = _factNamesToFacts.find(pFact.name);
   if (it != _factNamesToFacts.end())
@@ -586,8 +585,8 @@ void WorldState::iterateOnMatchingFactsWithoutFluentConsideration
 void WorldState::iterateOnMatchingFacts
 (const std::function<bool (const Fact&)>& pValueCallback,
  const Fact& pFact,
- const std::map<std::string, std::set<Entity>>& pParametersToConsiderAsAnyValue,
- const std::map<std::string, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr) const
+ const std::map<Parameter, std::set<Entity>>& pParametersToConsiderAsAnyValue,
+ const std::map<Parameter, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr) const
 {
   auto it = _factNamesToFacts.find(pFact.name);
   if (it != _factNamesToFacts.end())
@@ -633,7 +632,7 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
       {
         const Inference& currInference = itInference->second;
 
-        std::map<std::string, std::set<Entity>> parametersToValues;
+        std::map<Parameter, std::set<Entity>> parametersToValues;
         for (const auto& currParam : currInference.parameters)
           parametersToValues[currParam];
         if (!currInference.condition || currInference.condition->isTrue(*this, pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
@@ -643,7 +642,7 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
           {
             if (!parametersToValues.empty())
             {
-              std::list<std::map<std::string, Entity>> parametersToValuePoss;
+              std::list<std::map<Parameter, Entity>> parametersToValuePoss;
               unfoldMapWithSet(parametersToValuePoss, parametersToValues);
               if (!parametersToValuePoss.empty())
               {

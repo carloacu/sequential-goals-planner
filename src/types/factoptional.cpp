@@ -24,7 +24,7 @@ FactOptional::FactOptional(bool pIsFactNegated,
 
 
 FactOptional::FactOptional(const FactOptional& pOther,
-                           const std::map<std::string, Entity>* pParametersPtr)
+                           const std::map<Parameter, Entity>* pParametersPtr)
   : isFactNegated(pOther.isFactNegated),
     fact(pOther.fact)
 {
