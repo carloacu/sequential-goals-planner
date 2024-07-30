@@ -103,11 +103,17 @@ bool Entity::match(const Parameter& pParameter) const
 }
 
 
-bool Entity::matchAny(const std::vector<Parameter>& pParameters) const
+bool Entity::isValidParameterAccordingToPossiblities(const std::vector<Parameter>& pParameters) const
 {
   for (auto& currParam : pParameters)
-    if (match(currParam))
+  {
+    if (value == currParam.name)
+    {
+      if (type && currParam.type && !currParam.type->isA(*type))
+        return false;
       return true;
+    }
+  }
   return false;
 }
 

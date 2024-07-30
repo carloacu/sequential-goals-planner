@@ -193,19 +193,24 @@ void _test_action_initialization()
 
   cp::Action action(cp::Condition::fromStr("pred_name(toto)", ontology, entities),
                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
-  action.limitPredicateTypes(worldState);
+  action.throwIfNotValid(worldState);
 
 
   cp::Action action2(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
   action2.parameters.emplace_back(cp::Parameter::fromStr("?p - my_type", ontology.types));
-  action2.limitPredicateTypes(worldState);
+  action2.throwIfNotValid(worldState);
 
   cp::Action action3(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
+  action3.parameters.emplace_back(cp::Parameter::fromStr("?p - sub_my_type", ontology.types));
+  action3.throwIfNotValid(worldState);
+
+  cp::Action action4(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
+                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
   try
   {
-    action3.limitPredicateTypes(worldState);
+    action4.throwIfNotValid(worldState);
     assert_true(false);
   }
   catch (const std::exception& e)
@@ -213,12 +218,12 @@ void _test_action_initialization()
     assert_eq<std::string>("\"?p\" is missing in action parameters", e.what());
   }
 
-  cp::Action action4(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
-                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=?r", ontology, entities));
-  action4.parameters.emplace_back(cp::Parameter::fromStr("?p - my_type", ontology.types));
+  cp::Action action5(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
+                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=?r", ontology, entities));
+  action5.parameters.emplace_back(cp::Parameter::fromStr("?p - my_type", ontology.types));
   try
   {
-    action4.limitPredicateTypes(worldState);
+    action5.throwIfNotValid(worldState);
     assert_true(false);
   }
   catch (const std::exception& e)

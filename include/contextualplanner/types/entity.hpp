@@ -32,7 +32,7 @@ struct CONTEXTUALPLANNER_API Entity
   std::string toStr() const;
   bool isAParameterToFill() const;
   bool match(const Parameter& pParameter) const;
-  bool matchAny(const std::vector<Parameter>& pParameter) const;
+  bool isValidParameterAccordingToPossiblities(const std::vector<Parameter>& pParameter) const;
 
   std::string value;
   std::shared_ptr<Type> type;
