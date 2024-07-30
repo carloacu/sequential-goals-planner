@@ -79,6 +79,7 @@ struct CONTEXTUALPLANNER_API Action
   void replaceArgument(const std::string& pOld,
                        const std::string& pNew);
 
+  // TODO: remove that function?
   void throwIfNotValid(const WorldState& pWorldState);
 
   /// Print the precondition in string.
