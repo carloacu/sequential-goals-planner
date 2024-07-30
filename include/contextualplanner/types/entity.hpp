@@ -2,6 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_ENTITY_HPP
 
 #include <string>
+#include <vector>
 #include "../util/api.hpp"
 #include "type.hpp"
 
@@ -31,6 +32,7 @@ struct CONTEXTUALPLANNER_API Entity
   std::string toStr() const;
   bool isAParameterToFill() const;
   bool match(const Parameter& pParameter) const;
+  bool matchAny(const std::vector<Parameter>& pParameter) const;
 
   std::string value;
   std::shared_ptr<Type> type;

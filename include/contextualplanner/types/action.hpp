@@ -79,7 +79,7 @@ struct CONTEXTUALPLANNER_API Action
   void replaceArgument(const std::string& pOld,
                        const std::string& pNew);
 
-  void limitPredicateTypes();
+  void limitPredicateTypes(const WorldState& pWorldState);
 
   /// Print the precondition in string.
   std::string precondition_str() const { return precondition ? precondition->toStr() : ""; }
@@ -97,6 +97,12 @@ struct CONTEXTUALPLANNER_API Action
   ProblemModification effect;
   /// If it is important to not repeat this action.
   bool highImportanceOfNotRepeatingIt = false;
+
+private:
+  void _limitPredicateTypesForACondition(const std::unique_ptr<Condition>& pPrecondition);
+  void _limitPredicateTypesForAnWordStateModif(const std::unique_ptr<WorldStateModification>& pWs,
+                                               const WorldState& pWorldState);
+  void _limitPredicateTypesForAFact(const Fact& pFact);
 };
 
 

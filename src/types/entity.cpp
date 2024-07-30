@@ -103,4 +103,14 @@ bool Entity::match(const Parameter& pParameter) const
 }
 
 
+bool Entity::matchAny(const std::vector<Parameter>& pParameters) const
+{
+  for (auto& currParam : pParameters)
+    if (match(currParam))
+      return true;
+  return false;
+}
+
+
+
 } // !cp

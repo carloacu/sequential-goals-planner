@@ -46,22 +46,22 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pFactParameters Optional fact parameters to possible values. The possible value will not be considered here.
    * @param[in] pOtherFactParametersPtr Another map of fact parameters to possible values.
    * @param[in] pConditionParameters Parameters of the condition.
-   * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
+   * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
    * @return True if this condition contains an optional fact with parameters compatibility.
    */
   virtual bool containsFactOpt(const FactOptional& pFactOptional,
                                const std::map<Parameter, std::set<Entity>>& pFactParameters,
                                const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                                const std::vector<Parameter>& pConditionParameters,
-                               bool pIsWrappingExprssionNegated = false) const = 0;
+                               bool pIsWrappingExpressionNegated = false) const = 0;
 
   /**
    * @brief Iterate over all the optional facts.
    * @param[in] pFactCallback Callback called for each optional fact of the condition.
-   * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
+   * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
    */
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                      bool pIsWrappingExprssionNegated = false) const = 0;
+                      bool pIsWrappingExpressionNegated = false) const = 0;
 
 
   /**
@@ -72,7 +72,7 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pFactFromEffectParameters pFactFromEffect parameters.
    * @param[in] pFactFromEffectTmpParametersPtr pFactFromEffect other parameters.
    * @param[in] pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments.
-   * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
+   * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
    * @return True if one callback returned true, false otherwise.
    */
   virtual bool findConditionCandidateFromFactFromEffect(
@@ -82,7 +82,7 @@ struct CONTEXTUALPLANNER_API Condition
       const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
       const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
       const std::map<Parameter, std::set<Entity>>& pConditionParametersToPossibleArguments,
-      bool pIsWrappingExprssionNegated = false) const = 0;
+      bool pIsWrappingExpressionNegated = false) const = 0;
 
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world sate until the callback returns false.
@@ -101,7 +101,7 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in, out] pConditionParametersToPossibleArguments Map of the parameters of the condition to their possible arguments <br/>
    * refreshed if it is necessary to have the condition true.
    * @param[out] pCanBecomeTruePtr If this condition can become true according to the facts that can become true in the world state.
-   * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
+   * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
    * @return True if this condition is satisfied.
    */
   virtual bool isTrue(const WorldState& pWorldState,
@@ -109,18 +109,18 @@ struct CONTEXTUALPLANNER_API Condition
                       const std::set<Fact>& pRemovedFacts = {},
                       std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments = nullptr,
                       bool* pCanBecomeTruePtr = nullptr,
-                      bool pIsWrappingExprssionNegated = false) const = 0;
+                      bool pIsWrappingExpressionNegated = false) const = 0;
 
   /**
    * @brief Check if the condition can become true according to the facts that can become true in a world state.
    * @param[in] pWorldState World state to consider.
    * @param[in] pParameters Parameter of the condition.
-   * @param[in] pIsWrappingExprssionNegated Is the expression wrapping this call is negated.
+   * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
    * @return True if this condition can be satisfied.
    */
   virtual bool canBecomeTrue(const WorldState& pWorldState,
                              const std::vector<Parameter>& pParameters,
-                             bool pIsWrappingExprssionNegated = false) const = 0;
+                             bool pIsWrappingExpressionNegated = false) const = 0;
 
   /// Equality operators.
   virtual bool operator==(const Condition& pOther) const = 0;
@@ -190,16 +190,16 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                        const std::map<Parameter, std::set<Entity>>& pFactParameters,
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
-                       bool pIsWrappingExprssionNegated) const override;
+                       bool pIsWrappingExpressionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
   bool findConditionCandidateFromFactFromEffect(const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
                                                 const WorldState& pWorldState,
                                                 const Fact& pFactFromEffect,
                                                 const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
                                                 const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
                                                 const std::map<Parameter, std::set<Entity>>& pConditionParametersToPossibleArguments,
-                                                bool pIsWrappingExprssionNegated) const override;
+                                                bool pIsWrappingExpressionNegated) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState& pWorldState) const override;
   bool isTrue(const WorldState& pWorldState,
@@ -207,10 +207,10 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
                      const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExprssionNegated) const override;
+                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const WorldState& pWorldState) const override;
@@ -248,9 +248,9 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                        const std::map<Parameter, std::set<Entity>>& pFactParameters,
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
-                       bool pIsWrappingExprssionNegated) const override;
+                       bool pIsWrappingExpressionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
 
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
@@ -259,7 +259,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
       const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
       const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
       const std::map<Parameter, std::set<Entity>>& pConditionParametersToPossibleArguments,
-      bool pIsWrappingExprssionNegated) const override;
+      bool pIsWrappingExpressionNegated) const override;
 
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState& pWorldState) const override { return true; } // TODO
@@ -268,10 +268,10 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
                      const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExprssionNegated) const override;
+                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const WorldState&) const override { return {}; }
@@ -309,9 +309,9 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
                        const std::map<Parameter, std::set<Entity>>& pFactParameters,
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
-                       bool pIsWrappingExprssionNegated) const override;
+                       bool pIsWrappingExpressionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
 
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
@@ -320,7 +320,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
       const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
       const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
       const std::map<Parameter, std::set<Entity>>& pConditionParametersToPossibleArguments,
-      bool pIsWrappingExprssionNegated) const override;
+      bool pIsWrappingExpressionNegated) const override;
 
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState& pWorldState) const override { return true; } // TODO
@@ -329,10 +329,10 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
                      const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExprssionNegated) const override;
+                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const WorldState&) const override { return {}; }
@@ -368,9 +368,9 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                        const std::map<Parameter, std::set<Entity>>& pFactParameters,
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
-                       bool pIsWrappingExprssionNegated) const override;
+                       bool pIsWrappingExpressionNegated) const override;
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState&,
@@ -378,7 +378,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
       const std::map<Parameter, std::set<Entity>>&,
       const std::map<Parameter, std::set<Entity>>*,
       const std::map<Parameter, std::set<Entity>>&,
-      bool pIsWrappingExprssionNegated) const override;
+      bool pIsWrappingExpressionNegated) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const WorldState&) const override { return pFactCallback(factOptional); }
   bool isTrue(const WorldState& pWorldState,
@@ -386,10 +386,10 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
-              bool pIsWrappingExprssionNegated) const override;
+              bool pIsWrappingExpressionNegated) const override;
   bool canBecomeTrue(const WorldState& pWorldState,
                      const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExprssionNegated) const override;
+                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const WorldState& pWorldState) const override;
@@ -442,7 +442,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
               const std::set<Fact>&,
               std::map<Parameter, std::set<Entity>>*,
               bool*,
-              bool pIsWrappingExprssionNegated) const override { return !pIsWrappingExprssionNegated; }
+              bool pIsWrappingExpressionNegated) const override { return !pIsWrappingExpressionNegated; }
   bool canBecomeTrue(const WorldState&,
                      const std::vector<Parameter>&,
                      bool) const override  { return true; }

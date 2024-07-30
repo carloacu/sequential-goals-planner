@@ -4,6 +4,7 @@
 #include <contextualplanner/types/action.hpp>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/ontology.hpp>
+#include <contextualplanner/types/worldstate.hpp>
 
 namespace
 {
@@ -177,6 +178,7 @@ void _test_fact_initialization()
 
 void _test_action_initialization()
 {
+  cp::WorldState worldState;
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromStr("my_type my_type2 return_type\n"
                                            "sub_my_type - my_type");
@@ -191,21 +193,39 @@ void _test_action_initialization()
 
   cp::Action action(cp::Condition::fromStr("pred_name(toto)", ontology, entities),
                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
-  action.limitPredicateTypes();
+  action.limitPredicateTypes(worldState);
 
-  /*
+
   cp::Action action2(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
+                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
+  action2.parameters.emplace_back(cp::Parameter::fromStr("?p - my_type", ontology.types));
+  action2.limitPredicateTypes(worldState);
+
+  cp::Action action3(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
   try
   {
-    action2.limitPredicateTypes();
+    action3.limitPredicateTypes(worldState);
     assert_true(false);
   }
   catch (const std::exception& e)
   {
-    assert_eq<std::string>("xcccxccc", e.what());
+    assert_eq<std::string>("\"?p\" is missing in action parameters", e.what());
   }
-  */
+
+  cp::Action action4(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
+                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=?r", ontology, entities));
+  action4.parameters.emplace_back(cp::Parameter::fromStr("?p - my_type", ontology.types));
+  try
+  {
+    action4.limitPredicateTypes(worldState);
+    assert_true(false);
+  }
+  catch (const std::exception& e)
+  {
+    assert_eq<std::string>("\"?r\" fluent is missing in action parameters", e.what());
+  }
+
 }
 
 
