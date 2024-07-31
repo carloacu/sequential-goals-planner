@@ -3,7 +3,9 @@
 #include <iostream>
 #include <contextualplanner/types/action.hpp>
 #include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/goalstack.hpp>
 #include <contextualplanner/types/ontology.hpp>
+#include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 
 namespace
@@ -23,6 +25,12 @@ void assert_true(const TYPE& pValue)
     assert(false);
 }
 
+template <typename TYPE>
+void assert_false(const TYPE& pValue)
+{
+  if (pValue)
+    assert(false);
+}
 
 void _test_setOfTypes()
 {
@@ -234,6 +242,36 @@ void _test_action_initialization()
 }
 
 
+void _test_checkConditionWithOntology()
+{
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "my_type my_type2 - entity");
+  ontology.constants = cp::SetOfEntities::fromStr("toto - my_type\n"
+                                                  "titi - my_type2", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?e - entity)", ontology.types);
+
+  cp::WorldState worldState;
+  cp::GoalStack goalStack;
+  std::map<cp::SetOfInferencesId, cp::SetOfInferences> setOfInferences;
+  worldState.addFact(cp::Fact::fromStr("pred_name(toto)", ontology, {}), goalStack, setOfInferences, ontology, {}, {});
+  assert_false(cp::Condition::fromStr("pred_name(titi)", ontology, {})->isTrue(worldState));
+
+
+  {
+    std::map<cp::Parameter, std::set<cp::Entity>> conditionParameters;
+    conditionParameters[cp::Parameter::fromStr("?p - my_type", ontology.types)];
+    assert_true(cp::Condition::fromStr("pred_name(?p)", ontology, {})->isTrue(worldState, {}, {}, &conditionParameters));
+  }
+
+  {
+    std::map<cp::Parameter, std::set<cp::Entity>> conditionParameters;
+    conditionParameters[cp::Parameter::fromStr("?p - my_type2", ontology.types)];
+    assert_false(cp::Condition::fromStr("pred_name(?p)", ontology, {})->isTrue(worldState, {}, {}, &conditionParameters));
+  }
+}
+
+
 }
 
 
@@ -248,6 +286,7 @@ void test_ontology()
   _test_setOfEntities_fromStr();
   _test_fact_initialization();
   _test_action_initialization();
+  _test_checkConditionWithOntology();
 
   std::cout << "ontology is ok !!!!" << std::endl;
 }

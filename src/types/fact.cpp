@@ -616,7 +616,8 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
     if (pParametersPtr != nullptr)
     {
       auto itParam = pParametersPtr->find(pFactValue.value);
-      if (itParam != pParametersPtr->end())
+      if (itParam != pParametersPtr->end() &&
+          (!pValueToLookFor.type || !itParam->first.type || pValueToLookFor.type->isA(*itParam->first.type)))
       {
         if (!itParam->second.empty())
           return itParam->second.count(pValueToLookFor) > 0;
