@@ -21,7 +21,8 @@ SetOfPredicates SetOfPredicates::fromStr(const std::string& pStr,
   std::vector<std::string> lineSplitted;
   cp::split(lineSplitted, pStr, "\n");
   for (auto& currLine : lineSplitted)
-    res.addPredicate(Predicate(currLine, pSetOfTypes));
+    if (!currLine.empty())
+      res.addPredicate(Predicate(currLine, pSetOfTypes));
   return res;
 }
 

@@ -645,16 +645,16 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 
   {
     bool doesParametersMatches = true;
-    auto itFactParameters = pOtherFact.arguments.begin();
-    auto itLookForParameters = arguments.begin();
-    while (itFactParameters != pOtherFact.arguments.end())
+    auto itFactArguments = pOtherFact.arguments.begin();
+    auto itLookForArguments = arguments.begin();
+    while (itFactArguments != pOtherFact.arguments.end())
     {
-      if (*itFactParameters != *itLookForParameters &&
-          ((!pParametersAreForTheFact && !doesItMatch(*itFactParameters, *itLookForParameters)) ||
-           (pParametersAreForTheFact && !doesItMatch(*itLookForParameters, *itFactParameters))))
+      if (*itFactArguments != *itLookForArguments &&
+          ((!pParametersAreForTheFact && !doesItMatch(*itFactArguments, *itLookForArguments)) ||
+           (pParametersAreForTheFact && !doesItMatch(*itLookForArguments, *itFactArguments))))
         doesParametersMatches = false;
-      ++itFactParameters;
-      ++itLookForParameters;
+      ++itFactArguments;
+      ++itLookForArguments;
     }
     if (!doesParametersMatches)
       return false;

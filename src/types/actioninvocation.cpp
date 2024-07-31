@@ -30,7 +30,7 @@ std::string ActionInvocation::toStr() const
         res += ", ";
       res += currParam.first.name + " -> ";
       if (!currParam.second.empty())
-        res += currParam.second.begin()->toStr();
+        res += currParam.second.begin()->value;
     }
     res += ")";
   }

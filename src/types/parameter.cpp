@@ -29,16 +29,10 @@ Parameter& Parameter::operator=(Parameter&& pOther) noexcept {
 
 
 bool Parameter::operator<(const Parameter& pOther) const {
-  if (name != pOther.name)
-    return name < pOther.name;
-  if (type && !pOther.type)
-    return true;
-  if (!type && pOther.type)
-    return false;
-  if (type && pOther.type)
-    return *type < *pOther.type;
-  return false;
+   // Because 2 parameters cannot have the same name
+   return name < pOther.name;
 }
+
 
 
 bool Parameter::operator==(const Parameter& pOther) const {
