@@ -50,6 +50,12 @@ bool Entity::operator==(const Entity& pOther) const {
 }
 
 
+const std::string& Entity::anyEntityValue()
+{
+  return _anyValue;
+}
+
+
 Entity Entity::createAnyEntity()
 {
   return Entity(_anyValue);
@@ -85,10 +91,14 @@ std::string Entity::toStr() const
   return value + " - " + type->name;
 }
 
+bool Entity::isAnyValue() const
+{
+  return value == _anyValue;
+}
 
 bool Entity::isAParameterToFill() const
 {
-  return !value.empty() && value[0] == '?';
+  return !value.empty() && (value[0] == '?' || isAnyValue());
 }
 
 bool Entity::match(const Parameter& pParameter) const

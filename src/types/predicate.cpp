@@ -58,7 +58,14 @@ Predicate::Predicate(const std::string& pStr,
 
  bool Predicate::operator==(const Predicate& pOther) const
  {
-   return name == pOther.name && parameters == pOther.parameters && fluent == pOther.fluent;
+   if (name == pOther.name && parameters == pOther.parameters)
+   {
+     if (!fluent && !pOther.fluent)
+       return true;
+     if (fluent && pOther.fluent && fluent->name == pOther.fluent->name)
+       return true;
+   }
+   return false;
  }
 
 

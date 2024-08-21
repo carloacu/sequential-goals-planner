@@ -17,6 +17,8 @@ struct Entity;
 struct Parameter;
 
 
+extern bool CONTEXTUALPLANNER_DEBUG_FOR_TESTS;
+
 CONTEXTUALPLANNER_API
 void unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
                       const std::map<Parameter, std::set<Entity>>& pInMap);
@@ -80,6 +82,46 @@ bool areUPtrEqual(const std::unique_ptr<T>& pPtr1,
   if (pPtr1 && pPtr2)
     return *pPtr1 == *pPtr2;
   return false;
+}
+
+
+
+template <typename T>
+std::list<T> mergeTwoLists(const std::list<T>& pList1,
+                           const std::list<T>& pList2)
+{
+  std::list<T> res = pList1;
+  res.insert(res.end(), pList2.begin(), pList2.end());
+  return res;
+}
+
+
+template <typename T>
+std::list<T> mergeTwoListsWithNoDoubleEltCheck(const std::list<T>& pList1,
+                                               const std::list<T>& pList2)
+{
+  std::list<T> res = pList1;
+  for (auto& currElt2 : pList2)
+  {
+    auto it = std::find(pList1.begin(), pList1.end(), currElt2);
+    if (it == pList1.end())
+      res.insert(res.end(), currElt2);
+  }
+  return res;
+}
+
+
+template <typename T>
+std::list<T> intersectTwoLists(const std::list<T>& pList1,
+                               const std::list<T>& pList2)
+{
+  std::list<T> intersectionList;
+  for (auto& elem : pList1) {
+      if (std::find(pList2.begin(), pList2.end(), elem) != pList2.end()) {
+          intersectionList.push_back(elem);
+      }
+  }
+  return intersectionList;
 }
 
 

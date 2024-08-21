@@ -4,11 +4,13 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace cp
 {
 struct FactOptional;
 struct Ontology;
+struct Parameter;
 struct SetOfEntities;
 
 
@@ -24,7 +26,9 @@ struct ExpressionParsed
   std::unique_ptr<ExpressionParsed> followingExpression;
 
   FactOptional toFact(const Ontology& pOntology,
-                      const SetOfEntities& pEntities) const;
+                      const SetOfEntities& pEntities,
+                      const std::vector<Parameter>& pParameters,
+                      bool pIsOkIfFluentIsMissing) const;
 
   static ExpressionParsed fromStr(const std::string& pStr,
                                   std::size_t& pPos);

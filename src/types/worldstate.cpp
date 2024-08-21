@@ -19,8 +19,8 @@ bool _isNegatedFactCompatibleWithFacts(
 {
   for (const auto& currFact : pFacts)
     if (currFact.areEqualWithoutFluentConsideration(pNegatedFact) &&
-        ((currFact.isValueNegated && currFact.fluent == pNegatedFact.fluent) ||
-         (!currFact.isValueNegated && currFact.fluent != pNegatedFact.fluent)))
+        ((currFact.isValueNegated() && currFact.fluent() == pNegatedFact.fluent()) ||
+         (!currFact.isValueNegated() && currFact.fluent() != pNegatedFact.fluent())))
       return true;
   return false;
 }
@@ -33,8 +33,7 @@ WorldState::WorldState()
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
-    _facts(),
-    _factNamesToFacts(),
+    _factsMapping(),
     _cache(std::make_unique<WorldStateCache>(*this))
 {
 }
@@ -45,8 +44,7 @@ WorldState::WorldState(const WorldState& pOther)
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
-    _facts(pOther._facts),
-    _factNamesToFacts(pOther._factNamesToFacts),
+    _factsMapping(pOther._factsMapping),
     _cache(std::make_unique<WorldStateCache>(*this, *pOther._cache))
 {
 }
@@ -59,8 +57,7 @@ WorldState::~WorldState()
 
 void WorldState::operator=(const WorldState& pOther)
 {
-  _facts = pOther._facts;
-  _factNamesToFacts = pOther._factNamesToFacts;
+  _factsMapping = pOther._factsMapping;
   _cache = std::make_unique<WorldStateCache>(*this, *pOther._cache);
 }
 
@@ -124,7 +121,7 @@ template bool WorldState::addFacts<std::vector<Fact>>(const std::vector<Fact>&, 
 
 bool WorldState::hasFact(const Fact& pFact) const
 {
-  return _facts.count(pFact) > 0;
+  return _factsMapping.facts().count(pFact) > 0;
 }
 
 bool WorldState::removeFact(const Fact& pFact,
@@ -169,46 +166,52 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
       pWhatChanged.punctualFacts.insert(currFact);
       continue;
     }
-    if (_facts.count(currFact) > 0)
+    if (_factsMapping.facts().count(currFact) > 0)
       continue;
+    bool skipThisFact = false;
 
     // Remove existing facts if needed
-    auto itFactNameToFacts = _factNamesToFacts.find(currFact.name);
-    if (itFactNameToFacts != _factNamesToFacts.end())
+    bool aFactWasRemoved = false;
+    do
     {
-      bool skipThisFact = false;
-      for (auto itExistingFact = itFactNameToFacts->second.begin(); itExistingFact != itFactNameToFacts->second.end(); )
+      aFactWasRemoved = false;
+      auto currFactMatchInWs = _factsMapping.find(currFact, true);
+      for (auto itExistingFact = currFactMatchInWs.begin(); itExistingFact != currFactMatchInWs.end(); )
       {
-        auto& currExistingFact = *itExistingFact;
-        if (currFact.arguments == currExistingFact.arguments &&
-            ((!currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.fluent != currExistingFact.fluent) ||
-             (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.fluent == currExistingFact.fluent) ||
-             (!currFact.isValueNegated && currExistingFact.isValueNegated)))
+        const auto& currExistingFact = *itExistingFact;
+
+        if (currFact.isValueNegated() && !currExistingFact.isValueNegated() && currFact.fluent() != currExistingFact.fluent())
+          skipThisFact = true;
+
+        if (currFact.arguments() == currExistingFact.arguments() &&
+            ((!currFact.isValueNegated() && !currExistingFact.isValueNegated() && currFact.fluent() != currExistingFact.fluent()) ||
+             (currFact.isValueNegated() && !currExistingFact.isValueNegated() && currFact.fluent() == currExistingFact.fluent()) ||
+             (!currFact.isValueNegated() && currExistingFact.isValueNegated())))
         {
-          ++itExistingFact;
           WhatChanged subWhatChanged;
           _removeFacts(subWhatChanged, std::vector<cp::Fact>{currExistingFact}, pGoalStack, pNow);
           bool goalChanged = false;
           _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfInferences,
                              pOntology, pEntities, pNow);
-          continue;
-        }
-
-        if (currFact.isValueNegated && !currExistingFact.isValueNegated && currFact.fluent != currExistingFact.fluent)
-        {
-          skipThisFact = true;
+          aFactWasRemoved = true;
           break;
         }
+
+        if (skipThisFact)
+          break;
         ++itExistingFact;
       }
       if (skipThisFact)
         continue;
     }
+    while (aFactWasRemoved);
 
-    pWhatChanged.addedFacts.insert(currFact);
-    _facts.insert(currFact);
-    _factNamesToFacts[currFact.name].insert(currFact);
-    _cache->notifyAboutANewFact(currFact);
+    if (!skipThisFact)
+    {
+      pWhatChanged.addedFacts.insert(currFact);
+      _factsMapping.add(currFact);
+      _cache->notifyAboutANewFact(currFact);
+    }
   }
   pGoalStack._refresh(*this, pNow);
 }
@@ -225,53 +228,48 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
 {
   for (const auto& currFact : pFacts)
   {
-    bool factRemoved = false;
+    /*
     auto it = _facts.find(currFact);
     if (it == _facts.end())
     {
       // If the fact is not found, we try to find the fact with another value
-      if (currFact.fluent == Fact::anyValue)
+      if (currFact.fluent() == Fact::anyValue)
       {
-        auto itFromFactName = _factNamesToFacts.find(currFact.name);
-        if (itFromFactName != _factNamesToFacts.end())
+        auto itFromFactName = _factsMapping.find(currFact.toFactAccessorCacheForFullMatchWithoutFluent());
+        if (itFromFactName != _factsMapping.end())
         {
-          for (const auto& currFactFromName : itFromFactName->second)
+          for (const auto& currFactFromAccessor : itFromFactName->second)
           {
-            if (currFactFromName.areEqualExceptAnyValues(currFact))
-            {
-              it = _facts.find(currFactFromName);
-              if (it != _facts.end())
-              {
-                _facts.erase(it);
-                itFromFactName->second.erase(currFactFromName);
-                if (itFromFactName->second.empty())
-                  _factNamesToFacts.erase(itFromFactName);
-                factRemoved = true;
-                break;
-              }
-            }
+            _removeAFact(pWhatChanged, currFactFromAccessor);
           }
+          continue;
         }
       }
-      if (it == _facts.end())
-        continue;
     }
-    pWhatChanged.removedFacts.insert(currFact);
-    if (!factRemoved)
-    {
-      _facts.erase(it);
-      auto itFactName = _factNamesToFacts.find(currFact.name);
-      if (itFactName == _factNamesToFacts.end())
-        assert(false);
-      itFactName->second.erase(currFact);
-      if (itFactName->second.empty())
-        _factNamesToFacts.erase(itFactName);
-    }
-    _cache->clear();
+    */
+    _removeAFact(pWhatChanged, currFact);
   }
   pGoalStack._refresh(*this, pNow);
 }
 
+
+void WorldState::_removeAFact(WhatChanged& pWhatChanged,
+                              const Fact& pFact)
+{
+  pWhatChanged.removedFacts.insert(pFact);
+  _factsMapping.erase(pFact);
+
+  /*
+  {
+    _facts.erase(pFact);
+    std::list<FactAccessor> accessors;
+    FactAccessor::conditonFactToListOfFactAccessors(accessors, pFact);
+    for (auto& currAccessor : accessors)
+      _factsMapping.erase(currAccessor);
+  }
+  */
+  _cache->clear();
+}
 
 void WorldState::_modify(WhatChanged& pWhatChanged,
                          const std::unique_ptr<WorldStateModification>& pWsModif,
@@ -323,19 +321,15 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
                           const SetOfEntities& pEntities,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  if (_facts != pFacts)
-  {
-    _facts = pFacts;
-    _factNamesToFacts.clear();
-    for (const auto& currFact : pFacts)
-      _factNamesToFacts[currFact.name].insert(currFact);
-    _cache->clear();
-    WhatChanged whatChanged;
-    pGoalStack._refresh(*this, pNow);
-    bool goalChanged = false;
-    _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences,
-                       pOntology, pEntities, pNow);
-  }
+  _factsMapping.clear();
+  for (const auto& currFact : pFacts)
+    _factsMapping.add(currFact);
+  _cache->clear();
+  WhatChanged whatChanged;
+  pGoalStack._refresh(*this, pNow);
+  bool goalChanged = false;
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfInferences,
+                     pOntology, pEntities, pNow);
 }
 
 
@@ -346,7 +340,7 @@ bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
   if (!pFactOptional.isFactNegated)
     return canFactBecomeTrue(pFactOptional.fact, pParameters);
 
-  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, _facts))
+  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, _factsMapping.facts()))
     return true;
   if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, accessibleFacts))
     return true;
@@ -360,7 +354,7 @@ bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
     if (pFactOptional.fact.areEqualExceptAnyValues(currRemovableFact, nullptr, nullptr, &pParameters))
       return true;
 
-  if (_facts.count(pFactOptional.fact) > 0)
+  if (_factsMapping.facts().count(pFactOptional.fact) > 0)
     return false;
   return true;
 }
@@ -369,9 +363,9 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
                                    const std::vector<Parameter>& pParameters) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
-  if (!pFact.isValueNegated)
+  if (!pFact.isValueNegated())
   {
-    if (_factNamesToFacts.count(pFact.name) ||
+    if (!_factsMapping.find(pFact).empty() ||
         accessibleFacts.count(pFact) > 0)
       return true;
 
@@ -382,7 +376,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
   }
   else
   {
-    if (_isNegatedFactCompatibleWithFacts(pFact, _facts))
+    if (_isNegatedFactCompatibleWithFacts(pFact, _factsMapping.facts()))
       return true;
     if (_isNegatedFactCompatibleWithFacts(pFact, accessibleFacts))
       return true;
@@ -403,30 +397,27 @@ bool WorldState::canFactNameBeModified(const std::string& pFactName) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
   for (const auto& currAccessibleFact : accessibleFacts)
-    if (currAccessibleFact.name == pFactName)
+    if (currAccessibleFact.name() == pFactName)
       return true;
 
   const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
   for (const auto& currAccessibleFact : accessibleFactsWithAnyValues)
-    if (currAccessibleFact.name == pFactName)
+    if (currAccessibleFact.name() == pFactName)
       return true;
 
   const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
   for (const auto& currRemovableFact : removableFactsWithAnyValues)
-    if (currRemovableFact.name == pFactName)
+    if (currRemovableFact.name() == pFactName)
       return true;
   return false;
 }
 
 std::optional<Entity> WorldState::getFactFluent(const cp::Fact& pFact) const
 {
-  auto itFact = _factNamesToFacts.find(pFact.name);
-  if (itFact != _factNamesToFacts.end())
-  {
-    for (auto& currFact : itFact->second)
-      if (currFact.arguments == pFact.arguments)
-        return currFact.fluent;
-  }
+  auto factMatchingInWs = _factsMapping.find(pFact, true);
+  for (const auto& currFact : factMatchingInWs)
+    if (currFact.arguments() == pFact.arguments())
+      return currFact.fluent();
   return {};
 }
 
@@ -436,34 +427,31 @@ void WorldState::extractPotentialArgumentsOfAFactParameter(
     const Fact& pFact,
     const std::string& pParameter) const
 {
-  auto itFact = _factNamesToFacts.find(pFact.name);
-  if (itFact != _factNamesToFacts.end())
+  auto factMatchingInWs = _factsMapping.find(pFact);
+  for (const auto& currFact : factMatchingInWs)
   {
-    for (auto& currFact : itFact->second)
+    if (currFact.arguments().size() == pFact.arguments().size())
     {
-      if (currFact.arguments.size() == pFact.arguments.size())
+      std::set<Entity> potentialNewValues;
+      bool doesItMatch = true;
+      for (auto i = 0; i < pFact.arguments().size(); ++i)
       {
-        std::set<Entity> potentialNewValues;
-        bool doesItMatch = true;
-        for (auto i = 0; i < pFact.arguments.size(); ++i)
+        if (pFact.arguments()[i] == pParameter)
         {
-          if (pFact.arguments[i] == pParameter)
-          {
-            potentialNewValues.insert(currFact.arguments[i]);
-            continue;
-          }
-          if (pFact.arguments[i] == currFact.arguments[i])
-            continue;
-          doesItMatch = false;
-          break;
+          potentialNewValues.insert(currFact.arguments()[i]);
+          continue;
         }
-        if (doesItMatch)
-        {
-          if (pPotentialArgumentsOfTheParameter.empty())
-            pPotentialArgumentsOfTheParameter = std::move(potentialNewValues);
-          else
-            pPotentialArgumentsOfTheParameter.insert(potentialNewValues.begin(), potentialNewValues.end());
-        }
+        if (pFact.arguments()[i] == currFact.arguments()[i])
+          continue;
+        doesItMatch = false;
+        break;
+      }
+      if (doesItMatch)
+      {
+        if (pPotentialArgumentsOfTheParameter.empty())
+          pPotentialArgumentsOfTheParameter = std::move(potentialNewValues);
+        else
+          pPotentialArgumentsOfTheParameter.insert(potentialNewValues.begin(), potentialNewValues.end());
       }
     }
   }
@@ -472,8 +460,9 @@ void WorldState::extractPotentialArgumentsOfAFactParameter(
 
 bool WorldState::isOptionalFactSatisfied(const FactOptional& pFactOptional) const
 {
-  return (pFactOptional.isFactNegated || _facts.count(pFactOptional.fact) > 0) &&
-      (!pFactOptional.isFactNegated || _facts.count(pFactOptional.fact) == 0);
+  const auto& facts = _factsMapping.facts();
+  return (pFactOptional.isFactNegated || facts.count(pFactOptional.fact) > 0) &&
+      (!pFactOptional.isFactNegated || facts.count(pFactOptional.fact) == 0);
 }
 
 
@@ -498,8 +487,8 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
       return true;
     }
 
-    auto itFacts = _factNamesToFacts.find(pFactOptional.fact.name);
-    if (itFacts != _factNamesToFacts.end())
+    auto factMatchingInWs = _factsMapping.find(pFactOptional.fact, true);
+    if (!factMatchingInWs.empty())
     {
       if (pParametersToPossibleArgumentsPtr != nullptr)
       {
@@ -510,16 +499,16 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
         {
           auto factToCompare = pFactOptional.fact;
           factToCompare.replaceArguments(currParamPoss);
-          if (factToCompare.fluent == Fact::anyValue)
+          if (factToCompare.fluent() == Fact::anyValue)
           {
-            for (auto& currFact : itFacts->second)
+            for (const auto& currFact : factMatchingInWs)
             {
               if (currFact.areEqualExceptAnyValues(factToCompare))
               {
-                if (pFactOptional.fact.fluent != Fact::anyValue)
+                if (pFactOptional.fact.fluent() != Fact::anyValue)
                 {
-                  if (pFactOptional.fact.fluent && currFact.fluent)
-                    newParameters = {{pFactOptional.fact.fluent->value, {*currFact.fluent}}};
+                  if (pFactOptional.fact.fluent() && currFact.fluent())
+                    newParameters = {{pFactOptional.fact.fluent()->value, {*currFact.fluent()}}};
                   applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
                 }
                 return false;
@@ -528,13 +517,13 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
             return true;
           }
         }
-        if (pFactOptional.fact.fluent == Fact::anyValue)
+        if (pFactOptional.fact.fluent() == Fact::anyValue)
           return false;
       }
 
-      if (pFactOptional.fact.fluent == Fact::anyValue)
+      if (pFactOptional.fact.fluent() == Fact::anyValue)
       {
-        for (auto& currFact : itFacts->second)
+        for (const auto& currFact : factMatchingInWs)
           if (currFact.areEqualExceptAnyValues(pFactOptional.fact))
             return false;
         return true;
@@ -542,7 +531,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
     }
 
     bool triedToMidfyParameters = false;
-    if (pFactOptional.fact.isInOtherFactsMap(_factNamesToFacts, true, nullptr, pParametersToPossibleArgumentsPtr, nullptr, &triedToMidfyParameters))
+    if (pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, nullptr, pParametersToPossibleArgumentsPtr, nullptr, &triedToMidfyParameters))
     {
       if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
         *pCanBecomeTruePtr = true;
@@ -551,7 +540,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
     return true;
   }
 
-  auto res = pFactOptional.fact.isInOtherFactsMap(_factNamesToFacts, true, &newParameters, pParametersToPossibleArgumentsPtr);
+  auto res = pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, &newParameters, pParametersToPossibleArgumentsPtr);
   if (pParametersToPossibleArgumentsPtr != nullptr)
     applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
   return res;
@@ -573,12 +562,11 @@ void WorldState::iterateOnMatchingFactsWithoutFluentConsideration
  const std::map<Parameter, std::set<Entity>>& pParametersToConsiderAsAnyValue,
  const std::map<Parameter, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr) const
 {
-  auto it = _factNamesToFacts.find(pFact.name);
-  if (it != _factNamesToFacts.end())
-    for (const Fact& currFact : it->second)
-      if (currFact.areEqualExceptAnyValuesAndFluent(pFact, &pParametersToConsiderAsAnyValue, pParametersToConsiderAsAnyValuePtr))
-        if (pValueCallback(currFact))
-          break;
+  auto factMatchInWs = _factsMapping.find(pFact, true);
+  for (const auto& currFact : factMatchInWs)
+    if (currFact.areEqualExceptAnyValuesAndFluent(pFact, &pParametersToConsiderAsAnyValue, pParametersToConsiderAsAnyValuePtr))
+      if (pValueCallback(currFact))
+        break;
 }
 
 
@@ -588,19 +576,18 @@ void WorldState::iterateOnMatchingFacts
  const std::map<Parameter, std::set<Entity>>& pParametersToConsiderAsAnyValue,
  const std::map<Parameter, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr) const
 {
-  auto it = _factNamesToFacts.find(pFact.name);
-  if (it != _factNamesToFacts.end())
-    for (const Fact& currFact : it->second)
-      if (currFact.areEqualExceptAnyValues(pFact, &pParametersToConsiderAsAnyValue, pParametersToConsiderAsAnyValuePtr))
-        if (pValueCallback(currFact))
-          break;
+  auto factMatchInWs = _factsMapping.find(pFact);
+  for (const auto& currFact : factMatchInWs)
+    if (currFact.areEqualExceptAnyValues(pFact, &pParametersToConsiderAsAnyValue, pParametersToConsiderAsAnyValuePtr))
+      if (pValueCallback(currFact))
+        break;
 }
 
 
 
 void WorldState::refreshCacheIfNeeded(const Domain& pDomain)
 {
-  _cache->refreshIfNeeded(pDomain, _facts);
+  _cache->refreshIfNeeded(pDomain, _factsMapping.facts());
 }
 
 
@@ -614,7 +601,7 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
                                        WhatChanged& pWhatChanged,
                                        bool& pGoalChanged,
                                        GoalStack& pGoalStack,
-                                       const std::set<InferenceId>& pInferenceIds,
+                                       const FactToConditions::ConstMapOfFactIterator& pInferenceIds,
                                        const std::map<InferenceId, Inference>& pInferences,
                                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                                        const Ontology& pOntology,
@@ -664,7 +651,7 @@ bool WorldState::_tryToApplyInferences(std::set<InferenceId>& pInferencesAlready
                     return false;
                   }, optFactPtr->fact, parametersToValues);
                   for (auto& currFactToRemove : factsToRemove)
-                    _modify(pWhatChanged, WorldStateModification::fromStr("!" + currFactToRemove->toStr(), pOntology, pEntities), // Optimize to construct WorldStateModification without passing by a string
+                    _modify(pWhatChanged, WorldStateModification::fromStr("!" + currFactToRemove->toStr(), pOntology, pEntities, {}), // Optimize to construct WorldStateModification without passing by a string
                             pGoalStack, pSetOfInferences, pOntology, pEntities, pNow);
                 }
               }
@@ -710,25 +697,22 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
 
         for (auto& currAddedFact : pWhatChanged.punctualFacts)
         {
-          auto it = condToReachableInferences.find(currAddedFact.name);
-          if (it != condToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences,
+          auto it = condToReachableInferences.find(currAddedFact);
+          if (_tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it, inferences,
                                     pSetOfInferences, pOntology, pEntities, pNow))
             needAnotherLoop = true;
         }
         for (auto& currAddedFact : pWhatChanged.addedFacts)
         {
-          auto it = condToReachableInferences.find(currAddedFact.name);
-          if (it != condToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences,
+          auto it = condToReachableInferences.find(currAddedFact);
+          if (_tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it, inferences,
                                     pSetOfInferences, pOntology, pEntities, pNow))
             needAnotherLoop = true;
         }
         for (auto& currRemovedFact : pWhatChanged.removedFacts)
         {
-          auto it = notCondToReachableInferences.find(currRemovedFact.name);
-          if (it != notCondToReachableInferences.end() &&
-              _tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it->second, inferences,
+          auto it = notCondToReachableInferences.find(currRemovedFact);
+          if (_tryToApplyInferences(inferencesAlreadyApplied, pWhatChanged, pGoalChanged, pGoalStack, it, inferences,
                                     pSetOfInferences, pOntology, pEntities, pNow))
             needAnotherLoop = true;
         }
@@ -742,7 +726,7 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
     if (!pWhatChanged.removedFacts.empty())
       onFactsRemoved(pWhatChanged.removedFacts);
     if (pWhatChanged.hasFactsToModifyInTheWorldForSure())
-      onFactsChanged(_facts);
+      onFactsChanged(_factsMapping.facts());
   }
 }
 

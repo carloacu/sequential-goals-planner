@@ -22,7 +22,8 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    */
   static std::unique_ptr<WorldStateModification> fromStr(const std::string& pStr,
                                                          const Ontology& pOntology,
-                                                         const SetOfEntities& pEntities);
+                                                         const SetOfEntities& pEntities,
+                                                         const std::vector<Parameter>& pParameters);
 
   /**
    * @brief Create a world state modification by concatenating two existing world state modifications.

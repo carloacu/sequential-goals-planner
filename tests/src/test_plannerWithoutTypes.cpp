@@ -88,8 +88,9 @@ void assert_false(const TYPE& pValue)
 }
 
 
-cp::Fact _fact(const std::string& pStr) {
-  return cp::Fact(pStr, {}, {});
+cp::Fact _fact(const std::string& pStr,
+               const std::vector<cp::Parameter>& pParameters = {}) {
+  return cp::Fact(pStr, {}, {}, pParameters);
 }
 
 cp::Goal _goal(const std::string& pStr,
@@ -98,12 +99,14 @@ cp::Goal _goal(const std::string& pStr,
   return cp::Goal(pStr, {}, {}, pMaxTimeToKeepInactive, pGoalGroupId);
 }
 
-std::unique_ptr<cp::Condition> _condition_fromStr(const std::string& pConditionStr) {
-  return cp::Condition::fromStr(pConditionStr, {}, {});
+std::unique_ptr<cp::Condition> _condition_fromStr(const std::string& pConditionStr,
+                                                  const std::vector<cp::Parameter>& pParameters = {}) {
+  return cp::Condition::fromStr(pConditionStr, {}, {}, pParameters);
 }
 
-std::unique_ptr<cp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr) {
-  return cp::WorldStateModification::fromStr(pStr, {}, {});
+std::unique_ptr<cp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr,
+                                                                            const std::vector<cp::Parameter>& pParameters = {}) {
+  return cp::WorldStateModification::fromStr(pStr, {}, {}, pParameters);
 }
 
 void _setGoalsForAPriority(cp::Problem& pProblem,
@@ -191,7 +194,7 @@ void _setFacts(cp::WorldState& pWorldState,
                const std::map<cp::SetOfInferencesId, cp::SetOfInferences>& pSetOfInferences = _emptySetOfInferences) {
   std::set<cp::Fact> facts;
   for (auto& currFactStr : pFactStrs)
-    facts.emplace(currFactStr, cp::Ontology(), cp::SetOfEntities());
+    facts.emplace(currFactStr, cp::Ontology(), cp::SetOfEntities(), std::vector<cp::Parameter>());
   pWorldState.setFacts(facts, pGoalStack, pSetOfInferences, cp::Ontology(), cp::SetOfEntities(), _now);
 }
 
@@ -1138,26 +1141,28 @@ void _actionWithConstantValue()
 void _actionWithParameterizedValue()
 {
   std::map<std::string, cp::Action> actions;
-  cp::Action navigate({}, _worldStateModification_fromStr("place=target"));
-  navigate.parameters.emplace_back("target");
+  std::vector<cp::Parameter> parameters(1, cp::Parameter("?target"));
+  cp::Action navigate({}, _worldStateModification_fromStr("place=?target", parameters));
+  navigate.parameters = std::move(parameters);
   actions.emplace(_action_navigate, navigate);
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("place=kitchen")});
-  assert_eq(_action_navigate + "(target -> kitchen)", _solveStr(problem, actions));
+  assert_eq(_action_navigate + "(?target -> kitchen)", _solveStr(problem, actions));
 }
 
 
 void _actionWithParameterizedParameter()
 {
   std::map<std::string, cp::Action> actions;
-  cp::Action joke({}, _worldStateModification_fromStr("isHappy(human)"));
-  joke.parameters.emplace_back("human");
+  std::vector<cp::Parameter> parameters(1, cp::Parameter("?human"));
+  cp::Action joke({}, _worldStateModification_fromStr("isHappy(?human)", parameters));
+  joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("isHappy(1)")});
-  assert_eq(_action_joke + "(human -> 1)", _solveStr(problem, actions));
+  assert_eq(_action_joke + "(?human -> 1)", _solveStr(problem, actions));
 }
 
 
@@ -1166,15 +1171,16 @@ void _actionWithParametersInPreconditionsAndEffects()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::Action joke(_condition_fromStr("isEngaged(human)"),
-                  _worldStateModification_fromStr("isHappy(human)"));
-  joke.parameters.emplace_back("human");
+  std::vector<cp::Parameter> parameters(1, cp::Parameter("?human"));
+  cp::Action joke(_condition_fromStr("isEngaged(?human)", parameters),
+                  _worldStateModification_fromStr("isHappy(?human)", parameters));
+  joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
   _addFact(problem.worldState, "isEngaged(1)", problem.goalStack);
   _setGoalsForAPriority(problem, {_goal("isHappy(1)")});
-  assert_eq(_action_joke + "(human -> 1)", _solveStr(problem, actions));
+  assert_eq(_action_joke + "(?human -> 1)", _solveStr(problem, actions));
 }
 
 
@@ -1182,9 +1188,10 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
-  cp::Action joke(_condition_fromStr("isEngaged(human)"),
-                  _worldStateModification_fromStr("isHappy(human)"));
-  joke.parameters.emplace_back("human");
+  std::vector<cp::Parameter> parameters(1, cp::Parameter("?human"));
+  cp::Action joke(_condition_fromStr("isEngaged(?human)", parameters),
+                  _worldStateModification_fromStr("isHappy(?human)", parameters));
+  joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
@@ -1197,9 +1204,10 @@ void _actionWithParametersInsideThePath()
 {
   std::unique_ptr<std::chrono::steady_clock::time_point> now = {};
   std::map<std::string, cp::Action> actions;
+  std::vector<cp::Parameter> navigateParameters(1, cp::Parameter("?target"));
   cp::Action navigateAction({},
-                            _worldStateModification_fromStr("place=target"));
-  navigateAction.parameters.emplace_back("target");
+                            _worldStateModification_fromStr("place=?target", navigateParameters));
+  navigateAction.parameters = std::move(navigateParameters);
   actions.emplace(_action_navigate, navigateAction);
 
   actions.emplace(_action_welcome,
@@ -1209,7 +1217,7 @@ void _actionWithParametersInsideThePath()
   cp::Problem problem;
   _addFact(problem.worldState, "place=kitchen", problem.goalStack);
   _setGoalsForAPriority(problem, {_goal("welcomePeople")});
-  assert_eq<std::string>(_action_navigate + "(target -> entrance)" + _sep +
+  assert_eq<std::string>(_action_navigate + "(?target -> entrance)" + _sep +
                          _action_welcome, _solveStr(problem, actions));
   assert_true(_hasFact(problem.worldState, "place=entrance"));
   assert_false(_hasFact(problem.worldState, "place=kitchen"));
@@ -2018,9 +2026,8 @@ void _setWsModification()
 void _forAllWsModification()
 {
   const std::string action1 = "action1";
-  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("forAll(obj, grab(me, obj), set(location(obj), location(me)))"));
+  cp::Action navAction({}, _worldStateModification_fromStr("forAll(?obj, grab(me, ?obj), set(location(?obj), location(me)))"));
   actions.emplace(action1, navAction);
 
   cp::Problem problem;
@@ -2036,15 +2043,16 @@ void _forAllWsModification()
 
 void _actionNavigationAndGrabObjectWithParameters()
 {
-  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=targetLocation"));
-  navAction.parameters.emplace_back("targetLocation");
+  std::vector<cp::Parameter> navParameters(1, cp::Parameter("?targetLocation"));
+  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", navParameters));
+  navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(_condition_fromStr("equals(location(me), location(object))"),
-                        _worldStateModification_fromStr("grab(me, object)"));
-  grabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> grabParameters(1, cp::Parameter("?object"));
+  cp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", grabParameters),
+                        _worldStateModification_fromStr("grab(me, ?object)", grabParameters));
+  grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
   cp::Problem problem;
@@ -2052,21 +2060,22 @@ void _actionNavigationAndGrabObjectWithParameters()
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack);
   assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)"))->toStr());
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)")});
-  assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
+  assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)", _solveStr(problem, actions));
 }
 
 
 void _actionNavigationAndGrabObjectWithParameters2()
 {
-  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=targetLocation"));
-  navAction.parameters.emplace_back("targetLocation");
+  std::vector<cp::Parameter> navParameters(1, cp::Parameter("?targetLocation"));
+  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", navParameters));
+  navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(_condition_fromStr("equals(location(object), location(me))"),
-                        _worldStateModification_fromStr("grab(me, object)"));
-  grabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> grabParameters(1, cp::Parameter("?object"));
+  cp::Action grabAction(_condition_fromStr("equals(location(?object), location(me))", grabParameters),
+                        _worldStateModification_fromStr("grab(me, ?object)", grabParameters));
+  grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
   cp::Problem problem;
@@ -2074,7 +2083,7 @@ void _actionNavigationAndGrabObjectWithParameters2()
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack);
   assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)"))->toStr());
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)")});
-  assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets)", _solveStr(problem, actions));
+  assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)", _solveStr(problem, actions));
 }
 
 
@@ -2082,29 +2091,30 @@ void _actionNavigationAndGrabObjectWithParameters2()
 void _moveObject()
 {
   const std::string actionNavigate2 = "actionNavigate2";
-  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=targetLocation"));
-  navAction.parameters.emplace_back("targetLocation");
+  std::vector<cp::Parameter> navParameters(1, cp::Parameter("?targetLocation"));
+  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", navParameters));
+  navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action navAction2(_condition_fromStr("grab(me, object)"),
-                        _worldStateModification_fromStr("location(me)=targetLocation & location(object)=targetLocation"));
-  navAction2.parameters.emplace_back("targetLocation");
-  navAction2.parameters.emplace_back("object");
+  std::vector<cp::Parameter> nav2Parameters{cp::Parameter("?targetLocation"), cp::Parameter("?object")};
+  cp::Action navAction2(_condition_fromStr("grab(me, ?object)", nav2Parameters),
+                        _worldStateModification_fromStr("location(me)=?targetLocation & location(?object)=?targetLocation", nav2Parameters));
+  navAction2.parameters = std::move(nav2Parameters);
   actions.emplace(actionNavigate2, navAction2);
 
-  cp::Action grabAction(_condition_fromStr("equals(location(me), location(object))"),
-                        _worldStateModification_fromStr("grab(me, object)"));
-  grabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> grabParameters(1, cp::Parameter("?object"));
+  cp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", grabParameters),
+                        _worldStateModification_fromStr("grab(me, ?object)", grabParameters));
+  grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
   cp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack);
   _setGoalsForAPriority(problem, {_goal("location(sweets)=bedroom")});
-  assert_eq<std::string>(_action_navigate + "(targetLocation -> kitchen), " + _action_grab + "(object -> sweets), " +
-                         actionNavigate2 + "(object -> sweets, targetLocation -> bedroom)", _solveStr(problem, actions));
+  assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets), " +
+                         actionNavigate2 + "(?object -> sweets, ?targetLocation -> bedroom)", _solveStr(problem, actions));
 }
 
 
@@ -2112,25 +2122,28 @@ void _moveAndUngrabObject()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=targetLocation"));
-  navAction.parameters.emplace_back("targetLocation");
+  std::vector<cp::Parameter> navParameters(1, cp::Parameter("?targetLocation"));
+  cp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", navParameters));
+  navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(object))"),
-                        _worldStateModification_fromStr("grab(me, object)"));
-  grabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> grabParameters(1, cp::Parameter("?object"));
+  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", grabParameters),
+                        _worldStateModification_fromStr("grab(me, ?object)", grabParameters));
+  grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, object)"));
-  ungrabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> ungrabParameters(1, cp::Parameter("?object"));
+  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ungrabParameters));
+  ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
   cp::Problem problem;
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=targetLocation & grab(me, object)"),
-                          _worldStateModification_fromStr("locationOfObj(object)=targetLocation"));
-  inference.parameters.emplace_back("targetLocation");
-  inference.parameters.emplace_back("object");
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter("?targetLocation"), cp::Parameter("?object")};
+  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", inferenceParameters),
+                          _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
   setOfInferences.addInference(inference);
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
 
@@ -2138,10 +2151,10 @@ void _moveAndUngrabObject()
   _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)")});
 
-  assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(?targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(?targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_ungrab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, "locationOfObj(sweets)=kitchen"));
 }
@@ -2154,9 +2167,10 @@ void _failToMoveAnUnknownObject()
   const std::string actionRanomWalk = "actionRanomWalk";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction(_condition_fromStr("!isLost & !charging(me)"),
-                       _worldStateModification_fromStr("locationOfRobot(me)=targetLocation"));
-  navAction.parameters.emplace_back("targetLocation");
+  std::vector<cp::Parameter> navParameters(1, cp::Parameter("?targetLocation"));
+  cp::Action navAction(_condition_fromStr("!isLost & !charging(me)", navParameters),
+                       _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", navParameters));
+  navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
   cp::Action randomWalkAction(_condition_fromStr("!charging(me)"),
@@ -2166,26 +2180,28 @@ void _failToMoveAnUnknownObject()
   cp::Action leavePodAction({}, _worldStateModification_fromStr("!charging(me)"));
   actions.emplace(actionLeavePod, leavePodAction);
 
-  cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObj(object)=*"),
-                                 _worldStateModification_fromStr("locationOfObj(object)=aLocation"));
-  whereIsObjectAction.parameters.emplace_back("object");
-  whereIsObjectAction.parameters.emplace_back("aLocation");
+  std::vector<cp::Parameter> whereIsObjectParameters{cp::Parameter("?object"), cp::Parameter("?aLocation")};
+  cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObj(?object)=*", whereIsObjectParameters),
+                                 _worldStateModification_fromStr("locationOfObj(?object)=?aLocation", whereIsObjectParameters));
+  whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(object))"),
-                        _worldStateModification_fromStr("grab(me, object)"));
-  grabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> grabParameters{cp::Parameter("?object")};
+  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", grabParameters),
+                        _worldStateModification_fromStr("grab(me, ?object)", grabParameters));
+  grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, object)"));
-  ungrabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> ungrabParameters{cp::Parameter("?object")};
+  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ungrabParameters));
+  ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=targetLocation & grab(me, object)"),
-                          _worldStateModification_fromStr("locationOfObj(object)=targetLocation"));
-  inference.parameters.emplace_back("targetLocation");
-  inference.parameters.emplace_back("object");
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter("?targetLocation"), cp::Parameter("?object")};
+  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", inferenceParameters),
+                          _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
   setOfInferences.addInference(inference);
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
 
@@ -2194,15 +2210,15 @@ void _failToMoveAnUnknownObject()
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
   _addFact(problem.worldState, "charging(me)", problem.goalStack, setOfInferencesMap, now);
-  assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(actionWhereIsObject + "(?aLocation -> bedroom, ?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)")});
   assert_eq(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_navigate + "(targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_navigate + "(targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(?targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(?targetLocation -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_ungrab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
@@ -2212,48 +2228,51 @@ void _completeMovingObjectScenario()
   const std::string actionWhereIsObject = "actionWhereIsObject";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction(_condition_fromStr("!lost(me) & !pathIsBlocked"),
-                       _worldStateModification_fromStr("locationOfRobot(me)=targetPlace"));
-  navAction.parameters.emplace_back("targetPlace");
+  std::vector<cp::Parameter> navParameters{cp::Parameter("?targetPlace")};
+  cp::Action navAction(_condition_fromStr("!lost(me) & !pathIsBlocked", navParameters),
+                       _worldStateModification_fromStr("locationOfRobot(me)=?targetPlace", navParameters));
+  navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(object)) & not(exists(o, grab(me)=o))"),
-                        _worldStateModification_fromStr("grab(me)=object"));
-  grabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> grabParameters{cp::Parameter("?object")};
+  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & not(exists(o, grab(me)=o))", grabParameters),
+                        _worldStateModification_fromStr("grab(me)=?object", grabParameters));
+  grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=object"));
-  ungrabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> ungrabParameters{cp::Parameter("?object")};
+  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=?object", ungrabParameters));
+  ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
-  cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObject(object)=*"),
-                                 _worldStateModification_fromStr("locationOfObject(object)=aLocation"));
-  whereIsObjectAction.parameters.emplace_back("object");
-  whereIsObjectAction.parameters.emplace_back("aLocation");
+  std::vector<cp::Parameter> whereIsObjectParameters{cp::Parameter("?object"), cp::Parameter("?aLocation")};
+  cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObject(?object)=*", whereIsObjectParameters),
+                                 _worldStateModification_fromStr("locationOfObject(?object)=?aLocation", whereIsObjectParameters));
+  whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=location & grab(me)=object"),
-                          _worldStateModification_fromStr("locationOfObject(object)=location"));
-  inference.parameters.emplace_back("object");
-  inference.parameters.emplace_back("location");
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter("?object"), cp::Parameter("?location")};
+  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object", inferenceParameters),
+                          _worldStateModification_fromStr("locationOfObject(?object)=?location", inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
   setOfInferences.addInference(inference);
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
 
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets")});
 
-  assert_eq(actionWhereIsObject + "(aLocation -> bedroom, object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(actionWhereIsObject + "(?aLocation -> bedroom, ?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   auto& setOfInferencesMap = domain.getSetOfInferences();
   _addFact(problem.worldState, "locationOfObject(sweets)=kitchen", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets")});
-  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_grab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_navigate + "(targetPlace -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(_action_ungrab + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(?targetPlace -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_ungrab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   _setGoalsForAPriority(problem, {_goal("locationOfObject(bottle)=entrance & !grab(me)=bottle")});
-  assert_eq(actionWhereIsObject + "(aLocation -> entrance, object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(actionWhereIsObject + "(?aLocation -> entrance, ?object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
 void _inferenceWithANegatedFactWithParameter()
@@ -2264,25 +2283,29 @@ void _inferenceWithANegatedFactWithParameter()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action ungrabLeftAction(_condition_fromStr("!hasTwoHandles(object)"),
-                              _worldStateModification_fromStr("!grabLeftHand(me)=object"));
-  ungrabLeftAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> ungrabLeftParameters{cp::Parameter("?object")};
+  cp::Action ungrabLeftAction(_condition_fromStr("!hasTwoHandles(?object)", ungrabLeftParameters),
+                              _worldStateModification_fromStr("!grabLeftHand(me)=?object", ungrabLeftParameters));
+  ungrabLeftAction.parameters = std::move(ungrabLeftParameters);
   actions.emplace(actionUngrabLeftHand, ungrabLeftAction);
 
-  cp::Action ungrabRightAction(_condition_fromStr("!hasTwoHandles(object)"),
-                               _worldStateModification_fromStr("!grabRightHand(me)=object"));
-  ungrabRightAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> ungrabRightParameters{cp::Parameter("?object")};
+  cp::Action ungrabRightAction(_condition_fromStr("!hasTwoHandles(?object)", ungrabRightParameters),
+                               _worldStateModification_fromStr("!grabRightHand(me)=?object", ungrabRightParameters));
+  ungrabRightAction.parameters = std::move(ungrabRightParameters);
   actions.emplace(actionUngrabRightHand, ungrabRightAction);
 
-  cp::Action ungrabBothAction(_condition_fromStr("hasTwoHandles(object)"),
-                              _worldStateModification_fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"));
-  ungrabBothAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> ungrabBothParameters{cp::Parameter("?object")};
+  cp::Action ungrabBothAction(_condition_fromStr("hasTwoHandles(?object)", ungrabBothParameters),
+                              _worldStateModification_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ungrabBothParameters));
+  ungrabBothAction.parameters = std::move(ungrabBothParameters);
   actions.emplace(actionUngrabBothHands, ungrabBothAction);
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference(_condition_fromStr("!grabLeftHand(me)=object & !grabRightHand(me)=object"),
-                          _worldStateModification_fromStr("!grab(me, object)"));
-  inference.parameters.emplace_back("object");
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter("?object")};
+  cp::Inference inference(_condition_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", inferenceParameters),
+                          _worldStateModification_fromStr("!grab(me, ?object)", inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
   setOfInferences.addInference(inference);
 
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
@@ -2295,14 +2318,14 @@ void _inferenceWithANegatedFactWithParameter()
   _addFact(problem.worldState, "grab(me, sweets)", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal("!grab(me, sweets)")});
 
-  assert_eq(actionUngrabBothHands + "(object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(actionUngrabBothHands + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, "grab(me, sweets)"));
 
   _addFact(problem.worldState, "grabLeftHand(me)=bottle", problem.goalStack, setOfInferencesMap, now);
   _addFact(problem.worldState, "grab(me, bottle)", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal("!grab(me, bottle)")});
-  assert_eq(actionUngrabLeftHand + "(object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(actionUngrabLeftHand + "(?object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 
   _addFact(problem.worldState, "grabLeftHand(me)=bottle", problem.goalStack, setOfInferencesMap, now);
@@ -2310,7 +2333,7 @@ void _inferenceWithANegatedFactWithParameter()
   _addFact(problem.worldState, "grabRightHand(me)=glass", problem.goalStack, setOfInferencesMap, now);
   _addFact(problem.worldState, "grab(me, glass)", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal("!grab(me, glass)")});
-  assert_eq(actionUngrabRightHand + "(object -> glass)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(actionUngrabRightHand + "(?object -> glass)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, "grab(me, glass)"));
 }
 
@@ -2351,9 +2374,10 @@ void _useTwoTimesAnInference()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference(_condition_fromStr(_fact_a + " & " + _fact_b + "(object)"),
-                          _worldStateModification_fromStr(_fact_c + "(object)"));
-  inference.parameters.emplace_back("object");
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter("?object")};
+  cp::Inference inference(_condition_fromStr(_fact_a + " & " + _fact_b + "(?object)", inferenceParameters),
+                          _worldStateModification_fromStr(_fact_c + "(?object)", inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
   setOfInferences.addInference(inference);
 
   std::map<std::string, cp::Action> actions;
@@ -2378,15 +2402,17 @@ void _linkWithAnyValueInCondition()
 
   actions.emplace(action1, cp::Action(_condition_fromStr("!" + _fact_a + "=*"),
                                       _worldStateModification_fromStr(_fact_b)));
-  cp::Action act2({}, _worldStateModification_fromStr("!" + _fact_a + "=aVal"));
-  act2.parameters.emplace_back("aVal");
+
+  std::vector<cp::Parameter> act2Parameters{cp::Parameter("?aVal")};
+  cp::Action act2({}, _worldStateModification_fromStr("!" + _fact_a + "=?aVal", act2Parameters));
+  act2.parameters = std::move(act2Parameters);
   actions.emplace(action2, act2);
 
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
   _addFact(problem.worldState, _fact_a + "=toto", problem.goalStack);
   _setGoalsForAPriority(problem, {_goal(_fact_b)});
-  assert_eq(action2 + "(aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2 + "(?aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
@@ -2569,24 +2595,27 @@ void _doNextActionThatBringsToTheSmallerCost()
 {
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=targetPlace"));
-  navAction.parameters.emplace_back("targetPlace");
+  std::vector<cp::Parameter> navParameters{cp::Parameter("?targetPlace")};
+  cp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=?targetPlace", navParameters));
+  navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(object)) & !grab(me)=*"),
-                        _worldStateModification_fromStr("grab(me)=object"));
-  grabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> grabParameters{cp::Parameter("?object")};
+  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & !grab(me)=*", grabParameters),
+                        _worldStateModification_fromStr("grab(me)=?object", grabParameters));
+  grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=object"));
-  ungrabAction.parameters.emplace_back("object");
+  std::vector<cp::Parameter> ungrabParameters{cp::Parameter("?object")};
+  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=?object", ungrabParameters));
+  ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=location & grab(me)=object & objectGrabable(object)"),
-                          _worldStateModification_fromStr("locationOfObject(object)=location"));
-  inference.parameters.emplace_back("object");
-  inference.parameters.emplace_back("location");
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter("?object"), cp::Parameter("?location")};
+  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", inferenceParameters),
+                          _worldStateModification_fromStr("locationOfObject(?object)=?location", inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
   setOfInferences.addInference(inference);
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -2601,11 +2630,11 @@ void _doNextActionThatBringsToTheSmallerCost()
   auto secondProblem = problem;
   // Here it will will be quicker for the second goal if we ungrab the obj2 right away
   _setGoalsForAPriority(problem, {_goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), _goal("locationOfObject(obj2)=livingRoom & !grab(me)=obj2")});
-  assert_eq(_action_ungrab + "(object -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_ungrab + "(?object -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 
   // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
   _setGoalsForAPriority(secondProblem, {_goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), _goal("locationOfObject(obj2)=kitchen & !grab(me)=obj2")});
-  assert_eq(_action_navigate + "(targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(secondProblem, domain, now).actionInvocation.toStr());
+  assert_eq(_action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(secondProblem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2616,14 +2645,15 @@ void _checkFilterFactInCondition()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "(obj)"));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> act1Parameters{cp::Parameter("?obj")};
+  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "(?obj)", act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2(_condition_fromStr(_fact_b + "(obj, loc) & " + _fact_a + "(obj)"),
-                        _worldStateModification_fromStr(_fact_c));
-  actionObj2.parameters.emplace_back("obj");
-  actionObj2.parameters.emplace_back("loc");
+  std::vector<cp::Parameter> act2Parameters{cp::Parameter("?obj"), cp::Parameter("?loc")};
+  cp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "(?obj)", act2Parameters),
+                        _worldStateModification_fromStr(_fact_c, act2Parameters));
+  actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
   cp::Domain domain(std::move(actions));
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -2632,8 +2662,8 @@ void _checkFilterFactInCondition()
   _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, setOfInferencesMap, now);
   _addFact(problem.worldState, _fact_b + "(obj1, loc2)", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal(_fact_c)});
-  assert_eq<std::string>(action1 + "(obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq<std::string>(action2 + "(loc -> loc1, obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>(action1 + "(?obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq<std::string>(action2 + "(?loc -> loc1, ?obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
@@ -2646,20 +2676,22 @@ void _checkFilterFactInConditionAndThenPropagate()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=obj"));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> act1Parameters{cp::Parameter("?obj")};
+  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2(_condition_fromStr(_fact_b + "(obj, loc) & " + _fact_a + "=obj"),
-                        _worldStateModification_fromStr(_fact_c + "(loc)"));
-  actionObj2.parameters.emplace_back("obj");
-  actionObj2.parameters.emplace_back("loc");
+  std::vector<cp::Parameter> act2Parameters{cp::Parameter("?obj"), cp::Parameter("?loc")};
+  cp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "=?obj", act2Parameters),
+                        _worldStateModification_fromStr(_fact_c + "(?loc)", act2Parameters));
+  actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
 
-  cp::Action actionObj3(_condition_fromStr(_fact_c + "(loc)"),
-                        _worldStateModification_fromStr(_fact_d + "(loc)"));
-  actionObj3.parameters.emplace_back("loc");
+  std::vector<cp::Parameter> act3Parameters{cp::Parameter("?loc")};
+  cp::Action actionObj3(_condition_fromStr(_fact_c + "(?loc)", act3Parameters),
+                        _worldStateModification_fromStr(_fact_d + "(?loc)", act3Parameters));
+  actionObj3.parameters = std::move(act3Parameters);
   actions.emplace(action3, actionObj3);
 
   cp::Domain domain(std::move(actions));
@@ -2669,9 +2701,9 @@ void _checkFilterFactInConditionAndThenPropagate()
   _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, setOfInferencesMap, now);
   _addFact(problem.worldState, _fact_b + "(obj2, loc2)", problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(loc2)")});
-  assert_eq(action1 + "(obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(action2 + "(loc -> loc2, obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(action3 + "(loc -> loc2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2 + "(?loc -> loc2, ?obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action3 + "(?loc -> loc2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
 }
 
@@ -2736,7 +2768,7 @@ void _checkOutputValueOfLookForAnActionToDo()
 }
 
 
-void _hardProbleThatNeedsToBeSmart()
+void _hardProblemThatNeedsToBeSmart()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -2747,8 +2779,9 @@ void _hardProbleThatNeedsToBeSmart()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=obj"));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> act1Parameters{cp::Parameter("?obj")};
+  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
   cp::Action actionObj2(_condition_fromStr(_fact_a + "=val1"),
@@ -2778,9 +2811,9 @@ void _hardProbleThatNeedsToBeSmart()
   _addFact(problem.worldState, _fact_d, problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal(_fact_e)});
 
-  assert_eq(action1 + "(obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq(action4, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(action1 + "(obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq(action6, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
@@ -2800,8 +2833,9 @@ void _goalsToDoInParallel()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=obj"));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> act1Parameters{cp::Parameter("?obj")};
+  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
   cp::Action actionObj2(_condition_fromStr(_fact_a + "=val1"),
@@ -2835,11 +2869,11 @@ void _goalsToDoInParallel()
   _addFact(problem.worldState, _fact_d, problem.goalStack, setOfInferencesMap, now);
   _setGoalsForAPriority(problem, {_goal(_fact_e)});
 
-  assert_eq(action1 + "(obj -> val3)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> val3)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 
-  assert_eq<std::string>(action1 + "(obj -> val3)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_eq<std::string>(action1 + "(?obj -> val3)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
   assert_eq<std::string>(action4, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
-  assert_eq<std::string>(action7 + _sep + action1 + "(obj -> val1)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
+  assert_eq<std::string>(action7 + _sep + action1 + "(?obj -> val1)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
   assert_eq<std::string>(action2, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
   assert_eq<std::string>(action6, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
   assert_eq<std::string>("", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, now));
@@ -2883,7 +2917,7 @@ void _checkSimpleExists()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("exists(l, " + _fact_a + "(l))"),
+  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(?l))"),
                         _worldStateModification_fromStr(_fact_b));
   actions.emplace(action1, actionObj1);
 
@@ -2904,9 +2938,10 @@ void _checkExistsWithActionParameterInvolved()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("exists(l, " + _fact_a + "(l, obj))"),
+  std::vector<cp::Parameter> actionParameters{cp::Parameter("?obj")};
+  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(?l, ?obj))", actionParameters),
                         _worldStateModification_fromStr(_fact_b));
-  actionObj1.parameters.emplace_back("obj");
+  actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
   cp::Domain domain(std::move(actions));
@@ -2916,7 +2951,7 @@ void _checkExistsWithActionParameterInvolved()
 
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
   _addFact(problem.worldState, _fact_a + "(kitchen, pen)", problem.goalStack, setOfInferencesMap, now);
-  assert_eq(action1 + "(obj -> pen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> pen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2926,9 +2961,10 @@ void _checkExistsWithManyFactsInvolved()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("exists(l, " + _fact_a + "(self, l) & " + _fact_b + "(obj, l))"),
-                        _worldStateModification_fromStr(_fact_c));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> actionParameters{cp::Parameter("?obj")};
+  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", actionParameters),
+                        _worldStateModification_fromStr(_fact_c, actionParameters));
+  actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
   cp::Domain domain(std::move(actions));
@@ -2941,7 +2977,7 @@ void _checkExistsWithManyFactsInvolved()
   _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, setOfInferencesMap, now);
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, now).actionInvocation.toStr());
   _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, setOfInferencesMap, now);
-  assert_eq(action1 + "(obj -> bottle)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> bottle)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2952,13 +2988,15 @@ void _doAnActionToSatisfyAnExists()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("exists(l, " + _fact_a + "(self, l) & " + _fact_b + "(obj, l))"),
-                        _worldStateModification_fromStr(_fact_c + "(obj)"));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> act1Parameters{cp::Parameter("?obj")};
+  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", act1Parameters),
+                        _worldStateModification_fromStr(_fact_c + "(?obj)", act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, loc)"));
-  actionObj2.parameters.emplace_back("loc");
+  std::vector<cp::Parameter> act2Parameters{cp::Parameter("?loc")};
+  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", act2Parameters));
+  actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
   cp::Domain domain(std::move(actions));
@@ -2969,8 +3007,8 @@ void _doAnActionToSatisfyAnExists()
   _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, setOfInferencesMap, now);
   _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, setOfInferencesMap, now);
   _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, setOfInferencesMap, now);
-  assert_eq(action2 + "(loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(action1 + "(obj -> mouse)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2 + "(?loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> mouse)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -2981,14 +3019,16 @@ void _checkForAllEffectAtStart()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("exists(l, " + _fact_a + "(self, l) & " + _fact_b + "(obj, l))"),
-                        _worldStateModification_fromStr(_fact_c + "(obj)"));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> act1Parameters{cp::Parameter("?obj")};
+  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", act1Parameters),
+                        _worldStateModification_fromStr(_fact_c + "(?obj)", act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, loc)"));
-  actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr("forall(l, when(" + _fact_a + "(self, l), not(" + _fact_a + "(self, l))))");
-  actionObj2.parameters.emplace_back("loc");
+  std::vector<cp::Parameter> act2Parameters{cp::Parameter("?loc")};
+  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", act2Parameters));
+  actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr("forall(?l, when(" + _fact_a + "(self, ?l), not(" + _fact_a + "(self, ?l))))", act2Parameters);
+  actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
   cp::Domain domain(std::move(actions));
@@ -3001,9 +3041,9 @@ void _checkForAllEffectAtStart()
   _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, setOfInferencesMap, now);
   _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, setOfInferencesMap, now);
   assert_true(_hasFact(problem.worldState, _fact_a + "(self, entrance)"));
-  assert_eq(action2 + "(loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2 + "(?loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, _fact_a + "(self, entrance)")); // removed by the effect at start of action2
-  assert_eq(action1 + "(obj -> mouse)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> mouse)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -3014,13 +3054,15 @@ void _existsWithValue()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("exists(l, " + _fact_a + "(self)=l & " + _fact_b + "(obj)=l)"),
-                        _worldStateModification_fromStr(_fact_c + "(obj)"));
-  actionObj1.parameters.emplace_back("obj");
+  std::vector<cp::Parameter> act1Parameters{cp::Parameter("?obj")};
+  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self)=?l & " + _fact_b + "(?obj)=?l)", act1Parameters),
+                        _worldStateModification_fromStr(_fact_c + "(?obj)", act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self)=loc"));
-  actionObj2.parameters.emplace_back("loc");
+  std::vector<cp::Parameter> act2Parameters{cp::Parameter("?loc")};
+  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self)=?loc", act2Parameters));
+  actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
   cp::Domain domain(std::move(actions));
@@ -3029,8 +3071,8 @@ void _existsWithValue()
   _setGoalsForAPriority(problem, {_goal(_fact_c + "(pen)")});
 
   _addFact(problem.worldState, _fact_b + "(pen)=livingroom", problem.goalStack, setOfInferencesMap, now);
-  assert_eq(action2 + "(loc -> livingroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq(action1 + "(obj -> pen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2 + "(?loc -> livingroom)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action1 + "(?obj -> pen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -3063,16 +3105,18 @@ void _actionToSatisfyANotExists()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("not(busy(spec_rec)) & not(exists(l, " + _fact_a + "(self, l)))"),
+  cp::Action actionObj1(_condition_fromStr("not(busy(spec_rec)) & not(exists(?l, " + _fact_a + "(self, ?l)))"),
                         _worldStateModification_fromStr("not(busy(spec_rec)) & " + _fact_b));
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2({}, _worldStateModification_fromStr("!" + _fact_a + "(self, loc)"));
-  actionObj2.parameters.emplace_back("loc");
+  std::vector<cp::Parameter> act2Parameters{cp::Parameter("?loc")};
+  cp::Action actionObj2({}, _worldStateModification_fromStr("!" + _fact_a + "(self, ?loc)", act2Parameters));
+  actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-  cp::Action actionObj3({}, _worldStateModification_fromStr("not(busy(r))"));
-  actionObj3.parameters.emplace_back("r");
+  std::vector<cp::Parameter> act3Parameters{cp::Parameter("?r")};
+  cp::Action actionObj3({}, _worldStateModification_fromStr("not(busy(?r))", act3Parameters));
+  actionObj3.parameters = std::move(act3Parameters);
   actions.emplace(action3, actionObj3);
 
   cp::Domain domain(std::move(actions));
@@ -3081,9 +3125,9 @@ void _actionToSatisfyANotExists()
   _setGoalsForAPriority(problem, {_goal(_fact_b)});
   _addFact(problem.worldState, "busy(spec_rec)", problem.goalStack, setOfInferencesMap, now);
 
-  assert_eq(action3 + "(r -> spec_rec)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action3 + "(?r -> spec_rec)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
   _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, setOfInferencesMap, now);
-  assert_eq(action2 + "(loc -> kitchen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
+  assert_eq(action2 + "(?loc -> kitchen)", _lookForAnActionToDo(problem, domain, now).actionInvocation.toStr());
 }
 
 
@@ -3124,11 +3168,15 @@ void _derivedPredicate()
   std::map<std::string, cp::Action> actions;
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)"), _fact(_fact_c + "(?o)"), {cp::Parameter("?o")});
+  std::vector<cp::Parameter> derPred1Parameters{cp::Parameter("?o")};
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", derPred1Parameters),
+                                         _fact(_fact_c + "(?o)", derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
-  cp::DerivedPredicate derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)"), _fact(_fact_d + "(?o)"), {cp::Parameter("?o")});
+  std::vector<cp::Parameter> derPred2Parameters{cp::Parameter("?o")};
+  cp::DerivedPredicate derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", derPred2Parameters),
+                                         _fact(_fact_d + "(?o)", derPred2Parameters), derPred2Parameters);
   for (auto& currInference : derivedPredicate2.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
@@ -3202,8 +3250,9 @@ void _assignAFact()
   const std::string action1 = "action1";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
-  action1Obj.parameters.emplace_back("?p");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?p")};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
   cp::Domain domain(std::move(actions));
@@ -3224,8 +3273,9 @@ void _assignAFactToAction()
   const std::string action2 = "action2";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
-  action1Obj.parameters.emplace_back("?p");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?p")};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
   actions.emplace(action2, cp::Action(_condition_fromStr(_fact_a + "=valGoal"),
                                       _worldStateModification_fromStr(_fact_c)));
@@ -3248,12 +3298,14 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
   const std::string action2 = "action2";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
-  action1Obj.parameters.emplace_back("?p");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?p")};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))"),
-                        _worldStateModification_fromStr(_fact_d));
-  action2Obj.parameters.emplace_back("?pc");
+  std::vector<cp::Parameter> action2Parameters{cp::Parameter("?pc")};
+  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", action2Parameters),
+                        _worldStateModification_fromStr(_fact_d, action2Parameters));
+  action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
   cp::Domain domain(std::move(actions));
@@ -3280,10 +3332,11 @@ void _assignAFactThenCheckExistWithAnotherFact()
   const std::string action2 = "action2";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
-  action1Obj.parameters.emplace_back("?p");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?p")};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  cp::Action action2Obj(_condition_fromStr("exists(pc, =(" + _fact_a + ", " + _fact_c + "(pc)))"),
+  cp::Action action2Obj(_condition_fromStr("exists(?pc, =(" + _fact_a + ", " + _fact_c + "(?pc)))"),
                         _worldStateModification_fromStr(_fact_d));
   actions.emplace(action2, action2Obj);
 
@@ -3309,13 +3362,16 @@ void _existWithEqualityInInference()
   const std::string action1 = "action1";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)"),
-                        _worldStateModification_fromStr(_fact_d + "(?o)"));
-  action1Obj.parameters.emplace_back("?o");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?o")};
+  cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", action1Parameters),
+                        _worldStateModification_fromStr(_fact_d + "(?o)", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))"), _fact(_fact_b + "(?o)"), {cp::Parameter("?o")});
+  std::vector<cp::Parameter> derPred1Parameters{cp::Parameter("?o")};
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", derPred1Parameters),
+                                         _fact(_fact_b + "(?o)", derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
@@ -3349,13 +3405,16 @@ void _existWithEqualityInInference_withEqualityInverted()
   const std::string action1 = "action1";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)"),
-                        _worldStateModification_fromStr(_fact_d + "(?o)"));
-  action1Obj.parameters.emplace_back("?o");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?o")};
+  cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", action1Parameters),
+                        _worldStateModification_fromStr(_fact_d + "(?o)", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))"), _fact(_fact_b + "(?o)"), {cp::Parameter("?o")});
+  std::vector<cp::Parameter> derPred1Parameters{cp::Parameter("?o")};
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", derPred1Parameters),
+                                         _fact(_fact_b + "(?o)", derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
@@ -3391,19 +3450,22 @@ void _fixInferenceWithFluentInParameter()
   const std::string action2 = "action2";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))"));
-  action1Obj.parameters.emplace_back("?p");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?p")};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))"),
-                        _worldStateModification_fromStr(_fact_d));
-  action2Obj.parameters.emplace_back("?pc");
+  std::vector<cp::Parameter> action2Parameters{cp::Parameter("?pc")};
+  cp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", action2Parameters),
+                        _worldStateModification_fromStr(_fact_d, action2Parameters));
+  action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
   cp::SetOfInferences setOfInferences;
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v"), _fact(_fact_e + "(?a)=?v"), {cp::Parameter("?a"), cp::Parameter("?v")});
+  std::vector<cp::Parameter> derPred1Parameters{cp::Parameter("?a"), cp::Parameter("?v")};
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", derPred1Parameters),
+                                         _fact(_fact_e + "(?a)=?v", derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
-
 
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -3423,13 +3485,15 @@ void _assignAFactTwoTimesInTheSamePlan()
   const std::string action2 = "action2";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
-  action1Obj.parameters.emplace_back("?p");
-
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?p")};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))"),
-                        _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))"));
-  action2Obj.parameters.emplace_back("?pc");
+
+  std::vector<cp::Parameter> action2Parameters{cp::Parameter("?pc")};
+  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", action2Parameters),
+                        _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", action2Parameters));
+  action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
   cp::Domain domain(std::move(actions));
@@ -3457,18 +3521,21 @@ void _checkTwoTimesTheEqualityOfAFact()
   const std::string action3 = "action3";
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))"));
-  action1Obj.parameters.emplace_back("?p");
+  std::vector<cp::Parameter> action1Parameters{cp::Parameter("?p")};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))"),
-                        _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))"));
-  action2Obj.parameters.emplace_back("?pc");
+  std::vector<cp::Parameter> action2Parameters{cp::Parameter("?pc")};
+  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", action2Parameters),
+                        _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", action2Parameters));
+  action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
-  cp::Action action3Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_e + "(?tt))"),
-                        _worldStateModification_fromStr("assign(" + _fact_f + ", ?tt)"));
-  action3Obj.parameters.emplace_back("?tt");
+  std::vector<cp::Parameter> action3Parameters{cp::Parameter("?tt")};
+  cp::Action action3Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_e + "(?tt))", action3Parameters),
+                        _worldStateModification_fromStr("assign(" + _fact_f + ", ?tt)", action3Parameters));
+  action3Obj.parameters = std::move(action3Parameters);
   actions.emplace(action3, action3Obj);
 
   cp::Domain domain(std::move(actions));
@@ -3498,21 +3565,23 @@ void _inferenceToRemoveAFactWithoutFluent()
   std::map<std::string, cp::Action> actions;
 
   cp::SetOfInferences setOfInferences;
-  cp::Inference inference1(_condition_fromStr("locationOfRobot(me)=?l"),
-                          _worldStateModification_fromStr("robotAt(me, ?l)"));
-  inference1.parameters.emplace_back("?l");
+  std::vector<cp::Parameter> inf1Parameters{cp::Parameter("?l")};
+  cp::Inference inference1(_condition_fromStr("locationOfRobot(me)=?l", inf1Parameters),
+                          _worldStateModification_fromStr("robotAt(me, ?l)", inf1Parameters));
+  inference1.parameters = std::move(inf1Parameters);
   setOfInferences.addInference(inference1);
 
-  cp::Inference inference2(_condition_fromStr("exists(loc, locationOfRobot(me)=loc & within(loc)=?l)"),
-                          _worldStateModification_fromStr("robotAt(me, ?l)"));
-  inference2.parameters.emplace_back("?l");
+  std::vector<cp::Parameter> inf2Parameters{cp::Parameter("?l")};
+  cp::Inference inference2(_condition_fromStr("exists(?loc, locationOfRobot(me)=?loc & within(?loc)=?l)", inf2Parameters),
+                          _worldStateModification_fromStr("robotAt(me, ?l)", inf2Parameters));
+  inference2.parameters = std::move(inf2Parameters);
   setOfInferences.addInference(inference2);
 
-  cp::Inference inference(_condition_fromStr("!locationOfRobot(me)=?l"),
-                          _worldStateModification_fromStr("forall(ll, robotAt(me, ll), !robotAt(me, ll))"));
-
-  inference.parameters.emplace_back("?l");
-  setOfInferences.addInference(inference);
+  std::vector<cp::Parameter> inf3Parameters{cp::Parameter("?l")};
+  cp::Inference inference3(_condition_fromStr("!locationOfRobot(me)=?l", inf3Parameters),
+                          _worldStateModification_fromStr("forall(?ll, robotAt(me, ?ll), !robotAt(me, ?ll))", inf3Parameters));
+  inference3.parameters = std::move(inf3Parameters);
+  setOfInferences.addInference(inference3);
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
@@ -3636,7 +3705,7 @@ void test_plannerWithoutTypes()
   _checkFilterFactInConditionAndThenPropagate();
   _satisfyGoalWithSuperiorOperator();
   _checkOutputValueOfLookForAnActionToDo();
-  _hardProbleThatNeedsToBeSmart();
+  _hardProblemThatNeedsToBeSmart();
   _goalsToDoInParallel();
   _checkOverallEffectDuringParallelisation();
   _checkSimpleExists();

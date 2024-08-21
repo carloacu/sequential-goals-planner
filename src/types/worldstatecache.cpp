@@ -76,18 +76,18 @@ void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
     {
       if (_accessibleFacts.count(currFact) == 0)
       {
-        auto itPrecToActions = pDomain.preconditionToActions().find(currFact.name);
-        if (itPrecToActions != pDomain.preconditionToActions().end())
-          _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, factsAlreadychecked);
+        auto itPrecToActions = pDomain.preconditionToActions().find(currFact);
+        _feedAccessibleFactsFromSetOfActions(itPrecToActions, pDomain, factsAlreadychecked);
       }
     }
-    _feedAccessibleFactsFromSetOfActions(pDomain.actionsWithoutFactToAddInPrecondition(), pDomain,
+    auto actionWithoutPrecondition = pDomain.actionsWithoutFactToAddInPrecondition().valuesWithoutFact();
+    _feedAccessibleFactsFromSetOfActions(actionWithoutPrecondition, pDomain,
                                          factsAlreadychecked);
   }
 }
 
 
-void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
+void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const FactToConditions::ConstMapOfFactIterator& pActions,
                                                            const Domain& pDomain,
                                                            FactsAlreadyChecked& pFactsAlreadychecked)
 {
@@ -112,7 +112,7 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const std::set<Action
 }
 
 
-void WorldStateCache::_feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
+void WorldStateCache::_feedAccessibleFactsFromSetOfInferences(const FactToConditions::ConstMapOfFactIterator& pInferences,
                                                               const std::map<InferenceId, Inference>& pAllInferences,
                                                               const Domain& pDomain,
                                                               FactsAlreadyChecked& pFactsAlreadychecked)
@@ -147,7 +147,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
       if (_worldState.facts().count(pFactOpt.fact) == 0 &&
           _accessibleFacts.count(pFactOpt.fact) == 0)
       {
-        if (pFactOpt.fact.fluent == Fact::anyValue)
+        if (pFactOpt.fact.fluent() == Fact::anyValue)
         {
           accessibleFactsToAddWithAnyValues.push_back(pFactOpt.fact);
         }
@@ -165,7 +165,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
     {
       if (_removableFacts.count(pFactOpt.fact) == 0)
       {
-        if (pFactOpt.fact.fluent == Fact::anyValue)
+        if (pFactOpt.fact.fluent() == Fact::anyValue)
         {
           removableFactsToAddWithAnyValues.push_back(pFactOpt.fact);
         }
@@ -205,22 +205,19 @@ void WorldStateCache::_feedAccessibleFactsFromFact(const Fact& pFact,
   if (!pFactsAlreadychecked.factsToAdd.insert(pFact).second)
     return;
 
-  auto itPrecToActions = pDomain.preconditionToActions().find(pFact.name);
-  if (itPrecToActions != pDomain.preconditionToActions().end())
-    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked);
+  auto itPrecToActions = pDomain.preconditionToActions().find(pFact);
+  _feedAccessibleFactsFromSetOfActions(itPrecToActions, pDomain, pFactsAlreadychecked);
 
   const auto& setOfInferences = pDomain.getSetOfInferences();
   for (const auto& currSetOfInferences : setOfInferences)
   {
     auto& allInferences = currSetOfInferences.second.inferences();
     auto& conditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().conditionToInferences;
-    auto itCondToReachableInferences = conditionToReachableInferences.find(pFact.name);
-    if (itCondToReachableInferences != conditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
+    auto itCondToReachableInferences = conditionToReachableInferences.find(pFact);
+    _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences, allInferences, pDomain, pFactsAlreadychecked);
     auto& conditionToUnreachableInferences = currSetOfInferences.second.unreachableInferenceLinks().conditionToInferences;
-    auto itCondToUnreachableInferences = conditionToUnreachableInferences.find(pFact.name);
-    if (itCondToUnreachableInferences != conditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
+    auto itCondToUnreachableInferences = conditionToUnreachableInferences.find(pFact);
+    _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 
@@ -232,22 +229,19 @@ void WorldStateCache::_feedAccessibleFactsFromNotFact(const Fact& pFact,
   if (!pFactsAlreadychecked.factsToRemove.insert(pFact).second)
     return;
 
-  auto itPrecToActions = pDomain.notPreconditionToActions().find(pFact.name);
-  if (itPrecToActions != pDomain.notPreconditionToActions().end())
-    _feedAccessibleFactsFromSetOfActions(itPrecToActions->second, pDomain, pFactsAlreadychecked);
+  auto itPrecToActions = pDomain.notPreconditionToActions().find(pFact);
+  _feedAccessibleFactsFromSetOfActions(itPrecToActions, pDomain, pFactsAlreadychecked);
 
   const auto& setOfInferences = pDomain.getSetOfInferences();
   for (const auto& currSetOfInferences : setOfInferences)
   {
     auto& allInferences = currSetOfInferences.second.inferences();
     auto& notConditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
-    auto itCondToReachableInferences = notConditionToReachableInferences.find(pFact.name);
-    if (itCondToReachableInferences != notConditionToReachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
+    auto itCondToReachableInferences = notConditionToReachableInferences.find(pFact);
+    _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences, allInferences, pDomain, pFactsAlreadychecked);
     auto& notConditionToUnreachableInferences = currSetOfInferences.second.unreachableInferenceLinks().notConditionToInferences;
-    auto itCondToUnreachableInferences = notConditionToUnreachableInferences.find(pFact.name);
-    if (itCondToUnreachableInferences != notConditionToUnreachableInferences.end())
-      _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences->second, allInferences, pDomain, pFactsAlreadychecked);
+    auto itCondToUnreachableInferences = notConditionToUnreachableInferences.find(pFact);
+    _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 

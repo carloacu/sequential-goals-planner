@@ -6,6 +6,8 @@
 #include "../util/api.hpp"
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/types/action.hpp>
+#include <contextualplanner/types/factaccessor.hpp>
+#include <contextualplanner/types/facttoconditions.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 
@@ -51,11 +53,11 @@ struct CONTEXTUALPLANNER_API Domain
   /// All action identifiers to action.
   const std::map<ActionId, Action>& actions() const { return _actions; }
   /// All facts in precondition to action identifiers.
-  const std::map<std::string, std::set<ActionId>>& preconditionToActions() const { return _preconditionToActions; }
+  const FactToConditions& preconditionToActions() const { return _preconditionToActions; }
   /// All negationed facts in precondition to action identifiers.
-  const std::map<std::string, std::set<ActionId>>& notPreconditionToActions() const { return _notPreconditionToActions; }
+  const FactToConditions& notPreconditionToActions() const { return _notPreconditionToActions; }
   /// All action identifiers of the actions without precondtion.
-  const std::set<ActionId>& actionsWithoutFactToAddInPrecondition() const { return _actionsWithoutFactToAddInPrecondition; }
+  const FactToConditions& actionsWithoutFactToAddInPrecondition() const { return _actionsWithoutFactToAddInPrecondition; }
 
 
 
@@ -101,11 +103,11 @@ private:
   /// Map of action identifiers to action.
   std::map<ActionId, Action> _actions;
   /// Map of facts in precondition to action identifiers.
-  std::map<std::string, std::set<ActionId>> _preconditionToActions;
+  FactToConditions _preconditionToActions;
   /// Map of negationed facts in precondition to action identifiers.
-  std::map<std::string, std::set<ActionId>> _notPreconditionToActions;
+  FactToConditions _notPreconditionToActions;
   /// Set of action identifiers of the actions without precondtion.
-  std::set<ActionId> _actionsWithoutFactToAddInPrecondition;
+  FactToConditions _actionsWithoutFactToAddInPrecondition;
   /// Map set of inferences identifiers to the set of inferences.
   std::map<SetOfInferencesId, SetOfInferences> _setOfInferences;
 };

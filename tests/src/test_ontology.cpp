@@ -32,6 +32,14 @@ void assert_false(const TYPE& pValue)
     assert(false);
 }
 
+std::map<cp::Parameter, std::set<cp::Entity>> _toParameterMap(const std::vector<cp::Parameter>& pParameters)
+{
+  std::map<cp::Parameter, std::set<cp::Entity>> res;
+  for (auto& currParam : pParameters)
+    res[currParam];
+  return res;
+}
+
 void _test_setOfTypes()
 {
   cp::SetOfTypes setOfTypes;
@@ -120,12 +128,12 @@ void _test_fact_initialization()
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?v - my_type)\n"
                                                      "pred_name2(?v - my_type, ?o - my_type2) - return_type", ontology.types);
 
-  cp::Fact("pred_name(toto)", ontology, {});
-  cp::Fact("pred_name(sub_toto)", ontology, {});
+  cp::Fact("pred_name(toto)", ontology, {}, {});
+  cp::Fact("pred_name(sub_toto)", ontology, {}, {});
 
   try
   {
-    cp::Fact("pred_that_does_not_exist(titi)", ontology, {});
+    cp::Fact("pred_that_does_not_exist(titi)", ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -133,7 +141,7 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name(unknown_value)", ontology, {});
+    cp::Fact("pred_name(unknown_value)", ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -141,7 +149,7 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name", ontology, {});
+    cp::Fact("pred_name", ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -149,7 +157,7 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name(titi)", ontology, {});
+    cp::Fact("pred_name(titi)", ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -157,20 +165,27 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name(toto)=val", ontology, {});
+    cp::Fact("pred_name(toto)=val", ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
     assert_eq<std::string>("\"val\" fluent is not a entity value. The exception was thrown while parsing fact: \"pred_name(toto)=val\"", e.what());
   }
 
-  cp::Fact("pred_name2(toto, titi)=res", ontology, {});
-  cp::Fact("pred_name2(toto, ?v)=res", ontology, {});
-  cp::Fact("pred_name2(toto, ?v)=?r", ontology, {});
+  cp::Fact("pred_name2(toto, titi)=res", ontology, {}, {});
+  {
+    std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?v - my_type2", ontology.types));
+    cp::Fact("pred_name2(toto, ?v)=res", ontology, {}, parameters);
+  }
+  {
+    std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?v - my_type2", ontology.types));
+    parameters.push_back( cp::Parameter::fromStr("?r - return_type", ontology.types));
+    cp::Fact("pred_name2(toto, ?v)=?r", ontology, {}, parameters);
+  }
 
   try
   {
-    cp::Fact("pred_name2(toto, titi)=unknown_val", ontology, {});
+    cp::Fact("pred_name2(toto, titi)=unknown_val", ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -179,8 +194,8 @@ void _test_fact_initialization()
 
 
   // Without ontology
-  assert_eq<std::string>("pred(, )", cp::Fact("pred(lol, mdr)", {}, {}).predicate.toStr());
-  assert_eq<std::string>("pred(, ) - ", cp::Fact("pred(lol, mdr)=dd", {}, {}).predicate.toStr());
+  assert_eq<std::string>("pred(, )", cp::Fact("pred(lol, mdr)", {}, {}, {}).predicate.toStr());
+  assert_eq<std::string>("pred(, ) - ", cp::Fact("pred(lol, mdr)=dd", {}, {}, {}).predicate.toStr());
 }
 
 
@@ -195,50 +210,61 @@ void _test_action_initialization()
                                                   "titi tutu - my_type2\n"
                                                   "res - return_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?v - my_type)\n"
-                                                     "pred_name2(?v - my_type, ?o - my_type2) - return_type", ontology.types);
+                                                     "pred_name2(?v - my_type, ?o - my_type2) - return_type\n"
+                                                     "pred_name3(?o - my_type2) - return_type", ontology.types);
 
   cp::SetOfEntities entities;
 
-  cp::Action action(cp::Condition::fromStr("pred_name(toto)", ontology, entities),
-                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
+  cp::Action action(cp::Condition::fromStr("pred_name(toto)", ontology, entities, {}),
+                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, {}));
   action.throwIfNotValid(worldState);
 
+  {
+    std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
+    cp::Action action2(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
+                      cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, parameters));
+    action2.parameters = std::move(parameters);
+    action2.throwIfNotValid(worldState);
+  }
 
-  cp::Action action2(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
-                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
-  action2.parameters.emplace_back(cp::Parameter::fromStr("?p - my_type", ontology.types));
-  action2.throwIfNotValid(worldState);
+  {
+    std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - sub_my_type", ontology.types));
+    cp::Action action3(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
+                      cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, parameters));
+    action3.parameters = std::move(parameters);
+    action3.throwIfNotValid(worldState);
+  }
 
-  cp::Action action3(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
-                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
-  action3.parameters.emplace_back(cp::Parameter::fromStr("?p - sub_my_type", ontology.types));
-  action3.throwIfNotValid(worldState);
-
-  cp::Action action4(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
-                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities));
   try
   {
+    cp::Action action4(cp::Condition::fromStr("pred_name(?p)", ontology, entities, {}),
+                       cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, {}));
     action4.throwIfNotValid(worldState);
     assert_true(false);
   }
   catch (const std::exception& e)
   {
-    assert_eq<std::string>("\"?p\" is missing in action parameters", e.what());
+    assert_eq<std::string>("Add a parameter argument of a fact \"?p\" that is unknown", e.what());
   }
 
-  cp::Action action5(cp::Condition::fromStr("pred_name(?p)", ontology, entities),
-                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=?r", ontology, entities));
-  action5.parameters.emplace_back(cp::Parameter::fromStr("?p - my_type", ontology.types));
-  try
   {
-    action5.throwIfNotValid(worldState);
-    assert_true(false);
-  }
-  catch (const std::exception& e)
-  {
-    assert_eq<std::string>("\"?r\" fluent is missing in action parameters", e.what());
+    std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
+    try
+    {
+      cp::Action action5(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
+                         cp::WorldStateModification::fromStr("pred_name2(toto, titi)=?r", ontology, entities, parameters));
+      action5.parameters = std::move(parameters);
+      action5.throwIfNotValid(worldState);
+      assert_true(false);
+    }
+    catch (const std::exception& e)
+    {
+      assert_eq<std::string>("Add a fluent of a fact \"?r\" that is unknown", e.what());
+    }
   }
 
+  cp::Condition::fromStr("exists(?obj - my_type2, pred_name2(toto, ?obj)=res)", ontology, entities, {});
+  cp::WorldStateModification::fromStr("forAll(?obj - my_type2, pred_name2(toto, ?obj)=res, set(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
 }
 
 
@@ -254,20 +280,19 @@ void _test_checkConditionWithOntology()
   cp::WorldState worldState;
   cp::GoalStack goalStack;
   std::map<cp::SetOfInferencesId, cp::SetOfInferences> setOfInferences;
-  worldState.addFact(cp::Fact::fromStr("pred_name(toto)", ontology, {}), goalStack, setOfInferences, ontology, {}, {});
-  assert_false(cp::Condition::fromStr("pred_name(titi)", ontology, {})->isTrue(worldState));
-
+  worldState.addFact(cp::Fact::fromStr("pred_name(toto)", ontology, {}, {}), goalStack, setOfInferences, ontology, {}, {});
+  assert_false(cp::Condition::fromStr("pred_name(titi)", ontology, {}, {})->isTrue(worldState));
 
   {
-    std::map<cp::Parameter, std::set<cp::Entity>> conditionParameters;
-    conditionParameters[cp::Parameter::fromStr("?p - my_type", ontology.types)];
-    assert_true(cp::Condition::fromStr("pred_name(?p)", ontology, {})->isTrue(worldState, {}, {}, &conditionParameters));
+    std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
+    auto parametersMap = _toParameterMap(parameters);
+    assert_true(cp::Condition::fromStr("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
   }
 
   {
-    std::map<cp::Parameter, std::set<cp::Entity>> conditionParameters;
-    conditionParameters[cp::Parameter::fromStr("?p - my_type2", ontology.types)];
-    assert_false(cp::Condition::fromStr("pred_name(?p)", ontology, {})->isTrue(worldState, {}, {}, &conditionParameters));
+    std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type2", ontology.types));
+    auto parametersMap = _toParameterMap(parameters);
+    assert_false(cp::Condition::fromStr("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
   }
 }
 

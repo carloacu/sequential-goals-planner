@@ -7,6 +7,8 @@
 #include <memory>
 #include <set>
 #include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/util/observableunsafe.hpp>
 #include "../util/api.hpp"
@@ -206,9 +208,9 @@ struct CONTEXTUALPLANNER_API WorldState
                                                  const std::string& pParameter) const;
 
   /// Facts of the world.
-  const std::set<Fact>& facts() const { return _facts; }
+  const std::set<Fact>& facts() const { return _factsMapping.facts(); }
   /// Fact names to facts in the world.
-  const std::map<std::string, std::set<Fact>>& factNamesToFacts() const { return _factNamesToFacts; }
+  const SetOfFact& factsMapping() const { return _factsMapping; }
 
 
   /**
@@ -276,9 +278,7 @@ struct CONTEXTUALPLANNER_API WorldState
 
 private:
   /// Facts of the world state.
-  std::set<Fact> _facts;
-  /// Fact names to facts in the world state.
-  std::map<std::string, std::set<Fact>> _factNamesToFacts;
+  SetOfFact _factsMapping;
   std::unique_ptr<WorldStateCache> _cache;
 
   /// Stored what changed.
@@ -332,6 +332,9 @@ private:
                     GoalStack& pGoalStack,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
+  void _removeAFact(WhatChanged& pWhatChanged,
+                    const Fact& pFact);
+
   /**
    * @brief Modify the world state without inference deduction and raising a notification.
    * @param[out] pWhatChanged Get what changed.
@@ -363,7 +366,7 @@ private:
                              WhatChanged& pWhatChanged,
                              bool& pGoalChanged,
                              GoalStack& pGoalStack,
-                             const std::set<InferenceId>& pInferenceIds,
+                             const FactToConditions::ConstMapOfFactIterator& pInferenceIds,
                              const std::map<InferenceId, Inference>& pInferences,
                              const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
                              const Ontology& pOntology,

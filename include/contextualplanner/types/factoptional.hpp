@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <set>
 #include "../util/api.hpp"
 #include "fact.hpp"
 
@@ -28,7 +27,9 @@ struct CONTEXTUALPLANNER_API FactOptional
                const std::vector<std::string>& pArgumentStrs,
                const std::string& pFluentStr,
                const Ontology& pOntology,
-               const SetOfEntities& pEntities);
+               const SetOfEntities& pEntities,
+               const std::vector<Parameter>& pParameters,
+               bool pIsOkIfFluentIsMissing = false);
 
   /**
    * @brief Construct an optional fact from another one.
@@ -47,6 +48,7 @@ struct CONTEXTUALPLANNER_API FactOptional
   FactOptional(const std::string& pStr,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
+               const std::vector<Parameter>& pParameters,
                const char* pSeparatorPtr = nullptr,
                std::size_t pBeginPos = 0,
                std::size_t* pResPos = nullptr);

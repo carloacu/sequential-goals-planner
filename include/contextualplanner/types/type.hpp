@@ -25,6 +25,9 @@ struct CONTEXTUALPLANNER_API Type
 
   bool operator<(const Type& pOther) const;
 
+  static std::shared_ptr<Type> getSmallerType(const std::shared_ptr<Type>& pType1,
+                                              const std::shared_ptr<Type>& pType2);
+
   const std::string name;
   const std::shared_ptr<Type> parent;
   std::list<std::shared_ptr<Type>> subTypes;

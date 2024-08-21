@@ -7,6 +7,8 @@
 #include <contextualplanner/types/factoptional.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/parameter.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -62,17 +64,20 @@ std::string Fact::punctualPrefix = "~punctual~";
 Fact::Fact(const std::string& pStr,
            const Ontology& pOntology,
            const SetOfEntities& pEntities,
+           const std::vector<Parameter>& pParameters,
            const char* pSeparatorPtr,
            bool* pIsFactNegatedPtr,
            std::size_t pBeginPos,
            std::size_t* pResPos)
-  : name(),
-    arguments(),
-    fluent(),
-    isValueNegated(false),
-    predicate("_not_set", pOntology.types)
+  : predicate("_not_set", pOntology.types),
+    _name(),
+    _arguments(),
+    _fluent(),
+    _isValueNegated(false),
+    _factAccessorCacheForConditions(),
+    _factAccessorCacheForFullMatchWithoutFluent()
 {
-  auto resPos = fillFactFromStr(pStr, pOntology, pEntities, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
+  auto resPos = fillFactFromStr(pStr, pOntology, pEntities, pParameters, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
   if (pResPos != nullptr)
     *pResPos = resPos;
 }
@@ -82,24 +87,29 @@ Fact::Fact(const std::string& pName,
            const std::vector<std::string>& pArgumentStrs,
            const std::string& pFluentStr,
            const Ontology& pOntology,
-           const SetOfEntities& pEntities)
-  : name(pName),
-    arguments(),
-    fluent(),
-    isValueNegated(false),
-    predicate("_not_set", pOntology.types)
+           const SetOfEntities& pEntities,
+           const std::vector<Parameter>& pParameters,
+           bool pIsOkIfFluentIsMissing)
+  : predicate("_not_set", pOntology.types),
+    _name(pName),
+    _arguments(),
+    _fluent(),
+    _isValueNegated(false),
+    _factAccessorCacheForConditions(),
+    _factAccessorCacheForFullMatchWithoutFluent()
 {
-  if (!name.empty() && name[name.size() - 1] == '!')
+  if (!_name.empty() && _name[_name.size() - 1] == '!')
   {
-    isValueNegated = true;
-    name = name.substr(0, name.size() - 1);
+    _isValueNegated = true;
+    _name = _name.substr(0, _name.size() - 1);
   }
 
-  predicate = pOntology.predicates.nameToPredicate(name);
+  predicate = pOntology.predicates.nameToPredicate(_name);
   for (auto& currParam : pArgumentStrs)
-    _addArgument(currParam, pOntology, pEntities);
-  _setFluent(pFluentStr, pOntology, pEntities);
-  _finalizeInisilizationAndValidityChecks(pOntology, pEntities);
+    _addArgument(currParam, pOntology, pEntities, pParameters);
+  _setFluent(pFluentStr, pOntology, pEntities, pParameters);
+  _finalizeInisilizationAndValidityChecks(pOntology, pEntities, pIsOkIfFluentIsMissing);
+  _resetCache();
 }
 
 
@@ -108,76 +118,91 @@ Fact::~Fact()
 }
 
 Fact::Fact(const Fact& pOther)
-  : name(pOther.name),
-    arguments(pOther.arguments),
-    fluent(pOther.fluent),
-    isValueNegated(pOther.isValueNegated),
-    predicate(pOther.predicate)
+  : predicate(pOther.predicate),
+    _name(pOther._name),
+    _arguments(pOther._arguments),
+    _fluent(pOther._fluent),
+    _isValueNegated(pOther._isValueNegated),
+    _factAccessorCacheForConditions(pOther._factAccessorCacheForConditions),
+    _factAccessorCacheForFullMatchWithoutFluent(pOther._factAccessorCacheForFullMatchWithoutFluent)
 {
 }
 
 Fact::Fact(Fact&& pOther) noexcept
-  : name(std::move(pOther.name)),
-    arguments(std::move(pOther.arguments)),
-    fluent(std::move(pOther.fluent)),
-    isValueNegated(std::move(pOther.isValueNegated)),
-    predicate(std::move(pOther.predicate))
+  : predicate(std::move(pOther.predicate)),
+    _name(std::move(pOther._name)),
+    _arguments(std::move(pOther._arguments)),
+    _fluent(std::move(pOther._fluent)),
+    _isValueNegated(std::move(pOther._isValueNegated)),
+    _factAccessorCacheForConditions(std::move(pOther._factAccessorCacheForConditions)),
+    _factAccessorCacheForFullMatchWithoutFluent(std::move(pOther._factAccessorCacheForFullMatchWithoutFluent))
 {
 }
 
 Fact& Fact::operator=(const Fact& pOther) {
-  name = pOther.name;
-  arguments = pOther.arguments;
-  fluent = pOther.fluent;
-  isValueNegated = pOther.isValueNegated;
   predicate = pOther.predicate;
+  _name = pOther._name;
+  _arguments = pOther._arguments;
+  _fluent = pOther._fluent;
+  _isValueNegated = pOther._isValueNegated;
+  _factAccessorCacheForConditions = pOther._factAccessorCacheForConditions;
+  _factAccessorCacheForFullMatchWithoutFluent = pOther._factAccessorCacheForFullMatchWithoutFluent;
   return *this;
 }
 
 Fact& Fact::operator=(Fact&& pOther) noexcept {
-    name = std::move(pOther.name);
-    arguments = std::move(pOther.arguments);
-    fluent = std::move(pOther.fluent);
-    isValueNegated = std::move(pOther.isValueNegated);
     predicate = std::move(pOther.predicate);
+    _name = std::move(pOther._name);
+    _arguments = std::move(pOther._arguments);
+    _fluent = std::move(pOther._fluent);
+    _isValueNegated = std::move(pOther._isValueNegated);
+    _factAccessorCacheForConditions = std::move(pOther._factAccessorCacheForConditions);
+    _factAccessorCacheForFullMatchWithoutFluent = std::move(pOther._factAccessorCacheForFullMatchWithoutFluent);
     return *this;
 }
 
 
 bool Fact::operator<(const Fact& pOther) const
 {
-  if (name != pOther.name)
-    return name < pOther.name;
-  if (fluent != pOther.fluent)
-    return fluent < pOther.fluent;
-  if (isValueNegated != pOther.isValueNegated)
-    return isValueNegated < pOther.isValueNegated;
+  if (_name != pOther._name)
+    return _name < pOther._name;
+  if (_fluent != pOther._fluent)
+    return _fluent < pOther._fluent;
+  if (_isValueNegated != pOther._isValueNegated)
+    return _isValueNegated < pOther._isValueNegated;
   std::string paramStr;
-  _parametersToStr(paramStr, arguments);
+  _parametersToStr(paramStr, _arguments);
   std::string otherParamStr;
-  _parametersToStr(otherParamStr, pOther.arguments);
+  _parametersToStr(otherParamStr, pOther._arguments);
   return paramStr < otherParamStr;
 }
 
 bool Fact::operator==(const Fact& pOther) const
 {
-  return name == pOther.name && arguments == pOther.arguments &&
-      fluent == pOther.fluent && isValueNegated == pOther.isValueNegated &&
+  return _name == pOther._name && _arguments == pOther._arguments &&
+      _fluent == pOther._fluent && _isValueNegated == pOther._isValueNegated &&
       predicate == pOther.predicate;
 }
 
+
+
+std::ostream& operator<<(std::ostream& os, const Fact& pFact) {
+    // Output the desired class members to the stream
+    os << pFact.toStr();
+    return os;  // Return the stream so it can be chained
+}
 
 bool Fact::areEqualWithoutFluentConsideration(const Fact& pFact,
                                               const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr,
                                               const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2) const
 {
-  if (pFact.name != name ||
-      pFact.arguments.size() != arguments.size())
+  if (pFact._name != _name ||
+      pFact._arguments.size() != _arguments.size())
     return false;
 
-  auto itParam = arguments.begin();
-  auto itOtherParam = pFact.arguments.begin();
-  while (itParam != arguments.end())
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pFact._arguments.begin();
+  while (itParam != _arguments.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
         !(_isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr) ||
@@ -193,14 +218,14 @@ bool Fact::areEqualWithoutFluentConsideration(const Fact& pFact,
 bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
                                              const std::string& pArgToIgnore) const
 {
-  if (pFact.name != name ||
-      pFact.arguments.size() != arguments.size() ||
-      pFact.fluent != fluent)
+  if (pFact._name != _name ||
+      pFact._arguments.size() != _arguments.size() ||
+      pFact._fluent != _fluent)
     return false;
 
-  auto itParam = arguments.begin();
-  auto itOtherParam = pFact.arguments.begin();
-  while (itParam != arguments.end())
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pFact._arguments.begin();
+  while (itParam != _arguments.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
         *itParam != pArgToIgnore)
@@ -219,12 +244,12 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
                                    const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
                                    const std::vector<Parameter>* pThisFactParametersToConsiderAsAnyValuePtr) const
 {
-  if (name != pOther.name || arguments.size() != pOther.arguments.size())
+  if (_name != pOther._name || _arguments.size() != pOther._arguments.size())
     return false;
 
-  auto itParam = arguments.begin();
-  auto itOtherParam = pOther.arguments.begin();
-  while (itParam != arguments.end())
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pOther._arguments.begin();
+  while (itParam != _arguments.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
         !(_isInside(*itParam, pThisFactParametersToConsiderAsAnyValuePtr)) &&
@@ -235,22 +260,22 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
     ++itOtherParam;
   }
 
-  if (!fluent && !pOther.fluent)
-    return isValueNegated == pOther.isValueNegated;
-  if (fluent &&
-      (*fluent == anyValue ||
-       _isInside(*fluent, pThisFactParametersToConsiderAsAnyValuePtr)))
-    return isValueNegated == pOther.isValueNegated;
-  if (pOther.fluent &&
-      (*pOther.fluent == anyValue ||
-       _isInside(*pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr) ||
-       _isInside(*pOther.fluent, pOtherFactParametersToConsiderAsAnyValuePtr2)))
-    return isValueNegated == pOther.isValueNegated;
+  if (!_fluent && !pOther._fluent)
+    return _isValueNegated == pOther._isValueNegated;
+  if (_fluent &&
+      (*_fluent == anyValue ||
+       _isInside(*_fluent, pThisFactParametersToConsiderAsAnyValuePtr)))
+    return _isValueNegated == pOther._isValueNegated;
+  if (pOther._fluent &&
+      (*pOther._fluent == anyValue ||
+       _isInside(*pOther._fluent, pOtherFactParametersToConsiderAsAnyValuePtr) ||
+       _isInside(*pOther._fluent, pOtherFactParametersToConsiderAsAnyValuePtr2)))
+    return _isValueNegated == pOther._isValueNegated;
 
-  if ((fluent && !pOther.fluent) || (!fluent && pOther.fluent) || *fluent != *pOther.fluent)
-    return isValueNegated != pOther.isValueNegated;
+  if ((_fluent && !pOther._fluent) || (!_fluent && pOther._fluent) || *_fluent != *pOther._fluent)
+    return _isValueNegated != pOther._isValueNegated;
 
-  return isValueNegated == pOther.isValueNegated;
+  return _isValueNegated == pOther._isValueNegated;
 }
 
 
@@ -259,12 +284,12 @@ bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
                                             const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
                                             const std::vector<Parameter>* pThisFactParametersToConsiderAsAnyValuePtr) const
 {
-  if (name != pOther.name || arguments.size() != pOther.arguments.size())
+  if (_name != pOther._name || _arguments.size() != pOther._arguments.size())
     return false;
 
-  auto itParam = arguments.begin();
-  auto itOtherParam = pOther.arguments.begin();
-  while (itParam != arguments.end())
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pOther._arguments.begin();
+  while (itParam != _arguments.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
         !(_isInside(*itParam, pThisFactParametersToConsiderAsAnyValuePtr)) &&
@@ -275,23 +300,23 @@ bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
     ++itOtherParam;
   }
 
-  return isValueNegated == pOther.isValueNegated;
+  return _isValueNegated == pOther._isValueNegated;
 }
 
 
 bool Fact::isPunctual() const
 {
-  return name.compare(0, punctualPrefix.size(), punctualPrefix) == 0;
+  return _name.compare(0, punctualPrefix.size(), punctualPrefix) == 0;
 }
 
 
 bool Fact::hasParameterOrFluent(const Parameter& pParameter) const
 {
-  if (fluent && fluent->match(pParameter))
+  if (_fluent && _fluent->match(pParameter))
     return true;
 
-  auto itParam = arguments.begin();
-  while (itParam != arguments.end())
+  auto itParam = _arguments.begin();
+  while (itParam != _arguments.end())
   {
     if (itParam->match(pParameter))
       return true;
@@ -301,21 +326,30 @@ bool Fact::hasParameterOrFluent(const Parameter& pParameter) const
 }
 
 
+bool Fact::hasAParameter(bool pIgnoreFluent) const
+{
+  for (const auto& currArg : _arguments)
+    if (currArg.isAParameterToFill())
+      return true;
+  return !pIgnoreFluent && _fluent && _fluent->isAParameterToFill();
+}
+
+
 std::optional<Entity> Fact::tryToExtractArgumentFromExample(const Parameter& pParameter,
                                                             const Fact& pExampleFact) const
 {
-  if (name != pExampleFact.name ||
-      isValueNegated != pExampleFact.isValueNegated ||
-      arguments.size() != pExampleFact.arguments.size())
+  if (_name != pExampleFact._name ||
+      _isValueNegated != pExampleFact._isValueNegated ||
+      _arguments.size() != pExampleFact._arguments.size())
     return {};
 
   std::optional<Entity> res;
-  if (fluent && pExampleFact.fluent && fluent->match(pParameter))
-    res = *pExampleFact.fluent;
+  if (_fluent && pExampleFact._fluent && _fluent->match(pParameter))
+    res = *pExampleFact._fluent;
 
-  auto itParam = arguments.begin();
-  auto itOtherParam = pExampleFact.arguments.begin();
-  while (itParam != arguments.end())
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pExampleFact._arguments.begin();
+  while (itParam != _arguments.end())
   {
     if (itParam->match(pParameter))
       res = *itOtherParam;
@@ -329,15 +363,15 @@ std::optional<Entity> Fact::tryToExtractArgumentFromExampleWithoutFluentConsider
     const Parameter& pParameter,
     const Fact& pExampleFact) const
 {
-  if (name != pExampleFact.name ||
-      isValueNegated != pExampleFact.isValueNegated ||
-      arguments.size() != pExampleFact.arguments.size())
+  if (_name != pExampleFact._name ||
+      _isValueNegated != pExampleFact._isValueNegated ||
+      _arguments.size() != pExampleFact._arguments.size())
     return {};
 
   std::optional<Entity> res;
-  auto itArg = arguments.begin();
-  auto itOtherArg = pExampleFact.arguments.begin();
-  while (itArg != arguments.end())
+  auto itArg = _arguments.begin();
+  auto itOtherArg = pExampleFact._arguments.begin();
+  while (itArg != _arguments.end())
   {
     if (itArg->match(pParameter))
       res = *itOtherArg;
@@ -353,9 +387,9 @@ bool Fact::isPatternOf(
     const std::map<Parameter, std::set<Entity>>& pPossibleArguments,
     const Fact& pFactExample) const
 {
-  if (name != pFactExample.name ||
-      isValueNegated != pFactExample.isValueNegated ||
-      arguments.size() != pFactExample.arguments.size())
+  if (_name != pFactExample._name ||
+      _isValueNegated != pFactExample._isValueNegated ||
+      _arguments.size() != pFactExample._arguments.size())
     return false;
 
   auto isOk = [&](const Entity& pPatternVal,
@@ -370,16 +404,16 @@ bool Fact::isPatternOf(
     return true;
   };
 
-  if (fluent && !pFactExample.fluent)
+  if (_fluent && !pFactExample._fluent)
     return false;
-  if (!fluent && pFactExample.fluent)
+  if (!_fluent && pFactExample._fluent)
     return false;
-  if (fluent && pFactExample.fluent && !isOk(*fluent, *pFactExample.fluent))
+  if (_fluent && pFactExample._fluent && !isOk(*_fluent, *pFactExample._fluent))
     return false;
 
-  auto itParam = arguments.begin();
-  auto itOtherParam = pFactExample.arguments.begin();
-  while (itParam != arguments.end())
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pFactExample._arguments.begin();
+  while (itParam != _arguments.end())
   {
     if (!isOk(*itParam, *itOtherParam))
       return false;
@@ -393,53 +427,55 @@ bool Fact::isPatternOf(
 
 void Fact::replaceArguments(const std::map<Parameter, Entity>& pCurrentArgumentsToNewArgument)
 {
-  if (fluent)
+  if (_fluent)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent->value);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(_fluent->value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end())
-      fluent = itValueParam->second;
+      _fluent = itValueParam->second;
   }
 
-  for (auto& currParam : arguments)
+  for (auto& currParam : _arguments)
   {
     auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end())
       currParam = itValueParam->second;
   }
+  _resetCache();
 }
 
 void Fact::replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurrentArgumentsToNewArgument)
 {
-  if (fluent)
+  if (_fluent)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(fluent->value);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(_fluent->value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
-      fluent = *itValueParam->second.begin();
+      _fluent = *itValueParam->second.begin();
   }
 
-  for (auto& currParam : arguments)
+  for (auto& currParam : _arguments)
   {
     auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.value);
     if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
       currParam = *itValueParam->second.begin();
   }
+  _resetCache();
 }
 
 std::string Fact::toStr() const
 {
-  std::string res = name;
-  if (!arguments.empty())
+  std::string res = _name;
+  if (!_arguments.empty())
   {
     res += "(";
-    _parametersToStr(res, arguments);
+    _parametersToStr(res, _arguments);
     res += ")";
   }
-  if (fluent)
+  if (_fluent)
   {
-    if (isValueNegated)
-      res += "!=" + fluent->value;
+    if (_isValueNegated)
+      res += "!=" + _fluent->value;
     else
-      res += "=" + fluent->value;
+      res += "=" + _fluent->value;
   }
   return res;
 }
@@ -448,9 +484,10 @@ std::string Fact::toStr() const
 Fact Fact::fromStr(const std::string& pStr,
                    const Ontology& pOntology,
                    const SetOfEntities& pEntities,
+                   const std::vector<Parameter>& pParameters,
                    bool* pIsFactNegatedPtr)
 {
-  return Fact(pStr, pOntology, pEntities, nullptr, pIsFactNegatedPtr);
+  return Fact(pStr, pOntology, pEntities, pParameters, nullptr, pIsFactNegatedPtr);
 }
 
 
@@ -458,6 +495,7 @@ std::size_t Fact::fillFactFromStr(
     const std::string& pStr,
     const Ontology& pOntology,
     const SetOfEntities& pEntities,
+    const std::vector<Parameter>& pParameters,
     const char* pSeparatorPtr,
     std::size_t pBeginPos,
     bool* pIsFactNegatedPtr)
@@ -491,48 +529,50 @@ std::size_t Fact::fillFactFromStr(
           break;
         if (pStr[pos] == '!')
         {
-          isValueNegated = true;
-          if (name.empty())
-            name = pStr.substr(beginPos, pos - beginPos);
+          _isValueNegated = true;
+          if (_name.empty())
+            _name = pStr.substr(beginPos, pos - beginPos);
           ++pos;
           continue;
         }
         if (pStr[pos] == '(' || pStr[pos] == separatorOfParameters)
         {
           insideParenthesis = true;
-          if (name.empty())
-            name = pStr.substr(beginPos, pos - beginPos);
+          if (_name.empty())
+            _name = pStr.substr(beginPos, pos - beginPos);
           ++pos;
-          auto argumentName = cp::Fact(pStr, pOntology, pEntities, &separatorOfParameters, &isValueNegated, pos, &pos).toStr();
-          _addArgument(argumentName, pOntology, pEntities);
+          auto argumentName = cp::Fact(pStr, pOntology, pEntities, pParameters, &separatorOfParameters, &_isValueNegated, pos, &pos).toStr();
+          _addArgument(argumentName, pOntology, pEntities, pParameters);
           beginPos = pos;
           continue;
         }
         if (pStr[pos] == ')' || pStr[pos] == '=')
         {
           insideParenthesis = false;
-          if (name.empty())
-            name = pStr.substr(beginPos, pos - beginPos);
+          if (_name.empty())
+            _name = pStr.substr(beginPos, pos - beginPos);
           ++pos;
           beginPos = pos;
           continue;
         }
         ++pos;
       }
-      if (name.empty())
-        name = pStr.substr(beginPos, pos - beginPos);
+      if (_name.empty())
+        _name = pStr.substr(beginPos, pos - beginPos);
       else if (pos > beginPos)
-        _setFluent(pStr.substr(beginPos, pos - beginPos), pOntology, pEntities);
+        _setFluent(pStr.substr(beginPos, pos - beginPos), pOntology, pEntities, pParameters);
     }
 
     if (!pOntology.empty())
-      predicate = pOntology.predicates.nameToPredicate(name);
-    _finalizeInisilizationAndValidityChecks(pOntology, pEntities);
+      predicate = pOntology.predicates.nameToPredicate(_name);
+    _finalizeInisilizationAndValidityChecks(pOntology, pEntities, false);
   }
   catch (const std::exception& e)
   {
     throw std::runtime_error(std::string(e.what()) + ". The exception was thrown while parsing fact: \"" + pStr + "\"");
   }
+
+  _resetCache();
   return pos;
 }
 
@@ -542,7 +582,7 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToR
   bool res = false;
   for (const auto& currParam : pArgumentsToReplace)
   {
-    for (auto& currFactParam : arguments)
+    for (auto& currFactParam : _arguments)
     {
       if (currFactParam.value == currParam.name)
       {
@@ -550,12 +590,14 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToR
         res = true;
       }
     }
-    if (fluent && fluent->value == currParam.name)
+    if (_fluent && _fluent->value == currParam.name)
     {
-      fluent = anyValue;
+      _fluent = anyValue;
       res = true;
     }
   }
+
+  _resetCache();
   return res;
 }
 
@@ -576,7 +618,7 @@ bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
 }
 
 
-bool Fact::isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOtherFacts,
+bool Fact::isInOtherFactsMap(const SetOfFact& pOtherFacts,
                              bool pParametersAreForTheFact,
                              std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
                              const std::map<Parameter, std::set<Entity>>* pParametersPtr,
@@ -584,12 +626,11 @@ bool Fact::isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOther
                              bool* pTriedToModifyParametersPtr) const
 {
   bool res = false;
-  auto it = pOtherFacts.find(name);
-  if (it != pOtherFacts.end())
-    for (const auto& currOtherFact : it->second)
-      if (isInOtherFact(currOtherFact, pParametersAreForTheFact, pNewParametersPtr, pParametersPtr,
-                        pParametersToModifyInPlacePtr, pTriedToModifyParametersPtr))
-        res = true;
+  auto otherFactsThatMatched = pOtherFacts.find(*this);
+  for (const auto& currOtherFact : otherFactsThatMatched)
+    if (isInOtherFact(currOtherFact, pParametersAreForTheFact, pNewParametersPtr, pParametersPtr,
+                      pParametersToModifyInPlacePtr, pTriedToModifyParametersPtr))
+      res = true;
   return res;
 }
 
@@ -602,8 +643,8 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
                          bool* pTriedToModifyParametersPtr,
                          bool pIgnoreFluents) const
 {
-  if (pOtherFact.name != name ||
-      pOtherFact.arguments.size() != arguments.size())
+  if (pOtherFact._name != _name ||
+      pOtherFact._arguments.size() != _arguments.size())
     return false;
 
   std::map<Parameter, std::set<Entity>> newPotentialParameters;
@@ -646,9 +687,9 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 
   {
     bool doesParametersMatches = true;
-    auto itFactArguments = pOtherFact.arguments.begin();
-    auto itLookForArguments = arguments.begin();
-    while (itFactArguments != pOtherFact.arguments.end())
+    auto itFactArguments = pOtherFact._arguments.begin();
+    auto itLookForArguments = _arguments.begin();
+    while (itFactArguments != pOtherFact._arguments.end())
     {
       if (*itFactArguments != *itLookForArguments &&
           ((!pParametersAreForTheFact && !doesItMatch(*itFactArguments, *itLookForArguments)) ||
@@ -662,26 +703,26 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   }
 
   std::optional<bool> resOpt;
-  if (pIgnoreFluents || (!fluent && !pOtherFact.fluent))
+  if (pIgnoreFluents || (!_fluent && !pOtherFact._fluent))
   {
-    resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
+    resOpt.emplace(pOtherFact._isValueNegated == _isValueNegated);
   }
-  else if (fluent && pOtherFact.fluent)
+  else if (_fluent && pOtherFact._fluent)
   {
     if (pParametersAreForTheFact)
     {
-      if (doesItMatch(*fluent, *pOtherFact.fluent))
-        resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
+      if (doesItMatch(*_fluent, *pOtherFact._fluent))
+        resOpt.emplace(pOtherFact._isValueNegated == _isValueNegated);
     }
     else
     {
-      if (doesItMatch(*pOtherFact.fluent, *fluent))
-        resOpt.emplace(pOtherFact.isValueNegated == isValueNegated);
+      if (doesItMatch(*pOtherFact._fluent, *_fluent))
+        resOpt.emplace(pOtherFact._isValueNegated == _isValueNegated);
     }
   }
 
   if (!resOpt)
-    resOpt.emplace(pOtherFact.isValueNegated != isValueNegated);
+    resOpt.emplace(pOtherFact._isValueNegated != _isValueNegated);
 
   if (*resOpt)
   {
@@ -720,102 +761,216 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 void Fact::replaceArgument(const std::string& pCurrent,
                            const std::string& pNew)
 {
-  for (auto& currParameter : arguments)
+  for (auto& currParameter : _arguments)
     if (currParameter == pCurrent)
       currParameter = pNew;
 }
 
+void Fact::ensureAllFactAccessorCacheAreSet()
+{
+  _resetCache();
+}
+
+
+FactAccessor Fact::toFactAccessor() const
+{
+  if (_factAccessorCacheForConditions)
+    return *_factAccessorCacheForConditions;
+
+  if (CONTEXTUALPLANNER_DEBUG_FOR_TESTS)
+    throw std::runtime_error("_factAccessorCache is not set");
+  return FactAccessor(*this, false);
+}
+
+FactAccessor Fact::toFactAccessorCacheForFullMatchWithoutFluent() const
+{
+  if (_factAccessorCacheForFullMatchWithoutFluent)
+    return *_factAccessorCacheForFullMatchWithoutFluent;
+
+  if (CONTEXTUALPLANNER_DEBUG_FOR_TESTS)
+    throw std::runtime_error("_factAccessorCacheForFullMatchWithoutFluent is not set");
+  return FactAccessor(*this, true, true);
+}
+
+void Fact::setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType)
+{
+  _arguments[pIndex].type = pType;
+  _resetCache();
+}
+
+void Fact::setFluent(const std::optional<Entity>& pFluent)
+{
+  _fluent = pFluent;
+  _resetCache();
+}
+
+bool Fact::isCompleteWithAnyValueFluent() const
+{
+  if (_fluent && _fluent->isAnyValue())
+  {
+    for (const auto& currArg : _arguments)
+      if (currArg.isAParameterToFill())
+        return false;
+    return true;
+  }
+  return false;
+}
+
+
+void Fact::_resetCache()
+{
+  _factAccessorCacheForConditions.reset();
+  _factAccessorCacheForFullMatchWithoutFluent.reset();
+  if (!_factAccessorCacheForConditions)
+    _factAccessorCacheForConditions.emplace(*this, false);
+  if (!_factAccessorCacheForFullMatchWithoutFluent)
+    _factAccessorCacheForFullMatchWithoutFluent.emplace(*this, true, true);
+}
 
 void Fact::_addArgument(const std::string& pArgumentName,
                         const Ontology& pOntology,
-                        const SetOfEntities& pEntities)
+                        const SetOfEntities& pEntities,
+                        const std::vector<Parameter>& pParameters)
 {
   if (pArgumentName.empty())
     return;
-  if (!pOntology.empty() && pArgumentName[0] != '?')
+  if (pArgumentName[0] == '?')
+  {
+    bool foundParam = false;
+    for (const auto& currParam : pParameters)
+    {
+      if (currParam.name == pArgumentName)
+      {
+        _arguments.emplace_back(currParam.name, currParam.type);
+        foundParam = true;
+        break;
+      }
+    }
+    if (!foundParam)
+      throw std::runtime_error("Add a parameter argument of a fact \"" + pArgumentName + "\" that is unknown");
+  }
+  else if (!pOntology.empty())
   {
     auto* entityPtr = pOntology.constants.valueToEntity(pArgumentName);
     if (entityPtr == nullptr)
-      throw std::runtime_error("\"" + pArgumentName + "\" is not an entity value");
-    arguments.emplace_back(*entityPtr);
+    {
+      entityPtr = pEntities.valueToEntity(pArgumentName);
+      if (entityPtr == nullptr)
+        throw std::runtime_error("\"" + pArgumentName + "\" is not an entity value");
+    }
+    _arguments.emplace_back(*entityPtr);
   }
   else
   {
-    arguments.emplace_back(pArgumentName);
+    _arguments.emplace_back(pArgumentName);
   }
 }
 
 
 void Fact::_setFluent(const std::string& pFluentStr,
                       const Ontology& pOntology,
-                      const SetOfEntities& pEntities)
+                      const SetOfEntities& pEntities,
+                      const std::vector<Parameter>& pParameters)
 {
   if (pFluentStr.empty())
     return;
-  if (!pOntology.empty() && pFluentStr[0] != '?')
+
+  if (pFluentStr[0] == '?')
+  {
+    bool foundFluent = false;
+    for (const auto& currParam : pParameters)
+    {
+      if (currParam.name == pFluentStr)
+      {
+        _fluent.emplace(currParam.name, currParam.type);
+        foundFluent = true;
+        break;
+      }
+    }
+    if (!foundFluent)
+      throw std::runtime_error("Add a fluent of a fact \"" + pFluentStr + "\" that is unknown");
+  }
+  else if (!pOntology.empty())
   {
     auto* entityPtr = pOntology.constants.valueToEntity(pFluentStr);
     if (entityPtr == nullptr)
-      throw std::runtime_error("\"" + pFluentStr + "\" fluent is not a entity value");
-    fluent.emplace(*entityPtr);
+    {
+      if (pFluentStr == Entity::anyEntityValue())
+        _fluent.emplace(Entity::createAnyEntity());
+      else
+        throw std::runtime_error("\"" + pFluentStr + "\" fluent is not a entity value");
+    }
+    else
+    {
+      _fluent.emplace(*entityPtr);
+    }
   }
   else
   {
-    fluent = pFluentStr;
+    _fluent = pFluentStr;
   }
 }
 
 
 void Fact::_finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
-                                                   const SetOfEntities& pEntities)
+                                                   const SetOfEntities& pEntities,
+                                                   bool pIsOkIfFluentIsMissing)
 {
   if (!pOntology.empty())
   {
-    if (predicate.parameters.size() != arguments.size())
+    if (predicate.parameters.size() != _arguments.size())
       throw std::runtime_error("The fact \"" + toStr() + "\" does not have the same number of parameters than the associated predicate \"" + predicate.toStr() + "\"");
-    for (auto i = 0; i < arguments.size(); ++i)
+    for (auto i = 0; i < _arguments.size(); ++i)
     {
       if (!predicate.parameters[i].type)
         throw std::runtime_error("\"" + predicate.parameters[i].name + "\" does not have a type, in fact predicate \"" + predicate.toStr() + "\"");
-      if (arguments[i].isAParameterToFill())
+      if (!_arguments[i].type && !_arguments[i].isAnyValue())
+        throw std::runtime_error("\"" + _arguments[i].value + "\" does not have a type");
+      if (_arguments[i].isAParameterToFill())
       {
-        arguments[i].type = predicate.parameters[i].type;
+        predicate.parameters[i].type = Type::getSmallerType(_arguments[i].type, predicate.parameters[i].type);
+        _arguments[i].type = predicate.parameters[i].type;
         continue;
       }
-      if (!arguments[i].type)
-        throw std::runtime_error("\"" + arguments[i].value + "\" does not have a type");
-      if (!arguments[i].type->isA(*predicate.parameters[i].type))
-        throw std::runtime_error("\"" + arguments[i].toStr() + "\" is not a \"" + predicate.parameters[i].type->name + "\" for predicate: \"" + predicate.toStr() + "\"");
+      if (!_arguments[i].type->isA(*predicate.parameters[i].type))
+        throw std::runtime_error("\"" + _arguments[i].toStr() + "\" is not a \"" + predicate.parameters[i].type->name + "\" for predicate: \"" + predicate.toStr() + "\"");
     }
 
     if (predicate.fluent)
     {
-      if (!fluent)
-        throw std::runtime_error("The fact \"" + toStr() + "\" does not have fluent but the associated predicate: \"" + predicate.toStr() + "\" has a fluent");
+      if (_fluent)
+      {
+        if (!_fluent->type && !_fluent->isAnyValue())
+          throw std::runtime_error("\"" + _fluent->toStr() + "\" does not have type");
 
-      if (fluent->isAParameterToFill())
-      {
-        fluent->type = predicate.fluent;
+        if (_fluent->isAParameterToFill())
+        {
+          predicate.fluent = Type::getSmallerType(_fluent->type, predicate.fluent);
+          _fluent->type = predicate.fluent;
+        }
+        else
+        {
+          if (!_fluent->type->isA(*predicate.fluent))
+            throw std::runtime_error("\"" + _fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" for predicate: \"" + predicate.toStr() + "\"");
+        }
       }
-      else
+      else if (!pIsOkIfFluentIsMissing)
       {
-        if (!fluent->type)
-          throw std::runtime_error("\"" + fluent->toStr() + "\" does not have type");
-        if (!fluent->type->isA(*predicate.fluent))
-          throw std::runtime_error("\"" + fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" for predicate: \"" + predicate.toStr() + "\"");
+        throw std::runtime_error("The fact \"" + toStr() + "\" does not have fluent but the associated predicate: \"" + predicate.toStr() + "\" has a fluent");
       }
+
     }
-    else if (fluent)
+    else if (_fluent)
     {
       throw std::runtime_error("The fact \"" + toStr() + "\" has a fluent but the associated predicate: \"" + predicate.toStr() + "\" does not have a fluent");
     }
   }
   else
   {
-    predicate.name = name;
-    for (auto i = 0; i < arguments.size(); ++i)
+    predicate.name = _name;
+    for (auto i = 0; i < _arguments.size(); ++i)
       predicate.parameters.emplace_back("");
-    if (fluent)
+    if (_fluent)
       predicate.fluent = std::make_shared<Type>("");
   }
 }

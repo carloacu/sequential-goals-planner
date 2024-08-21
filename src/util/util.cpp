@@ -5,6 +5,7 @@
 
 namespace cp
 {
+bool CONTEXTUALPLANNER_DEBUG_FOR_TESTS = false;  // Define the variable and initialize it
 
 namespace
 {

@@ -26,10 +26,12 @@ struct CONTEXTUALPLANNER_API Entity
   bool operator==(const Entity& pOther) const;
   bool operator!=(const Entity& pOther) const { return !operator==(pOther); }
 
+  static const std::string& anyEntityValue();
   static Entity createAnyEntity();
   static Entity fromStr(const std::string& pStr,
                         const SetOfTypes& pSetOfTypes);
   std::string toStr() const;
+  bool isAnyValue() const;
   bool isAParameterToFill() const;
   bool match(const Parameter& pParameter) const;
   bool isValidParameterAccordingToPossiblities(const std::vector<Parameter>& pParameter) const;

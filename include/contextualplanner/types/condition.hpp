@@ -2,7 +2,10 @@
 #define INCLUDE_CONTEXTUALPLANNER_CONDITION_HPP
 
 #include <functional>
+#include <map>
 #include <memory>
+#include <set>
+#include <vector>
 #include "../util/api.hpp"
 #include "factoptional.hpp"
 
@@ -15,6 +18,8 @@ struct ConditionExists;
 struct ConditionNot;
 struct ConditionFact;
 struct ConditionNumber;
+struct Entity;
+struct Parameter;
 
 
 /// Condition with a tree structure to check in a world.
@@ -27,7 +32,8 @@ struct CONTEXTUALPLANNER_API Condition
    */
   static std::unique_ptr<Condition> fromStr(const std::string& pStr,
                                             const Ontology& pOntology,
-                                            const SetOfEntities& pEntities);
+                                            const SetOfEntities& pEntities,
+                                            const std::vector<Parameter>& pParameters);
 
   /**
    * @brief Convert the condition to a string.
@@ -60,8 +66,9 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pFactCallback Callback called for each optional fact of the condition.
    * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
    */
-  virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                      bool pIsWrappingExpressionNegated = false) const = 0;
+  virtual void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+                      bool pIsWrappingExpressionNegated = false,
+                      bool pIgnoreFluent = false) const = 0;
 
 
   /**
@@ -191,8 +198,9 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExpressionNegated) const override;
+  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+              bool pIsWrappingExpressionNegated,
+              bool pIgnoreFluent) const override;
   bool findConditionCandidateFromFactFromEffect(const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
                                                 const WorldState& pWorldState,
                                                 const Fact& pFactFromEffect,
@@ -240,7 +248,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
 {
   std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
 
-  ConditionExists(const std::string& pObject,
+  ConditionExists(const Parameter& pParameter,
                   std::unique_ptr<Condition> pCondition);
 
   bool hasFact(const Fact& pFact) const override;
@@ -249,8 +257,9 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExpressionNegated) const override;
+  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+              bool pIsWrappingExpressionNegated,
+              bool pIgnoreFluent) const override;
 
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
@@ -291,7 +300,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
   ConditionNumber* fcNbPtr() override { return nullptr; }
 
   /// Variable to check the existance in the condition
-  std::string object;
+  Parameter parameter;
   /// Expression to check
   std::unique_ptr<Condition> condition;
 };
@@ -310,8 +319,9 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExpressionNegated) const override;
+  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+              bool pIsWrappingExpressionNegated,
+              bool pIgnoreFluent) const override;
 
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
@@ -369,8 +379,9 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              bool pIsWrappingExpressionNegated) const override;
+  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+              bool pIsWrappingExpressionNegated,
+              bool pIgnoreFluent) const override;
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState&,
@@ -426,7 +437,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
                        const std::map<Parameter, std::set<Entity>>*,
                        const std::vector<Parameter>&,
                        bool) const override { return false; }
-  void forAll(const std::function<void (const FactOptional&)>&, bool) const override {}
+  void forAll(const std::function<void (const FactOptional&, bool)>&, bool, bool) const override {}
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>&,
       const WorldState&,

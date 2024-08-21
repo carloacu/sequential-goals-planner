@@ -1,6 +1,7 @@
 #include <contextualplanner/types/condition.hpp>
 #include <optional>
 #include <sstream>
+#include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/util.hpp>
 #include "expressionParsed.hpp"
@@ -44,12 +45,12 @@ bool _forEachValueUntil(const std::function<bool (const Entity&)>& pValueCallbac
 
   auto* factCondPtr = pCondition.fcFactPtr();
   if (factCondPtr != nullptr &&
-      !factCondPtr->factOptional.fact.fluent)
+      !factCondPtr->factOptional.fact.fluent())
   {
     pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
           [&pValueCallback](const Fact& pFact) {
-      if (pFact.fluent)
-        pValueCallback(*pFact.fluent);
+      if (pFact.fluent())
+        pValueCallback(*pFact.fluent());
       return false;
     },
     factCondPtr->factOptional.fact, // pFact
@@ -85,12 +86,12 @@ void _forEach(const std::function<void (const Entity&, const Fact*)>& pValueCall
 
   auto* factCondPtr = pCondition.fcFactPtr();
   if (factCondPtr != nullptr &&
-      !factCondPtr->factOptional.fact.fluent)
+      !factCondPtr->factOptional.fact.fluent())
   {
     pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
           [&pValueCallback](const Fact& pFact) {
-      if (pFact.fluent)
-        pValueCallback(*pFact.fluent, &pFact);
+      if (pFact.fluent())
+        pValueCallback(*pFact.fluent(), &pFact);
       return false;
     },
     factCondPtr->factOptional.fact, // pFact
@@ -112,34 +113,35 @@ bool _areEqual(
 
 std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& pExpressionParsed,
                                                         const Ontology& pOntology,
-                                                        const SetOfEntities& pEntities)
+                                                        const SetOfEntities& pEntities,
+                                                        const std::vector<Parameter>& pParameters)
 {
   std::unique_ptr<Condition> res;
 
   if ((pExpressionParsed.name == _equalsFunctionName || pExpressionParsed.name == _equalsCharFunctionName) &&
       pExpressionParsed.arguments.size() == 2)
   {
-    auto leftOperand = _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities);
+    auto leftOperand = _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities, pParameters);
     const auto& rightOperandExp = *(++pExpressionParsed.arguments.begin());
-    auto rightOperand = _expressionParsedToCondition(rightOperandExp, pOntology, pEntities);
+    auto rightOperand = _expressionParsedToCondition(rightOperandExp, pOntology, pEntities, pParameters);
 
     auto* leftFactPtr = leftOperand->fcFactPtr();
     if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
     {
       auto* rightFactPtr = rightOperand->fcFactPtr();
       if (rightFactPtr != nullptr &&
-          rightFactPtr->factOptional.fact.arguments.empty() &&
-          !rightFactPtr->factOptional.fact.fluent)
+          rightFactPtr->factOptional.fact.arguments().empty() &&
+          !rightFactPtr->factOptional.fact.fluent())
       {
-        if (rightFactPtr->factOptional.fact.name == Fact::undefinedValue.value)
+        if (rightFactPtr->factOptional.fact.name() == Fact::undefinedValue.value)
         {
           leftFactPtr->factOptional.isFactNegated = true;
-          leftFactPtr->factOptional.fact.fluent.emplace(Fact::anyValue);
+          leftFactPtr->factOptional.fact.setFluent(Fact::anyValue);
           res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
         }
         else if (pExpressionParsed.name == _equalsCharFunctionName && !rightOperandExp.isAFunction)
         {
-          leftFactPtr->factOptional.fact.fluent.emplace(Entity(rightFactPtr->factOptional.fact.name));
+          leftFactPtr->factOptional.fact.setFluent(Entity(rightFactPtr->factOptional.fact.name()));
           res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
         }
       }
@@ -152,15 +154,23 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
   else if (pExpressionParsed.name == _existsFunctionName &&
            pExpressionParsed.arguments.size() == 2)
   {
-    res = std::make_unique<ConditionExists>(pExpressionParsed.arguments.front().name,
-                                            _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities));
+    auto itArg = pExpressionParsed.arguments.begin();
+    auto& firstArg = *itArg;
+    std::shared_ptr<Type> paramType;
+    if (firstArg.followingExpression)
+      paramType = pOntology.types.nameToType(firstArg.followingExpression->name);
+    Parameter existsParameter(firstArg.name, paramType);
+    auto newParameters = pParameters;
+    newParameters.push_back(existsParameter);
+    res = std::make_unique<ConditionExists>(existsParameter,
+                                            _expressionParsedToCondition(*(++itArg), pOntology, pEntities, newParameters));
   }
   else if (pExpressionParsed.name == _notFunctionName &&
            pExpressionParsed.arguments.size() == 1)
   {
     auto& expNegationned = pExpressionParsed.arguments.front();
 
-    res = _expressionParsedToCondition(expNegationned, pOntology, pEntities);
+    res = _expressionParsedToCondition(expNegationned, pOntology, pEntities, pParameters);
     if (res)
     {
        auto* factPtr = res->fcFactPtr();
@@ -174,15 +184,15 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
            pExpressionParsed.arguments.size() == 2)
   {
     res = std::make_unique<ConditionNode>(ConditionNodeType::SUPERIOR,
-                                          _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities),
-                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities));
+                                          _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities, pParameters),
+                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities, pParameters));
   }
   else if (pExpressionParsed.name == _inferiorFunctionName &&
            pExpressionParsed.arguments.size() == 2)
   {
     res = std::make_unique<ConditionNode>(ConditionNodeType::INFERIOR,
-                                          _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities),
-                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities));
+                                          _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities, pParameters),
+                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities, pParameters));
   }
   else if ((pExpressionParsed.name == _andFunctionName || pExpressionParsed.name == _orFunctionName) &&
            pExpressionParsed.arguments.size() >= 2)
@@ -190,7 +200,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
     auto listNodeType = pExpressionParsed.name == _andFunctionName ? ConditionNodeType::AND : ConditionNodeType::OR;
     std::list<std::unique_ptr<Condition>> elts;
     for (auto& currExp : pExpressionParsed.arguments)
-      elts.emplace_back(_expressionParsedToCondition(currExp, pOntology, pEntities));
+      elts.emplace_back(_expressionParsedToCondition(currExp, pOntology, pEntities, pParameters));
 
     res = std::make_unique<ConditionNode>(listNodeType, std::move(*(--(--elts.end()))), std::move(elts.back()));
     elts.pop_back();
@@ -212,7 +222,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
     }
 
     if (!res)
-      res = std::make_unique<ConditionFact>(pExpressionParsed.toFact(pOntology, pEntities));
+      res = std::make_unique<ConditionFact>(pExpressionParsed.toFact(pOntology, pEntities, pParameters, false));
   }
 
   if (pExpressionParsed.followingExpression)
@@ -230,7 +240,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
       nodeType = ConditionNodeType::OR;
     res = std::make_unique<ConditionNode>(nodeType,
                                           std::move(res),
-                                          _expressionParsedToCondition(*pExpressionParsed.followingExpression, pOntology, pEntities));
+                                          _expressionParsedToCondition(*pExpressionParsed.followingExpression, pOntology, pEntities, pParameters));
   }
 
   return res;
@@ -249,8 +259,9 @@ bool _existsIsTrueRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
     std::map<Parameter, std::set<Entity>> newParameters;
 
     const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-    const auto& factNamesToFacts = pWorldState.factNamesToFacts();
-    res = factToOfCondition.isInOtherFactsMap(factNamesToFacts, true, &newParameters, pConditionParametersToPossibleArguments, &pLocalParamToValue) || res;
+    const auto& factAccessorsToFacts = pWorldState.factsMapping();
+    res = factToOfCondition.isInOtherFactsMap(factAccessorsToFacts, true, &newParameters,
+                                              pConditionParametersToPossibleArguments, &pLocalParamToValue) || res;
 
     if (pConditionParametersToPossibleArguments != nullptr)
       applyNewParams(*pConditionParametersToPossibleArguments, newParameters);
@@ -277,9 +288,9 @@ bool _existsIsTrueRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
         auto& leftOpFact = *leftOpFactPtr;
 
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
-          if (pFact.fluent)
+          if (pFact.fluent())
           {
-            auto& newParams = leftOpPossibleValuesToParams[*pFact.fluent];
+            auto& newParams = leftOpPossibleValuesToParams[*pFact.fluent()];
             if (pConditionParametersToPossibleArguments != nullptr)
             {
               for (auto& currArg : *pConditionParametersToPossibleArguments)
@@ -302,9 +313,9 @@ bool _existsIsTrueRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
 
         std::map<Parameter, std::set<Entity>> newParameters;
         pWorldState.iterateOnMatchingFactsWithoutFluentConsideration([&](const Fact& pFact){
-          if (pFact.fluent)
+          if (pFact.fluent())
           {
-            auto itToLeftPoss = leftOpPossibleValuesToParams.find(*pFact.fluent);
+            auto itToLeftPoss = leftOpPossibleValuesToParams.find(*pFact.fluent());
             if (itToLeftPoss != leftOpPossibleValuesToParams.end())
             {
               if (pConditionParametersToPossibleArguments != nullptr)
@@ -344,9 +355,9 @@ bool _existsIsTrueRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
 void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
                            const std::map<Parameter, std::set<Entity>>& pConditionParametersToPossibleArguments,
                            const Condition& pCondition,
-                           const std::map<std::string, std::set<Fact>>& pFactNamesToFacts,
+                           const SetOfFact& pFacts,
                            const Fact& pFactFromEffect,
-                           const std::string& pObject,
+                           const Parameter& pParameter,
                            bool pIsNegated)
 {
   auto* factOfConditionPtr = pCondition.fcFactPtr();
@@ -354,10 +365,10 @@ void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToV
   {
     const auto& factOfConditionOpt = factOfConditionPtr->factOptional;
     if (factOfConditionOpt.isFactNegated != pIsNegated ||
-        !factOfConditionOpt.fact.areEqualWithoutAnArgConsideration(pFactFromEffect, pObject))
+        !factOfConditionOpt.fact.areEqualWithoutAnArgConsideration(pFactFromEffect, pParameter.name))
     {
       std::map<Parameter, std::set<Entity>> newParameters;
-      factOfConditionOpt.fact.isInOtherFactsMap(pFactNamesToFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
+      factOfConditionOpt.fact.isInOtherFactsMap(pFacts, true, &newParameters, &pConditionParametersToPossibleArguments, &pLocalParamToValue);
     }
     return;
   }
@@ -367,8 +378,8 @@ void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToV
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand &&
       (nodeOfConditionPtr->nodeType == ConditionNodeType::AND || nodeOfConditionPtr->nodeType == ConditionNodeType::OR))
   {
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFactNamesToFacts, pFactFromEffect, pObject, pIsNegated);
-    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFactNamesToFacts, pFactFromEffect, pObject, pIsNegated);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pFactFromEffect, pParameter, pIsNegated);
+    _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pFactFromEffect, pParameter, pIsNegated);
   }
 }
 
@@ -377,13 +388,14 @@ void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToV
 
 std::unique_ptr<Condition> Condition::fromStr(const std::string& pStr,
                                               const Ontology& pOntology,
-                                              const SetOfEntities& pEntities)
+                                              const SetOfEntities& pEntities,
+                                              const std::vector<Parameter>& pParameters)
 {
   if (pStr.empty())
     return {};
   std::size_t pos = 0;
   auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
-  return _expressionParsedToCondition(expressionParsed, pOntology, pEntities);
+  return _expressionParsedToCondition(expressionParsed, pOntology, pEntities, pParameters);
 }
 
 std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
@@ -444,13 +456,15 @@ bool ConditionNode::containsFactOpt(const FactOptional& pFactOptional,
 }
 
 
-void ConditionNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                           bool pIsWrappingExpressionNegated) const
+void ConditionNode::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+                           bool pIsWrappingExpressionNegated,
+                           bool pIgnoreFluent) const
 {
+  bool ignoreFluent = pIgnoreFluent || (nodeType != ConditionNodeType::AND && nodeType != ConditionNodeType::OR);
   if (leftOperand)
-    leftOperand->forAll(pFactCallback, pIsWrappingExpressionNegated);
+    leftOperand->forAll(pFactCallback, pIsWrappingExpressionNegated, ignoreFluent);
   if (rightOperand)
-    rightOperand->forAll(pFactCallback, pIsWrappingExpressionNegated);
+    rightOperand->forAll(pFactCallback, pIsWrappingExpressionNegated, ignoreFluent);
 }
 
 
@@ -488,7 +502,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
                 [&](const Entity& pValue)
           {
             auto factToCheck = leftFact.factOptional.fact;
-            factToCheck.fluent.emplace(pValue);
+            factToCheck.setFluent(pValue);
             return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
           }, true, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
         }
@@ -504,7 +518,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
                     [&](const Entity& pValue)
               {
                 auto factToCheck = rightFact.factOptional.fact;
-                factToCheck.fluent.emplace(pValue);
+                factToCheck.setFluent(pValue);
                 return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
               }, true, *leftOperand, pWorldState, &pConditionParametersToPossibleArguments);
             }
@@ -541,7 +555,7 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
       if (nodeType == ConditionNodeType::EQUALITY)
       {
         auto factToCheck = leftFact.factOptional.fact;
-        factToCheck.fluent = rightOperand->getFluent(pWorldState);
+        factToCheck.setFluent(rightOperand->getFluent(pWorldState));
         return pFactCallback(FactOptional(factToCheck));
       }
       else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
@@ -605,18 +619,18 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
 
       if (nodeType == ConditionNodeType::EQUALITY)
       {
-        const auto& factNamesToFacts = pWorldState.factNamesToFacts();
+        const auto& factAccessorsToFacts = pWorldState.factsMapping();
         bool res = false;
         std::map<Parameter, std::set<Entity>> newParameters;
         _forEach([&](const Entity& pValue, const Fact* pFromFactPtr)
         {
           auto factToCheck = leftFactPtr->factOptional.fact;
-          factToCheck.fluent = pValue;
+          factToCheck.setFluent(pValue);
           bool subRes = false;
           if (factToCheck.isPunctual())
             subRes = pPunctualFacts.count(factToCheck) != 0;
           else
-            subRes = factToCheck.isInOtherFactsMap(factNamesToFacts, true, &newParameters, pConditionParametersToPossibleArguments);
+            subRes = factToCheck.isInOtherFactsMap(factAccessorsToFacts, true, &newParameters, pConditionParametersToPossibleArguments);
 
           // Try to resolve the parameters
           if (subRes && pFromFactPtr != nullptr &&
@@ -650,20 +664,17 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
         auto* rightNbPtr = rightOperand->fcNbPtr();
         if (rightNbPtr != nullptr)
         {
-          const auto& factNamesToFacts = pWorldState.factNamesToFacts();
-          auto itWsFacts = factNamesToFacts.find(leftFact.name);
-          if (itWsFacts != factNamesToFacts.end())
+          const auto& factsMapping = pWorldState.factsMapping();
+          auto leftFactMatchingInWs = factsMapping.find(leftFact);
+          for (const auto& currWsFact : leftFactMatchingInWs)
           {
-            for (const auto& currWsFact : itWsFacts->second)
+            if (currWsFact.fluent() &&
+                leftFact.areEqualWithoutFluentConsideration(currWsFact))
             {
-              if (currWsFact.fluent &&
-                  leftFact.areEqualWithoutFluentConsideration(currWsFact))
-              {
-                bool res = compIntNb(currWsFact.fluent->value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
-                if (!pIsWrappingExpressionNegated)
-                  return res;
-                return !res;
-              }
+              bool res = compIntNb(currWsFact.fluent()->value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
+              if (!pIsWrappingExpressionNegated)
+                return res;
+              return !res;
             }
           }
         }
@@ -699,7 +710,7 @@ bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.fluent = pWorldState.getFactFluent(rightFactPtr->factOptional.fact);
+      factToCheck.setFluent(pWorldState.getFactFluent(rightFactPtr->factOptional.fact));
       return pWorldState.canFactBecomeTrue(factToCheck, pParameters);
     }
   }
@@ -774,13 +785,13 @@ std::string ConditionExists::toStr(const std::function<std::string (const Fact&)
   std::string conditionStr;
   if (condition)
     conditionStr = condition->toStr(pFactWriterPtr);
-  return std::string(_existsFunctionName) + "(" + object + ", " + conditionStr + ")";
+  return std::string(_existsFunctionName) + "(" + parameter.toStr() + ", " + conditionStr + ")";
 }
 
-ConditionExists::ConditionExists(const std::string& pObject,
+ConditionExists::ConditionExists(const Parameter& pParameter,
                                  std::unique_ptr<Condition> pCondition)
   : Condition(),
-    object(pObject),
+    parameter(pParameter),
     condition(std::move(pCondition))
 {
 }
@@ -800,12 +811,13 @@ bool ConditionExists::containsFactOpt(const FactOptional& pFactOptional,
   return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, pIsWrappingExpressionNegated);
 }
 
-void ConditionExists::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                             bool pIsWrappingExpressionNegated) const
+void ConditionExists::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+                             bool pIsWrappingExpressionNegated,
+                             bool pIgnoreFluent) const
 {
 
   if (condition)
-    condition->forAll(pFactCallback, pIsWrappingExpressionNegated);
+    condition->forAll(pFactCallback, pIsWrappingExpressionNegated, pIgnoreFluent);
 }
 
 
@@ -820,11 +832,11 @@ bool ConditionExists::findConditionCandidateFromFactFromEffect(
 {
   if (condition)
   {
-    const auto& factNamesToFacts = pWorldState.factNamesToFacts();
-    std::map<Parameter, std::set<Entity>> localParamToValue{{object, {}}};
-    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, factNamesToFacts, pFactFromEffect, object, pIsWrappingExpressionNegated);
+    const auto& factAccessorsToFacts = pWorldState.factsMapping();
+    std::map<Parameter, std::set<Entity>> localParamToValue{{parameter, {}}};
+    _existsExtractPossRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, factAccessorsToFacts, pFactFromEffect, parameter, pIsWrappingExpressionNegated);
     auto parameters = pConditionParametersToPossibleArguments;
-    parameters[object];
+    parameters[parameter];
 
     return condition->findConditionCandidateFromFactFromEffect([&](const FactOptional& pConditionFact) {
       auto factToConsider = pConditionFact.fact;
@@ -846,7 +858,7 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
 {
   if (condition)
   {
-    std::map<Parameter, std::set<Entity>> localParamToValue{{object, {}}};
+    std::map<Parameter, std::set<Entity>> localParamToValue{{parameter, {}}};
     return _existsIsTrueRec(localParamToValue, pConditionParametersToPossibleArguments, *condition, pWorldState) == !pIsWrappingExpressionNegated;
   }
   return !pIsWrappingExpressionNegated;
@@ -865,11 +877,11 @@ bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
       const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
       std::set<Entity> potentialArgumentsOfTheParameter;
       pWorldState.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter,
-                                                            factToOfCondition, object);
+                                                            factToOfCondition, parameter.name);
       for (auto& currPot : potentialArgumentsOfTheParameter)
       {
         auto factToCheck = factToOfCondition;
-        factToCheck.replaceArguments({{object, currPot}});
+        factToCheck.replaceArguments({{parameter, currPot}});
         if (pWorldState.canFactBecomeTrue(factToCheck, pParameters))
           return true;
       }
@@ -883,7 +895,7 @@ bool ConditionExists::operator==(const Condition& pOther) const
 {
   auto* otherExistsPtr = pOther.fcExistsPtr();
   return otherExistsPtr != nullptr &&
-      object == otherExistsPtr->object &&
+      parameter == otherExistsPtr->parameter &&
       _areEqual(condition, otherExistsPtr->condition);
 }
 
@@ -891,7 +903,7 @@ std::unique_ptr<Condition> ConditionExists::clone(const std::map<Parameter, Enti
                                                   bool pInvert) const
 {
   auto res = std::make_unique<ConditionExists>(
-        object,
+        parameter,
         condition ? condition->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>());
   if (pInvert)
     return std::make_unique<ConditionNot>(std::move(res));
@@ -933,12 +945,13 @@ bool ConditionNot::containsFactOpt(const FactOptional& pFactOptional,
 }
 
 
-void ConditionNot::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                          bool pIsWrappingExpressionNegated) const
+void ConditionNot::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+                          bool pIsWrappingExpressionNegated,
+                          bool pIgnoreFluent) const
 {
 
   if (condition)
-    condition->forAll(pFactCallback, !pIsWrappingExpressionNegated);
+    condition->forAll(pFactCallback, !pIsWrappingExpressionNegated, pIgnoreFluent);
 }
 
 
@@ -1024,18 +1037,19 @@ bool ConditionFact::containsFactOpt(const FactOptional& pFactOptional,
   return false;
 }
 
-void ConditionFact::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                           bool pIsWrappingExpressionNegated) const
+void ConditionFact::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
+                           bool pIsWrappingExpressionNegated,
+                           bool pIgnoreFluent) const
 {
   if (!pIsWrappingExpressionNegated)
   {
-    pFactCallback(factOptional);
+    pFactCallback(factOptional, pIgnoreFluent);
   }
   else
   {
     auto factOptionalCopied = factOptional;
     factOptionalCopied.isFactNegated = !factOptionalCopied.isFactNegated;
-    pFactCallback(factOptionalCopied);
+    pFactCallback(factOptionalCopied, pIgnoreFluent);
   }
 }
 

@@ -8,6 +8,7 @@
 #include <set>
 #include "../util/api.hpp"
 #include <contextualplanner/types/entity.hpp>
+#include <contextualplanner/types/factaccessor.hpp>
 #include <contextualplanner/types/predicate.hpp>
 
 namespace cp
@@ -15,6 +16,7 @@ namespace cp
 struct FactOptional;
 struct Ontology;
 struct SetOfEntities;
+struct SetOfFact;
 
 /// Axiomatic knowledge that can be contained in a world.
 struct CONTEXTUALPLANNER_API Fact
@@ -30,6 +32,7 @@ struct CONTEXTUALPLANNER_API Fact
   Fact(const std::string& pStr,
        const Ontology& pOntology,
        const SetOfEntities& pEntities,
+       const std::vector<Parameter>& pParameters,
        const char* pSeparatorPtr = nullptr,
        bool* pIsFactNegatedPtr = nullptr,
        std::size_t pBeginPos = 0,
@@ -39,7 +42,9 @@ struct CONTEXTUALPLANNER_API Fact
        const std::vector<std::string>& pArgumentStrs,
        const std::string& pFluentStr,
        const Ontology& pOntology,
-       const SetOfEntities& pEntities);
+       const SetOfEntities& pEntities,
+       const std::vector<Parameter>& pParameters,
+       bool pIsOkIfFluentIsMissing = false);
 
   /// Destruct the fact.
   ~Fact();
@@ -56,6 +61,8 @@ struct CONTEXTUALPLANNER_API Fact
   bool operator==(const Fact& pOther) const;
   /// Check not equality with another fact.
   bool operator!=(const Fact& pOther) const { return !operator==(pOther); }
+
+  friend std::ostream& operator<<(std::ostream& os, const Fact& pFact);
 
   /**
    * @brief Check equality with another fact without considering the values.
@@ -111,6 +118,8 @@ struct CONTEXTUALPLANNER_API Fact
    * @return True if the string matches in the arguments or in the value of this fact, false otherwise.
    */
   bool hasParameterOrFluent(const Parameter& pParameter) const;
+
+  bool hasAParameter(bool pIgnoreFluent = false) const;
 
   /**
    * @brief Extract an argument from another instance of this fact.<br/>
@@ -169,6 +178,7 @@ struct CONTEXTUALPLANNER_API Fact
   static Fact fromStr(const std::string& pStr,
                       const Ontology& pOntology,
                       const SetOfEntities& pEntities,
+                      const std::vector<Parameter>& pParameters,
                       bool* pIsFactNegatedPtr = nullptr);
 
   /**
@@ -182,6 +192,7 @@ struct CONTEXTUALPLANNER_API Fact
   std::size_t fillFactFromStr(const std::string& pStr,
                               const Ontology& pOntology,
                               const SetOfEntities& pEntities,
+                              const std::vector<Parameter>& pParameters,
                               const char* pSeparatorPtr,
                               std::size_t pBeginPos,
                               bool* pIsFactNegatedPtr);
@@ -220,7 +231,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
    * @return True if the fact matches any of the other facts.
    */
-  bool isInOtherFactsMap(const std::map<std::string, std::set<Fact>>& pOtherFacts,
+  bool isInOtherFactsMap(const SetOfFact& pOtherFacts,
                          bool pParametersAreForTheFact,
                          std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
                          const std::map<Parameter, std::set<Entity>>* pParametersPtr,
@@ -254,14 +265,21 @@ struct CONTEXTUALPLANNER_API Fact
   void replaceArgument(const std::string& pCurrent,
                        const std::string& pNew);
 
-  /// Name of the fact.
-  std::string name;
-  /// Arguments of the fact.
-  std::vector<Entity> arguments;
-  /// Fluent of the fact.
-  std::optional<Entity> fluent;
-  /// Is the value of the fact negated.
-  bool isValueNegated;
+
+  const std::string& name() const { return _name; }
+  const std::vector<Entity>& arguments() const { return _arguments; }
+  const std::optional<Entity>& fluent() const { return _fluent; }
+  bool isValueNegated() const { return _isValueNegated; }
+
+  void ensureAllFactAccessorCacheAreSet();
+  FactAccessor toFactAccessor() const;
+  FactAccessor toFactAccessorCacheForFullMatchWithoutFluent() const;
+
+  void setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType);
+  void setFluent(const std::optional<Entity>& pFluent);
+
+  bool isCompleteWithAnyValueFluent() const;
+
   Predicate predicate;
 
   /// Constant defining the "any value" special value.
@@ -272,16 +290,32 @@ struct CONTEXTUALPLANNER_API Fact
   static std::string punctualPrefix;
 
 private:
+  /// Name of the fact.
+  std::string _name;
+  /// Arguments of the fact.
+  std::vector<Entity> _arguments;
+  /// Fluent of the fact.
+  std::optional<Entity> _fluent;
+  /// Is the value of the fact negated.
+  bool _isValueNegated;
+  std::optional<FactAccessor> _factAccessorCacheForConditions;
+  std::optional<FactAccessor> _factAccessorCacheForFullMatchWithoutFluent;
+
+  void _resetCache();
 
   void _addArgument(const std::string& pArgumentName,
                     const Ontology& pOntology,
-                    const SetOfEntities& pEntities);
+                    const SetOfEntities& pEntities,
+                    const std::vector<Parameter>& pParameters);
   void _setFluent(const std::string& pFluentStr,
                   const Ontology& pOntology,
-                  const SetOfEntities& pEntities);
+                  const SetOfEntities& pEntities,
+                  const std::vector<Parameter>& pParameters);
   void _finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
-                                               const SetOfEntities& pEntities);
+                                               const SetOfEntities& pEntities,
+                                               bool pIsOkIfFluentIsMissing);
 };
+
 
 } // !cp
 

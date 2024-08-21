@@ -25,7 +25,9 @@ bool _isASeparator(char pChar)
 
 
 FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
-                                      const SetOfEntities& pEntities) const
+                                      const SetOfEntities& pEntities,
+                                      const std::vector<Parameter>& pParameters,
+                                      bool pIsOkIfFluentIsMissing) const
 {
   std::vector<std::string> argumentStrs;
   for (auto& currArg : arguments)
@@ -43,16 +45,17 @@ FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
     factName = name;
   }
 
-  FactOptional res(isFactNegated, factName, argumentStrs, value, pOntology, pEntities);
+  FactOptional res(isFactNegated, factName, argumentStrs, value, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing);
   if (value == Fact::undefinedValue.value && !res.isFactNegated)
   {
     res.isFactNegated = true;
-    res.fact.fluent = Fact::anyValue;
+    res.fact.setFluent(Fact::anyValue);
   }
-  else if (value != "" || res.fact.isValueNegated)
+  else if (value != "" || res.fact.isValueNegated())
   {
-    res.fact.fluent = value;
+    res.fact.setFluent(value);
   }
+  res.fact.ensureAllFactAccessorCacheAreSet();
   return res;
 }
 

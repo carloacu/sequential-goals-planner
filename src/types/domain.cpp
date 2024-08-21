@@ -94,15 +94,16 @@ void Domain::addAction(const ActionId& pActionId,
   if (pAction.precondition)
   {
     pAction.precondition->forAll(
-          [&](const FactOptional& pFactOptional)
+          [&](const FactOptional& pFactOptional,
+              bool pIgnoreFluent)
     {
       if (pFactOptional.isFactNegated)
       {
-        _notPreconditionToActions[pFactOptional.fact.name].insert(pActionId);
+        _notPreconditionToActions.add(pFactOptional.fact, pActionId, pIgnoreFluent);
       }
       else
       {
-        _preconditionToActions[pFactOptional.fact.name].insert(pActionId);
+        _preconditionToActions.add(pFactOptional.fact, pActionId, pIgnoreFluent);
         hasAddedAFact = true;
       }
     }
@@ -110,7 +111,7 @@ void Domain::addAction(const ActionId& pActionId,
   }
 
   if (!hasAddedAFact)
-    _actionsWithoutFactToAddInPrecondition.insert(pActionId);
+    _actionsWithoutFactToAddInPrecondition.addValueWithoutFact(pActionId);
 }
 
 
@@ -124,19 +125,12 @@ void Domain::removeAction(const ActionId& pActionId)
 
   if (actionThatWillBeRemoved.precondition)
   {
-    actionThatWillBeRemoved.precondition->forAll(
-          [&](const FactOptional& pFactOptional)
-    {
-      if (pFactOptional.isFactNegated)
-        _notPreconditionToActions[pFactOptional.fact.name].erase(pActionId);
-      else
-        _preconditionToActions[pFactOptional.fact.name].erase(pActionId);
-    }
-    );
+    _notPreconditionToActions.erase(pActionId);
+    _preconditionToActions.erase(pActionId);
   }
   else
   {
-     _actionsWithoutFactToAddInPrecondition.erase(pActionId);
+    _actionsWithoutFactToAddInPrecondition.erase(pActionId);
   }
 
   _actions.erase(it);

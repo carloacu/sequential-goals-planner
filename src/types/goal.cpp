@@ -60,14 +60,14 @@ Goal::Goal(const std::string& pStr,
     char separator = ',';
     bool isFactNegated = false;
     std::size_t endPos = 0;
-    auto conditionFact = Fact(goalStr, pOntology, pEntities, &separator, &isFactNegated, 0, &endPos);
+    auto conditionFact = Fact(goalStr, pOntology, pEntities, {}, &separator, &isFactNegated, 0, &endPos);
     _conditionFactPtr = std::make_unique<FactOptional>(conditionFact, isFactNegated);
 
     ++endPos;
     goalStr = goalStr.substr(endPos, goalStr.size() - endPos);
   }
 
-   _objective = Condition::fromStr(goalStr, pOntology, pEntities);
+  _objective = Condition::fromStr(goalStr, pOntology, pEntities, {});
   assert(_objective);
 }
 

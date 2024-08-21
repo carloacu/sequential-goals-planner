@@ -28,12 +28,13 @@ InferenceId SetOfInferences::addInference(const Inference& pInference,
   if (pInference.condition)
   {
     pInference.condition->forAll(
-          [&](const FactOptional& pFactOptional)
+          [&](const FactOptional& pFactOptional,
+              bool pIgnoreFluent)
     {
       if (pFactOptional.isFactNegated)
-        links.notConditionToInferences[pFactOptional.fact.name].insert(newId);
+        links.notConditionToInferences.add(pFactOptional.fact, newId, pIgnoreFluent);
       else
-        links.conditionToInferences[pFactOptional.fact.name].insert(newId);
+        links.conditionToInferences.add(pFactOptional.fact, newId, pIgnoreFluent);
     }
     );
   }
@@ -51,15 +52,8 @@ void SetOfInferences::removeInference(const InferenceId& pInferenceId)
 
   if (inferenceThatWillBeRemoved.condition)
   {
-    inferenceThatWillBeRemoved.condition->forAll(
-          [&](const FactOptional& pFactOptional)
-    {
-      if (pFactOptional.isFactNegated)
-        links.notConditionToInferences[pFactOptional.fact.name].erase(pInferenceId);
-      else
-        links.conditionToInferences[pFactOptional.fact.name].erase(pInferenceId);
-    }
-    );
+    links.notConditionToInferences.erase(pInferenceId);
+    links.conditionToInferences.erase(pInferenceId);
   }
   _inferences.erase(it);
 }

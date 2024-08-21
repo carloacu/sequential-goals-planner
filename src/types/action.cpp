@@ -42,7 +42,7 @@ void Action::throwIfNotValid(const WorldState& pWorldState)
 void Action::_throwIfNotValidForACondition(const std::unique_ptr<Condition>& pPrecondition)
 {
   if (pPrecondition)
-    pPrecondition->forAll([&](const FactOptional& pFactOptional) {
+    pPrecondition->forAll([&](const FactOptional& pFactOptional, bool) {
       _throwIfNotValidForAFact(pFactOptional.fact);
     });
 }
@@ -60,12 +60,12 @@ void Action::_throwIfNotValidForAnWordStateModif(const std::unique_ptr<WorldStat
 
 void Action::_throwIfNotValidForAFact(const Fact& pFact)
 {
-  for (auto& currArgument : pFact.arguments)
+  for (auto& currArgument : pFact.arguments())
     if (currArgument.isAParameterToFill() && !currArgument.isValidParameterAccordingToPossiblities(parameters))
       throw std::runtime_error("\"" + currArgument.value + "\" is missing in action parameters");
 
-  if (pFact.fluent && pFact.fluent->isAParameterToFill() && !pFact.fluent->isValidParameterAccordingToPossiblities(parameters))
-    throw std::runtime_error("\"" + pFact.fluent->value + "\" fluent is missing in action parameters");
+  if (pFact.fluent() && pFact.fluent()->isAParameterToFill() && !pFact.fluent()->isValidParameterAccordingToPossiblities(parameters))
+    throw std::runtime_error("\"" + pFact.fluent()->value + "\" fluent is missing in action parameters");
 }
 
 

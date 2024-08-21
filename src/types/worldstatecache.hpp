@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <contextualplanner/types/fact.hpp>
+#include <contextualplanner/types/facttoconditions.hpp>
 #include <contextualplanner/util/alias.hpp>
 
 
@@ -59,7 +60,7 @@ private:
    * @param[in] pDomain Domain containing all the possible actions and inferences.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
-  void _feedAccessibleFactsFromSetOfActions(const std::set<ActionId>& pActions,
+  void _feedAccessibleFactsFromSetOfActions(const FactToConditions::ConstMapOfFactIterator& pActions,
                                             const Domain& pDomain,
                                             FactsAlreadyChecked& pFactsAlreadychecked);
 
@@ -70,7 +71,7 @@ private:
    * @param[in] pDomain Domain containing all the possible actions and inferences.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
-  void _feedAccessibleFactsFromSetOfInferences(const std::set<InferenceId>& pInferences,
+  void _feedAccessibleFactsFromSetOfInferences(const FactToConditions::ConstMapOfFactIterator& pInferences,
                                                const std::map<InferenceId, Inference>& pAllInferences,
                                                const Domain& pDomain,
                                                FactsAlreadyChecked& pFactsAlreadychecked);

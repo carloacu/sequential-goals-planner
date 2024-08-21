@@ -4,6 +4,7 @@
 #include <map>
 #include "../util/api.hpp"
 #include <contextualplanner/types/inference.hpp>
+#include <contextualplanner/types/facttoconditions.hpp>
 #include <contextualplanner/util/alias.hpp>
 
 namespace cp
@@ -39,9 +40,9 @@ struct CONTEXTUALPLANNER_API SetOfInferences
   struct InferenceLinks
   {
     /// Map of fact conditions to inference idntifiers.
-    std::map<std::string, std::set<InferenceId>> conditionToInferences{};
+    FactToConditions conditionToInferences{};
     /// Map of negated fact conditions to inference idntifiers.
-    std::map<std::string, std::set<InferenceId>> notConditionToInferences{};
+    FactToConditions notConditionToInferences{};
 
     bool empty() const { return conditionToInferences.empty() && notConditionToInferences.empty(); }
   };

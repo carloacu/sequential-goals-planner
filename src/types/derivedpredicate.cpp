@@ -19,8 +19,8 @@ std::list<Inference> DerivedPredicate::toInferences(const Ontology& pOntology,
                                                     const SetOfEntities& pEntities) const
 {
   std::list<Inference> res;
-  res.emplace_back(condition->clone(), WorldStateModification::fromStr(fact.toStr(), pOntology, pEntities), parameters);
-  res.emplace_back(condition->clone(nullptr, true), WorldStateModification::fromStr("!" + fact.toStr(), pOntology, pEntities), parameters);
+  res.emplace_back(condition->clone(), WorldStateModification::fromStr(fact.toStr(), pOntology, pEntities, parameters), parameters);
+  res.emplace_back(condition->clone(nullptr, true), WorldStateModification::fromStr("!" + fact.toStr(), pOntology, pEntities, parameters), parameters);
   return res;
 }
 
