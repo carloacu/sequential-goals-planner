@@ -273,7 +273,6 @@ struct CONTEXTUALPLANNER_API Fact
 
   void ensureAllFactAccessorCacheAreSet();
   FactAccessor toFactAccessor() const;
-  FactAccessor toFactAccessorCacheForFullMatchWithoutFluent() const;
 
   void setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType);
   void setFluent(const std::optional<Entity>& pFluent);
@@ -299,7 +298,6 @@ private:
   /// Is the value of the fact negated.
   bool _isValueNegated;
   std::optional<FactAccessor> _factAccessorCacheForConditions;
-  std::optional<FactAccessor> _factAccessorCacheForFullMatchWithoutFluent;
 
   void _resetCache();
 

@@ -227,28 +227,7 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   for (const auto& currFact : pFacts)
-  {
-    /*
-    auto it = _facts.find(currFact);
-    if (it == _facts.end())
-    {
-      // If the fact is not found, we try to find the fact with another value
-      if (currFact.fluent() == Fact::anyValue)
-      {
-        auto itFromFactName = _factsMapping.find(currFact.toFactAccessorCacheForFullMatchWithoutFluent());
-        if (itFromFactName != _factsMapping.end())
-        {
-          for (const auto& currFactFromAccessor : itFromFactName->second)
-          {
-            _removeAFact(pWhatChanged, currFactFromAccessor);
-          }
-          continue;
-        }
-      }
-    }
-    */
     _removeAFact(pWhatChanged, currFact);
-  }
   pGoalStack._refresh(*this, pNow);
 }
 
@@ -258,16 +237,6 @@ void WorldState::_removeAFact(WhatChanged& pWhatChanged,
 {
   pWhatChanged.removedFacts.insert(pFact);
   _factsMapping.erase(pFact);
-
-  /*
-  {
-    _facts.erase(pFact);
-    std::list<FactAccessor> accessors;
-    FactAccessor::conditonFactToListOfFactAccessors(accessors, pFact);
-    for (auto& currAccessor : accessors)
-      _factsMapping.erase(currAccessor);
-  }
-  */
   _cache->clear();
 }
 

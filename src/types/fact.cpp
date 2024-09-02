@@ -74,8 +74,7 @@ Fact::Fact(const std::string& pStr,
     _arguments(),
     _fluent(),
     _isValueNegated(false),
-    _factAccessorCacheForConditions(),
-    _factAccessorCacheForFullMatchWithoutFluent()
+    _factAccessorCacheForConditions()
 {
   auto resPos = fillFactFromStr(pStr, pOntology, pEntities, pParameters, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
   if (pResPos != nullptr)
@@ -95,8 +94,7 @@ Fact::Fact(const std::string& pName,
     _arguments(),
     _fluent(),
     _isValueNegated(false),
-    _factAccessorCacheForConditions(),
-    _factAccessorCacheForFullMatchWithoutFluent()
+    _factAccessorCacheForConditions()
 {
   if (!_name.empty() && _name[_name.size() - 1] == '!')
   {
@@ -123,8 +121,7 @@ Fact::Fact(const Fact& pOther)
     _arguments(pOther._arguments),
     _fluent(pOther._fluent),
     _isValueNegated(pOther._isValueNegated),
-    _factAccessorCacheForConditions(pOther._factAccessorCacheForConditions),
-    _factAccessorCacheForFullMatchWithoutFluent(pOther._factAccessorCacheForFullMatchWithoutFluent)
+    _factAccessorCacheForConditions(pOther._factAccessorCacheForConditions)
 {
 }
 
@@ -134,8 +131,7 @@ Fact::Fact(Fact&& pOther) noexcept
     _arguments(std::move(pOther._arguments)),
     _fluent(std::move(pOther._fluent)),
     _isValueNegated(std::move(pOther._isValueNegated)),
-    _factAccessorCacheForConditions(std::move(pOther._factAccessorCacheForConditions)),
-    _factAccessorCacheForFullMatchWithoutFluent(std::move(pOther._factAccessorCacheForFullMatchWithoutFluent))
+    _factAccessorCacheForConditions(std::move(pOther._factAccessorCacheForConditions))
 {
 }
 
@@ -146,7 +142,6 @@ Fact& Fact::operator=(const Fact& pOther) {
   _fluent = pOther._fluent;
   _isValueNegated = pOther._isValueNegated;
   _factAccessorCacheForConditions = pOther._factAccessorCacheForConditions;
-  _factAccessorCacheForFullMatchWithoutFluent = pOther._factAccessorCacheForFullMatchWithoutFluent;
   return *this;
 }
 
@@ -157,7 +152,6 @@ Fact& Fact::operator=(Fact&& pOther) noexcept {
     _fluent = std::move(pOther._fluent);
     _isValueNegated = std::move(pOther._isValueNegated);
     _factAccessorCacheForConditions = std::move(pOther._factAccessorCacheForConditions);
-    _factAccessorCacheForFullMatchWithoutFluent = std::move(pOther._factAccessorCacheForFullMatchWithoutFluent);
     return *this;
 }
 
@@ -779,17 +773,7 @@ FactAccessor Fact::toFactAccessor() const
 
   if (CONTEXTUALPLANNER_DEBUG_FOR_TESTS)
     throw std::runtime_error("_factAccessorCache is not set");
-  return FactAccessor(*this, false);
-}
-
-FactAccessor Fact::toFactAccessorCacheForFullMatchWithoutFluent() const
-{
-  if (_factAccessorCacheForFullMatchWithoutFluent)
-    return *_factAccessorCacheForFullMatchWithoutFluent;
-
-  if (CONTEXTUALPLANNER_DEBUG_FOR_TESTS)
-    throw std::runtime_error("_factAccessorCacheForFullMatchWithoutFluent is not set");
-  return FactAccessor(*this, true, true);
+  return FactAccessor(*this);
 }
 
 void Fact::setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType)
@@ -820,11 +804,8 @@ bool Fact::isCompleteWithAnyValueFluent() const
 void Fact::_resetCache()
 {
   _factAccessorCacheForConditions.reset();
-  _factAccessorCacheForFullMatchWithoutFluent.reset();
   if (!_factAccessorCacheForConditions)
-    _factAccessorCacheForConditions.emplace(*this, false);
-  if (!_factAccessorCacheForFullMatchWithoutFluent)
-    _factAccessorCacheForFullMatchWithoutFluent.emplace(*this, true, true);
+    _factAccessorCacheForConditions.emplace(*this);
 }
 
 void Fact::_addArgument(const std::string& pArgumentName,
