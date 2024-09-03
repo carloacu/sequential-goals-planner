@@ -7,11 +7,17 @@
 
 namespace cp
 {
+namespace
+{
+const std::string _numberTypeName = "number";
+}
 
 SetOfTypes::SetOfTypes()
-    : _types(),
+    : _numberType(std::make_shared<Type>(_numberTypeName)),
+      _types(),
       _nameToType()
 {
+  _nameToType[_numberTypeName] = _numberType;
 }
 
 
@@ -108,7 +114,7 @@ std::string SetOfTypes::toStr() const
 
 bool SetOfTypes::empty() const
 {
-  return _types.empty() && _nameToType.empty();
+  return _types.empty();
 }
 
 

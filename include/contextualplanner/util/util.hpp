@@ -20,6 +20,9 @@ struct Parameter;
 extern bool CONTEXTUALPLANNER_DEBUG_FOR_TESTS;
 
 CONTEXTUALPLANNER_API
+bool isNumber(const std::string& str);
+
+CONTEXTUALPLANNER_API
 void unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
                       const std::map<Parameter, std::set<Entity>>& pInMap);
 

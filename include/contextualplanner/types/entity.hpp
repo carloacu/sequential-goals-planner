@@ -28,6 +28,8 @@ struct CONTEXTUALPLANNER_API Entity
 
   static const std::string& anyEntityValue();
   static Entity createAnyEntity();
+  static Entity createNumberEntity(const std::string& pNumber,
+                                   const SetOfTypes& pSetOfTypes);
   static Entity fromStr(const std::string& pStr,
                         const SetOfTypes& pSetOfTypes);
   std::string toStr() const;

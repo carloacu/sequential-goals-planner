@@ -62,6 +62,13 @@ Entity Entity::createAnyEntity()
 }
 
 
+Entity Entity::createNumberEntity(const std::string& pNumber,
+                                  const SetOfTypes& pSetOfTypes)
+{
+  return Entity(pNumber, pSetOfTypes.numberType());
+}
+
+
 Entity Entity::fromStr(const std::string& pStr,
                        const SetOfTypes& pSetOfTypes)
 {

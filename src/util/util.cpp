@@ -1,4 +1,5 @@
 #include <contextualplanner/util/util.hpp>
+#include <cctype> // For isdigit()
 #include <sstream>
 #include <contextualplanner/types/entity.hpp>
 #include <contextualplanner/types/parameter.hpp>
@@ -46,6 +47,13 @@ void _unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
 
 }
 
+
+bool isNumber(const std::string& str) {
+    for (char const &c : str)
+        if (!std::isdigit(c))
+          return false;
+    return !str.empty(); // Ensure it's not an empty string
+}
 
 void unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
                       const std::map<Parameter, std::set<Entity>>& pInMap)

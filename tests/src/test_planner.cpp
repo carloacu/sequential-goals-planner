@@ -74,9 +74,7 @@ void _simplest_plan_possible()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
-                                           "type1 - entity\n"
-                                           "type2 - entity");
+  ontology.types = cp::SetOfTypes::fromStr("type1 type2 - entity");
   ontology.constants = cp::SetOfEntities::fromStr("toto - type1\n"
                                                   "titi - type2", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_a(?e - entity)\n"
@@ -90,7 +88,7 @@ void _simplest_plan_possible()
   actionObj1.parameters = std::move(parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
@@ -135,6 +133,36 @@ void _wrong_condition_type()
 }
 
 
+void _number_type()
+{
+  const std::string action1 = "action1";
+  std::map<std::string, cp::Action> actions;
+
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("toto - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("pred_a(?e - entity) - number\n"
+                                                     "pred_b", ontology.types);
+
+  const cp::SetOfEntities entities;
+
+  cp::Action actionObj1(cp::Condition::fromStr("pred_a(toto)=10", ontology, entities, {}),
+                        cp::WorldStateModification::fromStr("pred_b", ontology, entities, {}));
+  actions.emplace(action1, actionObj1);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
+  assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  problem.worldState.addFact(cp::Fact("pred_a(toto)=10", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+
+  _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
+  assert_eq<std::string>(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -153,6 +181,7 @@ int main(int argc, char *argv[])
 
   _simplest_plan_possible();
   _wrong_condition_type();
+  _number_type();
 
   test_plannerWithoutTypes();
   std::cout << "chatbot planner is ok !!!!" << std::endl;

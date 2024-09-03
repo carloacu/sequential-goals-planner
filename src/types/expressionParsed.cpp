@@ -1,6 +1,8 @@
 #include "expressionParsed.hpp"
 #include <stdexcept>
 #include <contextualplanner/types/factoptional.hpp>
+#include <contextualplanner/types/ontology.hpp>
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -50,6 +52,10 @@ FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
   {
     res.isFactNegated = true;
     res.fact.setFluent(Fact::anyValue);
+  }
+  else if (!pOntology.empty() && isNumber(value))
+  {
+    res.fact.setFluent(Entity::createNumberEntity(value, pOntology.types));
   }
   else if (value != "" || res.fact.isValueNegated())
   {

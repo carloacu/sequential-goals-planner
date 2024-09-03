@@ -878,6 +878,8 @@ void Fact::_setFluent(const std::string& pFluentStr,
     {
       if (pFluentStr == Entity::anyEntityValue())
         _fluent.emplace(Entity::createAnyEntity());
+      else if (isNumber(pFluentStr))
+        _fluent.emplace(Entity::createNumberEntity(pFluentStr, pOntology.types));
       else
         throw std::runtime_error("\"" + pFluentStr + "\" fluent is not a entity value");
     }
