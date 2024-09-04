@@ -61,7 +61,6 @@ FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
   {
     res.fact.setFluent(value);
   }
-  res.fact.ensureAllFactAccessorCacheAreSet();
   return res;
 }
 

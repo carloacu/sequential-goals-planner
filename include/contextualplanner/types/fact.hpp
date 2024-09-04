@@ -271,7 +271,6 @@ struct CONTEXTUALPLANNER_API Fact
   const std::optional<Entity>& fluent() const { return _fluent; }
   bool isValueNegated() const { return _isValueNegated; }
 
-  void ensureAllFactAccessorCacheAreSet();
   FactAccessor toFactAccessor() const;
 
   void setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType);

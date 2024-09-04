@@ -41,7 +41,6 @@ void test_setOfFacts()
   SetOfFact factToFacts;
 
   auto fact1 = cp::Fact::fromStr("pred_name(toto)", ontology, entities, {});
-  fact1.ensureAllFactAccessorCacheAreSet();
   factToFacts.add(fact1);
 
   {
@@ -58,20 +57,16 @@ void test_setOfFacts()
   // tests with pred_name5
 
   auto fact2 = cp::Fact::fromStr("pred_name5(toto2)=titi", ontology, entities, {});
-  fact2.ensureAllFactAccessorCacheAreSet();
   factToFacts.add(fact2);
 
   auto fact3 = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-  fact3.ensureAllFactAccessorCacheAreSet();
   factToFacts.add(fact3);
 
   auto fact4 = cp::Fact::fromStr("pred_name5(toto)=titi_const", ontology, entities, {});
-  fact4.ensureAllFactAccessorCacheAreSet();
   factToFacts.add(fact4);
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    factWithParam.ensureAllFactAccessorCacheAreSet();
     assert_eq<std::string>("[pred_name5(toto - my_type)=titi]", factToFacts.find(factWithParam).toStr());
     assert_eq<std::string>("[pred_name5(toto - my_type)=titi, pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
@@ -79,7 +74,6 @@ void test_setOfFacts()
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p1 - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name5(?p1)=titi_const", ontology, entities, parameters);
-    factWithParam.ensureAllFactAccessorCacheAreSet();
     assert_eq<std::string>("[pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam).toStr());
     assert_eq<std::string>("[pred_name5(toto2 - my_type)=titi, pred_name5(toto - my_type)=titi, pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
@@ -89,18 +83,15 @@ void test_setOfFacts()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    factWithParam.ensureAllFactAccessorCacheAreSet();
     assert_eq<std::string>("[]", factToFacts.find(factWithParam).toStr());
     assert_eq<std::string>("[pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
 
   auto fact4WithAnyValue = cp::Fact::fromStr("pred_name5(toto)=*", ontology, entities, {});
-  fact4WithAnyValue.ensureAllFactAccessorCacheAreSet();
   factToFacts.erase(fact4WithAnyValue);
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    factWithParam.ensureAllFactAccessorCacheAreSet();
     assert_eq<std::string>("[]", factToFacts.find(factWithParam).toStr());
     assert_eq<std::string>("[]", factToFacts.find(factWithParam, true).toStr());
   }

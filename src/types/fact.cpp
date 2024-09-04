@@ -760,11 +760,6 @@ void Fact::replaceArgument(const std::string& pCurrent,
       currParameter = pNew;
 }
 
-void Fact::ensureAllFactAccessorCacheAreSet()
-{
-  _resetCache();
-}
-
 
 FactAccessor Fact::toFactAccessor() const
 {
