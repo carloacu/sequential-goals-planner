@@ -1,6 +1,5 @@
 #include <contextualplanner/types/setoffacts.hpp>
 #include <stdexcept>
-#include <contextualplanner/types/factaccessor.hpp>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -74,12 +73,12 @@ void SetOfFact::add(const Fact& pFact)
     }
   }
 
-  std::list<FactAccessor> accessors;
-  FactAccessor::conditonFactToListOfFactAccessors(accessors, pFact);
-  for (auto& currAccessor : accessors)
+  std::list<std::string> factSignatures;
+  pFact.generateSignatureForAllSubTypes(factSignatures);
+  for (auto& currSignature : factSignatures)
   {
     auto& factArguments = pFact.arguments();
-    auto insertionRes = _signatureToLists.emplace(currAccessor.factSignature(), factArguments.size());
+    auto insertionRes = _signatureToLists.emplace(currSignature, factArguments.size());
     ParameterToValues& parameterToValues = insertionRes.first->second;
 
     parameterToValues.all.emplace_back(pFact);
@@ -141,12 +140,11 @@ bool SetOfFact::_erase(const Fact& pFact)
       }
     }
 
-    std::list<FactAccessor> accessors;
-    FactAccessor::conditonFactToListOfFactAccessors(accessors, pFact);
-    for (auto& currAccessor : accessors)
+    std::list<std::string> factSignatures;
+    pFact.generateSignatureForAllSubTypes(factSignatures);
+    for (auto& currSignature : factSignatures)
     {
       auto& factArguments = pFact.arguments();
-      const auto& currSignature = currAccessor.factSignature();
       auto itParameterToValues = _signatureToLists.find(currSignature);
       if (itParameterToValues != _signatureToLists.end())
       {
@@ -255,9 +253,7 @@ typename SetOfFact::SetOfFactIterator SetOfFact::find(const Fact& pFact,
     return {};
   };
 
-
-  auto factAccessor = pFact.toFactAccessor();
-  auto itParameterToValues = _signatureToLists.find(factAccessor.factSignature());
+  auto itParameterToValues = _signatureToLists.find(pFact.factSignature());
   if (itParameterToValues != _signatureToLists.end())
   {
     const ParameterToValues& parameterToValues = itParameterToValues->second;

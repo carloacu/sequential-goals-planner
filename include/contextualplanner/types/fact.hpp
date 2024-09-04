@@ -8,7 +8,6 @@
 #include <set>
 #include "../util/api.hpp"
 #include <contextualplanner/types/entity.hpp>
-#include <contextualplanner/types/factaccessor.hpp>
 #include <contextualplanner/types/predicate.hpp>
 
 namespace cp
@@ -271,7 +270,9 @@ struct CONTEXTUALPLANNER_API Fact
   const std::optional<Entity>& fluent() const { return _fluent; }
   bool isValueNegated() const { return _isValueNegated; }
 
-  FactAccessor toFactAccessor() const;
+  std::string factSignature() const;
+  std::string generateFactSignature() const;
+  void generateSignatureForAllSubTypes(std::list<std::string>& pRes) const;
 
   void setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType);
   void setFluent(const std::optional<Entity>& pFluent);
@@ -296,9 +297,9 @@ private:
   std::optional<Entity> _fluent;
   /// Is the value of the fact negated.
   bool _isValueNegated;
-  std::optional<FactAccessor> _factAccessorCacheForConditions;
+  std::string _factSignature;
 
-  void _resetCache();
+  void _resetFactSignatureCache();
 
   void _addArgument(const std::string& pArgumentName,
                     const Ontology& pOntology,

@@ -74,7 +74,7 @@ Fact::Fact(const std::string& pStr,
     _arguments(),
     _fluent(),
     _isValueNegated(false),
-    _factAccessorCacheForConditions()
+    _factSignature()
 {
   auto resPos = fillFactFromStr(pStr, pOntology, pEntities, pParameters, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
   if (pResPos != nullptr)
@@ -94,7 +94,7 @@ Fact::Fact(const std::string& pName,
     _arguments(),
     _fluent(),
     _isValueNegated(false),
-    _factAccessorCacheForConditions()
+    _factSignature()
 {
   if (!_name.empty() && _name[_name.size() - 1] == '!')
   {
@@ -107,7 +107,7 @@ Fact::Fact(const std::string& pName,
     _addArgument(currParam, pOntology, pEntities, pParameters);
   _setFluent(pFluentStr, pOntology, pEntities, pParameters);
   _finalizeInisilizationAndValidityChecks(pOntology, pEntities, pIsOkIfFluentIsMissing);
-  _resetCache();
+  _resetFactSignatureCache();
 }
 
 
@@ -121,7 +121,7 @@ Fact::Fact(const Fact& pOther)
     _arguments(pOther._arguments),
     _fluent(pOther._fluent),
     _isValueNegated(pOther._isValueNegated),
-    _factAccessorCacheForConditions(pOther._factAccessorCacheForConditions)
+    _factSignature(pOther._factSignature)
 {
 }
 
@@ -131,7 +131,7 @@ Fact::Fact(Fact&& pOther) noexcept
     _arguments(std::move(pOther._arguments)),
     _fluent(std::move(pOther._fluent)),
     _isValueNegated(std::move(pOther._isValueNegated)),
-    _factAccessorCacheForConditions(std::move(pOther._factAccessorCacheForConditions))
+    _factSignature(std::move(pOther._factSignature))
 {
 }
 
@@ -141,7 +141,7 @@ Fact& Fact::operator=(const Fact& pOther) {
   _arguments = pOther._arguments;
   _fluent = pOther._fluent;
   _isValueNegated = pOther._isValueNegated;
-  _factAccessorCacheForConditions = pOther._factAccessorCacheForConditions;
+  _factSignature = pOther._factSignature;
   return *this;
 }
 
@@ -151,7 +151,7 @@ Fact& Fact::operator=(Fact&& pOther) noexcept {
     _arguments = std::move(pOther._arguments);
     _fluent = std::move(pOther._fluent);
     _isValueNegated = std::move(pOther._isValueNegated);
-    _factAccessorCacheForConditions = std::move(pOther._factAccessorCacheForConditions);
+    _factSignature = std::move(pOther._factSignature);
     return *this;
 }
 
@@ -434,7 +434,7 @@ void Fact::replaceArguments(const std::map<Parameter, Entity>& pCurrentArguments
     if (itValueParam != pCurrentArgumentsToNewArgument.end())
       currParam = itValueParam->second;
   }
-  _resetCache();
+  _resetFactSignatureCache();
 }
 
 void Fact::replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurrentArgumentsToNewArgument)
@@ -452,7 +452,7 @@ void Fact::replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurren
     if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
       currParam = *itValueParam->second.begin();
   }
-  _resetCache();
+  _resetFactSignatureCache();
 }
 
 std::string Fact::toStr() const
@@ -566,7 +566,7 @@ std::size_t Fact::fillFactFromStr(
     throw std::runtime_error(std::string(e.what()) + ". The exception was thrown while parsing fact: \"" + pStr + "\"");
   }
 
-  _resetCache();
+  _resetFactSignatureCache();
   return pos;
 }
 
@@ -591,7 +591,7 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToR
     }
   }
 
-  _resetCache();
+  _resetFactSignatureCache();
   return res;
 }
 
@@ -761,26 +761,74 @@ void Fact::replaceArgument(const std::string& pCurrent,
 }
 
 
-FactAccessor Fact::toFactAccessor() const
+std::string Fact::factSignature() const
 {
-  if (_factAccessorCacheForConditions)
-    return *_factAccessorCacheForConditions;
+  if (_factSignature != "")
+    return _factSignature;
 
   if (CONTEXTUALPLANNER_DEBUG_FOR_TESTS)
-    throw std::runtime_error("_factAccessorCache is not set");
-  return FactAccessor(*this);
+    throw std::runtime_error("_factSignature is not set");
+  return generateFactSignature();
 }
+
+std::string Fact::generateFactSignature() const
+{
+  auto res = _name;
+  res += "(";
+  bool firstArg = true;
+  for (const auto& currArg : _arguments)
+  {
+    if (currArg.type)
+    {
+      if (firstArg)
+        firstArg = false;
+      else
+        res += ", ";
+      res += currArg.type->name;
+    }
+  }
+  res += ")";
+
+  if (_fluent)
+  {
+    if (_fluent->type)
+      res += "=" + _fluent->type->name;
+  }
+  return res;
+}
+
+
+void Fact::generateSignatureForAllSubTypes(std::list<std::string>& pRes) const
+{
+  pRes.emplace_back(factSignature());
+
+  for (std::size_t i = 0; i < _arguments.size(); ++i)
+  {
+    const auto& currArg = _arguments[i];
+    if (currArg.type && currArg.isAParameterToFill())
+    {
+      for (const auto& currSubType : currArg.type->subTypes)
+      {
+        auto fact = *this;
+        fact.setArgumentType(i, currSubType);
+        fact.generateSignatureForAllSubTypes(pRes);
+      }
+    }
+  }
+}
+
+
 
 void Fact::setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType)
 {
   _arguments[pIndex].type = pType;
-  _resetCache();
+  _resetFactSignatureCache();
 }
 
 void Fact::setFluent(const std::optional<Entity>& pFluent)
 {
   _fluent = pFluent;
-  _resetCache();
+  _resetFactSignatureCache();
 }
 
 bool Fact::isCompleteWithAnyValueFluent() const
@@ -796,12 +844,11 @@ bool Fact::isCompleteWithAnyValueFluent() const
 }
 
 
-void Fact::_resetCache()
+void Fact::_resetFactSignatureCache()
 {
-  _factAccessorCacheForConditions.reset();
-  if (!_factAccessorCacheForConditions)
-    _factAccessorCacheForConditions.emplace(*this);
+  _factSignature = generateFactSignature();
 }
+
 
 void Fact::_addArgument(const std::string& pArgumentName,
                         const Ontology& pOntology,

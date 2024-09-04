@@ -6,7 +6,6 @@
 #include "../util/api.hpp"
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/types/action.hpp>
-#include <contextualplanner/types/factaccessor.hpp>
 #include <contextualplanner/types/facttoconditions.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setofinferences.hpp>

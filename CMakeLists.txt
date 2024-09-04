@@ -13,7 +13,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/domain.hpp
     include/contextualplanner/types/entity.hpp
     include/contextualplanner/types/fact.hpp
-    include/contextualplanner/types/factaccessor.hpp
+
     include/contextualplanner/types/factoptional.hpp
     include/contextualplanner/types/goal.hpp
     include/contextualplanner/types/goalstack.hpp
@@ -62,7 +62,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/expressionParsed.hpp
     src/types/expressionParsed.cpp
     src/types/fact.cpp
-    src/types/factaccessor.cpp
+
     src/types/factoptional.cpp
     src/types/factsalreadychecked.hpp
     src/types/goal.cpp
