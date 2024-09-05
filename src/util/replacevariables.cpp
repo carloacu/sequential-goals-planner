@@ -16,9 +16,9 @@ void replaceVariables(std::string& pStr,
     auto endVarPos = pStr.find("}", beginOfVarName);
     if (endVarPos != std::string::npos)
     {
-      auto varName = pStr.substr(beginOfVarName, endVarPos - beginOfVarName);
+      auto varParam = pStr.substr(beginOfVarName, endVarPos - beginOfVarName);
 
-      auto it = pVariablesToValue.find(varName);
+      auto it = pVariablesToValue.find(varParam);
       if (it != pVariablesToValue.end())
       {
         auto& varValue = it->second;

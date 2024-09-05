@@ -104,8 +104,10 @@ Fact::Fact(const std::string& pName,
 
   predicate = pOntology.predicates.nameToPredicate(_name);
   for (auto& currParam : pArgumentStrs)
-    _addArgument(currParam, pOntology, pEntities, pParameters);
-  _setFluent(pFluentStr, pOntology, pEntities, pParameters);
+    if (!currParam.empty())
+      _arguments.push_back(Entity::fromUsage(currParam, pOntology, pEntities, pParameters));
+  if (!pFluentStr.empty())
+    _fluent = Entity::fromUsage(pFluentStr, pOntology, pEntities, pParameters);
   _finalizeInisilizationAndValidityChecks(pOntology, pEntities, pIsOkIfFluentIsMissing);
   _resetFactSignatureCache();
 }
@@ -536,7 +538,8 @@ std::size_t Fact::fillFactFromStr(
             _name = pStr.substr(beginPos, pos - beginPos);
           ++pos;
           auto argumentName = cp::Fact(pStr, pOntology, pEntities, pParameters, &separatorOfParameters, &_isValueNegated, pos, &pos).toStr();
-          _addArgument(argumentName, pOntology, pEntities, pParameters);
+          if (!argumentName.empty())
+            _arguments.push_back(Entity::fromUsage(argumentName, pOntology, pEntities, pParameters));
           beginPos = pos;
           continue;
         }
@@ -554,7 +557,11 @@ std::size_t Fact::fillFactFromStr(
       if (_name.empty())
         _name = pStr.substr(beginPos, pos - beginPos);
       else if (pos > beginPos)
-        _setFluent(pStr.substr(beginPos, pos - beginPos), pOntology, pEntities, pParameters);
+      {
+        auto fluentStr = pStr.substr(beginPos, pos - beginPos);
+        if (!fluentStr.empty())
+          _fluent = Entity::fromUsage(fluentStr, pOntology, pEntities, pParameters);
+      }
     }
 
     if (!pOntology.empty())
@@ -847,93 +854,6 @@ bool Fact::isCompleteWithAnyValueFluent() const
 void Fact::_resetFactSignatureCache()
 {
   _factSignature = generateFactSignature();
-}
-
-
-void Fact::_addArgument(const std::string& pArgumentName,
-                        const Ontology& pOntology,
-                        const SetOfEntities& pEntities,
-                        const std::vector<Parameter>& pParameters)
-{
-  if (pArgumentName.empty())
-    return;
-  if (pArgumentName[0] == '?')
-  {
-    bool foundParam = false;
-    for (const auto& currParam : pParameters)
-    {
-      if (currParam.name == pArgumentName)
-      {
-        _arguments.emplace_back(currParam.name, currParam.type);
-        foundParam = true;
-        break;
-      }
-    }
-    if (!foundParam)
-      throw std::runtime_error("Add a parameter argument of a fact \"" + pArgumentName + "\" that is unknown");
-  }
-  else if (!pOntology.empty())
-  {
-    auto* entityPtr = pOntology.constants.valueToEntity(pArgumentName);
-    if (entityPtr == nullptr)
-    {
-      entityPtr = pEntities.valueToEntity(pArgumentName);
-      if (entityPtr == nullptr)
-        throw std::runtime_error("\"" + pArgumentName + "\" is not an entity value");
-    }
-    _arguments.emplace_back(*entityPtr);
-  }
-  else
-  {
-    _arguments.emplace_back(pArgumentName);
-  }
-}
-
-
-void Fact::_setFluent(const std::string& pFluentStr,
-                      const Ontology& pOntology,
-                      const SetOfEntities& pEntities,
-                      const std::vector<Parameter>& pParameters)
-{
-  if (pFluentStr.empty())
-    return;
-
-  if (pFluentStr[0] == '?')
-  {
-    bool foundFluent = false;
-    for (const auto& currParam : pParameters)
-    {
-      if (currParam.name == pFluentStr)
-      {
-        _fluent.emplace(currParam.name, currParam.type);
-        foundFluent = true;
-        break;
-      }
-    }
-    if (!foundFluent)
-      throw std::runtime_error("Add a fluent of a fact \"" + pFluentStr + "\" that is unknown");
-  }
-  else if (!pOntology.empty())
-  {
-    auto* entityPtr = pOntology.constants.valueToEntity(pFluentStr);
-    if (entityPtr == nullptr)
-    {
-      if (pFluentStr == Entity::anyEntityValue())
-        _fluent.emplace(Entity::createAnyEntity());
-      else if (isNumber(pFluentStr))
-        _fluent.emplace(Entity::createNumberEntity(pFluentStr, pOntology.types));
-      else
-        throw std::runtime_error("\"" + pFluentStr + "\" fluent is not a entity value");
-    }
-    else
-    {
-      _fluent.emplace(*entityPtr);
-    }
-  }
-  else
-  {
-    _fluent = pFluentStr;
-  }
 }
 
 

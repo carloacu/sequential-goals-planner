@@ -1,6 +1,8 @@
 #include <contextualplanner/types/entity.hpp>
 #include <vector>
+#include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/parameter.hpp>
+#include <contextualplanner/types/setofentities.hpp>
 #include <contextualplanner/types/setoftypes.hpp>
 #include <contextualplanner/util/util.hpp>
 
@@ -69,8 +71,8 @@ Entity Entity::createNumberEntity(const std::string& pNumber,
 }
 
 
-Entity Entity::fromStr(const std::string& pStr,
-                       const SetOfTypes& pSetOfTypes)
+Entity Entity::fromDeclaration(const std::string& pStr,
+                               const SetOfTypes& pSetOfTypes)
 {
   std::vector<std::string> nameWithType;
   cp::split(nameWithType, pStr, "-");
@@ -88,6 +90,40 @@ Entity Entity::fromStr(const std::string& pStr,
   }
 
   return Entity(nameWithType[0]);
+}
+
+
+Entity Entity::fromUsage(const std::string& pStr,
+                         const Ontology& pOntology,
+                         const SetOfEntities& pEntities,
+                         const std::vector<Parameter>& pParameters)
+{
+  if (pStr.empty())
+    throw std::runtime_error("Empty entity usage");
+
+  if (pStr[0] == '?')
+  {
+    for (const auto& currParam : pParameters)
+      if (currParam.name == pStr)
+        return Entity(currParam.name, currParam.type);
+    throw std::runtime_error("The parameter \"" + pStr + "\" is unknown");
+  }
+
+  if (pOntology.empty())
+    return Entity(pStr);
+
+  auto* entityPtr = pOntology.constants.valueToEntity(pStr);
+  if (entityPtr != nullptr)
+    return Entity(*entityPtr);
+
+  entityPtr = pEntities.valueToEntity(pStr);
+  if (entityPtr != nullptr)
+    return Entity(*entityPtr);
+  if (pStr == Entity::anyEntityValue())
+    return Entity::createAnyEntity();
+  if (isNumber(pStr))
+    return Entity::createNumberEntity(pStr, pOntology.types);
+  throw std::runtime_error("\"" + pStr + "\" is not an entity value");
 }
 
 

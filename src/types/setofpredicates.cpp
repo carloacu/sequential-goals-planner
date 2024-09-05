@@ -27,6 +27,12 @@ SetOfPredicates SetOfPredicates::fromStr(const std::string& pStr,
 }
 
 
+void SetOfPredicates::addAll(const SetOfPredicates& pOther)
+{
+  for (const auto& currPredicate : pOther._predicates)
+    addPredicate(currPredicate);
+}
+
 void SetOfPredicates::addPredicate(const Predicate& pPredicate)
 {
   _predicates.push_back(pPredicate);

@@ -17,7 +17,7 @@ struct CONTEXTUALPLANNER_API SetOfEntities
   SetOfEntities();
 
   static SetOfEntities fromStr(const std::string& pStr,
-                                 const SetOfTypes& pSetOfTypes);
+                               const SetOfTypes& pSetOfTypes);
 
   void add(const Entity& pEntity);
 

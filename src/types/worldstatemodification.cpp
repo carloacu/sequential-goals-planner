@@ -676,33 +676,31 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
   {
     auto leftOperand = _expressionParsedToWsModification(pExpressionParsed.arguments.front(), pOntology, pEntities, pParameters, true);
     const auto& rightOperandExp = *(++pExpressionParsed.arguments.begin());
-    auto rightOperand = _expressionParsedToWsModification(rightOperandExp, pOntology, pEntities, pParameters, true);
-
     auto* leftFactPtr = dynamic_cast<WorldStateModificationFact*>(&*leftOperand);
-    if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated)
+    if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated &&
+        rightOperandExp.arguments.empty() &&
+        !rightOperandExp.followingExpression && rightOperandExp.value == "")
     {
-      const auto* rightFactPtr = dynamic_cast<const WorldStateModificationFact*>(&*rightOperand);
-      if (rightFactPtr != nullptr &&
-          rightFactPtr->factOptional.fact.arguments().empty() &&
-          !rightFactPtr->factOptional.fact.fluent())
+      if (rightOperandExp.name == Fact::undefinedValue.value)
       {
-        if (rightFactPtr->factOptional.fact.name() == Fact::undefinedValue.value)
-        {
-          leftFactPtr->factOptional.isFactNegated = true;
-          leftFactPtr->factOptional.fact.setFluent(Fact::anyValue);
-          res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
-        }
-        else if (pExpressionParsed.name == _assignFunctionName && !rightOperandExp.isAFunction)
-        {
-          leftFactPtr->factOptional.fact.setFluent(rightFactPtr->factOptional.fact.name());
-          res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
-        }
+        leftFactPtr->factOptional.isFactNegated = true;
+        leftFactPtr->factOptional.fact.setFluent(Fact::anyValue);
+        res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
+      }
+      else if (pExpressionParsed.name == _assignFunctionName && !rightOperandExp.isAFunction &&
+               rightOperandExp.name != "")
+      {
+        leftFactPtr->factOptional.fact.setFluent(Entity::fromUsage(rightOperandExp.name, pOntology, pEntities, pParameters));
+        res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
       }
     }
 
     if (!res)
+    {
+      auto rightOperand = _expressionParsedToWsModification(rightOperandExp, pOntology, pEntities, pParameters, true);
       res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::ASSIGN,
                                                          std::move(leftOperand), std::move(rightOperand));
+    }
   }
   else if (pExpressionParsed.name == _notFunctionName &&
            pExpressionParsed.arguments.size() == 1)

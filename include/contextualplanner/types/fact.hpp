@@ -301,14 +301,6 @@ private:
 
   void _resetFactSignatureCache();
 
-  void _addArgument(const std::string& pArgumentName,
-                    const Ontology& pOntology,
-                    const SetOfEntities& pEntities,
-                    const std::vector<Parameter>& pParameters);
-  void _setFluent(const std::string& pFluentStr,
-                  const Ontology& pOntology,
-                  const SetOfEntities& pEntities,
-                  const std::vector<Parameter>& pParameters);
   void _finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
                                                const SetOfEntities& pEntities,
                                                bool pIsOkIfFluentIsMissing);

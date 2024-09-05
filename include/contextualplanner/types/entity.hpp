@@ -8,8 +8,11 @@
 
 namespace cp
 {
-struct SetOfTypes;
+struct Ontology;
 struct Parameter;
+struct SetOfEntities;
+struct SetOfTypes;
+
 
 struct CONTEXTUALPLANNER_API Entity
 {
@@ -30,8 +33,14 @@ struct CONTEXTUALPLANNER_API Entity
   static Entity createAnyEntity();
   static Entity createNumberEntity(const std::string& pNumber,
                                    const SetOfTypes& pSetOfTypes);
-  static Entity fromStr(const std::string& pStr,
-                        const SetOfTypes& pSetOfTypes);
+  static Entity fromDeclaration(const std::string& pStr,
+                                const SetOfTypes& pSetOfTypes);
+
+  static Entity fromUsage(const std::string& pStr,
+                          const Ontology& pOntology,
+                          const SetOfEntities& pEntities,
+                          const std::vector<Parameter>& pParameters);
+
   std::string toStr() const;
   bool isAnyValue() const;
   bool isAParameterToFill() const;

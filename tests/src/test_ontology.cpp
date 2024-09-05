@@ -169,7 +169,7 @@ void _test_fact_initialization()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"val\" fluent is not a entity value. The exception was thrown while parsing fact: \"pred_name(toto)=val\"", e.what());
+    assert_eq<std::string>("\"val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name(toto)=val\"", e.what());
   }
 
   cp::Fact("pred_name2(toto, titi)=res", ontology, {}, {});
@@ -189,7 +189,7 @@ void _test_fact_initialization()
     assert_true(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"unknown_val\" fluent is not a entity value. The exception was thrown while parsing fact: \"pred_name2(toto, titi)=unknown_val\"", e.what());
+    assert_eq<std::string>("\"unknown_val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name2(toto, titi)=unknown_val\"", e.what());
   }
 
 
@@ -244,7 +244,7 @@ void _test_action_initialization()
   }
   catch (const std::exception& e)
   {
-    assert_eq<std::string>("Add a parameter argument of a fact \"?p\" that is unknown", e.what());
+    assert_eq<std::string>("The parameter \"?p\" is unknown", e.what());
   }
 
   {
@@ -259,12 +259,18 @@ void _test_action_initialization()
     }
     catch (const std::exception& e)
     {
-      assert_eq<std::string>("Add a fluent of a fact \"?r\" that is unknown", e.what());
+      assert_eq<std::string>("The parameter \"?r\" is unknown", e.what());
     }
   }
 
   cp::Condition::fromStr("exists(?obj - my_type2, pred_name2(toto, ?obj)=res)", ontology, entities, {});
+  cp::Condition::fromStr("exists(?obj - my_type2, =(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
+  cp::Condition::fromStr("=(pred_name3(tutu), undefined)", ontology, entities, {});
+  cp::Condition::fromStr("=(pred_name3(tutu), res)", ontology, entities, {});
   cp::WorldStateModification::fromStr("forAll(?obj - my_type2, pred_name2(toto, ?obj)=res, set(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
+  cp::WorldStateModification::fromStr("assign(pred_name3(tutu), res)", ontology, entities, {});
+  std::vector<cp::Parameter> returnParameter(1, cp::Parameter::fromStr("?r - return_type", ontology.types));
+  cp::WorldStateModification::fromStr("assign(pred_name3(tutu), ?r)", ontology, entities, returnParameter);
 }
 
 
