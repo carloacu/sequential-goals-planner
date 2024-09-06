@@ -6,6 +6,7 @@
 #include <set>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/util/alias.hpp>
 
 
@@ -34,7 +35,7 @@ struct CONTEXTUALPLANNER_API WorldStateCache
   /// Clear accessible and removable facts.
   void clear();
 
-  const std::set<Fact>& accessibleFacts() const { return _accessibleFacts; }
+  const SetOfFact& accessibleFacts() const { return _accessibleFacts; }
   const std::set<Fact>& accessibleFactsWithAnyValues() const { return _accessibleFactsWithAnyValues; }
   const std::set<Fact>& removableFacts() const { return _removableFacts; }
   const std::set<Fact>& removableFactsWithAnyValues() const { return _removableFactsWithAnyValues; }
@@ -43,7 +44,7 @@ struct CONTEXTUALPLANNER_API WorldStateCache
 private:
   const WorldState& _worldState;
   /// Facts that can be reached with the set of actions of the domain.
-  std::set<Fact> _accessibleFacts;
+  SetOfFact _accessibleFacts;
   /// Facts with any values that can be reached with the set of actions of the domain.
   std::set<Fact> _accessibleFactsWithAnyValues;
   /// Facts that can be removed with the set of actions of the domain.

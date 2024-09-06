@@ -311,7 +311,7 @@ bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
 
   if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, _factsMapping.facts()))
     return true;
-  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, accessibleFacts))
+  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, accessibleFacts.facts()))
     return true;
 
   const auto& removableFacts = _cache->removableFacts();
@@ -335,7 +335,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
   if (!pFact.isValueNegated())
   {
     if (!_factsMapping.find(pFact).empty() ||
-        accessibleFacts.count(pFact) > 0)
+        !accessibleFacts.find(pFact).empty())
       return true;
 
     const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
@@ -347,7 +347,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
   {
     if (_isNegatedFactCompatibleWithFacts(pFact, _factsMapping.facts()))
       return true;
-    if (_isNegatedFactCompatibleWithFacts(pFact, accessibleFacts))
+    if (_isNegatedFactCompatibleWithFacts(pFact, accessibleFacts.facts()))
       return true;
 
     const auto& removableFacts = _cache->removableFacts();
@@ -365,7 +365,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
 bool WorldState::canFactNameBeModified(const std::string& pFactName) const
 {
   const auto& accessibleFacts = _cache->accessibleFacts();
-  for (const auto& currAccessibleFact : accessibleFacts)
+  for (const auto& currAccessibleFact : accessibleFacts.facts())
     if (currAccessibleFact.name() == pFactName)
       return true;
 

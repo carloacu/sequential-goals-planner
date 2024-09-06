@@ -163,6 +163,37 @@ void _number_type()
 }
 
 
+void _planWithActionThenInferenceWithFluentParameter()
+{
+  const std::string action1 = "action1";
+  std::map<std::string, cp::Action> actions;
+
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("pred_a - entity\n"
+                                                     "pred_b(?e - entity)", ontology.types);
+
+  const cp::SetOfEntities entities;
+
+  cp::Action actionObj1({},
+                        cp::WorldStateModification::fromStr("pred_a=toto", ontology, entities, {}));
+  actions.emplace(action1, actionObj1);
+
+  cp::SetOfInferences setOfInferences;
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
+  cp::Inference inference(cp::Condition::fromStr("pred_a=?e", ontology, entities, inferenceParameters),
+                          cp::WorldStateModification::fromStr("pred_b(?e)", ontology, entities, inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
+  setOfInferences.addInference(inference);
+
+  cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("pred_b(toto)", ontology, entities)});
+ assert_eq<std::string>(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -182,6 +213,7 @@ int main(int argc, char *argv[])
   _simplest_plan_possible();
   _wrong_condition_type();
   _number_type();
+  _planWithActionThenInferenceWithFluentParameter();
 
   test_plannerWithoutTypes();
   std::cout << "chatbot planner is ok !!!!" << std::endl;

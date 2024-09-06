@@ -47,13 +47,13 @@ void WorldStateCache::clear()
 
 void WorldStateCache::notifyAboutANewFact(const Fact& pNewFact)
 {
-  auto itAccessible = _accessibleFacts.find(pNewFact);
-  if (itAccessible != _accessibleFacts.end())
+  auto itAccessible = _accessibleFacts.facts().find(pNewFact);
+  if (itAccessible != _accessibleFacts.facts().end())
   {
     // If we already known that this fact was accessible no need to clear the cache.
     // We simply just remove it from the accessible fact,
     // because an accessible fact means that the fact is not already present in the world state.
-    _accessibleFacts.erase(itAccessible);
+    _accessibleFacts.erase(pNewFact);
   }
   else
   {
@@ -74,7 +74,7 @@ void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
     FactsAlreadyChecked factsAlreadychecked;
     for (const auto& currFact : pFacts)
     {
-      if (_accessibleFacts.count(currFact) == 0)
+      if (_accessibleFacts.facts().count(currFact) == 0)
       {
         auto itPrecToActions = pDomain.preconditionToActions().find(currFact);
         _feedAccessibleFactsFromSetOfActions(itPrecToActions, pDomain, factsAlreadychecked);
@@ -145,7 +145,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
     if (!pFactOpt.isFactNegated)
     {
       if (_worldState.facts().count(pFactOpt.fact) == 0 &&
-          _accessibleFacts.count(pFactOpt.fact) == 0)
+          _accessibleFacts.facts().count(pFactOpt.fact) == 0)
       {
         if (pFactOpt.fact.fluent() == Fact::anyValue)
         {
@@ -184,7 +184,8 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
   if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() ||
       !removableFactsToAdd.empty() || !removableFactsToAddWithAnyValues.empty())
   {
-    _accessibleFacts.insert(accessibleFactsToAdd.begin(), accessibleFactsToAdd.end());
+    for (auto& currFact : accessibleFactsToAdd)
+      _accessibleFacts.add(currFact);
     _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
     _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
     _removableFactsWithAnyValues.insert(removableFactsToAddWithAnyValues.begin(), removableFactsToAddWithAnyValues.end());
