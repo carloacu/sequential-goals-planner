@@ -119,6 +119,21 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
 {
   std::unique_ptr<Condition> res;
 
+  auto nodeType = ConditionNodeType::AND;
+  if (pExpressionParsed.followingExpression)
+  {
+    if (pExpressionParsed.separatorToFollowingExp == '+')
+      nodeType = ConditionNodeType::PLUS;
+    else if (pExpressionParsed.separatorToFollowingExp == '-')
+      nodeType = ConditionNodeType::MINUS;
+    else if (pExpressionParsed.separatorToFollowingExp == '>')
+      nodeType = ConditionNodeType::SUPERIOR;
+    else if (pExpressionParsed.separatorToFollowingExp == '<')
+      nodeType = ConditionNodeType::INFERIOR;
+    else if (pExpressionParsed.separatorToFollowingExp == '|')
+      nodeType = ConditionNodeType::OR;
+  }
+
   if ((pExpressionParsed.name == _equalsFunctionName || pExpressionParsed.name == _equalsCharFunctionName) &&
       pExpressionParsed.arguments.size() == 2)
   {
@@ -223,22 +238,14 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
     }
 
     if (!res)
-      res = std::make_unique<ConditionFact>(pExpressionParsed.toFact(pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing));
+    {
+      bool isOkIfFluentIsMissing = pIsOkIfFluentIsMissing || nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR;
+      res = std::make_unique<ConditionFact>(pExpressionParsed.toFact(pOntology, pEntities, pParameters, isOkIfFluentIsMissing));
+    }
   }
 
   if (pExpressionParsed.followingExpression)
   {
-    auto nodeType = ConditionNodeType::AND;
-    if (pExpressionParsed.separatorToFollowingExp == '+')
-      nodeType = ConditionNodeType::PLUS;
-    else if (pExpressionParsed.separatorToFollowingExp == '-')
-      nodeType = ConditionNodeType::MINUS;
-    else if (pExpressionParsed.separatorToFollowingExp == '>')
-      nodeType = ConditionNodeType::SUPERIOR;
-    else if (pExpressionParsed.separatorToFollowingExp == '<')
-      nodeType = ConditionNodeType::INFERIOR;
-    else if (pExpressionParsed.separatorToFollowingExp == '|')
-      nodeType = ConditionNodeType::OR;
     res = std::make_unique<ConditionNode>(nodeType,
                                           std::move(res),
                                           _expressionParsedToCondition(*pExpressionParsed.followingExpression, pOntology, pEntities, pParameters, false));
