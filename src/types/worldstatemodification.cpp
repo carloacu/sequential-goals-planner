@@ -537,7 +537,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
 
       if (!factToCheck.fact.fluent())
       {
-        factToCheck.fact.setFluent("??tmpValueFromSet_" + pFromDeductionId);
+        factToCheck.fact.setFluent(Entity("??tmpValueFromSet_" + pFromDeductionId, factToCheck.fact.predicate.fluent));
         localParameterToFind[factToCheck.fact.fluent()->value];
       }
       bool res = pFactCallback(factToCheck, &localParameterToFind, [&](const std::map<Parameter, std::set<Entity>>& pLocalParameterToFind){

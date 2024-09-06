@@ -194,6 +194,47 @@ void _planWithActionThenInferenceWithFluentParameter()
 }
 
 
+void _planWithActionThenInferenceWithAssign()
+{
+  const std::string action1 = "action1";
+  std::map<std::string, cp::Action> actions;
+
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "other_type");
+  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity\n"
+                                                  "v - other_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("pred_a - other_type\n"
+                                                     "pred_b(?e - entity) - other_type\n"
+                                                     "pred_c - other_type\n"
+                                                     "pred_d - other_type", ontology.types);
+
+  const cp::SetOfEntities entities;
+
+  std::vector<cp::Parameter> actionParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
+  cp::Action actionObj1({},
+                        cp::WorldStateModification::fromStr("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
+  actionObj1.parameters = std::move(actionParameters);
+  actions.emplace(action1, actionObj1);
+
+  cp::SetOfInferences setOfInferences;
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter::fromStr("?t - other_type", ontology.types)};
+  cp::Inference inference(cp::Condition::fromStr("pred_a=?t", ontology, entities, inferenceParameters),
+                          cp::WorldStateModification::fromStr("pred_d=?t", ontology, entities, inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
+  setOfInferences.addInference(inference);
+
+  cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("pred_d=v", ontology, entities)});
+  problem.worldState.addFact(cp::Fact("pred_b(toto)=v", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  assert_eq<std::string>(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+}
+
+
+
 }
 
 
@@ -214,6 +255,7 @@ int main(int argc, char *argv[])
   _wrong_condition_type();
   _number_type();
   _planWithActionThenInferenceWithFluentParameter();
+  _planWithActionThenInferenceWithAssign();
 
   test_plannerWithoutTypes();
   std::cout << "chatbot planner is ok !!!!" << std::endl;
