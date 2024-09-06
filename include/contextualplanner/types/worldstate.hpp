@@ -273,7 +273,7 @@ struct CONTEXTUALPLANNER_API WorldState
 
   void refreshCacheIfNeeded(const Domain& pDomain);
 
-  const std::set<Fact>& removableFacts() const;
+  const SetOfFact& removableFacts() const;
 
 
 private:

@@ -315,7 +315,7 @@ bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
     return true;
 
   const auto& removableFacts = _cache->removableFacts();
-  if (removableFacts.count(pFactOptional.fact) > 0)
+  if (removableFacts.facts().count(pFactOptional.fact) > 0)
     return true;
 
   const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
@@ -351,7 +351,7 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
       return true;
 
     const auto& removableFacts = _cache->removableFacts();
-    if (removableFacts.count(pFact) > 0)
+    if (removableFacts.facts().count(pFact) > 0)
       return true;
 
     const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
@@ -560,7 +560,7 @@ void WorldState::refreshCacheIfNeeded(const Domain& pDomain)
 }
 
 
-const std::set<Fact>& WorldState::removableFacts() const
+const SetOfFact& WorldState::removableFacts() const
 {
   return _cache->removableFacts();
 }

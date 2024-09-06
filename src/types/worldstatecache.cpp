@@ -163,7 +163,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
     }
     else
     {
-      if (_removableFacts.count(pFactOpt.fact) == 0)
+      if (_removableFacts.facts().count(pFactOpt.fact) == 0)
       {
         if (pFactOpt.fact.fluent() == Fact::anyValue)
         {
@@ -187,7 +187,8 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
     for (auto& currFact : accessibleFactsToAdd)
       _accessibleFacts.add(currFact);
     _accessibleFactsWithAnyValues.insert(accessibleFactsToAddWithAnyValues.begin(), accessibleFactsToAddWithAnyValues.end());
-    _removableFacts.insert(removableFactsToAdd.begin(), removableFactsToAdd.end());
+    for (auto& currFact : removableFactsToAdd)
+      _removableFacts.add(currFact);
     _removableFactsWithAnyValues.insert(removableFactsToAddWithAnyValues.begin(), removableFactsToAddWithAnyValues.end());
     for (const auto& currNewFact : accessibleFactsToAdd)
       _feedAccessibleFactsFromFact(currNewFact, pDomain, pFactsAlreadychecked);
