@@ -468,13 +468,13 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
         {
           auto factToCompare = pFactOptional.fact;
           factToCompare.replaceArguments(currParamPoss);
-          if (factToCompare.fluent() == Fact::anyValue)
+          if (factToCompare.fluent() && factToCompare.fluent()->isAnyValue())
           {
             for (const auto& currFact : factMatchingInWs)
             {
               if (currFact.areEqualExceptAnyValues(factToCompare))
               {
-                if (pFactOptional.fact.fluent() != Fact::anyValue)
+                if (!pFactOptional.fact.fluent() || !pFactOptional.fact.fluent()->isAnyValue())
                 {
                   if (pFactOptional.fact.fluent() && currFact.fluent())
                     newParameters = {{pFactOptional.fact.fluent()->toParameter(), {*currFact.fluent()}}};
@@ -486,11 +486,11 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
             return true;
           }
         }
-        if (pFactOptional.fact.fluent() == Fact::anyValue)
+        if (pFactOptional.fact.fluent() && pFactOptional.fact.fluent()->isAnyValue())
           return false;
       }
 
-      if (pFactOptional.fact.fluent() == Fact::anyValue)
+      if (pFactOptional.fact.fluent() && pFactOptional.fact.fluent()->isAnyValue())
       {
         for (const auto& currFact : factMatchingInWs)
           if (currFact.areEqualExceptAnyValues(pFactOptional.fact))

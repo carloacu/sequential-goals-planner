@@ -147,7 +147,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
       if (_worldState.facts().count(pFactOpt.fact) == 0 &&
           _accessibleFacts.facts().count(pFactOpt.fact) == 0)
       {
-        if (pFactOpt.fact.fluent() == Fact::anyValue)
+        if (pFactOpt.fact.fluent() && pFactOpt.fact.fluent()->isAnyValue())
         {
           accessibleFactsToAddWithAnyValues.push_back(pFactOpt.fact);
         }
@@ -165,7 +165,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
     {
       if (_removableFacts.facts().count(pFactOpt.fact) == 0)
       {
-        if (pFactOpt.fact.fluent() == Fact::anyValue)
+        if (pFactOpt.fact.fluent() && pFactOpt.fact.fluent()->isAnyValue())
         {
           removableFactsToAddWithAnyValues.push_back(pFactOpt.fact);
         }

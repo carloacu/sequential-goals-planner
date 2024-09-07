@@ -202,7 +202,7 @@ bool Fact::areEqualWithoutFluentConsideration(const Fact& pFact,
   auto itOtherParam = pFact._arguments.begin();
   while (itParam != _arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
+    if (*itParam != *itOtherParam && !itParam->isAnyValue() && !itOtherParam->isAnyValue() &&
         !(_isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr) ||
           _isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr2)))
       return false;
@@ -225,7 +225,7 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
   auto itOtherParam = pFact._arguments.begin();
   while (itParam != _arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
+    if (*itParam != *itOtherParam && !itParam->isAnyValue() && !itOtherParam->isAnyValue() &&
         itParam->value != pArgToIgnore)
       return false;
     ++itParam;
@@ -249,7 +249,7 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
   auto itOtherParam = pOther._arguments.begin();
   while (itParam != _arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
+    if (*itParam != *itOtherParam && !itParam->isAnyValue() && !itOtherParam->isAnyValue() &&
         !(_isInside(*itParam, pThisFactParametersToConsiderAsAnyValuePtr)) &&
         !(_isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr) ||
           _isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr2)))
@@ -261,11 +261,11 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
   if (!_fluent && !pOther._fluent)
     return _isValueNegated == pOther._isValueNegated;
   if (_fluent &&
-      (*_fluent == anyValue ||
+      (_fluent->isAnyValue() ||
        _isInside(*_fluent, pThisFactParametersToConsiderAsAnyValuePtr)))
     return _isValueNegated == pOther._isValueNegated;
   if (pOther._fluent &&
-      (*pOther._fluent == anyValue ||
+      (pOther._fluent->isAnyValue() ||
        _isInside(*pOther._fluent, pOtherFactParametersToConsiderAsAnyValuePtr) ||
        _isInside(*pOther._fluent, pOtherFactParametersToConsiderAsAnyValuePtr2)))
     return _isValueNegated == pOther._isValueNegated;
@@ -289,7 +289,7 @@ bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
   auto itOtherParam = pOther._arguments.begin();
   while (itParam != _arguments.end())
   {
-    if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
+    if (*itParam != *itOtherParam && !itParam->isAnyValue() && !itOtherParam->isAnyValue() &&
         !(_isInside(*itParam, pThisFactParametersToConsiderAsAnyValuePtr)) &&
         !(_isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr) ||
           _isInside(*itOtherParam, pOtherFactParametersToConsiderAsAnyValuePtr2)))
@@ -654,7 +654,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   std::map<Parameter, std::set<Entity>> newParametersInPlace;
   auto doesItMatch = [&](const Entity& pFactValue, const Entity& pValueToLookFor) {
     if (pFactValue == pValueToLookFor ||
-        pFactValue == Fact::anyValue)
+        pFactValue.isAnyValue())
       return true;
 
     if (pParametersPtr != nullptr)

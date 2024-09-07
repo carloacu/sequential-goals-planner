@@ -433,6 +433,76 @@ void _testQuiz()
 }
 
 
+
+void _doNextActionThatBringsToTheSmallerCost()
+{
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location\n"
+                                           "object\n"
+                                           "robot");
+  ontology.constants = cp::SetOfEntities::fromStr("me - robot", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("objectGrabable(?o - object)\n"
+                                                     "locationOfRobot(?r - robot) - location\n"
+                                                     "locationOfObject(?o - object) - location\n"
+                                                     "grab(?r - robot) - object", ontology.types);
+  const std::string action_navigate = "navigate";
+  const std::string action_grab = "grab";
+  const std::string action_ungrab = "ungrab";
+
+  std::map<std::string, cp::Action> actions;
+  std::vector<cp::Parameter> navParameters{cp::Parameter::fromStr("?targetPlace - location", ontology.types)};
+  cp::Action navAction({}, cp::WorldStateModification::fromStr("locationOfRobot(me)=?targetPlace", ontology, {}, navParameters));
+  navAction.parameters = std::move(navParameters);
+  actions.emplace(action_navigate, navAction);
+
+  std::vector<cp::Parameter> grabParameters{cp::Parameter::fromStr("?object - object", ontology.types)};
+  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & !grab(me)=*", ontology, {}, grabParameters),
+                        cp::WorldStateModification::fromStr("grab(me)=?object", ontology, {}, grabParameters));
+  grabAction.parameters = std::move(grabParameters);
+  actions.emplace(action_grab, grabAction);
+
+  std::vector<cp::Parameter> ungrabParameters{cp::Parameter::fromStr("?object - object", ontology.types)};
+  cp::Action ungrabAction({}, cp::WorldStateModification::fromStr("!grab(me)=?object", ontology, {}, ungrabParameters));
+  ungrabAction.parameters = std::move(ungrabParameters);
+  actions.emplace(action_ungrab, ungrabAction);
+
+  cp::SetOfInferences setOfInferences;
+  std::vector<cp::Parameter> inferenceParameters{cp::Parameter::fromStr("?object - object", ontology.types), cp::Parameter::fromStr("?location - location", ontology.types)};
+  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, inferenceParameters),
+                          cp::WorldStateModification::fromStr("locationOfObject(?object)=?location", ontology, {}, inferenceParameters));
+  inference.parameters = std::move(inferenceParameters);
+  setOfInferences.addInference(inference);
+  cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  auto& entities = problem.entities;
+  entities = cp::SetOfEntities::fromStr("obj1 obj2 - object\n"
+                                        "livingRoom kitchen bedroom - location", ontology.types);
+  problem.worldState.addFact(cp::Fact("objectGrabable(obj1)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("objectGrabable(obj2)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=livingRoom", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("grab(me)=obj2", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("locationOfObject(obj2)=livingRoom", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("locationOfObject(obj1)=kitchen", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  auto secondProblem = problem;
+  // Here it will will be quicker for the second goal if we ungrab the obj2 right away
+  _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
+                                  cp::Goal("locationOfObject(obj2)=livingRoom & !grab(me)=obj2", ontology, entities)});
+  assert_eq(action_ungrab + "(?object -> obj2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+
+  // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
+  _setGoalsForAPriority(secondProblem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
+                                        cp::Goal("locationOfObject(obj2)=kitchen & !grab(me)=obj2", ontology, entities)});
+  assert_eq(action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDo(secondProblem, domain, _now).actionInvocation.toStr());
+}
+
 }
 
 
@@ -458,6 +528,7 @@ int main(int argc, char *argv[])
   _testIncrementOfVariables();
   _actionWithParametersInPreconditionsAndEffects();
   _testQuiz();
+  _doNextActionThatBringsToTheSmallerCost();
 
   test_plannerWithoutTypes();
   std::cout << "chatbot planner is ok !!!!" << std::endl;

@@ -2477,53 +2477,6 @@ void _problemThatUseADomainThatChangedSinceLastUsage()
 }
 
 
-void _doNextActionThatBringsToTheSmallerCost()
-{
-  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters{_parameter("?targetPlace")};
-  cp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=?targetPlace", navParameters));
-  navAction.parameters = std::move(navParameters);
-  actions.emplace(_action_navigate, navAction);
-
-  std::vector<cp::Parameter> grabParameters{_parameter("?object")};
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & !grab(me)=*", grabParameters),
-                        _worldStateModification_fromStr("grab(me)=?object", grabParameters));
-  grabAction.parameters = std::move(grabParameters);
-  actions.emplace(_action_grab, grabAction);
-
-  std::vector<cp::Parameter> ungrabParameters{_parameter("?object")};
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=?object", ungrabParameters));
-  ungrabAction.parameters = std::move(ungrabParameters);
-  actions.emplace(_action_ungrab, ungrabAction);
-
-  cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{_parameter("?object"), _parameter("?location")};
-  cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", inferenceParameters),
-                          _worldStateModification_fromStr("locationOfObject(?object)=?location", inferenceParameters));
-  inference.parameters = std::move(inferenceParameters);
-  setOfInferences.addInference(inference);
-  cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
-  auto& setOfInferencesMap = domain.getSetOfInferences();
-
-  cp::Problem problem;
-  _addFact(problem.worldState, "objectGrabable(obj1)", problem.goalStack, setOfInferencesMap, now);
-  _addFact(problem.worldState, "objectGrabable(obj2)", problem.goalStack, setOfInferencesMap, now);
-  _addFact(problem.worldState, "locationOfRobot(me)=livingRoom", problem.goalStack, setOfInferencesMap, now);
-  _addFact(problem.worldState, "grab(me)=obj2", problem.goalStack, setOfInferencesMap, now);
-  _addFact(problem.worldState, "locationOfObject(obj2)=livingRoom", problem.goalStack, setOfInferencesMap, now);
-  _addFact(problem.worldState, "locationOfObject(obj1)=kitchen", problem.goalStack, setOfInferencesMap, now);
-  auto secondProblem = problem;
-  // Here it will will be quicker for the second goal if we ungrab the obj2 right away
-  _setGoalsForAPriority(problem, {_goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), _goal("locationOfObject(obj2)=livingRoom & !grab(me)=obj2")});
-  assert_eq(_action_ungrab + "(?object -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-
-  // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
-  _setGoalsForAPriority(secondProblem, {_goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1"), _goal("locationOfObject(obj2)=kitchen & !grab(me)=obj2")});
-  assert_eq(_action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(secondProblem, domain, now).actionInvocation.toStr());
-}
-
-
 void _checkFilterFactInCondition()
 {
   const std::string action1 = "action1";
@@ -3583,7 +3536,6 @@ void test_plannerWithoutTypes()
   _actionWithFactWithANegatedFact();
   _negatedFactValueInWorldState();
   _problemThatUseADomainThatChangedSinceLastUsage();
-  _doNextActionThatBringsToTheSmallerCost();
   _checkFilterFactInCondition();
   _checkFilterFactInConditionAndThenPropagate();
   _satisfyGoalWithSuperiorOperator();
