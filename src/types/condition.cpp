@@ -740,15 +740,13 @@ std::optional<Entity> ConditionNode::getFluent(const WorldState& pWorldState) co
   {
     auto leftValue = leftOperand->getFluent(pWorldState);
     auto rightValue = rightOperand->getFluent(pWorldState);
-    if (leftValue && rightValue)
-      return plusIntOrStr(leftValue, rightValue);
+    return plusIntOrStr(leftValue, rightValue);
   }
   if (nodeType == ConditionNodeType::MINUS)
   {
     auto leftValue = leftOperand->getFluent(pWorldState);
     auto rightValue = rightOperand->getFluent(pWorldState);
-    if (leftValue && rightValue)
-      return minusIntOrStr(leftValue->value, rightValue->value);
+    return minusIntOrStr(leftValue, rightValue);
   }
   return {};
 }
@@ -1147,7 +1145,7 @@ bool ConditionNumber::operator==(const Condition& pOther) const
 
 std::optional<Entity> ConditionNumber::getFluent(const WorldState&) const
 {
-  return toStr(nullptr);
+  return Entity::createNumberEntity(toStr(nullptr));
 }
 
 std::unique_ptr<Condition> ConditionNumber::clone(const std::map<Parameter, Entity>*,

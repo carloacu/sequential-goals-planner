@@ -86,8 +86,8 @@ struct WorldStateModificationNode : public WorldStateModification
         (rightOperand && rightOperand->isOnlyASetOfFacts());
   }
 
-  void replaceArgument(const std::string& pOldFact,
-                       const std::string& pNewFact) override
+  void replaceArgument(const Entity& pOldFact,
+                       const Entity& pNewFact) override
   {
     if (leftOperand)
       leftOperand->replaceArgument(pOldFact, pNewFact);
@@ -113,15 +113,13 @@ struct WorldStateModificationNode : public WorldStateModification
     {
       auto leftValue = leftOperand->getFluent(pWorldState);
       auto rightValue = rightOperand->getFluent(pWorldState);
-      if (leftValue && rightValue)
-        return plusIntOrStr(leftValue->value, rightValue->value);
+      return plusIntOrStr(leftValue, rightValue);
     }
     if (nodeType == WorldStateModificationNodeType::MINUS)
     {
       auto leftValue = leftOperand->getFluent(pWorldState);
       auto rightValue = rightOperand->getFluent(pWorldState);
-      if (leftValue && rightValue)
-        return minusIntOrStr(leftValue->value, rightValue->value);
+      return minusIntOrStr(leftValue, rightValue);
     }
     return {};
   }
@@ -183,8 +181,8 @@ struct WorldStateModificationFact : public WorldStateModification
 
   bool isOnlyASetOfFacts() const override { return true; }
 
-  void replaceArgument(const std::string& pOld,
-                       const std::string& pNew) override
+  void replaceArgument(const Entity& pOld,
+                       const Entity& pNew) override
   {
     factOptional.fact.replaceArgument(pOld, pNew);
   }
@@ -260,8 +258,8 @@ struct WorldStateModificationNumber : public WorldStateModification
   bool hasFactOptional(const cp::FactOptional&) const override { return false; }
   bool isOnlyASetOfFacts() const override { return false; }
 
-  void replaceArgument(const std::string&,
-                       const std::string&) override {}
+  void replaceArgument(const Entity&,
+                       const Entity&) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
               const WorldState&) const override {}
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>&,
@@ -276,7 +274,7 @@ struct WorldStateModificationNumber : public WorldStateModification
 
   std::optional<Entity> getFluent(const WorldState&) const override
   {
-    return toStr();
+    return Entity::createNumberEntity(toStr());
   }
 
   const FactOptional* getOptionalFact() const override
@@ -538,7 +536,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
       if (!factToCheck.fact.fluent())
       {
         factToCheck.fact.setFluent(Entity("??tmpValueFromSet_" + pFromDeductionId, factToCheck.fact.predicate.fluent));
-        localParameterToFind[factToCheck.fact.fluent()->value];
+        localParameterToFind[Parameter(factToCheck.fact.fluent()->value, factToCheck.fact.predicate.fluent)];
       }
       bool res = pFactCallback(factToCheck, &localParameterToFind, [&](const std::map<Parameter, std::set<Entity>>& pLocalParameterToFind){
         if (!localParameterToFind.empty() &&
@@ -639,7 +637,7 @@ void WorldStateModificationNode::_forAllInstruction(const std::function<void (co
         for (const auto& paramValue : parameterValues)
         {
           auto newWsModif = rightOperand->clone(nullptr);
-          newWsModif->replaceArgument(parameterOpt->name, paramValue.value);
+          newWsModif->replaceArgument(parameterOpt->toEntity(), paramValue);
           pCallback(*newWsModif);
         }
       }
@@ -777,7 +775,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       rightOpPtr = _expressionParsedToWsModification(secondArg, pOntology, pEntities, pParameters, false);
 
     res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::INCREASE,
-                                                       _expressionParsedToWsModification(firstArg, pOntology, pEntities, pParameters, false),
+                                                       _expressionParsedToWsModification(firstArg, pOntology, pEntities, pParameters, true),
                                                        std::move(rightOpPtr));
   }
   else if (pExpressionParsed.name == _decreaseFunctionName &&

@@ -60,14 +60,13 @@ const std::string& Entity::anyEntityValue()
 
 Entity Entity::createAnyEntity()
 {
-  return Entity(_anyValue);
+  return Entity(_anyValue, {});
 }
 
 
-Entity Entity::createNumberEntity(const std::string& pNumber,
-                                  const SetOfTypes& pSetOfTypes)
+Entity Entity::createNumberEntity(const std::string& pNumber)
 {
-  return Entity(pNumber, pSetOfTypes.numberType());
+  return Entity(pNumber, SetOfTypes::numberType());
 }
 
 
@@ -89,7 +88,9 @@ Entity Entity::fromDeclaration(const std::string& pStr,
     return Entity(valueStr, pSetOfTypes.nameToType(typeStr));
   }
 
-  return Entity(nameWithType[0]);
+  if (pSetOfTypes.empty())
+    return Entity(nameWithType[0], {});
+  throw std::runtime_error("\"" + pStr + "\" entity should declare a type");
 }
 
 
@@ -110,7 +111,7 @@ Entity Entity::fromUsage(const std::string& pStr,
   }
 
   if (pOntology.empty())
-    return Entity(pStr);
+    return Entity(pStr, {});
 
   auto* entityPtr = pOntology.constants.valueToEntity(pStr);
   if (entityPtr != nullptr)
@@ -122,7 +123,7 @@ Entity Entity::fromUsage(const std::string& pStr,
   if (pStr == Entity::anyEntityValue())
     return Entity::createAnyEntity();
   if (isNumber(pStr))
-    return Entity::createNumberEntity(pStr, pOntology.types);
+    return Entity::createNumberEntity(pStr);
   throw std::runtime_error("\"" + pStr + "\" is not an entity value");
 }
 
@@ -143,6 +144,12 @@ bool Entity::isAParameterToFill() const
 {
   return !value.empty() && (value[0] == '?' || isAnyValue());
 }
+
+Parameter Entity::toParameter() const
+{
+  return Parameter(value, type);
+}
+
 
 bool Entity::match(const Parameter& pParameter) const
 {

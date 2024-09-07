@@ -33,12 +33,12 @@ void applyNewParams(std::map<Parameter, std::set<Entity>>& pParameters,
 
 
 CONTEXTUALPLANNER_API
-std::optional<std::string> plusIntOrStr(const std::optional<Entity>& pNb1,
-                                        const std::optional<Entity>& pNb2);
+std::optional<Entity> plusIntOrStr(const std::optional<Entity>& pNb1,
+                                   const std::optional<Entity>& pNb2);
 
 CONTEXTUALPLANNER_API
-std::optional<std::string> minusIntOrStr(const std::optional<Entity>& pNb1,
-                                         const std::optional<Entity>& pNb2);
+std::optional<Entity> minusIntOrStr(const std::optional<Entity>& pNb1,
+                                    const std::optional<Entity>& pNb2);
 
 CONTEXTUALPLANNER_API
 bool compIntNb(

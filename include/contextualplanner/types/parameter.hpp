@@ -7,13 +7,14 @@
 
 namespace cp
 {
+struct Entity;
 struct SetOfTypes;
 
 
 struct CONTEXTUALPLANNER_API Parameter
 {
   Parameter(const std::string& pName,
-            const std::shared_ptr<Type>& pType = {});
+            const std::shared_ptr<Type>& pType);
 
   Parameter(const Parameter& pOther) = default;
   Parameter(Parameter&& pOther) noexcept;
@@ -28,6 +29,7 @@ struct CONTEXTUALPLANNER_API Parameter
   static Parameter fromStr(const std::string& pStr,
                            const SetOfTypes& pSetOfTypes);
   std::string toStr() const;
+  Entity toEntity() const;
 
   std::string name;
   std::shared_ptr<Type> type;

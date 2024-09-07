@@ -54,8 +54,8 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pOldFact Existing fact to replace.
    * @param[in] pNewFact New fact to set instead.
    */
-  virtual void replaceArgument(const std::string& pOld,
-                               const std::string& pNew) = 0;
+  virtual void replaceArgument(const Entity& pOld,
+                               const Entity& pNew) = 0;
 
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state.

@@ -405,7 +405,7 @@ void WorldState::extractPotentialArgumentsOfAFactParameter(
       bool doesItMatch = true;
       for (auto i = 0; i < pFact.arguments().size(); ++i)
       {
-        if (pFact.arguments()[i] == pParameter)
+        if (pFact.arguments()[i].value == pParameter)
         {
           potentialNewValues.insert(currFact.arguments()[i]);
           continue;
@@ -477,7 +477,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
                 if (pFactOptional.fact.fluent() != Fact::anyValue)
                 {
                   if (pFactOptional.fact.fluent() && currFact.fluent())
-                    newParameters = {{pFactOptional.fact.fluent()->value, {*currFact.fluent()}}};
+                    newParameters = {{pFactOptional.fact.fluent()->toParameter(), {*currFact.fluent()}}};
                   applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
                 }
                 return false;

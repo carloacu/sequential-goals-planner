@@ -1,5 +1,6 @@
 #include <contextualplanner/types/parameter.hpp>
 #include <vector>
+#include <contextualplanner/types/entity.hpp>
 #include <contextualplanner/types/setoftypes.hpp>
 #include <contextualplanner/util/util.hpp>
 
@@ -34,7 +35,6 @@ bool Parameter::operator<(const Parameter& pOther) const {
 }
 
 
-
 bool Parameter::operator==(const Parameter& pOther) const {
   return name == pOther.name && type == pOther.type;
 }
@@ -58,7 +58,9 @@ Parameter Parameter::fromStr(const std::string& pStr,
     return Parameter(nameStr, pSetOfTypes.nameToType(typeStr));
   }
 
-  return Parameter(nameWithType[0]);
+  if (pSetOfTypes.empty())
+    return Parameter(nameWithType[0], {});
+  throw std::runtime_error("\"" + pStr + "\" parameter should declare a type");
 }
 
 
@@ -67,6 +69,11 @@ std::string Parameter::toStr() const
   if (!type)
     return name;
   return name + " - " + type->name;
+}
+
+Entity Parameter::toEntity() const
+{
+  return Entity(name, type);
 }
 
 

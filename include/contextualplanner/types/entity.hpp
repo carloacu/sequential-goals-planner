@@ -17,7 +17,7 @@ struct SetOfTypes;
 struct CONTEXTUALPLANNER_API Entity
 {
   Entity(const std::string& pValue,
-         const std::shared_ptr<Type>& pType = {});
+         const std::shared_ptr<Type>& pType);
 
   Entity(const Entity& pOther) = default;
   Entity(Entity&& pOther) noexcept;
@@ -31,8 +31,7 @@ struct CONTEXTUALPLANNER_API Entity
 
   static const std::string& anyEntityValue();
   static Entity createAnyEntity();
-  static Entity createNumberEntity(const std::string& pNumber,
-                                   const SetOfTypes& pSetOfTypes);
+  static Entity createNumberEntity(const std::string& pNumber);
   static Entity fromDeclaration(const std::string& pStr,
                                 const SetOfTypes& pSetOfTypes);
 
@@ -44,6 +43,7 @@ struct CONTEXTUALPLANNER_API Entity
   std::string toStr() const;
   bool isAnyValue() const;
   bool isAParameterToFill() const;
+  Parameter toParameter() const;
   bool match(const Parameter& pParameter) const;
   bool isValidParameterAccordingToPossiblities(const std::vector<Parameter>& pParameter) const;
 

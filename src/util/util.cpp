@@ -73,10 +73,10 @@ void applyNewParams(
 
 
 
-std::optional<std::string> plusIntOrStr(const std::optional<Entity>& pNb1,
-                                        const std::optional<Entity>& pNb2)
+std::optional<Entity> plusIntOrStr(const std::optional<Entity>& pNb1,
+                                   const std::optional<Entity>& pNb2)
 {
-  if (!pNb1 || !pNb2)
+  if (!pNb1 || !pNb2 || pNb1->type != pNb2->type)
     return {};
   try
   {
@@ -84,16 +84,16 @@ std::optional<std::string> plusIntOrStr(const std::optional<Entity>& pNb1,
     int nb2 = lexical_cast<int>(pNb2->value);
     std::stringstream ss;
     ss << nb1 + nb2;
-    return ss.str();
+    return Entity(ss.str(), pNb1->type);
   } catch (...) {}
-  return pNb1->value + pNb2->value;
+  return Entity(pNb1->value + pNb2->value, pNb1->type);
 }
 
 
-std::optional<std::string> minusIntOrStr(const std::optional<Entity>& pNb1,
-                                         const std::optional<Entity>& pNb2)
+std::optional<Entity> minusIntOrStr(const std::optional<Entity>& pNb1,
+                                    const std::optional<Entity>& pNb2)
 {
-  if (!pNb1 || !pNb2)
+  if (!pNb1 || !pNb2 || pNb1->type != pNb2->type)
     return {};
   try
   {
@@ -101,9 +101,9 @@ std::optional<std::string> minusIntOrStr(const std::optional<Entity>& pNb1,
     int nb2 = lexical_cast<int>(pNb2->value);
     std::stringstream ss;
     ss << nb1 - nb2;
-    return ss.str();
+    return Entity(ss.str(), pNb1->type);
   } catch (...) {}
-  return pNb1->value + "-" + pNb2->value;
+  return Entity(pNb1->value + "-" + pNb2->value, pNb1->type);
 }
 
 

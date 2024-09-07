@@ -17,6 +17,13 @@ void assert_eq(const TYPE& pExpected,
     assert(false);
 }
 
+cp::Parameter _parameter(const std::string& pStr) {
+  return cp::Parameter(pStr, {});
+}
+
+cp::Entity _entity(const std::string& pStr) {
+  return cp::Entity(pStr, {});
+}
 
 std::string _toStr(const std::list<std::map<Parameter, Entity>>& pParams)
 {
@@ -50,15 +57,15 @@ std::string _unfoldMapWithSet(const std::map<Parameter, std::set<cp::Entity>>& p
 void test_unfoldMapWithSet()
 {
   assert_eq<std::string>("", _unfoldMapWithSet({}));
-  assert_eq<std::string>("(a -> b)", _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b")}}}));
-  assert_eq<std::string>("(a -> b)(a -> c)", _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b"), cp::Entity("c")}}}));
+  assert_eq<std::string>("(a -> b)", _unfoldMapWithSet({{_parameter("a"), {_entity("b")}}}));
+  assert_eq<std::string>("(a -> b)(a -> c)", _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}}));
 
   assert_eq<std::string>("(a -> b, d -> e)",
-                         _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b")}}, {cp::Parameter("d"), {cp::Entity("e")}}}));
+                         _unfoldMapWithSet({{_parameter("a"), {_entity("b")}}, {_parameter("d"), {_entity("e")}}}));
   assert_eq<std::string>("(a -> b, d -> e)(a -> c, d -> e)",
-                         _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b"), cp::Entity("c")}}, {cp::Parameter("d"), {cp::Entity("e")}}}));
+                         _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}, {_parameter("d"), {_entity("e")}}}));
   assert_eq<std::string>("(a -> b, d -> e)(a -> b, d -> f)(a -> c, d -> e)(a -> c, d -> f)",
-                         _unfoldMapWithSet({{cp::Parameter("a"), {cp::Entity("b"), cp::Entity("c")}}, {cp::Parameter("d"), {cp::Entity("e"), cp::Entity("f")}}}));
+                         _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}, {_parameter("d"), {_entity("e"), _entity("f")}}}));
 }
 
 void test_autoIncrementOfVersion()

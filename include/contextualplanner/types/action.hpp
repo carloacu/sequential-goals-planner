@@ -76,8 +76,8 @@ struct CONTEXTUALPLANNER_API Action
    * @param pOldFact[in] Current fact to replace.
    * @param pNewFact[in] New fact to set.
    */
-  void replaceArgument(const std::string& pOld,
-                       const std::string& pNew);
+  void replaceArgument(const Entity& pOld,
+                       const Entity& pNew);
 
   // TODO: remove that function?
   void throwIfNotValid(const WorldState& pWorldState);

@@ -261,8 +261,8 @@ struct CONTEXTUALPLANNER_API Fact
    * @param pCurrent Fact to search in the arguments.
    * @param pNew New fact to set in place of pCurrent.
    */
-  void replaceArgument(const std::string& pCurrent,
-                       const std::string& pNew);
+  void replaceArgument(const Entity& pCurrent,
+                       const Entity& pNew);
 
 
   const std::string& name() const { return _name; }

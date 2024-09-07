@@ -84,8 +84,8 @@ struct CONTEXTUALPLANNER_API ProblemModification
    * @param[in] pOldFact Fact to replace.
    * @param[in] pNewFact New fact to set.
    */
-  void replaceArgument(const std::string& pOldFact,
-                       const std::string& pNewFact);
+  void replaceArgument(const Entity& pOldFact,
+                       const Entity& pNewFact);
 
   /**
    * @brief Iterate over all the optional facts until one can satisfy the objective.
@@ -168,8 +168,8 @@ inline void ProblemModification::add(const ProblemModification& pOther)
   goalsToAddInCurrentPriority.insert(goalsToAddInCurrentPriority.end(), pOther.goalsToAddInCurrentPriority.begin(), pOther.goalsToAddInCurrentPriority.end());
 }
 
-inline void ProblemModification::replaceArgument(const std::string& pOld,
-                                                 const std::string& pNew)
+inline void ProblemModification::replaceArgument(const Entity& pOld,
+                                                 const Entity& pNew)
 {
   if (worldStateModification)
     worldStateModification->replaceArgument(pOld, pNew);

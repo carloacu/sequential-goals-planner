@@ -258,11 +258,11 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
                 return false;
 
               // Maybe the extracted parameter is also a parameter so we replace by it's value
-              auto itParam = parametersToValues.find(parentParamValue->value);
+              auto itParam = parametersToValues.find(parentParamValue->toParameter());
               if (itParam != parametersToValues.end())
                 newParamValues = itParam->second;
               else
-                newParamValues.insert(parentParamValue->value);
+                newParamValues.insert(*parentParamValue);
               return !newParamValues.empty();
             }, pProblem.worldState, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersToValues);
 

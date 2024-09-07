@@ -50,15 +50,15 @@ bool _isInside(const Entity& pEntity,
 {
   if (pEltsPtr == nullptr)
     return false;
-  auto it = pEltsPtr->find(pEntity.value);
+  auto it = pEltsPtr->find(pEntity.toParameter());
   return it != pEltsPtr->end() && it->second.empty();
 }
 
 
 }
 
-const Entity Fact::anyValue = Entity("*");
-const Entity Fact::undefinedValue = Entity("undefined");
+const Entity Fact::anyValue = Entity("*", {});
+const Entity Fact::undefinedValue = Entity("undefined", {});
 std::string Fact::punctualPrefix = "~punctual~";
 
 Fact::Fact(const std::string& pStr,
@@ -108,6 +108,8 @@ Fact::Fact(const std::string& pName,
       _arguments.push_back(Entity::fromUsage(currParam, pOntology, pEntities, pParameters));
   if (!pFluentStr.empty())
     _fluent = Entity::fromUsage(pFluentStr, pOntology, pEntities, pParameters);
+  else if (pIsOkIfFluentIsMissing && predicate.fluent)
+    _fluent = Entity(Entity::anyEntityValue(), predicate.fluent);
   _finalizeInisilizationAndValidityChecks(pOntology, pEntities, pIsOkIfFluentIsMissing);
   _resetFactSignatureCache();
 }
@@ -224,7 +226,7 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
   while (itParam != _arguments.end())
   {
     if (*itParam != *itOtherParam && *itParam != anyValue && *itOtherParam != anyValue &&
-        *itParam != pArgToIgnore)
+        itParam->value != pArgToIgnore)
       return false;
     ++itParam;
     ++itOtherParam;
@@ -390,7 +392,7 @@ bool Fact::isPatternOf(
 
   auto isOk = [&](const Entity& pPatternVal,
                   const Entity& pExempleVal) {
-    auto itVal = pPossibleArguments.find(pPatternVal.value);
+    auto itVal = pPossibleArguments.find(pPatternVal.toParameter());
     if (itVal != pPossibleArguments.end())
     {
       if (!itVal->second.empty() &&
@@ -425,14 +427,14 @@ void Fact::replaceArguments(const std::map<Parameter, Entity>& pCurrentArguments
 {
   if (_fluent)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(_fluent->value);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(_fluent->toParameter());
     if (itValueParam != pCurrentArgumentsToNewArgument.end())
       _fluent = itValueParam->second;
   }
 
   for (auto& currParam : _arguments)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.value);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.toParameter());
     if (itValueParam != pCurrentArgumentsToNewArgument.end())
       currParam = itValueParam->second;
   }
@@ -443,14 +445,14 @@ void Fact::replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurren
 {
   if (_fluent)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(_fluent->value);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(_fluent->toParameter());
     if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
       _fluent = *itValueParam->second.begin();
   }
 
   for (auto& currParam : _arguments)
   {
-    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.value);
+    auto itValueParam = pCurrentArgumentsToNewArgument.find(currParam.toParameter());
     if (itValueParam != pCurrentArgumentsToNewArgument.end() && !itValueParam->second.empty())
       currParam = *itValueParam->second.begin();
   }
@@ -657,14 +659,14 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 
     if (pParametersPtr != nullptr)
     {
-      auto itParam = pParametersPtr->find(pFactValue.value);
+      auto itParam = pParametersPtr->find(pFactValue.toParameter());
       if (itParam != pParametersPtr->end() &&
           (!pValueToLookFor.type || !itParam->first.type || pValueToLookFor.type->isA(*itParam->first.type)))
       {
         if (!itParam->second.empty())
           return itParam->second.count(pValueToLookFor) > 0;
         if (pNewParametersPtr != nullptr)
-          newPotentialParameters[pFactValue.value].insert(pValueToLookFor);
+          newPotentialParameters[pFactValue.toParameter()].insert(pValueToLookFor);
         else if (pTriedToModifyParametersPtr != nullptr)
           *pTriedToModifyParametersPtr = true;
         return true;
@@ -673,12 +675,12 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 
     if (pParametersToModifyInPlacePtr != nullptr)
     {
-      auto itParam = pParametersToModifyInPlacePtr->find(pFactValue.value);
+      auto itParam = pParametersToModifyInPlacePtr->find(pFactValue.toParameter());
       if (itParam != pParametersToModifyInPlacePtr->end())
       {
         if (!itParam->second.empty())
           return itParam->second.count(pValueToLookFor) > 0;
-        newParametersInPlace[pFactValue.value].insert(pValueToLookFor);
+        newParametersInPlace[pFactValue.toParameter()].insert(pValueToLookFor);
         return true;
       }
     }
@@ -759,8 +761,8 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 }
 
 
-void Fact::replaceArgument(const std::string& pCurrent,
-                           const std::string& pNew)
+void Fact::replaceArgument(const Entity& pCurrent,
+                           const Entity& pNew)
 {
   for (auto& currParameter : _arguments)
     if (currParameter == pCurrent)
@@ -914,7 +916,7 @@ void Fact::_finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
   {
     predicate.name = _name;
     for (auto i = 0; i < _arguments.size(); ++i)
-      predicate.parameters.emplace_back("");
+      predicate.parameters.emplace_back("", std::shared_ptr<Type>());
     if (_fluent)
       predicate.fluent = std::make_shared<Type>("");
   }

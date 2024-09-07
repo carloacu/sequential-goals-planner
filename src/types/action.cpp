@@ -22,8 +22,8 @@ bool Action::hasFact(const cp::Fact& pFact) const
       effect.hasFact(pFact);
 }
 
-void Action::replaceArgument(const std::string& pOld,
-                             const std::string& pNew)
+void Action::replaceArgument(const Entity& pOld,
+                             const Entity& pNew)
 {
   effect.replaceArgument(pOld, pNew);
 }

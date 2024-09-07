@@ -20,14 +20,13 @@ struct CONTEXTUALPLANNER_API SetOfTypes
                const std::string& pParentType = "");
 
   std::shared_ptr<Type> nameToType(const std::string& pName) const;
-  std::shared_ptr<Type> numberType() const { return _numberType; }
+  static std::shared_ptr<Type> numberType();
 
   std::list<std::string> typesToStrs() const;
   std::string toStr() const;
   bool empty() const;
 
 private:
-  std::shared_ptr<Type> _numberType;
   std::list<std::shared_ptr<Type>> _types;
   std::map<std::string, std::shared_ptr<Type>> _nameToType;
 };

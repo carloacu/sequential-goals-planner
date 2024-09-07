@@ -10,11 +10,11 @@ namespace cp
 namespace
 {
 const std::string _numberTypeName = "number";
+const std::shared_ptr<Type> _numberType = std::make_shared<Type>(_numberTypeName);
 }
 
 SetOfTypes::SetOfTypes()
-    : _numberType(std::make_shared<Type>(_numberTypeName)),
-      _types(),
+    : _types(),
       _nameToType()
 {
   _nameToType[_numberTypeName] = _numberType;
@@ -82,6 +82,11 @@ std::shared_ptr<Type> SetOfTypes::nameToType(const std::string& pName) const
   if (it != _nameToType.end())
     return it->second;
   throw std::runtime_error("\"" + pName + "\" is not a valid type name");
+}
+
+std::shared_ptr<Type> SetOfTypes::numberType()
+{
+  return _numberType;
 }
 
 

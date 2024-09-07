@@ -20,6 +20,7 @@
 namespace
 {
 const auto _now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
+const std::map<cp::SetOfInferencesId, cp::SetOfInferences> _emptySetOfInferences;
 const std::string _fact_a = "fact_a";
 const std::string _fact_b = "fact_b";
 const std::string _fact_c = "fact_c";
@@ -234,6 +235,203 @@ void _planWithActionThenInferenceWithAssign()
 }
 
 
+void _fluentEqualityInPrecoditionOfAnAction()
+{
+  std::map<std::string, cp::Action> actions;
+
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "other_type\n"
+                                           "lol");
+  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity\n"
+                                                  "v - other_type\n"
+                                                  "lol_val - lol", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("pred_a - other_type\n"
+                                                     "pred_b(?e - entity) - other_type\n"
+                                                     "pred_c(?l - lol) - other_type\n"
+                                                     "pred_d(?l - lol)", ontology.types);
+  const cp::SetOfEntities entities;
+
+  const std::string action1 = "action1";
+  std::vector<cp::Parameter> actionParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
+  cp::Action actionObj1({},
+                        cp::WorldStateModification::fromStr("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
+  actionObj1.parameters = std::move(actionParameters);
+  actions.emplace(action1, actionObj1);
+
+  const std::string action2 = "action2";
+  std::vector<cp::Parameter> action2Parameters{cp::Parameter::fromStr("?l - lol", ontology.types)};
+  cp::Action actionObj2(cp::Condition::fromStr("=(pred_a, pred_c(?l))", ontology, entities, action2Parameters),
+                        cp::WorldStateModification::fromStr("pred_d(?l)", ontology, entities, action2Parameters));
+  actionObj2.parameters = std::move(action2Parameters);
+  actions.emplace(action2, actionObj2);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {cp::Goal("pred_d(lol_val)", ontology, entities)});
+  problem.worldState.addFact(cp::Fact("pred_b(toto)=v", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("pred_c(lol_val)=v", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  assert_eq<std::string>(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+}
+
+
+void _testIncrementOfVariables()
+{
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("");
+  ontology.constants = cp::SetOfEntities::fromStr("", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("numberOfQuestion - number\n"
+                                                     "maxNumberOfQuestions - number\n"
+                                                     "ask_all_the_questions\n"
+                                                     "finished_to_ask_questions", ontology.types);
+  const cp::SetOfEntities entities;
+
+  const std::string action_askQuestion1 = "ask_question_1";
+  const std::string action_askQuestion2 = "ask_question_2";
+  const std::string action_finisehdToAskQuestions = "finish_to_ask_questions";
+  const std::string action_sayQuestionBilan = "say_question_bilan";
+
+  std::map<std::string, cp::Action> actions;
+  const cp::Action actionQ1({}, cp::WorldStateModification::fromStr("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {}));
+  const cp::Action actionFinishToActActions(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
+                                            cp::WorldStateModification::fromStr("ask_all_the_questions", ontology, entities, {}));
+  const cp::Action actionSayQuestionBilan(cp::Condition::fromStr("ask_all_the_questions", ontology, entities, {}),
+                                          cp::WorldStateModification::fromStr("finished_to_ask_questions", ontology, entities, {}));
+  actions.emplace(action_askQuestion1, actionQ1);
+  actions.emplace(action_askQuestion2, cp::Action({}, cp::WorldStateModification::fromStr("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {})));
+  actions.emplace(action_finisehdToAskQuestions, actionFinishToActActions);
+  actions.emplace(action_sayQuestionBilan, actionSayQuestionBilan);
+  cp::Domain domain(std::move(actions));
+
+  std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
+  cp::Problem problem;
+  problem.worldState.modify(cp::WorldStateModification::fromStr(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfInferences, ontology, entities, _now);
+  assert(cp::Condition::fromStr(initFactsStr, ontology, entities, {})->isTrue(problem.worldState));
+  assert(!actionFinishToActActions.precondition->isTrue(problem.worldState));
+  assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
+  assert(cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 3)", ontology, entities, {})->isTrue(problem.worldState));
+  assert(!cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4)", ontology, entities, {})->isTrue(problem.worldState));
+  assert(cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4 - 1)", ontology, entities, {})->isTrue(problem.worldState));
+  for (std::size_t i = 0; i < 3; ++i)
+  {
+    _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
+    auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
+    if (i == 0 || i == 2)
+      assert_eq<std::string>(action_askQuestion1, actionToDo);
+    else
+      assert_eq<std::string>(action_askQuestion2, actionToDo);
+    problem.historical.notifyActionDone(actionToDo);
+    auto itAction = domain.actions().find(actionToDo);
+    assert(itAction != domain.actions().end());
+    problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
+                              _emptySetOfInferences, ontology, entities, _now);
+    problem.worldState.modify(cp::WorldStateModification::fromStr("!ask_all_the_questions", ontology, entities, {}),
+                              problem.goalStack, _emptySetOfInferences, ontology, entities, _now);
+  }
+  assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
+  assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
+  _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
+  auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
+  assert_eq<std::string>(action_finisehdToAskQuestions, actionToDo);
+  problem.historical.notifyActionDone(actionToDo);
+  auto itAction = domain.actions().find(actionToDo);
+  assert(itAction != domain.actions().end());
+  problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
+                            _emptySetOfInferences, ontology, entities, _now);
+  assert_eq<std::string>(action_sayQuestionBilan, _lookForAnActionToDo(problem, domain).actionInvocation.toStr());
+  assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
+  assert(actionSayQuestionBilan.precondition->isTrue(problem.worldState));
+  problem.worldState.modify(actionSayQuestionBilan.effect.worldStateModification, problem.goalStack,
+                            _emptySetOfInferences, ontology, entities, _now);
+}
+
+
+void _actionWithParametersInPreconditionsAndEffects()
+{
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("");
+  ontology.constants = cp::SetOfEntities::fromStr("", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?hid - number)\n"
+                                                     "isHappy(?hid - number)", ontology.types);
+  const cp::SetOfEntities entities;
+
+  std::map<std::string, cp::Action> actions;
+  std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?human - number", ontology.types));
+  cp::Action joke(cp::Condition::fromStr("isEngaged(?human)", ontology, entities, parameters),
+                  cp::WorldStateModification::fromStr("isHappy(?human)", ontology, entities, parameters));
+  joke.parameters = std::move(parameters);
+  const std::string action1 = "action1";
+  actions.emplace(action1, joke);
+
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  problem.worldState.addFact(cp::Fact("isEngaged(1)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+
+  _setGoalsForAPriority(problem, {cp::Goal("isHappy(1)", ontology, entities)});
+  assert_eq(action1 + "(?human -> 1)", cp::planToStr(cp::planForEveryGoals(problem, domain, _now)));
+}
+
+
+void _testQuiz()
+{
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("");
+  ontology.constants = cp::SetOfEntities::fromStr("", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("numberOfQuestion - number\n"
+                                                     "maxNumberOfQuestions - number\n"
+                                                     "ask_all_the_questions\n"
+                                                     "finished_to_ask_questions", ontology.types);
+  const cp::SetOfEntities entities;
+
+  const std::string action_askQuestion1 = "ask_question_1";
+  const std::string action_askQuestion2 = "ask_question_2";
+  const std::string action_sayQuestionBilan = "say_question_bilan";
+
+  std::map<std::string, cp::Action> actions;
+  cp::ProblemModification questionEffect(cp::WorldStateModification::fromStr("add(numberOfQuestion, 1)", ontology, entities, {}));
+  questionEffect.potentialWorldStateModification = cp::WorldStateModification::fromStr("ask_all_the_questions", ontology, entities, {});
+  const cp::Action actionQ1({}, questionEffect);
+  const cp::Action actionSayQuestionBilan(cp::Condition::fromStr("ask_all_the_questions", ontology, entities, {}),
+                                          cp::WorldStateModification::fromStr("finished_to_ask_questions", ontology, entities, {}));
+  actions.emplace(action_askQuestion1, actionQ1);
+  actions.emplace(action_askQuestion2, cp::Action({}, questionEffect));
+  actions.emplace(action_sayQuestionBilan, actionSayQuestionBilan);
+
+  cp::Domain domain(std::move(actions), {},
+                    cp::Inference(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
+                                  cp::WorldStateModification::fromStr("ask_all_the_questions", ontology, entities, {})));
+
+  auto initFacts = cp::WorldStateModification::fromStr("numberOfQuestion=0 & maxNumberOfQuestions=3", ontology, entities, {});
+
+  cp::Problem problem;
+
+  _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  problem.worldState.modify(initFacts, problem.goalStack, setOfInferencesMap, {}, {}, _now);
+  for (std::size_t i = 0; i < 3; ++i)
+  {
+    auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
+    if (i == 0 || i == 2)
+      assert_eq<std::string>(action_askQuestion1, actionToDo);
+    else
+      assert_eq<std::string>(action_askQuestion2, actionToDo);
+    problem.historical.notifyActionDone(actionToDo);
+    auto itAction = domain.actions().find(actionToDo);
+    assert(itAction != domain.actions().end());
+    problem.worldState.modify(itAction->second.effect.worldStateModification,
+                              problem.goalStack, setOfInferencesMap, {}, {}, _now);
+  }
+
+  auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
+  assert_eq(action_sayQuestionBilan, actionToDo);
+}
+
 
 }
 
@@ -256,6 +454,10 @@ int main(int argc, char *argv[])
   _number_type();
   _planWithActionThenInferenceWithFluentParameter();
   _planWithActionThenInferenceWithAssign();
+  _fluentEqualityInPrecoditionOfAnAction();
+  _testIncrementOfVariables();
+  _actionWithParametersInPreconditionsAndEffects();
+  _testQuiz();
 
   test_plannerWithoutTypes();
   std::cout << "chatbot planner is ok !!!!" << std::endl;
