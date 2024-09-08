@@ -2547,26 +2547,6 @@ void _checkFilterFactInConditionAndThenPropagate()
 }
 
 
-
-void _satisfyGoalWithSuperiorOperator()
-{
-  const std::string action1 = "action1";
-  auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a + "=100")));
-
-  cp::Domain domain(std::move(actions));
-  auto& setOfInferencesMap = domain.getSetOfInferences();
-
-  cp::Problem problem;
-  _addFact(problem.worldState, _fact_a + "=10", problem.goalStack, setOfInferencesMap, now);
-  _setGoalsForAPriority(problem, {_goal(_fact_a + ">50")});
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.toStr());
-}
-
-
-
 void _checkOutputValueOfLookForAnActionToDo()
 {
   const std::string action1 = "action1";
@@ -3538,7 +3518,6 @@ void test_plannerWithoutTypes()
   _problemThatUseADomainThatChangedSinceLastUsage();
   _checkFilterFactInCondition();
   _checkFilterFactInConditionAndThenPropagate();
-  _satisfyGoalWithSuperiorOperator();
   _checkOutputValueOfLookForAnActionToDo();
   _hardProblemThatNeedsToBeSmart();
   _goalsToDoInParallel();

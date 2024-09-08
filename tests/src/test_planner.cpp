@@ -66,6 +66,21 @@ cp::ActionInvocationWithGoal _lookForAnActionToDo(cp::Problem& pProblem,
   return cp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
+cp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
+    cp::Problem& pProblem,
+    const cp::Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
+{
+  auto plan = cp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow);
+  if (!plan.empty())
+  {
+    auto& firstActionInPlan = plan.front();
+    notifyActionStarted(pProblem, pDomain, firstActionInPlan, pNow);
+    notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
+    return firstActionInPlan;
+  }
+  return cp::ActionInvocationWithGoal("", {}, {}, 0);
+}
 
 
 
@@ -503,6 +518,28 @@ void _doNextActionThatBringsToTheSmallerCost()
   assert_eq(action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDo(secondProblem, domain, _now).actionInvocation.toStr());
 }
 
+
+void _satisfyGoalWithSuperiorOperator()
+{
+  const std::string action1 = "action1";
+  cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr("fact_a - number", ontology.types);
+
+  std::map<std::string, cp::Action> actions;
+  actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr("fact_a=100", ontology, {}, {})));
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  auto& entities = problem.entities;
+  problem.worldState.addFact(cp::Fact("fact_a=10", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  _setGoalsForAPriority(problem, {cp::Goal("fact_a>50", ontology, entities)});
+
+  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+}
+
 }
 
 
@@ -529,6 +566,7 @@ int main(int argc, char *argv[])
   _actionWithParametersInPreconditionsAndEffects();
   _testQuiz();
   _doNextActionThatBringsToTheSmallerCost();
+  _satisfyGoalWithSuperiorOperator();
 
   test_plannerWithoutTypes();
   std::cout << "chatbot planner is ok !!!!" << std::endl;
