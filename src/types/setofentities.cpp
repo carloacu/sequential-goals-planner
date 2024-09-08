@@ -52,6 +52,7 @@ SetOfEntities SetOfEntities::fromStr(const std::string& pStr,
 
 void SetOfEntities::add(const Entity& pEntity)
 {
+  _valueToEntity.erase(pEntity.value);
   _valueToEntity.emplace(pEntity.value, pEntity);
 }
 

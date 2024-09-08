@@ -34,6 +34,7 @@ void SetOfPredicates::addAll(const SetOfPredicates& pOther)
 
 void SetOfPredicates::addPredicate(const Predicate& pPredicate)
 {
+  _nameToPredicate.erase(pPredicate.name);
   _nameToPredicate.emplace(pPredicate.name, pPredicate);
 }
 
