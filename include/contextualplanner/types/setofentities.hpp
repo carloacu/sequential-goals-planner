@@ -27,8 +27,7 @@ struct CONTEXTUALPLANNER_API SetOfEntities
   bool empty() const;
 
 private:
-  std::list<Entity> _entities;
-  std::map<std::string, const Entity*> _valueToEntity;
+  std::map<std::string, Entity> _valueToEntity;
 };
 
 } // namespace cp

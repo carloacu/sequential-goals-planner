@@ -7,8 +7,7 @@ namespace cp
 {
 
 SetOfEntities::SetOfEntities()
-    : _entities(),
-      _valueToEntity()
+    : _valueToEntity()
 {
 }
 
@@ -53,30 +52,29 @@ SetOfEntities SetOfEntities::fromStr(const std::string& pStr,
 
 void SetOfEntities::add(const Entity& pEntity)
 {
-  _entities.push_back(pEntity);
-  _valueToEntity[pEntity.value] = &_entities.back();
+  _valueToEntity.emplace(pEntity.value, pEntity);
 }
 
 const Entity* SetOfEntities::valueToEntity(const std::string& pValue) const
 {
   auto it = _valueToEntity.find(pValue);
   if (it != _valueToEntity.end())
-    return it->second;
+    return &it->second;
   return nullptr;
 }
 
 std::string SetOfEntities::toStr() const
 {
   std::map<std::string, std::string> typeToValues;
-  for (auto& currEntity : _entities)
+  for (auto& currValueToEntity : _valueToEntity)
   {
     std::string typeName;
-    if (currEntity.type)
-      typeName = currEntity.type->name;
+    if (currValueToEntity.second.type)
+      typeName = currValueToEntity.second.type->name;
     auto& valuesStr = typeToValues[typeName];
     if (valuesStr != "")
       valuesStr += " ";
-    valuesStr += currEntity.value;
+    valuesStr += currValueToEntity.second.value;
   }
 
   std::string res;
@@ -96,7 +94,7 @@ std::string SetOfEntities::toStr() const
 
 bool SetOfEntities::empty() const
 {
-  return _entities.empty() && _valueToEntity.empty();
+  return _valueToEntity.empty();
 }
 
 

@@ -29,8 +29,7 @@ struct CONTEXTUALPLANNER_API SetOfPredicates
   bool empty() const;
 
 private:
-  std::list<Predicate> _predicates;
-  std::map<std::string, const Predicate*> _nameToPredicate;
+  std::map<std::string, Predicate> _nameToPredicate;
 };
 
 } // namespace cp

@@ -8,8 +8,7 @@ namespace cp
 {
 
 SetOfPredicates::SetOfPredicates()
-    : _predicates(),
-      _nameToPredicate()
+    : _nameToPredicate()
 {
 }
 
@@ -29,21 +28,20 @@ SetOfPredicates SetOfPredicates::fromStr(const std::string& pStr,
 
 void SetOfPredicates::addAll(const SetOfPredicates& pOther)
 {
-  for (const auto& currPredicate : pOther._predicates)
-    addPredicate(currPredicate);
+  for (const auto& currNameToPredicate : pOther._nameToPredicate)
+    addPredicate(currNameToPredicate.second);
 }
 
 void SetOfPredicates::addPredicate(const Predicate& pPredicate)
 {
-  _predicates.push_back(pPredicate);
-  _nameToPredicate[pPredicate.name] = &_predicates.back();
+  _nameToPredicate.emplace(pPredicate.name, pPredicate);
 }
 
 const Predicate* SetOfPredicates::nameToPredicatePtr(const std::string& pName) const
 {
   auto it = _nameToPredicate.find(pName);
   if (it != _nameToPredicate.end())
-    return it->second;
+    return &it->second;
   return nullptr;
 }
 
@@ -51,7 +49,7 @@ Predicate SetOfPredicates::nameToPredicate(const std::string& pName) const
 {
   auto it = _nameToPredicate.find(pName);
   if (it != _nameToPredicate.end())
-    return *it->second;
+    return it->second;
 
   if (empty()) // For retrocompatibility
     return Predicate(pName, {});
@@ -63,20 +61,20 @@ std::string SetOfPredicates::toStr() const
 {
   std::string res;
   bool firstIteration = true;
-  for (auto& currPredicate : _predicates)
+  for (auto& currNameToPredicate : _nameToPredicate)
   {
     if (firstIteration)
       firstIteration = false;
     else
       res += "\n";
-    res += currPredicate.toStr();
+    res += currNameToPredicate.second.toStr();
   }
   return res;
 }
 
 bool SetOfPredicates::empty() const
 {
-  return _predicates.empty() && _nameToPredicate.empty();
+  return _nameToPredicate.empty();
 }
 
 } // !cp
