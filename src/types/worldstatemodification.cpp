@@ -424,7 +424,7 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
       auto factToCheck = leftFactPtr->factOptional;
       factToCheck.fact.setFluent(rightOperand->getFluent(pWorldState));
       if (!factToCheck.fact.fluent())
-        factToCheck.fact.setFluent(Fact::anyValue);
+        factToCheck.fact.setFluentValue(Entity::anyEntityValue());
       return pFactCallback(factToCheck);
     }
   }
@@ -682,7 +682,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       if (rightOperandExp.name == Fact::undefinedValue.value)
       {
         leftFactPtr->factOptional.isFactNegated = true;
-        leftFactPtr->factOptional.fact.setFluent(Fact::anyValue);
+        leftFactPtr->factOptional.fact.setFluentValue(Entity::anyEntityValue());
         res = std::make_unique<WorldStateModificationFact>(std::move(*leftFactPtr));
       }
       else if (pExpressionParsed.name == _assignFunctionName && !rightOperandExp.isAFunction &&

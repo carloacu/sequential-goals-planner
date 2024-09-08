@@ -276,13 +276,12 @@ struct CONTEXTUALPLANNER_API Fact
 
   void setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType);
   void setFluent(const std::optional<Entity>& pFluent);
+  void setFluentValue(const std::string& pFluentStr);
 
   bool isCompleteWithAnyValueFluent() const;
 
   Predicate predicate;
 
-  /// Constant defining the "any value" special value.
-  const static Entity anyValue;
   /// Constant defining the "undefined" special value.
   const static Entity undefinedValue;
   /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)

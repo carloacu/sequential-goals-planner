@@ -148,7 +148,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
       if (rightOperandExp.name == Fact::undefinedValue.value)
       {
         leftFactPtr->factOptional.isFactNegated = true;
-        leftFactPtr->factOptional.fact.setFluent(Fact::anyValue);
+        leftFactPtr->factOptional.fact.setFluentValue(Entity::anyEntityValue());
         res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
       }
       else if (pExpressionParsed.name == _equalsCharFunctionName && !rightOperandExp.isAFunction &&

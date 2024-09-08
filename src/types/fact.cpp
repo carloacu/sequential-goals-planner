@@ -57,7 +57,6 @@ bool _isInside(const Entity& pEntity,
 
 }
 
-const Entity Fact::anyValue = Entity("*", {});
 const Entity Fact::undefinedValue = Entity("undefined", {});
 std::string Fact::punctualPrefix = "~punctual~";
 
@@ -589,13 +588,13 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToR
     {
       if (currFactParam.value == currParam.name)
       {
-        currFactParam = anyValue;
+        currFactParam.value = Entity::anyEntityValue();
         res = true;
       }
     }
     if (_fluent && _fluent->value == currParam.name)
     {
-      _fluent = anyValue;
+      _fluent->value = Entity::anyEntityValue();
       res = true;
     }
   }
@@ -837,6 +836,15 @@ void Fact::setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pTyp
 void Fact::setFluent(const std::optional<Entity>& pFluent)
 {
   _fluent = pFluent;
+  _resetFactSignatureCache();
+}
+
+void Fact::setFluentValue(const std::string& pFluentStr)
+{
+  if (_fluent)
+    _fluent->value = pFluentStr;
+  else
+    _fluent = Entity(pFluentStr, {});
   _resetFactSignatureCache();
 }
 
