@@ -14,7 +14,7 @@
 #include "test_util.hpp"
 #include "docexamples/test_planningDummyExample.hpp"
 #include "docexamples/test_planningExampleWithAPreconditionSolve.hpp"
-#include "test_plannerWithoutTypes.hpp"
+#include "test_plannerWithSingleType.hpp"
 
 
 namespace
@@ -605,7 +605,7 @@ int main(int argc, char *argv[])
   _satisfyGoalWithSuperiorOperator();
   _parameterToFillFromConditionOfFirstAction();
 
-  test_plannerWithoutTypes();
+  test_planWithSingleType();
   std::cout << "chatbot planner is ok !!!!" << std::endl;
   return 0;
 }

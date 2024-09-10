@@ -15,8 +15,8 @@ add_executable(
   src/test_planner.cpp
   src/test_facttoconditions.hpp
   src/test_facttoconditions.cpp
-  src/test_plannerWithoutTypes.hpp
-  src/test_plannerWithoutTypes.cpp
+  src/test_plannerWithSingleType.hpp
+  src/test_plannerWithSingleType.cpp
   src/test_ontology.hpp
   src/test_ontology.cpp
   src/test_setoffacts.hpp
