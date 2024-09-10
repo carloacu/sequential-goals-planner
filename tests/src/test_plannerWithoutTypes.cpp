@@ -2901,7 +2901,7 @@ void _notExists()
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
 
-  cp::Action actionObj1(_condition_fromStr("not(exists(l, " + _fact_a + "(self, l)))"),
+  cp::Action actionObj1(_condition_fromStr("not(exists(?l, " + _fact_a + "(self, ?l)))"),
                         _worldStateModification_fromStr(_fact_b));
   actions.emplace(action1, actionObj1);
 
@@ -3424,6 +3424,9 @@ void _inferenceToRemoveAFactWithoutFluent()
   assert_false(_hasFact(problem.worldState, "robotAt(me, house1)"));
   assert_false(_hasFact(problem.worldState, "robotAt(me, city)"));
 }
+
+
+
 
 }
 
