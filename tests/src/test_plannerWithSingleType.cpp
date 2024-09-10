@@ -118,12 +118,13 @@ std::unique_ptr<cp::WorldStateModification> _worldStateModification_fromStr(cons
 
 void _setGoalsForAPriority(cp::Problem& pProblem,
                            const std::vector<std::string>& pGoalStrs,
+                           const cp::Ontology& pOntology,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = cp::GoalStack::defaultPriority)
 {
   std::vector<cp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
-    goals.emplace_back(currFactStr, cp::Ontology(), cp::SetOfEntities());
+    goals.emplace_back(currFactStr, pOntology, cp::SetOfEntities());
   pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow, pPriority);
 }
 
@@ -139,6 +140,7 @@ void _setGoalsForAPriority(cp::Problem& pProblem,
 
 void _setGoals(cp::Problem& pProblem,
                const std::map<int, std::vector<std::string>>& pGoalStrs,
+               const cp::Ontology& pOntology,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
   std::map<int, std::vector<cp::Goal>> goals;
@@ -146,7 +148,7 @@ void _setGoals(cp::Problem& pProblem,
   {
     auto& goalsForAPrio = goals[currGoals.first];
     for (auto& currGoal : currGoals.second)
-      goalsForAPrio.emplace_back(currGoal, cp::Ontology(), cp::SetOfEntities());
+      goalsForAPrio.emplace_back(currGoal, pOntology, cp::SetOfEntities());
   }
   pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow);
 }
@@ -162,6 +164,7 @@ void _setGoals(cp::Problem& pProblem,
 
 void _addGoals(cp::Problem& pProblem,
                const std::map<int, std::vector<std::string>>& pGoalStrs,
+               const cp::Ontology& pOntology,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
   std::map<int, std::vector<cp::Goal>> goals;
@@ -169,19 +172,20 @@ void _addGoals(cp::Problem& pProblem,
   {
     auto& goalsForAPrio = goals[currGoals.first];
     for (auto& currGoal : currGoals.second)
-      goalsForAPrio.emplace_back(currGoal, cp::Ontology(), cp::SetOfEntities());
+      goalsForAPrio.emplace_back(currGoal, pOntology, cp::SetOfEntities());
   }
   pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow);
 }
 
 void _addGoalsForAPriority(cp::Problem& pProblem,
                            const std::vector<std::string>& pGoalStrs,
+                           const cp::Ontology& pOntology,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = cp::GoalStack::defaultPriority)
 {
   std::vector<cp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
-    goals.emplace_back(currFactStr, cp::Ontology(), cp::SetOfEntities());
+    goals.emplace_back(currFactStr, pOntology, cp::SetOfEntities());
   pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow, pPriority);
 }
 
@@ -198,27 +202,30 @@ void _addGoalsForAPriority(cp::Problem& pProblem,
 void _setFacts(cp::WorldState& pWorldState,
                const std::set<std::string>& pFactStrs,
                cp::GoalStack& pGoalStack,
+               const cp::Ontology& pOntology,
                const std::map<cp::SetOfInferencesId, cp::SetOfInferences>& pSetOfInferences = _emptySetOfInferences) {
   std::set<cp::Fact> facts;
   for (auto& currFactStr : pFactStrs)
-    facts.emplace(currFactStr, cp::Ontology(), cp::SetOfEntities(), std::vector<cp::Parameter>());
-  pWorldState.setFacts(facts, pGoalStack, pSetOfInferences, cp::Ontology(), cp::SetOfEntities(), _now);
+    facts.emplace(currFactStr, pOntology, cp::SetOfEntities(), std::vector<cp::Parameter>());
+  pWorldState.setFacts(facts, pGoalStack, pSetOfInferences, pOntology, cp::SetOfEntities(), _now);
 }
 
 void _addFact(cp::WorldState& pWorldState,
               const std::string& pFactStr,
               cp::GoalStack& pGoalStack,
+              const cp::Ontology& pOntology,
               const std::map<cp::SetOfInferencesId, cp::SetOfInferences>& pSetOfInferences = _emptySetOfInferences,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.addFact(_fact(pFactStr), pGoalStack, pSetOfInferences, cp::Ontology(), cp::SetOfEntities(), pNow);
+  pWorldState.addFact(_fact(pFactStr), pGoalStack, pSetOfInferences, pOntology, cp::SetOfEntities(), pNow);
 }
 
 void _removeFact(cp::WorldState& pWorldState,
                  const std::string& pFactStr,
                  cp::GoalStack& pGoalStack,
+                 const cp::Ontology& pOntology,
                  const std::map<cp::SetOfInferencesId, cp::SetOfInferences>& pSetOfInferences = _emptySetOfInferences,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.removeFact(_fact(pFactStr), pGoalStack, pSetOfInferences, cp::Ontology(), cp::SetOfEntities(), pNow);
+  pWorldState.removeFact(_fact(pFactStr), pGoalStack, pSetOfInferences, pOntology, cp::SetOfEntities(), pNow);
 }
 
 bool _hasFact(cp::WorldState& pWorldState,
@@ -511,11 +518,11 @@ void _noPreconditionGoalImmediatlyReached()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {"be_happy"});
+  _setGoalsForAPriority(problem, {"be_happy"}, ontology);
   assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain));
   assert_true(!problem.goalStack.goals().empty());
   assert_true(!_hasFact(problem.worldState, "be_happy"));
-  _addFact(problem.worldState, "be_happy", problem.goalStack);
+  _addFact(problem.worldState, "be_happy", problem.goalStack, ontology);
   assert_true(_hasFact(problem.worldState, "be_happy"));
 }
 
@@ -531,7 +538,7 @@ void _removeGoalWhenItIsSatisfiedByAnAction()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {"be_happy"});
+  _setGoalsForAPriority(problem, {"be_happy"}, ontology);
 
   auto plannerResult = _lookForAnActionToDoThenNotify(problem, domain);
   assert_eq(_action_goodBoy, plannerResult.actionInvocation.toStr());
@@ -552,7 +559,7 @@ void _removeAnAction()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {"be_happy"});
+  _setGoalsForAPriority(problem, {"be_happy"}, ontology);
   assert_eq(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
   domain.removeAction(_action_goodBoy);
   assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
@@ -574,7 +581,7 @@ void _removeSomeGoals()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {"be_happy"});
+  _setGoalsForAPriority(problem, {"be_happy"}, ontology);
   cp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
   std::set<std::string> goalsRemoved;
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
@@ -660,7 +667,7 @@ void _handlePreconditionWithNegatedFacts()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_checkedIn});
+  _setGoalsForAPriority(problem, {_fact_checkedIn}, ontology);
   auto actionToDo = _lookForAnActionToDoStr(problem, domain);
   assert_true(actionToDo == _action_greet || actionToDo == _action_joke);
 }
@@ -673,7 +680,11 @@ void _testWithNegatedAccessibleFacts()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
-
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e, ontology.types);
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action(_condition_fromStr(_fact_e + " & !" + _fact_b, ontology),
                                       _worldStateModification_fromStr("!" + _fact_c, ontology)));
@@ -683,10 +694,10 @@ void _testWithNegatedAccessibleFacts()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setFacts(problem.worldState, {_fact_a, _fact_b, _fact_c}, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_d});
+  _setFacts(problem.worldState, {_fact_a, _fact_b, _fact_c}, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_d}, ontology);
   assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
-  _addFact(problem.worldState, _fact_e,  problem.goalStack);
+  _addFact(problem.worldState, _fact_e,  problem.goalStack, ontology);
   assert_eq(action2, _lookForAnActionToDoStr(problem, domain));
 }
 
@@ -701,7 +712,7 @@ void _noPlanWithALengthOf2()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -721,7 +732,7 @@ void _noPlanWithALengthOf3()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -740,7 +751,7 @@ void _2preconditions()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_checkIn, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
@@ -759,7 +770,7 @@ void _2Goals()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -778,7 +789,7 @@ void _2UnrelatedGoals()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
@@ -797,7 +808,7 @@ void _impossibleGoal()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   assert_eq(_action_checkIn, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -822,19 +833,19 @@ void _privigelizeTheActionsThatHaveManyPreferedInContext()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setFacts(problem.worldState, {_fact_hasQrCode}, problem.goalStack);
+  _setFacts(problem.worldState, {_fact_hasQrCode}, problem.goalStack, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithQrCode + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setFacts(problem.worldState, {_fact_hasCheckInPasword}, problem.goalStack);
+  _setFacts(problem.worldState, {_fact_hasCheckInPasword}, problem.goalStack, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   assert_eq(_action_greet + _sep +
             _action_checkInWithPassword + _sep +
@@ -856,7 +867,7 @@ void _preconditionThatCannotBeSolved()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_true(_lookForAnActionToDoStr(problem, domain).empty());
 }
 
@@ -877,33 +888,33 @@ void _preferInContext()
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_greet + _sep +
             _action_checkInWithPassword + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setFacts(problem.worldState, {_fact_hasQrCode}, problem.goalStack);
+  _setFacts(problem.worldState, {_fact_hasQrCode}, problem.goalStack, ontology);
   assert_eq(_action_checkInWithQrCode + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setFacts(problem.worldState, {_fact_hasCheckInPasword}, problem.goalStack);
+  _setFacts(problem.worldState, {_fact_hasCheckInPasword}, problem.goalStack, ontology);
   assert_eq(_action_checkInWithPassword + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
   actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  _setFacts(problem.worldState, {}, problem.goalStack);
+  _setFacts(problem.worldState, {}, problem.goalStack, ontology);
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setFacts(problem.worldState, {_fact_hasQrCode}, problem.goalStack);
+  _setFacts(problem.worldState, {_fact_hasQrCode}, problem.goalStack, ontology);
   assert_eq(_action_checkInWithQrCode + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setFacts(problem.worldState, {_fact_hasCheckInPasword}, problem.goalStack);
+  _setFacts(problem.worldState, {_fact_hasCheckInPasword}, problem.goalStack, ontology);
   assert_eq(_action_checkInWithPassword + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
@@ -911,7 +922,7 @@ void _preferInContext()
   actions.emplace(_action_checkInWithRealPerson, cp::Action({},
                                                             _worldStateModification_fromStr(_fact_checkedIn, ontology),
                                                             _condition_fromStr("!" + _fact_hasQrCode, ontology)));
-  _setFacts(problem.worldState, {}, problem.goalStack);
+  _setFacts(problem.worldState, {}, problem.goalStack, ontology);
   assert_eq(_action_checkInWithRealPerson + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
@@ -932,12 +943,12 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_checkIn + _sep +
             _action_presentation + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setFacts(problem.worldState, {_fact_beginOfConversation}, problem.goalStack);
+  _setFacts(problem.worldState, {_fact_beginOfConversation}, problem.goalStack, ontology);
   assert_eq(_action_greet + _sep +
             _action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -958,16 +969,16 @@ void _avoidToDo2TimesTheSameActionIfPossble()
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions));
 
-  _setGoalsForAPriority(problem, {_fact_greeted});
+  _setGoalsForAPriority(problem, {_fact_greeted}, ontology);
   assert_eq(_action_greet, _solveStr(problem, actions));
 
-  _setFacts(problem.worldState, {}, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setFacts(problem.worldState, {}, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_checkIn + _sep +
             _action_presentation + _sep +
             _action_goodBoy, _solveStr(problem, actions));
@@ -986,7 +997,7 @@ void _takeHistoricalIntoAccount()
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_checkIn + _sep +
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions, &problem.historical));
@@ -1011,8 +1022,8 @@ void _goDoTheActionThatHaveTheMostPreferInContextValidated()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setFacts(problem.worldState, {_fact_is_close}, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setFacts(problem.worldState, {_fact_is_close}, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_checkIn, _lookForAnActionToDoStr(problem, domain));
 }
 
@@ -1027,7 +1038,7 @@ void _checkNotInAPrecondition()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_greeted});
+  _setGoalsForAPriority(problem, {_fact_greeted}, ontology);
   assert_eq(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   problem.worldState.modify(_worldStateModification_fromStr(_fact_checkedIn, ontology), problem.goalStack,
                             _emptySetOfInferences, {}, {}, _now);
@@ -1040,8 +1051,8 @@ void _checkClearGoalsWhenItsAlreadySatisfied()
   cp::Ontology ontology;
 
   cp::Problem problem;
-  _setFacts(problem.worldState, {_fact_greeted}, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_greeted});
+  _setFacts(problem.worldState, {_fact_greeted}, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_greeted}, ontology);
   assert_eq<std::size_t>(1, problem.goalStack.goals().size());
   cp::Domain domain;
   _lookForAnActionToDo(problem, domain);
@@ -1079,7 +1090,7 @@ void _precoditionEqualEffect()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_true(_lookForAnActionToDoStr(problem, domain).empty());
 }
 
@@ -1118,7 +1129,7 @@ void _circularDependencies()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq<std::string>("", _lookForAnActionToDoConstStr(problem, domain));
 }
 
@@ -1135,8 +1146,8 @@ void _triggerActionThatRemoveAFact()
 
   cp::Historical historical;
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_beSad, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_beHappy});
+  _addFact(problem.worldState, _fact_beSad, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   assert_eq(_action_joke + _sep +
             _action_goodBoy, _solveStr(problem, actions, {}, &historical));
 }
@@ -1200,7 +1211,7 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
-  _addFact(problem.worldState, "isEngaged(2)", problem.goalStack);
+  _addFact(problem.worldState, "isEngaged(2)", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("isHappy(1)", ontology)});
   assert_eq<std::string>("", _solveStr(problem, actions));
 }
@@ -1221,7 +1232,7 @@ void _actionWithParametersInsideThePath()
                              _worldStateModification_fromStr("welcomePeople", ontology)));
 
   cp::Problem problem;
-  _addFact(problem.worldState, "place=kitchen", problem.goalStack);
+  _addFact(problem.worldState, "place=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)});
   assert_eq<std::string>(_action_navigate + "(?target -> entrance)" + _sep +
                          _action_welcome, _solveStr(problem, actions));
@@ -1266,7 +1277,7 @@ void _testPersistImplyGoal()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_greeted + ", " + _fact_checkedIn + "))", ontology)});
   assert_eq<std::string>("", _solveStr(problem, actions));
-  _addFact(problem.worldState, _fact_greeted, problem.goalStack);
+  _addFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
   assert_eq<std::string>(_action_checkIn, _solveStr(problem, actions));
 }
 
@@ -1283,7 +1294,7 @@ void _testImplyGoal()
   _setGoalsForAPriority(problem, {_goal("imply(" + _fact_greeted + ", " + _fact_checkedIn + ")", ontology)});
   assert_eq<std::string>("", _solveStr(problem, actions));
   // It is not a persistent goal it is removed
-  _addFact(problem.worldState, _fact_greeted, problem.goalStack);
+  _addFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
   assert_eq<std::string>("", _solveStr(problem, actions));
 }
 
@@ -1299,10 +1310,10 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
   actions.emplace(_action_checkIn, cp::Action({},
                                               _worldStateModification_fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised, ontology)));
   cp::Problem problem;
-  _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack);
-  _setGoalsForAPriority(problem, {"persist(" + _fact_userSatisfied + ")"});
+  _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {"persist(" + _fact_userSatisfied + ")"}, ontology);
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
-  _removeFact(problem.worldState, _fact_userSatisfied, problem.goalStack);
+  _removeFact(problem.worldState, _fact_userSatisfied, problem.goalStack, ontology);
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
 }
 
@@ -1321,8 +1332,8 @@ void _dontLinkActionWithPreferredInContext()
 
   cp::Historical historical;
   cp::Problem problem;
-  _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_userSatisfied});
+  _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_userSatisfied}, ontology);
   assert_eq<std::string>(_action_askQuestion1, _solveStr(problem, actions));
 }
 
@@ -1337,7 +1348,7 @@ void _checkPriorities()
   actions.emplace(_action_goodBoy, cp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   cp::Problem problem;
-  _setGoals(problem, {{10, {_fact_greeted}}, {9, {_fact_beHappy}}});
+  _setGoals(problem, {{10, {_fact_greeted}}, {9, {_fact_beHappy}}}, ontology);
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions));
 }
@@ -1384,7 +1395,7 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
             _action_goodBoy, _solveStr(problem, actions));
 
   cp::Problem problem2;
-  _addFact(problem2.worldState, _fact_presented, problem2.goalStack); // The difference here is that the condition of the first goal is satisfied
+  _addFact(problem2.worldState, _fact_presented, problem2.goalStack, ontology); // The difference here is that the condition of the first goal is satisfied
   _setGoals(problem2, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem2, actions));
@@ -1392,15 +1403,15 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
 
   cp::Problem problem3;
   _setGoals(problem3, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
-  _addFact(problem3.worldState, _fact_presented, problem3.goalStack); // The difference here is that the condition is validated after the add of the goal
+  _addFact(problem3.worldState, _fact_presented, problem3.goalStack, ontology); // The difference here is that the condition is validated after the add of the goal
   assert_eq(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem3, actions));
 
 
   cp::Problem problem4;
   _setGoals(problem4, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
-  _addFact(problem4.worldState, _fact_presented, problem4.goalStack); // Here _fact_checkedIn goal shoud be removed from the stack
-  _removeFact(problem4.worldState, _fact_presented, problem4.goalStack); // The difference here is that the condition was validated only punctually
+  _addFact(problem4.worldState, _fact_presented, problem4.goalStack, ontology); // Here _fact_checkedIn goal shoud be removed from the stack
+  _removeFact(problem4.worldState, _fact_presented, problem4.goalStack, ontology); // The difference here is that the condition was validated only punctually
   assert_eq(_action_goodBoy, _solveStr(problem4, actions));
 }
 
@@ -1449,7 +1460,7 @@ void _changePriorityOfGoal()
     goalsRemoved = pGoalsRemoved;
   });
 
-  _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}});
+  _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, ontology);
   {
     auto& goals = problem.goalStack.goals();
     assert_eq(goalsFromSubscription, goals);
@@ -1469,7 +1480,7 @@ void _changePriorityOfGoal()
     assert_eq<std::size_t>(1, goals.find(10)->second.size());
   }
 
-  _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}});
+  _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, ontology);
   problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, false, problem.worldState, _now);
   {
     auto& goals = problem.goalStack.goals();
@@ -1481,7 +1492,7 @@ void _changePriorityOfGoal()
     assert_eq<std::size_t>(1, goals.find(10)->second.size());
   }
 
-  _setGoals(problem, {{10, {_fact_greeted, _fact_checkedIn}}});
+  _setGoals(problem, {{10, {_fact_greeted, _fact_checkedIn}}}, ontology);
   problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, true, problem.worldState, _now);
   {
     auto& goals = problem.goalStack.goals();
@@ -1508,7 +1519,7 @@ void _factChangedNotification()
 
   std::set<cp::Fact> factsChangedFromSubscription;
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_beginOfConversation, problem.goalStack);
+  _addFact(problem.worldState, _fact_beginOfConversation, problem.goalStack, ontology);
   auto factsChangedConnection = problem.worldState.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
@@ -1525,7 +1536,7 @@ void _factChangedNotification()
     factsRemoved.insert(factsRemoved.end(), pFacts.begin(), pFacts.end());
   });
 
-  _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}});
+  _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, ontology);
   assert_eq({}, factsChangedFromSubscription);
 
   auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
@@ -1542,7 +1553,7 @@ void _factChangedNotification()
   assert_eq({_fact(_fact_punctual_p1)}, punctualFactsAdded);
   assert_eq({_fact(_fact_checkedIn)}, factsAdded);
   assert_eq({}, factsRemoved);
-  _removeFact(problem.worldState, _fact_greeted, problem.goalStack);
+  _removeFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
   assert_eq({_fact(_fact_beginOfConversation), _fact(_fact_checkedIn)}, factsChangedFromSubscription);
   assert_eq({_fact(_fact_punctual_p1)}, punctualFactsAdded);
   assert_eq({_fact(_fact_checkedIn)}, factsAdded);
@@ -1573,7 +1584,7 @@ void _checkInferences()
                                           _emptyParameters, {{{9, {_goal(_fact_checkedIn, ontology)}}}}));
   assert_eq<std::string>("", _solveStr(problem, domain, _now));
   auto& setOfInferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, _fact_headTouched, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_headTouched, problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_true(!_hasFact(problem.worldState, _fact_headTouched)); // removed because of the inference
   assert_eq(_action_checkIn, _solveStr(problem, domain, _now));
 }
@@ -1596,7 +1607,7 @@ void _checkInferencesWithImply()
   _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))", ontology)});
   assert_eq<std::string>("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, _fact_headTouched, problem.goalStack, setOfReferencesMap, _now);
+  _addFact(problem.worldState, _fact_headTouched, problem.goalStack, ontology, setOfReferencesMap, _now);
   assert_true(!_hasFact(problem.worldState, _fact_headTouched)); // removed because of the inference
   assert_eq(_action_checkIn, _solveStr(problem, domain, _now));
 }
@@ -1618,7 +1629,7 @@ void _checkInferenceWithPunctualCondition()
   _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
   assert_eq<std::string>("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, _fact_punctual_headTouched, problem.goalStack, setOfReferencesMap, _now);
+  _addFact(problem.worldState, _fact_punctual_headTouched, problem.goalStack, ontology, setOfReferencesMap, _now);
   assert_true(!_hasFact(problem.worldState, _fact_punctual_headTouched)); // because it is a punctual fact
   assert_eq(_action_checkIn, _solveStr(problem, domain, _now));
 }
@@ -1642,7 +1653,7 @@ void _checkInferenceAtEndOfAPlan()
   _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
   assert_eq<std::string>("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, _fact_punctual_headTouched, problem.goalStack, setOfReferencesMap, _now);
+  _addFact(problem.worldState, _fact_punctual_headTouched, problem.goalStack, ontology, setOfReferencesMap, _now);
   assert_true(!_hasFact(problem.worldState, _fact_punctual_headTouched)); // because it is a punctual fact
   assert_eq(_action_checkIn, _solveStr(problem, domain, _now));
 }
@@ -1721,7 +1732,7 @@ void _checkInferenceThatAddAGoal()
   _setGoalsForAPriority(problem, {_goal("imply(" + _fact_g + ", " + _fact_d + ")", ontology)});
   assert_eq<std::string>("", _solveStrConst(problem, domain));
   auto& setOfInferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, _fact_g, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_g, problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1 + _sep + action4 + _sep + action3 + _sep + action2, _solveStr(problem, domain));
 }
 
@@ -1736,22 +1747,22 @@ void _testGetNotSatisfiedGoals()
   cp::Ontology ontology;
 
   cp::Problem problem;
-  _addGoalsForAPriority(problem, {goal1}, {}, cp::GoalStack::defaultPriority + 1);
-  _addGoalsForAPriority(problem, {goal2, goal3, goal4});
+  _addGoalsForAPriority(problem, {goal1}, ontology, {}, cp::GoalStack::defaultPriority + 1);
+  _addGoalsForAPriority(problem, {goal2, goal3, goal4}, ontology);
 
   assert_eq(goal1 + ", " + goal2 + ", " + goal3 + ", " + goal4, cp::printGoals(problem.goalStack.goals()));
   assert_eq(goal2 + ", " + goal4, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
-  _addFact(problem.worldState, _fact_a, problem.goalStack);
+  _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
   assert_eq(goal1 + ", " + goal2 + ", " + goal4, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
-  _addFact(problem.worldState, _fact_c, problem.goalStack);
+  _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
   assert_eq(goal1 + ", " + goal2 + ", " + goal3, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
-  _addFact(problem.worldState, _fact_d, problem.goalStack);
+  _addFact(problem.worldState, _fact_d, problem.goalStack, ontology);
   assert_eq(goal1 + ", " + goal2, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
-  _removeFact(problem.worldState, _fact_a, problem.goalStack);
+  _removeFact(problem.worldState, _fact_a, problem.goalStack, ontology);
   assert_eq(goal2, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
-  _addFact(problem.worldState, _fact_b, problem.goalStack);
+  _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
   assert_eq<std::string>("", cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
-  _removeFact(problem.worldState, _fact_d, problem.goalStack);
+  _removeFact(problem.worldState, _fact_d, problem.goalStack, ontology);
   assert_eq(goal3, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
 }
 
@@ -1772,14 +1783,14 @@ void _testGoalUnderPersist()
 
   {
     cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, now, cp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
     _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, now, cp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
     _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain));
@@ -1787,15 +1798,15 @@ void _testGoalUnderPersist()
 
   {
     cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, now, cp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
     _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
-    _addFact(problem.worldState, _fact_a, problem.goalStack);
+    _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
     assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, now, cp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
     assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain));
     _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
@@ -1804,7 +1815,7 @@ void _testGoalUnderPersist()
 
   {
     cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, now, cp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
     assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
     _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
@@ -1813,7 +1824,7 @@ void _testGoalUnderPersist()
 
   {
     cp::Problem problem;
-    _addGoalsForAPriority(problem, {_fact_c}, now, cp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {_fact_c}, ontology, now, cp::GoalStack::defaultPriority + 2);
     assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
     _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
@@ -1830,7 +1841,7 @@ void _testGoalUnderPersist()
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain, now));
     assert_eq(action1, _lookForAnActionToDoStr(problem, domain, now));
 
-    _removeFact(problem.worldState, _fact_c, problem.goalStack);
+    _removeFact(problem.worldState, _fact_c, problem.goalStack, ontology);
     problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, cp::GoalStack::defaultPriority + 2);
     auto plannerResult = _lookForAnActionToDo(problem, domain, now);
     assert_eq(action2, plannerResult.actionInvocation.actionId);
@@ -1861,7 +1872,7 @@ void _checkLinkedInferences()
 
   std::map<cp::SetOfInferencesId, cp::SetOfInferences> setOfInferencesMap = {{"soi", setOfInferences}};
   assert_false(_hasFact(problem.worldState, _fact_a));
-  _addFact(problem.worldState, _fact_punctual_p4, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_punctual_p4, problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_true(_hasFact(problem.worldState, _fact_a));
 }
 
@@ -1890,7 +1901,7 @@ void _oneStepTowards()
   assert_eq(_action_greet, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
   assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, _now));
   assert_eq(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, _now));
-  _addFact(problem.worldState, _fact_a, problem.goalStack);
+  _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
   assert_eq(actionb, _lookForAnActionToDoStr(problem, domain, _now));
   assert_eq<std::string>(actionb + _sep + _action_goodBoy, _solveStrConst(problem, domain));
   assert_eq<std::string>(implyGoal.toStr() + _sep + _fact_beHappy, _getGoalsDoneDuringAPlannificationConst(problem, domain));
@@ -1931,7 +1942,7 @@ void _infrenceLinksFromManyInferencesSets()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
-  _addFact(problem.worldState, _fact_punctual_p1, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_punctual_p1, problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
 }
@@ -1950,11 +1961,11 @@ void _factValueModification()
   cp::Problem problem;
   _setGoals(problem, {{10, {_goal("persist(imply(" + _fact_a + "=a, " + "!" + _fact_b + "))", ontology, 0)}}});
 
-  _addFact(problem.worldState, _fact_b, problem.goalStack);
+  _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
   assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain, _now));
-  _addFact(problem.worldState, _fact_a + "=a", problem.goalStack);
+  _addFact(problem.worldState, _fact_a + "=a", problem.goalStack, ontology);
   assert_eq(action1, _lookForAnActionToDoStr(problem, domain, _now));
-  _addFact(problem.worldState, _fact_a + "=b", problem.goalStack);
+  _addFact(problem.worldState, _fact_a + "=b", problem.goalStack, ontology);
   assert_eq<std::string>("", _lookForAnActionToDoStr(problem, domain, _now));
 }
 
@@ -1979,7 +1990,7 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
     goalsRemoved = pGoalsRemoved;
   });
-  _setGoals(problem, {{27, {_fact_a}}}, _now);
+  _setGoals(problem, {{27, {_fact_a}}}, ontology, _now);
 
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
   assert_eq<std::size_t>(1u, goalsRemoved.size());
@@ -2003,8 +2014,8 @@ void _setWsModification()
   actions.emplace(_action_navigate, navAction);
 
   cp::Problem problem;
-  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack);
-  _addFact(problem.worldState, "location(object)=kitchen", problem.goalStack);
+  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
+  _addFact(problem.worldState, "location(object)=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("location(me)=kitchen", ontology)});
   assert_eq(_action_navigate, _solveStr(problem, actions));
 }
@@ -2020,10 +2031,10 @@ void _forAllWsModification()
   actions.emplace(action1, navAction);
 
   cp::Problem problem;
-  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack);
-  _addFact(problem.worldState, "location(object1)=kitchen", problem.goalStack);
-  _addFact(problem.worldState, "grab(me, object1)", problem.goalStack);
-  _addFact(problem.worldState, "grab(me, object2)", problem.goalStack);
+  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
+  _addFact(problem.worldState, "location(object1)=kitchen", problem.goalStack, ontology);
+  _addFact(problem.worldState, "grab(me, object1)", problem.goalStack, ontology);
+  _addFact(problem.worldState, "grab(me, object2)", problem.goalStack, ontology);
 
   _setGoalsForAPriority(problem, {_goal("location(object2)=corridor", ontology)});
   assert_eq(action1, _solveStr(problem, actions));
@@ -2047,8 +2058,8 @@ void _actionNavigationAndGrabObjectWithParameters()
   actions.emplace(_action_grab, grabAction);
 
   cp::Problem problem;
-  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack);
-  _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack);
+  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
+  _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)"))->toStr());
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)", _solveStr(problem, actions));
@@ -2072,8 +2083,8 @@ void _actionNavigationAndGrabObjectWithParameters2()
   actions.emplace(_action_grab, grabAction);
 
   cp::Problem problem;
-  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack);
-  _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack);
+  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
+  _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)"))->toStr());
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)", _solveStr(problem, actions));
@@ -2106,8 +2117,8 @@ void _moveObject()
   actions.emplace(_action_grab, grabAction);
 
   cp::Problem problem;
-  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack);
-  _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack);
+  _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
+  _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("location(sweets)=bedroom", ontology)});
   assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets), " +
                          actionNavigate2 + "(?object -> sweets, ?targetLocation -> bedroom)", _solveStr(problem, actions));
@@ -2145,7 +2156,7 @@ void _moveAndUngrabObject()
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)});
 
   assert_eq(_action_navigate + "(?targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2208,10 +2219,10 @@ void _failToMoveAnUnknownObject()
   _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)});
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, "charging(me)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "charging(me)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(actionWhereIsObject + "(?aLocation -> bedroom, ?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)});
   assert_eq(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(_action_navigate + "(?targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2265,7 +2276,7 @@ void _completeMovingObjectScenario()
 
   assert_eq(actionWhereIsObject + "(?aLocation -> bedroom, ?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   auto& setOfInferencesMap = domain.getSetOfInferences();
-  _addFact(problem.worldState, "locationOfObject(sweets)=kitchen", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "locationOfObject(sweets)=kitchen", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets", ontology)});
   assert_eq(_action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2314,26 +2325,26 @@ void _inferenceWithANegatedFactWithParameter()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
-  _addFact(problem.worldState, "hasTwoHandles(sweets)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "grabLeftHand(me)=sweets", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "grabRightHand(me)=sweets", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "grab(me, sweets)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "hasTwoHandles(sweets)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grabLeftHand(me)=sweets", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grabRightHand(me)=sweets", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grab(me, sweets)", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal("!grab(me, sweets)", ontology)});
 
   assert_eq(actionUngrabBothHands + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, "grab(me, sweets)"));
 
-  _addFact(problem.worldState, "grabLeftHand(me)=bottle", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "grab(me, bottle)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grabLeftHand(me)=bottle", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grab(me, bottle)", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal("!grab(me, bottle)", ontology)});
   assert_eq(actionUngrabLeftHand + "(?object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 
-  _addFact(problem.worldState, "grabLeftHand(me)=bottle", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "grab(me, bottle)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "grabRightHand(me)=glass", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "grab(me, glass)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grabLeftHand(me)=bottle", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grab(me, bottle)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grabRightHand(me)=glass", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "grab(me, glass)", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal("!grab(me, glass)", ontology)});
   assert_eq(actionUngrabRightHand + "(?object -> glass)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, "grab(me, glass)"));
@@ -2361,8 +2372,8 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_c, problem.goalStack);
-  _addFact(problem.worldState, _fact_d, problem.goalStack);
+  _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
+  _addFact(problem.worldState, _fact_d, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
   assert_eq(action3, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2388,9 +2399,9 @@ void _useTwoTimesAnInference()
 
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_b + "(obj1)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(obj2)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_a, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(obj1)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(obj2)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a, problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_true(_hasFact(problem.worldState, _fact_c + "(obj1)"));
   assert_true(_hasFact(problem.worldState, _fact_c + "(obj2)"));
 }
@@ -2414,7 +2425,7 @@ void _linkWithAnyValueInCondition()
 
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_a + "=toto", problem.goalStack);
+  _addFact(problem.worldState, _fact_a + "=toto", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
   assert_eq(action2 + "(?aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2432,7 +2443,7 @@ void _removeAFactWithAnyValue()
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a + " & !" + _fact_b + "=*", ontology)));
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_b + "=toto", problem.goalStack);
+  _addFact(problem.worldState, _fact_b + "=toto", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_a, ontology)});
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, _fact_b + "=toto"));
@@ -2459,8 +2470,8 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_a + "(2)", problem.goalStack);
-  _addFact(problem.worldState, _fact_c, problem.goalStack);
+  _addFact(problem.worldState, _fact_a + "(2)", problem.goalStack, ontology);
+  _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
 
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
@@ -2479,8 +2490,8 @@ void _checkPreferInContext()
   actions.emplace(action2, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_b, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_a});
+  _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_a}, ontology);
   assert_eq(action1, _solveStrConst(problem, actions, &problem.historical));
   assert_eq(action1, _solveStrConst(problem, actions, &problem.historical));
 }
@@ -2502,8 +2513,8 @@ void _checkPreferHighImportanceOfNotRepeatingIt()
   actions.emplace(action2, action2Obj);
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_b, problem.goalStack);
-  _setGoalsForAPriority(problem, {_fact_a});
+  _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_fact_a}, ontology);
   assert_eq(action1, _solveStrConst(problem, actions, &problem.historical));
   assert_eq(action2, _solveStrConst(problem, actions, &problem.historical));
 }
@@ -2531,7 +2542,7 @@ void _actionWithFactWithANegatedFact()
 
   cp::Domain domain(std::move(actions));
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_e, problem.goalStack);
+  _addFact(problem.worldState, _fact_e, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
 
   assert_eq(action3, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2560,14 +2571,14 @@ void _negatedFactValueInWorldState()
 
   {
     cp::Problem problem;
-    _addFact(problem.worldState, _fact_a + "=b", problem.goalStack);
+    _addFact(problem.worldState, _fact_a + "=b", problem.goalStack, ontology);
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
     assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   }
 
   {
     cp::Problem problem;
-    _addFact(problem.worldState, _fact_a + "=c", problem.goalStack);
+    _addFact(problem.worldState, _fact_a + "=c", problem.goalStack, ontology);
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
     assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2576,7 +2587,7 @@ void _negatedFactValueInWorldState()
 
   {
     cp::Problem problem;
-    _addFact(problem.worldState, _fact_a + "!=b", problem.goalStack);
+    _addFact(problem.worldState, _fact_a + "!=b", problem.goalStack, ontology);
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
     assert_eq<std::string>(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2633,8 +2644,8 @@ void _checkFilterFactInCondition()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(obj1, loc2)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(obj1, loc2)", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
   assert_eq<std::string>(action1 + "(?obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq<std::string>(action2 + "(?loc -> loc1, ?obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2673,8 +2684,8 @@ void _checkFilterFactInConditionAndThenPropagate()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(obj2, loc2)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(obj2, loc2)", problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(loc2)", ontology)});
   assert_eq(action1 + "(?obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action2 + "(?loc -> loc2, ?obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2706,7 +2717,7 @@ void _checkOutputValueOfLookForAnActionToDo()
   }
 
   {
-    _addFact(problem.worldState, _fact_a, problem.goalStack, setOfInferencesMap, _now);
+    _addFact(problem.worldState, _fact_a, problem.goalStack, ontology, setOfInferencesMap, _now);
     cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
     auto res = cp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
     assert(res.empty());
@@ -2766,7 +2777,7 @@ void _hardProblemThatNeedsToBeSmart()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_d, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
 
   assert_eq(action1 + "(?obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2825,7 +2836,7 @@ void _goalsToDoInParallel()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_d, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfInferencesMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
 
   assert_eq(action1 + "(?obj -> val3)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -2888,7 +2899,7 @@ void _checkSimpleExists()
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(kitchen)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(kitchen)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -2912,7 +2923,7 @@ void _checkExistsWithActionParameterInvolved()
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(kitchen, pen)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(kitchen, pen)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1 + "(?obj -> pen)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -2935,11 +2946,11 @@ void _checkExistsWithManyFactsInvolved()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
 
-  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1 + "(?obj -> bottle)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -2968,9 +2979,9 @@ void _doAnActionToSatisfyAnExists()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c + "(mouse)", ontology)});
 
-  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action2 + "(?loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action1 + "(?obj -> mouse)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -3001,10 +3012,10 @@ void _checkForAllEffectAtStart()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c + "(mouse)", ontology)});
 
-  _addFact(problem.worldState, _fact_a + "(self, entrance)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(self, entrance)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_true(_hasFact(problem.worldState, _fact_a + "(self, entrance)"));
   assert_eq(action2 + "(?loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_false(_hasFact(problem.worldState, _fact_a + "(self, entrance)")); // removed by the effect at start of action2
@@ -3036,7 +3047,7 @@ void _existsWithValue()
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c + "(pen)", ontology)});
 
-  _addFact(problem.worldState, _fact_b + "(pen)=livingroom", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(pen)=livingroom", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action2 + "(?loc -> livingroom)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action1 + "(?obj -> pen)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -3059,7 +3070,7 @@ void _notExists()
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
   assert_eq(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -3091,10 +3102,10 @@ void _actionToSatisfyANotExists()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
-  _addFact(problem.worldState, "busy(spec_rec)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "busy(spec_rec)", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action3 + "(?r -> spec_rec)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action2 + "(?loc -> kitchen)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -3124,7 +3135,7 @@ void _orInCondition()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
-  _addFact(problem.worldState, _fact_a, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a, problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -3153,22 +3164,22 @@ void _derivedPredicate()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_e, problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_e, problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_false(_hasFact(problem.worldState, _fact_c + "(book)"));
   assert_false(_hasFact(problem.worldState, _fact_d + "(book)"));
-  _addFact(problem.worldState, _fact_a + "(book)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(book)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_false(_hasFact(problem.worldState, _fact_c + "(book)"));
   assert_true(_hasFact(problem.worldState, _fact_d + "(book)"));
-  _addFact(problem.worldState, _fact_b + "(book)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(book)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_true(_hasFact(problem.worldState, _fact_c + "(book)"));
   assert_true(_hasFact(problem.worldState, _fact_d + "(book)"));
   assert_false(_hasFact(problem.worldState, _fact_c + "(titi)"));
   assert_false(_hasFact(problem.worldState, _fact_d + "(titi)"));
-  _removeFact(problem.worldState, _fact_a + "(book)", problem.goalStack, setOfInferencesMap, _now);
+  _removeFact(problem.worldState, _fact_a + "(book)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_false(_hasFact(problem.worldState, _fact_c + "(book)"));
   assert_true(_hasFact(problem.worldState, _fact_d + "(book)"));
-  _addFact(problem.worldState, _fact_a + "(titi)", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(titi)", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_false(_hasFact(problem.worldState, _fact_c + "(book)"));
   assert_true(_hasFact(problem.worldState, _fact_d + "(book)"));
   assert_false(_hasFact(problem.worldState, _fact_c + "(titi)"));
@@ -3191,7 +3202,7 @@ void _assignAnotherValueToSatisfyNotGoal()
   _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)});
 
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "=titi", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "=titi", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -3211,7 +3222,7 @@ void _assignUndefined()
   _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)});
 
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "=titi", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "=titi", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq<std::size_t>(1u, problem.worldState.facts().size());
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq<std::size_t>(0u, problem.worldState.facts().size()); // because assign undefined is done like a fact removal
@@ -3234,9 +3245,9 @@ void _assignAFact()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a + "=valGoal", ontology)});
-  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -3261,9 +3272,9 @@ void _assignAFactToAction()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
-  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -3291,12 +3302,12 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
-  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action2 + "(?pc -> pc2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3325,12 +3336,12 @@ void _assignAFactThenCheckExistWithAnotherFact()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
-  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3363,20 +3374,20 @@ void _existWithEqualityInInference()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)});
-  _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_a + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _removeFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
+  _removeFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _removeFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
+  _removeFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_c + "(pc1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(p1)", ontology)});
   assert_eq(action1 + "(?o -> p1)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
@@ -3408,20 +3419,20 @@ void _existWithEqualityInInference_withEqualityInverted()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)});
-  _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_a + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_a + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _removeFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
+  _removeFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _removeFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
+  _removeFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq<std::string>("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_c + "(pc1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_eq(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(p1)", ontology)});
   assert_eq(action1 + "(?o -> p1)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
@@ -3458,8 +3469,8 @@ void _fixInferenceWithFluentInParameter()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
-  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -3489,13 +3500,13 @@ void _assignAFactTwoTimesInTheSamePlan()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a + "=kitchen", ontology)});
-  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_d + "(pc2)=kitchen", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_d + "(pc2)=kitchen", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action2 + "(?pc -> pc2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3533,14 +3544,14 @@ void _checkTwoTimesTheEqualityOfAFact()
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_f + "=bedroom", ontology)});
-  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_d + "(pc2)=kitchen", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, _fact_e + "(bedroom)=kitchen", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc1)=v1", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc3)=v3", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_d + "(pc2)=kitchen", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_e + "(bedroom)=kitchen", problem.goalStack, ontology, setOfInferencesMap, _now);
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq(action2 + "(?pc -> pc2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3578,21 +3589,21 @@ void _inferenceToRemoveAFactWithoutFluent()
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
-  _addFact(problem.worldState, "within(house1)=city", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "within(house2)=city", problem.goalStack, setOfInferencesMap, _now);
-  _addFact(problem.worldState, "locationOfRobot(me)=house1", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "within(house1)=city", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "within(house2)=city", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "locationOfRobot(me)=house1", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_true(_hasFact(problem.worldState, "robotAt(me, house1)"));
   assert_true(_hasFact(problem.worldState, "robotAt(me, city)"));
-  _removeFact(problem.worldState, "locationOfRobot(me)=house1", problem.goalStack, setOfInferencesMap, _now);
+  _removeFact(problem.worldState, "locationOfRobot(me)=house1", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_false(_hasFact(problem.worldState, "robotAt(me, house1)"));
   assert_false(_hasFact(problem.worldState, "robotAt(me, city)"));
-  _addFact(problem.worldState, "locationOfRobot(me)=house1", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "locationOfRobot(me)=house1", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_true(_hasFact(problem.worldState, "robotAt(me, house1)"));
   assert_true(_hasFact(problem.worldState, "robotAt(me, city)"));
-  _addFact(problem.worldState, "locationOfRobot(me)=city", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "locationOfRobot(me)=city", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_false(_hasFact(problem.worldState, "robotAt(me, house1)"));
   assert_true(_hasFact(problem.worldState, "robotAt(me, city)"));
-  _addFact(problem.worldState, "locationOfRobot(me)=anotherCity", problem.goalStack, setOfInferencesMap, _now);
+  _addFact(problem.worldState, "locationOfRobot(me)=anotherCity", problem.goalStack, ontology, setOfInferencesMap, _now);
   assert_false(_hasFact(problem.worldState, "robotAt(me, house1)"));
   assert_false(_hasFact(problem.worldState, "robotAt(me, city)"));
 }
