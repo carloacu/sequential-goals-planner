@@ -86,7 +86,7 @@ void _forEach(const std::function<void (const Entity&, const Fact*)>& pValueCall
 
   auto* factCondPtr = pCondition.fcFactPtr();
   if (factCondPtr != nullptr &&
-      !factCondPtr->factOptional.fact.fluent())
+      (!factCondPtr->factOptional.fact.fluent() || factCondPtr->factOptional.fact.fluent()->isAnyValue()))
   {
     pWorldState.iterateOnMatchingFactsWithoutFluentConsideration(
           [&pValueCallback](const Fact& pFact) {

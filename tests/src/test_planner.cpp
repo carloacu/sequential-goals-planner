@@ -540,6 +540,42 @@ void _satisfyGoalWithSuperiorOperator()
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 }
 
+
+void _parameterToFillFromConditionOfFirstAction()
+{
+  const std::string action1 = "action1";
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location\n"
+                                           "chargingZone");
+  ontology.constants = cp::SetOfEntities::fromStr("cz - chargingZone\n"
+                                                  "czLocation - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot - location\n"
+                                                     "declaredLocationOfChargingZone(?cz - chargingZone) - location\n"
+                                                     "batteryLevel - number", ontology.types);
+
+  std::map<std::string, cp::Action> actions;
+  std::vector<cp::Parameter> actionParameters{cp::Parameter::fromStr("?cz - chargingZone", ontology.types)};
+  cp::Action action1Obj(cp::Condition::fromStr("=(locationOfRobot, declaredLocationOfChargingZone(?cz))", ontology, {}, actionParameters),
+                                        cp::WorldStateModification::fromStr("batteryLevel=100", ontology, {}, actionParameters));
+  action1Obj.parameters = std::move(actionParameters);
+  actions.emplace(action1, action1Obj);
+  cp::Domain domain(std::move(actions));
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+
+  cp::Problem problem;
+  auto& entities = problem.entities;
+  problem.worldState.addFact(cp::Fact("locationOfRobot=czLocation", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("declaredLocationOfChargingZone(cz)=czLocation", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  problem.worldState.addFact(cp::Fact("batteryLevel=40", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+                             ontology, entities, _now);
+  _setGoalsForAPriority(problem, {cp::Goal("batteryLevel=100", ontology, entities)});
+
+  assert_eq(action1 + "(?cz -> cz)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -567,6 +603,7 @@ int main(int argc, char *argv[])
   _testQuiz();
   _doNextActionThatBringsToTheSmallerCost();
   _satisfyGoalWithSuperiorOperator();
+  _parameterToFillFromConditionOfFirstAction();
 
   test_plannerWithoutTypes();
   std::cout << "chatbot planner is ok !!!!" << std::endl;
