@@ -1265,42 +1265,53 @@ void _actionWithParameterizedValue()
 void _actionWithParameterizedParameter()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("human");
+  ontology.constants = cp::SetOfEntities::fromStr("h1 - human", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("isHappy(?h - human)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> parameters(1, _parameter("?human", ontology));
+  std::vector<cp::Parameter> parameters(1, _parameter("?human - human", ontology));
   cp::Action joke({}, _worldStateModification_fromStr("isHappy(?human)", ontology, parameters));
   joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("isHappy(1)", ontology)});
-  assert_eq(_action_joke + "(?human -> 1)", _solveStr(problem, actions));
+  _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)});
+  assert_eq(_action_joke + "(?human -> h1)", _solveStr(problem, actions));
 }
 
 
 void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("human");
+  ontology.constants = cp::SetOfEntities::fromStr("h1 h2 - human", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?h - human)\n"
+                                                     "isHappy(?h - human)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> parameters(1, _parameter("?human", ontology));
+  std::vector<cp::Parameter> parameters(1, _parameter("?human - human", ontology));
   cp::Action joke(_condition_fromStr("isEngaged(?human)", ontology, parameters),
                   _worldStateModification_fromStr("isHappy(?human)", ontology, parameters));
   joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
   cp::Problem problem;
-  _addFact(problem.worldState, "isEngaged(2)", problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal("isHappy(1)", ontology)});
+  _addFact(problem.worldState, "isEngaged(h2)", problem.goalStack, ontology);
+  _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)});
   assert_eq<std::string>("", _solveStr(problem, actions));
 }
 
 void _actionWithParametersInsideThePath()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location");
+  ontology.constants = cp::SetOfEntities::fromStr("entrance kitchen - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("place - location\n"
+                                                     "welcomePeople", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navigateParameters(1, _parameter("?target", ontology));
+  std::vector<cp::Parameter> navigateParameters(1, _parameter("?target - location", ontology));
   cp::Action navigateAction({},
                             _worldStateModification_fromStr("place=?target", ontology, navigateParameters));
   navigateAction.parameters = std::move(navigateParameters);
@@ -1323,6 +1334,7 @@ void _actionWithParametersInsideThePath()
 void _testPersistGoal()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr("welcomePeople", ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_welcome, cp::Action({}, _worldStateModification_fromStr("welcomePeople", ontology)));
@@ -1348,6 +1360,8 @@ void _testPersistGoal()
 void _testPersistImplyGoal()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_checkedIn, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1364,6 +1378,8 @@ void _testPersistImplyGoal()
 void _testImplyGoal()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_checkedIn, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1381,6 +1397,10 @@ void _testImplyGoal()
 void _checkPreviousBugAboutSelectingAnInappropriateAction()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
+                                                     _fact_userSatisfied + "\n" +
+                                                     _fact_robotLearntABehavior + "\n" +
+                                                     _fact_advertised, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_askQuestion1, cp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
@@ -1400,6 +1420,9 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
 void _dontLinkActionWithPreferredInContext()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
+                                                     _fact_userSatisfied + "\n" +
+                                                     _fact_checkedIn, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(_action_askQuestion1, cp::Action({},
@@ -1407,9 +1430,7 @@ void _dontLinkActionWithPreferredInContext()
                                                    _condition_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_checkIn, cp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  cp::Domain domain(std::move(actions));
 
-  cp::Historical historical;
   cp::Problem problem;
   _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_userSatisfied}, ontology);
@@ -1420,6 +1441,9 @@ void _dontLinkActionWithPreferredInContext()
 void _checkPriorities()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_beHappy + "\n" +
+                                                     _fact_checkedIn, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1436,6 +1460,10 @@ void _checkPriorities()
 void _stackablePropertyOfGoals()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_beHappy + "\n" +
+                                                     _fact_checkedIn + "\n" +
+                                                     _fact_presented, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1460,6 +1488,10 @@ void _stackablePropertyOfGoals()
 void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNotSatisfied()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_beHappy + "\n" +
+                                                     _fact_checkedIn + "\n" +
+                                                     _fact_presented, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1499,6 +1531,8 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
 void _checkMaxTimeToKeepInactiveForGoals()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_checkedIn, ontology.types);
 
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<cp::ActionId, cp::Action> actions;
@@ -1523,6 +1557,9 @@ void _checkMaxTimeToKeepInactiveForGoals()
 void _changePriorityOfGoal()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_checkedIn + "\n" +
+                                                     _fact_userSatisfied, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1590,6 +1627,11 @@ void _changePriorityOfGoal()
 void _factChangedNotification()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+                                                     _fact_checkedIn + "\n" +
+                                                     _fact_userSatisfied + "\n" +
+                                                     _fact_punctual_p1 + "\n" +
+                                                     _fact_beginOfConversation, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1650,6 +1692,8 @@ void _factChangedNotification()
 void _checkInferences()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
+                                                     _fact_checkedIn, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
@@ -1673,6 +1717,9 @@ void _checkInferences()
 void _checkInferencesWithImply()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
+                                                     _fact_checkedIn + "\n" +
+                                                     _fact_userWantsToCheckedIn, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
@@ -1695,6 +1742,8 @@ void _checkInferencesWithImply()
 void _checkInferenceWithPunctualCondition()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
+                                                     _fact_userWantsToCheckedIn, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr("!" + _fact_userWantsToCheckedIn, ontology)));
@@ -1717,6 +1766,9 @@ void _checkInferenceWithPunctualCondition()
 void _checkInferenceAtEndOfAPlan()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
+                                                     _fact_userWantsToCheckedIn + "\n" +
+                                                     _fact_punctual_checkedIn, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_punctual_checkedIn, ontology)));
@@ -1744,6 +1796,10 @@ void _checkInferenceInsideAPlan()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
@@ -1788,6 +1844,13 @@ void _checkInferenceThatAddAGoal()
   const std::string action5 = "action5";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e + "\n" +
+                                                     _fact_f + "\n" +
+                                                     _fact_g, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
@@ -1824,6 +1887,10 @@ void _testGetNotSatisfiedGoals()
   auto goal4 = "persist(imply(!" + _fact_c + ", " + _fact_d + "))";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d, ontology.types);
 
   cp::Problem problem;
   _addGoalsForAPriority(problem, {goal1}, ontology, {}, cp::GoalStack::defaultPriority + 1);
@@ -1853,6 +1920,11 @@ void _testGoalUnderPersist()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e, ontology.types);
 
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, cp::Action> actions;
@@ -1938,6 +2010,14 @@ void _testGoalUnderPersist()
 void _checkLinkedInferences()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_userWantsToCheckedIn + "\n" +
+                                                     _fact_a + "\n" +
+                                                     _fact_punctual_p1 + "\n" +
+                                                     _fact_punctual_p2 + "\n" +
+                                                     _fact_punctual_p3 + "\n" +
+                                                     _fact_punctual_p4 + "\n" +
+                                                     _fact_punctual_p5 + "\n" +
+                                                     _fact_e, ontology.types);
 
   cp::SetOfInferences setOfInferences;
   cp::Problem problem;
@@ -1960,6 +2040,11 @@ void _checkLinkedInferences()
 void _oneStepTowards()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+                                                     _fact_greeted + "\n" +
+                                                     _fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_beHappy, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   cp::ProblemModification greetPbModification;
@@ -1990,6 +2075,12 @@ void _oneStepTowards()
 void _infrenceLinksFromManyInferencesSets()
 {
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_punctual_p2 + "\n" +
+                                                     _fact_punctual_p1, ontology.types);
 
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -2032,6 +2123,10 @@ void _factValueModification()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("a b - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr("!" + _fact_b, ontology)));
@@ -2055,6 +2150,8 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   cp::ProblemModification wm(_worldStateModification_fromStr(_fact_a, ontology));
@@ -2087,6 +2184,11 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
 void _setWsModification()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me object - entity\n"
+                                                  "corridor kitchen - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type", ontology.types);
 
   std::map<std::string, cp::Action> actions;
   cp::Action navAction({}, _worldStateModification_fromStr("set(location(me), location(object))", ontology));
@@ -2103,10 +2205,16 @@ void _setWsModification()
 void _forAllWsModification()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me object1 object2 - entity\n"
+                                                  "corridor kitchen - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+                                                     "grab(?e - entity, ?o - entity)", ontology.types);
 
   const std::string action1 = "action1";
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("forAll(?obj, grab(me, ?obj), set(location(?obj), location(me)))", ontology));
+  cp::Action navAction({}, _worldStateModification_fromStr("forAll(?obj - entity, grab(me, ?obj), set(location(?obj), location(me)))", ontology));
   actions.emplace(action1, navAction);
 
   cp::Problem problem;
@@ -2123,14 +2231,20 @@ void _forAllWsModification()
 void _actionNavigationAndGrabObjectWithParameters()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me sweets - entity\n"
+                                                  "corridor kitchen - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+                                                     "grab(?e - entity, ?o - entity)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation", ontology));
+  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
   cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object", ontology));
+  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   cp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
@@ -2139,7 +2253,7 @@ void _actionNavigationAndGrabObjectWithParameters()
   cp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
-  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)", ontology))->toStr());
+  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)=*", ontology))->value);
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)", _solveStr(problem, actions));
 }
@@ -2148,14 +2262,20 @@ void _actionNavigationAndGrabObjectWithParameters()
 void _actionNavigationAndGrabObjectWithParameters2()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me sweets - entity\n"
+                                                  "corridor kitchen - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+                                                     "grab(?e - entity, ?o - entity)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation", ontology));
+  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
   cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object", ontology));
+  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   cp::Action grabAction(_condition_fromStr("equals(location(?object), location(me))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
@@ -2164,7 +2284,7 @@ void _actionNavigationAndGrabObjectWithParameters2()
   cp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
-  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)", ontology))->toStr());
+  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)=*", ontology))->value);
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)", _solveStr(problem, actions));
 }
@@ -2176,20 +2296,26 @@ void _moveObject()
   const std::string actionNavigate2 = "actionNavigate2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me sweets - entity\n"
+                                                  "corridor kitchen bedroom - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+                                                     "grab(?e - entity, ?o - entity)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation", ontology));
+  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
   cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> nav2Parameters{_parameter("?targetLocation", ontology), _parameter("?object", ontology)};
+  std::vector<cp::Parameter> nav2Parameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   cp::Action navAction2(_condition_fromStr("grab(me, ?object)", ontology, nav2Parameters),
                         _worldStateModification_fromStr("location(me)=?targetLocation & location(?object)=?targetLocation", ontology, nav2Parameters));
   navAction2.parameters = std::move(nav2Parameters);
   actions.emplace(actionNavigate2, navAction2);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object", ontology));
+  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   cp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
@@ -2207,27 +2333,36 @@ void _moveObject()
 void _moveAndUngrabObject()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "robot\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+                                                  "sweets - entity\n"
+                                                  "kitchen bedroom - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
+                                                     "locationOfObj(?o - entity) - loc_type\n"
+                                                     "grab(?e - robot, ?o - entity)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation", ontology));
+  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
   cp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object", ontology));
+  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  std::vector<cp::Parameter> ungrabParameters(1, _parameter("?object", ontology));
+  std::vector<cp::Parameter> ungrabParameters(1, _parameter("?object - entity", ontology));
   cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ontology, ungrabParameters));
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
   cp::Problem problem;
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{_parameter("?targetLocation", ontology), _parameter("?object", ontology)};
+  std::vector<cp::Parameter> inferenceParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, inferenceParameters),
                           _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, inferenceParameters));
   inference.parameters = std::move(inferenceParameters);
@@ -2254,9 +2389,20 @@ void _failToMoveAnUnknownObject()
   const std::string actionRanomWalk = "actionRanomWalk";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "robot\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+                                                  "sweets - entity\n"
+                                                  "kitchen bedroom - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
+                                                     "locationOfObj(?o - entity) - loc_type\n"
+                                                     "grab(?e - robot, ?o - entity)\n"
+                                                     "charging(?r - robot)\n"
+                                                     "isLost", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation", ontology));
+  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
   cp::Action navAction(_condition_fromStr("!isLost & !charging(me)", ontology, navParameters),
                        _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
@@ -2269,25 +2415,25 @@ void _failToMoveAnUnknownObject()
   cp::Action leavePodAction({}, _worldStateModification_fromStr("!charging(me)", ontology));
   actions.emplace(actionLeavePod, leavePodAction);
 
-  std::vector<cp::Parameter> whereIsObjectParameters{_parameter("?object", ontology), _parameter("?aLocation", ontology)};
+  std::vector<cp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
   cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObj(?object)=*", ontology, whereIsObjectParameters),
                                  _worldStateModification_fromStr("locationOfObj(?object)=?aLocation", ontology, whereIsObjectParameters));
   whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
-  std::vector<cp::Parameter> grabParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
   cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  std::vector<cp::Parameter> ungrabParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> ungrabParameters{_parameter("?object - entity", ontology)};
   cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ontology, ungrabParameters));
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{_parameter("?targetLocation", ontology), _parameter("?object", ontology)};
+  std::vector<cp::Parameter> inferenceParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, inferenceParameters),
                           _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, inferenceParameters));
   inference.parameters = std::move(inferenceParameters);
@@ -2317,33 +2463,46 @@ void _completeMovingObjectScenario()
   const std::string actionWhereIsObject = "actionWhereIsObject";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "robot\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+                                                  "sweets bottle - entity\n"
+                                                  "kitchen bedroom entrance - loc_type", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
+                                                     "locationOfObject(?o - entity) - loc_type\n"
+                                                     "grab(?e - robot) - entity\n"
+                                                     "charging(?r - robot)\n"
+                                                     "isLost\n"
+                                                     "pathIsBlocked\n"
+                                                     "lost(?r - robot)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters{_parameter("?targetPlace", ontology)};
+  std::vector<cp::Parameter> navParameters{_parameter("?targetPlace - loc_type", ontology)};
   cp::Action navAction(_condition_fromStr("!lost(me) & !pathIsBlocked", ontology, navParameters),
                        _worldStateModification_fromStr("locationOfRobot(me)=?targetPlace", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters{_parameter("?object", ontology)};
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & not(exists(o, grab(me)=o))", ontology, grabParameters),
+  std::vector<cp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
+  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & not(exists(?o - entity, grab(me)=?o))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me)=?object", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  std::vector<cp::Parameter> ungrabParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> ungrabParameters{_parameter("?object - entity", ontology)};
   cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=?object", ontology, ungrabParameters));
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
-  std::vector<cp::Parameter> whereIsObjectParameters{_parameter("?object", ontology), _parameter("?aLocation", ontology)};
+  std::vector<cp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
   cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObject(?object)=*", ontology, whereIsObjectParameters),
                                  _worldStateModification_fromStr("locationOfObject(?object)=?aLocation", ontology, whereIsObjectParameters));
   whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{_parameter("?object", ontology), _parameter("?location", ontology)};
+  std::vector<cp::Parameter> inferenceParameters{_parameter("?object - entity", ontology), _parameter("?location - loc_type", ontology)};
   cp::Inference inference(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object", ontology, inferenceParameters),
                           _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, inferenceParameters));
   inference.parameters = std::move(inferenceParameters);
@@ -2373,28 +2532,36 @@ void _inferenceWithANegatedFactWithParameter()
   const std::string actionUngrabBothHands = "actionUngrabBothHands";
 
   cp::Ontology ontology;
-
+  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+                                           "robot\n"
+                                           "entity");
+  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+                                                  "sweets bottle glass - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("grab(?e - robot, ?e - entity)\n"
+                                                     "hasTwoHandles(?e - entity)\n"
+                                                     "grabLeftHand(?r - robot) - entity\n"
+                                                     "grabRightHand(?r - robot) - entity", ontology.types);
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> ungrabLeftParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> ungrabLeftParameters{_parameter("?object - entity", ontology)};
   cp::Action ungrabLeftAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabLeftParameters),
                               _worldStateModification_fromStr("!grabLeftHand(me)=?object", ontology, ungrabLeftParameters));
   ungrabLeftAction.parameters = std::move(ungrabLeftParameters);
   actions.emplace(actionUngrabLeftHand, ungrabLeftAction);
 
-  std::vector<cp::Parameter> ungrabRightParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> ungrabRightParameters{_parameter("?object - entity", ontology)};
   cp::Action ungrabRightAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabRightParameters),
                                _worldStateModification_fromStr("!grabRightHand(me)=?object", ontology, ungrabRightParameters));
   ungrabRightAction.parameters = std::move(ungrabRightParameters);
   actions.emplace(actionUngrabRightHand, ungrabRightAction);
 
-  std::vector<cp::Parameter> ungrabBothParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> ungrabBothParameters{_parameter("?object - entity", ontology)};
   cp::Action ungrabBothAction(_condition_fromStr("hasTwoHandles(?object)", ontology, ungrabBothParameters),
                               _worldStateModification_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, ungrabBothParameters));
   ungrabBothAction.parameters = std::move(ungrabBothParameters);
   actions.emplace(actionUngrabBothHands, ungrabBothAction);
 
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> inferenceParameters{_parameter("?object - entity", ontology)};
   cp::Inference inference(_condition_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, inferenceParameters),
                           _worldStateModification_fromStr("!grab(me, ?object)", ontology, inferenceParameters));
   inference.parameters = std::move(inferenceParameters);
@@ -2437,6 +2604,11 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({},
@@ -2465,9 +2637,14 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 void _useTwoTimesAnInference()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("obj1 obj2 - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "(?e - entity)\n" +
+                                                     _fact_c + "(?e - entity)", ontology.types);
 
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{_parameter("?object", ontology)};
+  std::vector<cp::Parameter> inferenceParameters{_parameter("?object - entity", ontology)};
   cp::Inference inference(_condition_fromStr(_fact_a + " & " + _fact_b + "(?object)", ontology, inferenceParameters),
                           _worldStateModification_fromStr(_fact_c + "(?object)", ontology, inferenceParameters));
   inference.parameters = std::move(inferenceParameters);
@@ -2492,12 +2669,16 @@ void _linkWithAnyValueInCondition()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("toto - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action(_condition_fromStr("!" + _fact_a + "=*", ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?aVal", ontology)};
+  std::vector<cp::Parameter> act2Parameters{_parameter("?aVal - entity", ontology)};
   cp::Action act2({}, _worldStateModification_fromStr("!" + _fact_a + "=?aVal", ontology, act2Parameters));
   act2.parameters = std::move(act2Parameters);
   actions.emplace(action2, act2);
@@ -2517,6 +2698,10 @@ void _removeAFactWithAnyValue()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("toto - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + " - entity", ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a + " & !" + _fact_b + "=*", ontology)));
@@ -2537,19 +2722,25 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("e1 e2 - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d, ontology.types);
 
   std::map<cp::ActionId, cp::Action> actions;
   actions.emplace(action1, cp::Action({},
-                                      _worldStateModification_fromStr(_fact_a + "(1)", ontology),
+                                      _worldStateModification_fromStr(_fact_a + "(e1)", ontology),
                                       _condition_fromStr(_fact_c, ontology)));
-  actions.emplace(action2, cp::Action(_condition_fromStr(_fact_a + "(2)", ontology),
+  actions.emplace(action2, cp::Action(_condition_fromStr(_fact_a + "(e2)", ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
   actions.emplace(action3, cp::Action(_condition_fromStr(_fact_b, ontology),
                                       _worldStateModification_fromStr(_fact_d, ontology)));
   cp::Domain domain(std::move(actions));
 
   cp::Problem problem;
-  _addFact(problem.worldState, _fact_a + "(2)", problem.goalStack, ontology);
+  _addFact(problem.worldState, _fact_a + "(e2)", problem.goalStack, ontology);
   _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
 
@@ -2563,6 +2754,8 @@ void _checkPreferInContext()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology)));
@@ -2582,6 +2775,8 @@ void _checkPreferHighImportanceOfNotRepeatingIt()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   auto action1Obj = cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology));
@@ -2606,9 +2801,15 @@ void _actionWithFactWithANegatedFact()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("a b - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-
   actions.emplace(action1, cp::Action({},
                                       _worldStateModification_fromStr(_fact_a + "=a", ontology)));
 
@@ -2635,9 +2836,12 @@ void _negatedFactValueInWorldState()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("a b c - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-
   actions.emplace(action1, cp::Action(_condition_fromStr(_fact_a + "!=b", ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
   cp::Domain domain(std::move(actions));
@@ -2681,9 +2885,10 @@ void _problemThatUseADomainThatChangedSinceLastUsage()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-
   actions.emplace(action1, cp::Action(_condition_fromStr(_fact_a, ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
   cp::Domain domain(std::move(actions));
@@ -2706,15 +2911,22 @@ void _checkFilterFactInCondition()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location");
+  ontology.constants = cp::SetOfEntities::fromStr("obj1 obj2 - entity\n"
+                                                  "loc1 loc2 - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
+                                                     _fact_b + "(?e - entity, ?l - location)\n" +
+                                                     _fact_c, ontology.types);
 
   std::map<std::string, cp::Action> actions;
 
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj", ontology)};
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
   cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?obj", ontology), _parameter("?loc", ontology)};
+  std::vector<cp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
   cp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "(?obj)", ontology, act2Parameters),
                         _worldStateModification_fromStr(_fact_c, ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
@@ -2739,21 +2951,28 @@ void _checkFilterFactInConditionAndThenPropagate()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location");
+  ontology.constants = cp::SetOfEntities::fromStr("obj1 obj2 - entity\n"
+                                                  "loc1 loc2 - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "(?e - entity, ?l - location)\n" +
+                                                     _fact_c + "(?l - location)\n" +
+                                                     _fact_d + "(?l - location)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj", ontology)};
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
   cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?obj", ontology), _parameter("?loc", ontology)};
+  std::vector<cp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
   cp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "=?obj", ontology, act2Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?loc)", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-
-  std::vector<cp::Parameter> act3Parameters{_parameter("?loc", ontology)};
+  std::vector<cp::Parameter> act3Parameters{_parameter("?loc - location", ontology)};
   cp::Action actionObj3(_condition_fromStr(_fact_c + "(?loc)", ontology, act3Parameters),
                         _worldStateModification_fromStr(_fact_d + "(?loc)", ontology, act3Parameters));
   actionObj3.parameters = std::move(act3Parameters);
@@ -2778,6 +2997,8 @@ void _checkOutputValueOfLookForAnActionToDo()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
@@ -2825,9 +3046,17 @@ void _hardProblemThatNeedsToBeSmart()
   const std::string action6 = "action6";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e + "\n" +
+                                                     _fact_f, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj", ontology)};
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
   cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
@@ -2880,9 +3109,18 @@ void _goalsToDoInParallel()
   const std::string action7 = "action7";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e + "\n" +
+                                                     _fact_f + "\n" +
+                                                     _fact_g, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj", ontology)};
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
   cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
@@ -2937,6 +3175,11 @@ void _checkOverallEffectDuringParallelisation()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   cp::Action actionObj1(_condition_fromStr("!" + _fact_d, ontology),
@@ -2966,9 +3209,13 @@ void _checkSimpleExists()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location");
+  ontology.constants = cp::SetOfEntities::fromStr("kitchen - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?l - location)\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(?l))", ontology),
+  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l))", ontology),
                         _worldStateModification_fromStr(_fact_b, ontology));
   actions.emplace(action1, actionObj1);
 
@@ -2988,10 +3235,16 @@ void _checkExistsWithActionParameterInvolved()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location");
+  ontology.constants = cp::SetOfEntities::fromStr("pen - entity\n"
+                                                  "kitchen - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?l - location, ?e - entity)\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> actionParameters{_parameter("?obj", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(?l, ?obj))", ontology, actionParameters),
+  std::vector<cp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
+  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l, ?obj))", ontology, actionParameters),
                         _worldStateModification_fromStr(_fact_b, ontology));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
@@ -3012,10 +3265,19 @@ void _checkExistsWithManyFactsInvolved()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location\n"
+                                           "robot");
+  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+                                                  "bottle mouse pen - entity\n"
+                                                  "bedroom kitchen livingroom - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+                                                     _fact_b + "(?e - entity, ?l - location)\n" +
+                                                     _fact_c, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> actionParameters{_parameter("?obj", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, actionParameters),
+  std::vector<cp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
+  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, actionParameters),
                         _worldStateModification_fromStr(_fact_c, ontology, actionParameters));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
@@ -3040,15 +3302,24 @@ void _doAnActionToSatisfyAnExists()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location\n"
+                                           "robot");
+  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+                                                  "bottle mouse pen - entity\n"
+                                                  "bedroom kitchen livingroom - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+                                                     _fact_b + "(?e - entity, ?l - location)\n" +
+                                                     _fact_c + "(?e - entity)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc", ontology)};
+  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
   cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
@@ -3072,17 +3343,26 @@ void _checkForAllEffectAtStart()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location\n"
+                                           "robot");
+  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+                                                  "bottle mouse pen - entity\n"
+                                                  "bedroom entrance kitchen livingroom - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+                                                     _fact_b + "(?e - entity, ?l - location)\n" +
+                                                     _fact_c + "(?e - entity)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc", ontology)};
+  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
   cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
-  actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr("forall(?l, when(" + _fact_a + "(self, ?l), not(" + _fact_a + "(self, ?l))))", ontology, act2Parameters);
+  actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr("forall(?l - location, when(" + _fact_a + "(self, ?l), not(" + _fact_a + "(self, ?l))))", ontology, act2Parameters);
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
@@ -3108,15 +3388,24 @@ void _existsWithValue()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location\n"
+                                           "robot");
+  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+                                                  "pen - entity\n"
+                                                  "livingroom - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot) - location\n" +
+                                                     _fact_b + "(?e - entity) - location\n" +
+                                                     _fact_c + "(?e - entity)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l, " + _fact_a + "(self)=?l & " + _fact_b + "(?obj)=?l)", ontology, act1Parameters),
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self)=?l & " + _fact_b + "(?obj)=?l)", ontology, act1Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc", ontology)};
+  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
   cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self)=?loc", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
@@ -3137,9 +3426,15 @@ void _notExists()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location\n"
+                                           "robot");
+  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+                                                  "kitchen - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+                                                     _fact_b, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr("not(exists(?l, " + _fact_a + "(self, ?l)))", ontology),
+  cp::Action actionObj1(_condition_fromStr("not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
                         _worldStateModification_fromStr(_fact_b, ontology));
   actions.emplace(action1, actionObj1);
 
@@ -3161,18 +3456,27 @@ void _actionToSatisfyANotExists()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location\n"
+                                           "robot\n"
+                                           "resource");
+  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+                                                  "kitchen - location\n"
+                                                  "spec_rec - resource", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+                                                     _fact_b + "\n" +
+                                                     "busy(?r - resource)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr("not(busy(spec_rec)) & not(exists(?l, " + _fact_a + "(self, ?l)))", ontology),
+  cp::Action actionObj1(_condition_fromStr("not(busy(spec_rec)) & not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
                         _worldStateModification_fromStr("not(busy(spec_rec)) & " + _fact_b, ontology));
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc", ontology)};
+  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
   cp::Action actionObj2({}, _worldStateModification_fromStr("!" + _fact_a + "(self, ?loc)", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-  std::vector<cp::Parameter> act3Parameters{_parameter("?r", ontology)};
+  std::vector<cp::Parameter> act3Parameters{_parameter("?r - resource", ontology)};
   cp::Action actionObj3({}, _worldStateModification_fromStr("not(busy(?r))", ontology, act3Parameters));
   actionObj3.parameters = std::move(act3Parameters);
   actions.emplace(action3, actionObj3);
@@ -3196,6 +3500,9 @@ void _orInCondition()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   cp::Action actionObj1(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
@@ -3224,16 +3531,23 @@ void _orInCondition()
 void _derivedPredicate()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("object");
+  ontology.constants = cp::SetOfEntities::fromStr("book titi - object", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?o - object)\n" +
+                                                     _fact_b + "(?o - object)\n" +
+                                                     _fact_c + "(?o - object)\n" +
+                                                     _fact_d + "(?o - object)\n" +
+                                                     _fact_e, ontology.types);
 
   std::map<std::string, cp::Action> actions;
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o", ontology)};
+  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - object", ontology)};
   cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", ontology, derPred1Parameters),
                                          _fact(_fact_c + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
 
-  std::vector<cp::Parameter> derPred2Parameters{_parameter("?o", ontology)};
+  std::vector<cp::Parameter> derPred2Parameters{_parameter("?o - object", ontology)};
   cp::DerivedPredicate derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", ontology, derPred2Parameters),
                                          _fact(_fact_d + "(?o)", ontology, derPred2Parameters), derPred2Parameters);
   for (auto& currInference : derivedPredicate2.toInferences({}, {}))
@@ -3271,6 +3585,9 @@ void _assignAnotherValueToSatisfyNotGoal()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a + "=toto", ontology)));
@@ -3291,6 +3608,9 @@ void _assignUndefined()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr("assign(" + _fact_a + ", undefined)", ontology)));
@@ -3313,9 +3633,15 @@ void _assignAFact()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal - entity\n"
+                                                  "p1 p2 p3 - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "(?p - param) - entity", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p", ontology)};
+  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
   cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
@@ -3338,9 +3664,16 @@ void _assignAFactToAction()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal - entity\n"
+                                                  "p1 p2 p3 - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "(?p - param) - entity\n" +
+                                                     _fact_c, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p", ontology)};
+  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
   cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
@@ -3365,13 +3698,21 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "(?p - param) - entity\n" +
+                                                     _fact_c + "(?p - param) - entity\n" +
+                                                     _fact_d, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p", ontology)};
+  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
   cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  std::vector<cp::Parameter> action2Parameters{_parameter("?pc", ontology)};
+  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
   cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
