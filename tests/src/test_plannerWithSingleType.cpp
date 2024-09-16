@@ -3742,13 +3742,21 @@ void _assignAFactThenCheckExistWithAnotherFact()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "(?p - param) - entity\n" +
+                                                     _fact_c + "(?p - param) - entity\n" +
+                                                     _fact_d, ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p", ontology)};
+  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
   cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  cp::Action action2Obj(_condition_fromStr("exists(?pc, =(" + _fact_a + ", " + _fact_c + "(?pc)))", ontology),
+  cp::Action action2Obj(_condition_fromStr("exists(?pc - param, =(" + _fact_a + ", " + _fact_c + "(?pc)))", ontology),
                         _worldStateModification_fromStr(_fact_d, ontology));
   actions.emplace(action2, action2Obj);
 
@@ -3774,17 +3782,25 @@ void _existWithEqualityInInference()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+                                                     _fact_b + "(?p - param)\n" +
+                                                     _fact_c + "(?p - param) - entity\n" +
+                                                     _fact_d + "(?p - param)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?o", ontology)};
+  std::vector<cp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
   cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
                         _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o", ontology)};
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
+  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
                                          _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
@@ -3819,17 +3835,25 @@ void _existWithEqualityInInference_withEqualityInverted()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+                                                     _fact_b + "(?p - param)\n" +
+                                                     _fact_c + "(?p - param) - entity\n" +
+                                                     _fact_d + "(?p - param)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?o", ontology)};
+  std::vector<cp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
   cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
                         _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o", ontology)};
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
+  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
+  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
                                          _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
     setOfInferences.addInference(currInference);
@@ -3866,20 +3890,29 @@ void _fixInferenceWithFluentInParameter()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+                                                  "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+                                                     _fact_b + "(?p - param) - entity\n" +
+                                                     _fact_c + "(?p - param) - entity\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e + "(?p - param) - entity", ontology.types);
 
   std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p", ontology)};
+  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
   cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  std::vector<cp::Parameter> action2Parameters{_parameter("?pc", ontology)};
+  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
   cp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
   cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?a", ontology), _parameter("?v", ontology)};
+  std::vector<cp::Parameter> derPred1Parameters{_parameter("?a - param", ontology), _parameter("?v - entity", ontology)};
   cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", ontology, derPred1Parameters),
                                          _fact(_fact_e + "(?a)=?v", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences({}, {}))
@@ -3894,7 +3927,6 @@ void _fixInferenceWithFluentInParameter()
 
   assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
-
 
 
 void _assignAFactTwoTimesInTheSamePlan()

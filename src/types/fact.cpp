@@ -844,7 +844,7 @@ void Fact::setFluentValue(const std::string& pFluentStr)
   if (_fluent)
     _fluent->value = pFluentStr;
   else
-    _fluent = Entity(pFluentStr, {});
+    _fluent = Entity(pFluentStr, predicate.fluent);
   _resetFactSignatureCache();
 }
 
