@@ -443,44 +443,37 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              FactsAlreadyChecked& pFactsAlreadychecked,
                              const std::string& pFromDeductionId)
 {
-  auto doesSatisfyObjective = [&](const FactOptional& pFactOptional, std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity)
-  {
-    if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
-      return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.fluent() != pFactOptional.fact.fluent();
+  // Check if the effect satisfy the objective
+  if (pEffectToCheck.canSatisfyObjective([&](const FactOptional& pFactOptional, std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity)
+      {
+        if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
+          return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.fluent() != pFactOptional.fact.fluent();
 
-    const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
-    ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
-    bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
-    std::map<Parameter, std::set<Entity>> newParameters;
-    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
-                                                         pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
+        const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
+        ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
+        bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
+        std::map<Parameter, std::set<Entity>> newParameters;
+        bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
+                                                             pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
 
-    if (res && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-      res = false;
+        if (res && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+          res = false;
 
-    if (res && pFactOptional.fact.fluent() && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
-    {
-      const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
-      if (objValPtr != nullptr)
-        res = compIntNb(pFactOptional.fact.fluent()->value, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
-    }
-    applyNewParams(pParameters, newParameters);
-    return res;
-  };
-
-  if (pEffectToCheck.worldStateModification &&
-      pEffectToCheck.worldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState, pFromDeductionId))
-  {
-    pSatisfyObjective = true;
-    return true;
-  }
-  if (pEffectToCheck.potentialWorldStateModification &&
-      pEffectToCheck.potentialWorldStateModification->canSatisfyObjective(doesSatisfyObjective, pParameters, pProblem.worldState, pFromDeductionId))
+        if (res && pFactOptional.fact.fluent() && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
+        {
+          const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
+          if (objValPtr != nullptr)
+            res = compIntNb(pFactOptional.fact.fluent()->value, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
+        }
+        applyNewParams(pParameters, newParameters);
+        return res;
+      }, pParameters, pProblem.worldState, pFromDeductionId))
   {
     pSatisfyObjective = true;
     return true;
   }
 
+  // Iterate on possible successions
   auto& setOfInferences = pDomain.getSetOfInferences();
   return pEffectToCheck.canSatisfyObjective([&](const cp::FactOptional& pFactOptional,
                                             std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
@@ -769,7 +762,7 @@ const FactOptional* _getGoalToStatisfy(const Goal& pGoal,
 }
 
 
-bool _lookForAnActionToDoRec(
+bool _goalToPlanRec(
     std::list<ActionInvocationWithGoal>& pActionInvocations,
     Problem& pProblem,
     std::map<std::string, std::size_t>& pActionAlreadyInPlan,
@@ -782,54 +775,50 @@ bool _lookForAnActionToDoRec(
 {
   pProblem.worldState.refreshCacheIfNeeded(pDomain);
   TreeOfAlreadyDonePath treeOfAlreadyDonePath;
-  // nb of retries if the plan is not valid
-  for (int i = 0; i < 5; ++i)
+
+  std::unique_ptr<ActionInvocationWithGoal> potentialRes;
+  const FactOptional* factOptionalToSatisfyPtr = _getGoalToStatisfy(pGoal, pProblem);
+  if (factOptionalToSatisfyPtr != nullptr)
   {
-    std::unique_ptr<ActionInvocationWithGoal> potentialRes;
-    const FactOptional* factOptionalToSatisfyPtr = _getGoalToStatisfy(pGoal, pProblem);
-    if (factOptionalToSatisfyPtr != nullptr)
+    std::map<Parameter, std::set<Entity>> parameters;
+    auto actionId =
+        _findFirstActionForAGoal(parameters, treeOfAlreadyDonePath,
+                                 pGoal, pProblem, *factOptionalToSatisfyPtr,
+                                 pDomain, pTryToDoMoreOptimalSolution, 0, pGlobalHistorical);
+    if (!actionId.empty())
+      potentialRes = std::make_unique<ActionInvocationWithGoal>(actionId, parameters, pGoal.clone(), pPriority);
+  }
+
+  if (potentialRes && potentialRes->fromGoal)
+  {
+    const auto& actionToDoStr = potentialRes->actionInvocation.toStr();
+    auto itAlreadyFoundAction = pActionAlreadyInPlan.find(actionToDoStr);
+    if (itAlreadyFoundAction == pActionAlreadyInPlan.end())
     {
-      std::map<Parameter, std::set<Entity>> parameters;
-      auto actionId =
-          _findFirstActionForAGoal(parameters, treeOfAlreadyDonePath,
-                                   pGoal, pProblem, *factOptionalToSatisfyPtr,
-                                   pDomain, pTryToDoMoreOptimalSolution, 0, pGlobalHistorical);
-      if (!actionId.empty())
-        potentialRes = std::make_unique<ActionInvocationWithGoal>(actionId, parameters, pGoal.clone(), pPriority);
-    }
-
-    if (potentialRes && potentialRes->fromGoal)
-    {
-      const auto& actionToDoStr = potentialRes->actionInvocation.toStr();
-      auto itAlreadyFoundAction = pActionAlreadyInPlan.find(actionToDoStr);
-      if (itAlreadyFoundAction == pActionAlreadyInPlan.end())
-      {
-        pActionAlreadyInPlan[actionToDoStr] = 1;
-      }
-      else
-      {
-        if (itAlreadyFoundAction->second > 3)
-          return false;
-        ++itAlreadyFoundAction->second;
-      }
-
-
-      auto problemForPlanCost = pProblem;
-      bool goalChanged = false;
-      updateProblemForNextPotentialPlannerResult(problemForPlanCost, goalChanged, *potentialRes, pDomain, pNow, nullptr, nullptr);
-      if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
-          _lookForAnActionToDoRec(pActionInvocations, problemForPlanCost, pActionAlreadyInPlan,
-                                  pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
-      {
-        potentialRes->fromGoal->notifyActivity();
-        pActionInvocations.emplace_front(std::move(*potentialRes));
-        return true;
-      }
+      pActionAlreadyInPlan[actionToDoStr] = 1;
     }
     else
     {
-      return false; // Fail to find an next action to do
+      if (itAlreadyFoundAction->second > 1)
+        return false;
+      ++itAlreadyFoundAction->second;
     }
+
+    auto problemForPlanCost = pProblem;
+    bool goalChanged = false;
+    updateProblemForNextPotentialPlannerResult(problemForPlanCost, goalChanged, *potentialRes, pDomain, pNow, nullptr, nullptr);
+    if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
+        _goalToPlanRec(pActionInvocations, problemForPlanCost, pActionAlreadyInPlan,
+                       pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
+    {
+      potentialRes->fromGoal->notifyActivity();
+      pActionInvocations.emplace_front(std::move(*potentialRes));
+      return true;
+    }
+  }
+  else
+  {
+    return false; // Fail to find an next action to do
   }
   return false;
 }
@@ -849,8 +838,8 @@ std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
   pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(
         [&](const Goal& pGoal, int pPriority){
             std::map<std::string, std::size_t> actionAlreadyInPlan;
-            return _lookForAnActionToDoRec(res, pProblem, actionAlreadyInPlan,
-                                           pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority);
+            return _goalToPlanRec(res, pProblem, actionAlreadyInPlan,
+                                  pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority);
           },
         pProblem.worldState, pNow,
         pLookForAnActionOutputInfosPtr);
