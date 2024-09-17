@@ -47,13 +47,11 @@ struct CONTEXTUALPLANNER_API SetOfInferences
     bool empty() const { return conditionToInferences.empty() && notConditionToInferences.empty(); }
   };
 
-  bool empty() const { return _inferences.empty() && _reachableInferenceLinks.empty() && _unreachableInferenceLinks.empty(); }
+  bool empty() const { return _inferences.empty() && _reachableInferenceLinks.empty(); }
   /// All inferences of the problem.
   const std::map<InferenceId, Inference>& inferences() const { return _inferences; }
   /// Reachable inference links.
   const InferenceLinks& reachableInferenceLinks() const { return _reachableInferenceLinks; }
-  /// unReachable inference links.
-  const InferenceLinks& unreachableInferenceLinks() const { return _unreachableInferenceLinks; }
 
 
 private:
@@ -61,8 +59,6 @@ private:
   std::map<InferenceId, Inference> _inferences{};
   /// Reachable inference links.
   InferenceLinks _reachableInferenceLinks{};
-  /// unReachable inference links.
-  InferenceLinks _unreachableInferenceLinks{};
 };
 
 } // !cp

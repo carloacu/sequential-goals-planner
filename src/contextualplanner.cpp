@@ -524,16 +524,6 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
           if (possibleEffect == PossibleEffect::SATISFIED)
             break;
-          auto& conditionToUnreachableInferences = !pFactOptional.isFactNegated ?
-                currSetOfInferences.second.unreachableInferenceLinks().conditionToInferences :
-                currSetOfInferences.second.unreachableInferenceLinks().notConditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, pParametersToModifyInPlacePtr,
-                                                                                   pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
-                                                                                   conditionToUnreachableInferences, inferences,
-                                                                                   pGoal, pProblem, pFactOptionalToSatisfy,
-                                                                                   pDomain, subFactsAlreadychecked), possibleEffect);
-          if (possibleEffect == PossibleEffect::SATISFIED)
-            break;
         }
       }
 

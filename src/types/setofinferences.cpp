@@ -6,8 +6,7 @@ namespace cp
 
 SetOfInferences::SetOfInferences(const Inference& pInference)
  : _inferences(),
-   _reachableInferenceLinks(),
-   _unreachableInferenceLinks()
+   _reachableInferenceLinks()
 {
   addInference(pInference);
 }
@@ -23,7 +22,6 @@ InferenceId SetOfInferences::addInference(const Inference& pInference,
   auto newId = incrementLastNumberUntilAConditionIsSatisfied(pInferenceId, isIdOkForInsertion);
 
   _inferences.emplace(newId, pInference);
-  auto& links = pInference.isReachable ? _reachableInferenceLinks : _unreachableInferenceLinks;
 
   if (pInference.condition)
   {
@@ -32,9 +30,9 @@ InferenceId SetOfInferences::addInference(const Inference& pInference,
               bool pIgnoreFluent)
     {
       if (pFactOptional.isFactNegated)
-        links.notConditionToInferences.add(pFactOptional.fact, newId, pIgnoreFluent);
+        _reachableInferenceLinks.notConditionToInferences.add(pFactOptional.fact, newId, pIgnoreFluent);
       else
-        links.conditionToInferences.add(pFactOptional.fact, newId, pIgnoreFluent);
+        _reachableInferenceLinks.conditionToInferences.add(pFactOptional.fact, newId, pIgnoreFluent);
     }
     );
   }
@@ -48,12 +46,11 @@ void SetOfInferences::removeInference(const InferenceId& pInferenceId)
   if (it == _inferences.end())
     return;
   auto& inferenceThatWillBeRemoved = it->second;
-  auto& links = inferenceThatWillBeRemoved.isReachable ? _reachableInferenceLinks : _unreachableInferenceLinks;
 
   if (inferenceThatWillBeRemoved.condition)
   {
-    links.notConditionToInferences.erase(pInferenceId);
-    links.conditionToInferences.erase(pInferenceId);
+    _reachableInferenceLinks.notConditionToInferences.erase(pInferenceId);
+    _reachableInferenceLinks.conditionToInferences.erase(pInferenceId);
   }
   _inferences.erase(it);
 }

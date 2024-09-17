@@ -217,9 +217,6 @@ void WorldStateCache::_feedAccessibleFactsFromFact(const Fact& pFact,
     auto& conditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().conditionToInferences;
     auto itCondToReachableInferences = conditionToReachableInferences.find(pFact);
     _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences, allInferences, pDomain, pFactsAlreadychecked);
-    auto& conditionToUnreachableInferences = currSetOfInferences.second.unreachableInferenceLinks().conditionToInferences;
-    auto itCondToUnreachableInferences = conditionToUnreachableInferences.find(pFact);
-    _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 
@@ -241,9 +238,6 @@ void WorldStateCache::_feedAccessibleFactsFromNotFact(const Fact& pFact,
     auto& notConditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
     auto itCondToReachableInferences = notConditionToReachableInferences.find(pFact);
     _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences, allInferences, pDomain, pFactsAlreadychecked);
-    auto& notConditionToUnreachableInferences = currSetOfInferences.second.unreachableInferenceLinks().notConditionToInferences;
-    auto itCondToUnreachableInferences = notConditionToUnreachableInferences.find(pFact);
-    _feedAccessibleFactsFromSetOfInferences(itCondToUnreachableInferences, allInferences, pDomain, pFactsAlreadychecked);
   }
 }
 
