@@ -79,6 +79,10 @@ struct CONTEXTUALPLANNER_API Action
   void replaceArgument(const Entity& pOld,
                        const Entity& pNew);
 
+  void updateSuccessionCache(const Domain& pDomain,
+                             const ActionId& pIdOfThisAction);
+  std::string printSuccessionCache() const;
+
   // TODO: remove that function?
   void throwIfNotValid(const WorldState& pWorldState);
 

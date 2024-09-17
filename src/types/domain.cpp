@@ -72,8 +72,9 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
 
   if (!pSetOfInferences.empty())
     _setOfInferences.emplace(setOfInferencesIdFromConstructor, pSetOfInferences);
-}
 
+  _updateSuccessions();
+}
 
 
 void Domain::addAction(const ActionId& pActionId,
@@ -112,6 +113,7 @@ void Domain::addAction(const ActionId& pActionId,
 
   if (!hasAddedAFact)
     _actionsWithoutFactToAddInPrecondition.addValueWithoutFact(pActionId);
+  _updateSuccessions();
 }
 
 
@@ -134,6 +136,7 @@ void Domain::removeAction(const ActionId& pActionId)
   }
 
   _actions.erase(it);
+  _updateSuccessions();
 }
 
 
@@ -149,6 +152,7 @@ SetOfInferencesId Domain::addSetOfInferences(const SetOfInferences& pSetOfInfere
 
   auto newId = incrementLastNumberUntilAConditionIsSatisfied(pSetOfInferencesId, isIdOkForInsertion);
   _setOfInferences.emplace(newId, pSetOfInferences);
+  _updateSuccessions();
   return newId;
 }
 
@@ -160,6 +164,7 @@ void Domain::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
   {
     _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
     _setOfInferences.erase(it);
+    _updateSuccessions();
   }
 }
 
@@ -169,6 +174,21 @@ void Domain::clearInferences()
   {
     _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
     _setOfInferences.clear();
+    _updateSuccessions();
+  }
+}
+
+
+void Domain::_updateSuccessions()
+{
+  for (auto& currAction: _actions)
+    currAction.second.updateSuccessionCache(*this, currAction.first);
+
+  for (auto& currSetOfInferences : _setOfInferences)
+  {
+    const auto& currSetOfInferencesId = currSetOfInferences.first;
+    for (auto& currInference : currSetOfInferences.second.inferences())
+      currInference.second.updateSuccessionCache(*this, currSetOfInferencesId, currInference.first);
   }
 }
 

@@ -33,6 +33,11 @@ struct CONTEXTUALPLANNER_API Inference
     assert(factsToModify || !goalsToAdd.empty());
   }
 
+  void updateSuccessionCache(const Domain& pDomain,
+                             const SetOfInferencesId& pSetOfInferencesIdOfThisInference,
+                             const InferenceId& pInferenceIdOfThisInference);
+  std::string printSuccessionCache() const;
+
   /// Parameter names of this inference.
   std::vector<Parameter> parameters;
   /**

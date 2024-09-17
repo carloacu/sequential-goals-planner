@@ -1,5 +1,6 @@
 #include <contextualplanner/types/worldstatemodification.hpp>
 #include <sstream>
+#include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 #include "expressionParsed.hpp"
@@ -55,7 +56,8 @@ struct WorldStateModificationNode : public WorldStateModification
       nodeType(pNodeType),
       leftOperand(std::move(pLeftOperand)),
       rightOperand(std::move(pRightOperand)),
-      parameterOpt(pParameterOpt)
+      parameterOpt(pParameterOpt),
+      _successions()
   {
   }
 
@@ -105,6 +107,15 @@ struct WorldStateModificationNode : public WorldStateModification
                            std::map<Parameter, std::set<Entity>>& pParameters,
                            const WorldState& pWorldState,
                            const std::string& pFromDeductionId) const override;
+  bool iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
+                            std::map<Parameter, std::set<Entity>>& pParameters,
+                            const WorldState& pWorldState,
+                            const std::string& pFromDeductionId) const override;
+  void updateSuccesions(const Domain& pDomain,
+                        const WorldStateModificationContainerId& pContainerId,
+                        const std::set<FactOptional>& pOptionalFactsToIgnore) override;
+  void printSuccesions(std::string& pRes) const override;
+
   bool operator==(const WorldStateModification& pOther) const override;
 
   std::optional<Entity> getFluent(const WorldState& pWorldState) const override
@@ -154,6 +165,8 @@ struct WorldStateModificationNode : public WorldStateModification
   std::optional<Parameter> parameterOpt;
 
 private:
+  Successions _successions;
+
   void _forAllInstruction(const std::function<void (const WorldStateModification&)>& pCallback,
                           const WorldState& pWorldState) const;
 };
@@ -207,6 +220,29 @@ struct WorldStateModificationFact : public WorldStateModification
     return pFactCallback(factOptional, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
   }
 
+  bool iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
+                            std::map<Parameter, std::set<Entity>>&,
+                            const WorldState&,
+                            const std::string&) const override
+  {
+    if (!_successions.empty())
+       return pCallback(_successions, factOptional, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
+    return false;
+  }
+
+  void updateSuccesions(const Domain& pDomain,
+                        const WorldStateModificationContainerId& pContainerId,
+                        const std::set<FactOptional>& pOptionalFactsToIgnore) override
+  {
+    _successions.clear();
+    _successions.addSuccesionsOptFact(factOptional, pDomain, pContainerId, pOptionalFactsToIgnore);
+  }
+
+  void printSuccesions(std::string& pRes) const override
+  {
+    _successions.print(pRes, factOptional);
+  }
+
   bool operator==(const WorldStateModification& pOther) const override;
 
   std::optional<Entity> getFluent(const WorldState& pWorldState) const override
@@ -235,6 +271,9 @@ struct WorldStateModificationFact : public WorldStateModification
   }
 
   FactOptional factOptional;
+
+private:
+  Successions _successions;
 };
 
 
@@ -270,6 +309,15 @@ struct WorldStateModificationNumber : public WorldStateModification
                            std::map<Parameter, std::set<Entity>>&,
                            const WorldState&,
                            const std::string&) const override { return false; }
+  bool iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>&,
+                            std::map<Parameter, std::set<Entity>>&,
+                            const WorldState&,
+                            const std::string&) const override { return false; }
+  void updateSuccesions(const Domain&,
+                        const WorldStateModificationContainerId&,
+                        const std::set<FactOptional>&) override {}
+  void printSuccesions(std::string& pRes) const override {}
+
   bool operator==(const WorldStateModification& pOther) const override;
 
   std::optional<Entity> getFluent(const WorldState&) const override
@@ -357,6 +405,7 @@ std::string WorldStateModificationNode::toStr(bool pPrintAnyFluent) const
   }
   return "";
 }
+
 
 void WorldStateModificationNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                                         const WorldState& pWorldState) const
@@ -616,6 +665,163 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
 }
 
 
+bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
+                                                      std::map<Parameter, std::set<Entity>>& pParameters,
+                                                      const WorldState& pWorldState,
+                                                      const std::string& pFromDeductionId) const
+{
+  if (nodeType == WorldStateModificationNodeType::AND)
+    return (leftOperand && leftOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId)) ||
+        (rightOperand && rightOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId));
+
+  if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand && !_successions.empty())
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.setFluent(rightOperand->getFluent(pWorldState));
+      std::map<Parameter, std::set<Entity>> localParameterToFind;
+
+      if (!factToCheck.fact.fluent())
+      {
+        factToCheck.fact.setFluent(Entity("??tmpValueFromSet_" + pFromDeductionId, factToCheck.fact.predicate.fluent));
+        localParameterToFind[Parameter(factToCheck.fact.fluent()->value, factToCheck.fact.predicate.fluent)];
+      }
+      bool res = pCallback(_successions, factToCheck, &localParameterToFind, [&](const std::map<Parameter, std::set<Entity>>& pLocalParameterToFind){
+        if (!localParameterToFind.empty() &&
+            !localParameterToFind.begin()->second.empty())
+        {
+          res = false;
+          const auto* wSMFPtr = dynamic_cast<const WorldStateModificationFact*>(&*rightOperand);
+          if (wSMFPtr != nullptr)
+          {
+            std::set<Entity>& parameterPossibilities = localParameterToFind.begin()->second;
+
+            while (!parameterPossibilities.empty())
+            {
+              auto factWithValueToAssign = wSMFPtr->factOptional.fact;
+              factWithValueToAssign.replaceArguments(pLocalParameterToFind);
+              auto itBeginOfParamPoss = parameterPossibilities.begin();
+              factWithValueToAssign.setFluent(*itBeginOfParamPoss);
+
+              const auto& factAccessorsToFacts = pWorldState.factsMapping();
+              std::map<Parameter, std::set<Entity>> newParameters;
+              if (factWithValueToAssign.isInOtherFactsMap(factAccessorsToFacts, true, &newParameters, &pParameters))
+              {
+                res = true;
+                applyNewParams(pParameters, newParameters);
+                break;
+              }
+              parameterPossibilities.erase(itBeginOfParamPoss);
+            }
+          }
+          return res;
+        }
+        return true;
+      });
+      return res;
+    }
+  }
+
+  if (nodeType == WorldStateModificationNodeType::FOR_ALL)
+  {
+    bool res = false;
+    _forAllInstruction(
+          [&](const WorldStateModification& pWsModification)
+    {
+      if (!res)
+        res = pWsModification.iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId);
+    }, pWorldState);
+    return res;
+  }
+
+  if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand && rightOperand && !_successions.empty())
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      return pCallback(_successions, factToCheck, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
+    }
+  }
+
+  if (nodeType == WorldStateModificationNodeType::DECREASE && leftOperand && rightOperand && !_successions.empty())
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+    {
+      auto factToCheck = leftFactPtr->factOptional;
+      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      return pCallback(_successions, factToCheck, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
+    }
+  }
+
+  return false;
+}
+
+
+
+void WorldStateModificationNode::updateSuccesions(const Domain& pDomain,
+                                                  const WorldStateModificationContainerId& pContainerId,
+                                                  const std::set<FactOptional>& pOptionalFactsToIgnore)
+{
+  _successions.clear();
+
+  if (nodeType == WorldStateModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->updateSuccesions(pDomain, pContainerId, pOptionalFactsToIgnore);
+    if (rightOperand)
+      rightOperand->updateSuccesions(pDomain, pContainerId, pOptionalFactsToIgnore);
+  }
+  else if (nodeType == WorldStateModificationNodeType::ASSIGN ||
+           nodeType == WorldStateModificationNodeType::INCREASE ||
+           nodeType == WorldStateModificationNodeType::DECREASE)
+  {
+    if (leftOperand)
+    {
+      auto* leftFactPtr = _toWmFact(*leftOperand);
+      if (leftFactPtr != nullptr)
+        _successions.addSuccesionsOptFact(leftFactPtr->factOptional, pDomain, pContainerId, pOptionalFactsToIgnore);
+    }
+  }
+  else if (nodeType == WorldStateModificationNodeType::FOR_ALL)
+  {
+    if (rightOperand)
+      rightOperand->updateSuccesions(pDomain, pContainerId, pOptionalFactsToIgnore);
+  }
+}
+
+void WorldStateModificationNode::printSuccesions(std::string& pRes) const
+{
+  if (nodeType == WorldStateModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->printSuccesions(pRes);
+    if (rightOperand)
+      rightOperand->printSuccesions(pRes);
+  }
+  else if (nodeType == WorldStateModificationNodeType::ASSIGN ||
+           nodeType == WorldStateModificationNodeType::INCREASE ||
+           nodeType == WorldStateModificationNodeType::DECREASE)
+  {
+    if (leftOperand)
+    {
+      auto* leftFactPtr = _toWmFact(*leftOperand);
+      if (leftFactPtr != nullptr)
+        _successions.print(pRes, leftFactPtr->factOptional);
+    }
+  }
+  else if (nodeType == WorldStateModificationNodeType::FOR_ALL)
+  {
+    if (rightOperand)
+      rightOperand->printSuccesions(pRes);
+  }
+}
+
+
 bool WorldStateModificationNode::operator==(const WorldStateModification& pOther) const
 {
   auto* otherNodePtr = _toWmNode(pOther);
@@ -830,6 +1036,59 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
 }
 
 }
+
+
+void Successions::addSuccesionsOptFact(const FactOptional& pFactOptional,
+                                       const Domain& pDomain,
+                                       const WorldStateModificationContainerId& pContainerId,
+                                       const std::set<FactOptional>& pOptionalFactsToIgnore)
+{
+  if (pOptionalFactsToIgnore.count(pFactOptional) == 0)
+  {
+    auto& preconditionToActions = !pFactOptional.isFactNegated ? pDomain.preconditionToActions() : pDomain.notPreconditionToActions();
+    auto actionsFromPreconditions = preconditionToActions.find(pFactOptional.fact);
+    for (const auto& currActionId : actionsFromPreconditions)
+      if (!pContainerId.isAction(currActionId))
+        actions.insert(currActionId);
+
+    auto& setOfInferences = pDomain.getSetOfInferences();
+    for (auto& currSetOfInferences : setOfInferences)
+    {
+      std::set<InferenceId>* inferencesPtr = nullptr;
+      auto& conditionToReachableInferences = !pFactOptional.isFactNegated ?
+            currSetOfInferences.second.reachableInferenceLinks().conditionToInferences :
+            currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
+
+      auto inferencesFromCondtion = conditionToReachableInferences.find(pFactOptional.fact);
+      for (const auto& currInferenceId : inferencesFromCondtion)
+      {
+        if (!pContainerId.isInference(currSetOfInferences.first, currInferenceId))
+        {
+          if (inferencesPtr == nullptr)
+            inferencesPtr = &inferences[currSetOfInferences.first];
+          inferencesPtr->insert(currInferenceId);
+        }
+      }
+    }
+  }
+}
+
+void Successions::print(std::string& pRes,
+                        const FactOptional& pFactOptional) const
+{
+  if (empty())
+    return;
+  if (pRes != "")
+    pRes += "\n";
+
+  pRes += "fact: " + pFactOptional.toStr() + "\n";
+  for (const auto& currActionId : actions)
+    pRes += "action: " + currActionId + "\n";
+  for (const auto& currInferenceSet : inferences)
+    for (const auto& currInferenceId : currInferenceSet.second)
+      pRes += "inference: " + currInferenceSet.first + "|" + currInferenceId + "\n";
+}
+
 
 
 std::unique_ptr<WorldStateModification> WorldStateModification::fromStr(const std::string& pStr,

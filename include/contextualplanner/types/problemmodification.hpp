@@ -87,20 +87,6 @@ struct CONTEXTUALPLANNER_API ProblemModification
   void replaceArgument(const Entity& pOldFact,
                        const Entity& pNewFact);
 
-  /**
-   * @brief Iterate over all the optional facts until one can satisfy the objective.
-   * @param[in] pCallback Callback called for each optional fact of this object to check if it can satisfy the objective.
-   * @param[in, out] pParameters Parameters of the holding action.
-   * @param[in] pWorldState World state to consider.
-   * @param[in] pFromDeductionId Identifier of the deduction holding the problem modification.
-   * @return True if one callback returned true, false otherwise.
-   */
-  bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
-                           std::map<Parameter, std::set<Entity>>& pParameters,
-                           const WorldState& pWorldState,
-                           const std::string& pFromDeductionId) const;
-
-
   /// Convert the worldStateModification to a string or to an empty string if it is not defined.
   std::string worldStateModification_str() const { return worldStateModification ? worldStateModification->toStr() : ""; }
   /// Convert the potentialWorldStateModification to a string or to an empty string if it is not defined.
@@ -178,19 +164,6 @@ inline void ProblemModification::replaceArgument(const Entity& pOld,
   if (worldStateModificationAtStart)
     worldStateModificationAtStart->replaceArgument(pOld, pNew);
 }
-
-inline bool ProblemModification::canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
-                                                     std::map<Parameter, std::set<Entity>>& pParameters,
-                                                     const WorldState& pWorldState,
-                                                     const std::string& pFromDeductionId) const
-{
-  if (worldStateModification && worldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState, pFromDeductionId))
-    return true;
-  if (potentialWorldStateModification && potentialWorldStateModification->canSatisfyObjective(pCallback, pParameters, pWorldState, pFromDeductionId))
-    return true;
-  return false;
-}
-
 
 } // !cp
 

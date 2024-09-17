@@ -29,6 +29,29 @@ void Action::replaceArgument(const Entity& pOld,
 }
 
 
+void Action::updateSuccessionCache(const Domain& pDomain,
+                                   const ActionId& pIdOfThisAction)
+{
+  WorldStateModificationContainerId containerId;
+  containerId.actionIdToExclude.emplace(pIdOfThisAction);
+
+  auto optionalFactsToIgnore = precondition ? precondition->getFactToIgnoreInCorrespondingEffect() : std::set<FactOptional>();
+  if (effect.worldStateModification)
+    effect.worldStateModification->updateSuccesions(pDomain, containerId, optionalFactsToIgnore);
+  if (effect.potentialWorldStateModification)
+    effect.potentialWorldStateModification->updateSuccesions(pDomain, containerId, optionalFactsToIgnore);
+}
+
+std::string Action::printSuccessionCache() const
+{
+  std::string res;
+  if (effect.worldStateModification)
+    effect.worldStateModification->printSuccesions(res);
+  if (effect.potentialWorldStateModification)
+    effect.potentialWorldStateModification->printSuccesions(res);
+  return res;
+}
+
 void Action::throwIfNotValid(const WorldState& pWorldState)
 {
   _throwIfNotValidForACondition(precondition);

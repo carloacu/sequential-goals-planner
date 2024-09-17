@@ -50,6 +50,7 @@ struct CONTEXTUALPLANNER_API SetOfInferences
   bool empty() const { return _inferences.empty() && _reachableInferenceLinks.empty(); }
   /// All inferences of the problem.
   const std::map<InferenceId, Inference>& inferences() const { return _inferences; }
+  std::map<InferenceId, Inference>& inferences() { return _inferences; }
   /// Reachable inference links.
   const InferenceLinks& reachableInferenceLinks() const { return _reachableInferenceLinks; }
 

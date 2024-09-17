@@ -201,7 +201,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              std::map<Parameter, std::set<Entity>>& pParameters,
                              bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                             const ProblemModification& pEffectToCheck,
+                             const std::unique_ptr<WorldStateModification>& pWorldStateModificationPtr1,
+                             const std::unique_ptr<WorldStateModification>& pWorldStateModificationPtr2,
                              const Goal& pGoal,
                              const Problem& pProblem,
                              const FactOptional& pFactOptionalToSatisfy,
@@ -213,7 +214,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                                           const std::vector<Parameter>& pParameters,
                                           const std::unique_ptr<Condition>& pCondition,
-                                          const ProblemModification& pEffect,
+                                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
+                                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
                                           const FactOptional& pFactOptional,
                                           std::map<Parameter, std::set<Entity>>& pParentParameters,
                                           std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
@@ -233,7 +235,8 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
       parametersToValues[currParam];
 
     bool satisfyObjective = false;
-    if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, false, pTreeOfAlreadyDonePath, pEffect,
+    if (_lookForAPossibleEffect(satisfyObjective, parametersToValues, false, pTreeOfAlreadyDonePath,
+                                pWorldStateModificationPtr1, pWorldStateModificationPtr2,
                                 pGoal, pProblem, pFactOptionalToSatisfy, pDomain, pFactsAlreadychecked, pFromDeductionId))
     {
       bool tryToMatchWothFactOfTheWorld = false;
@@ -325,12 +328,12 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
 }
 
 PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
+    const std::set<ActionId>& pActionSuccessions,
     const FactOptional& pFactOptional,
     std::map<Parameter, std::set<Entity>>& pParentParameters,
     std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
     bool pTryToGetAllPossibleParentParameterValues,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-    const FactToConditions& pPreconditionToActions,
     const Goal& pGoal,
     const Problem& pProblem,
     const FactOptional& pFactOptionalToSatisfy,
@@ -338,13 +341,12 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto res = PossibleEffect::NOT_SATISFIED;
-  auto it = pPreconditionToActions.find(pFactOptional.fact);
-  if (!it.empty())
+  if (!pActionSuccessions.empty())
   {
     std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
     std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
     auto& actions = pDomain.actions();
-    for (const auto& currActionId : it)
+    for (const auto& currActionId : pActionSuccessions)
     {
       auto itAction = actions.find(currActionId);
       if (itAction != actions.end())
@@ -357,7 +359,9 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
         auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currActionId);
         if (newTreePtr != nullptr)
           res = _merge(_lookForAPossibleDeduction(*newTreePtr, action.parameters, action.precondition,
-                                                  action.effect, pFactOptional, cpParentParameters, &cpTmpParameters,
+                                                  action.effect.worldStateModification,
+                                                  action.effect.potentialWorldStateModification,
+                                                  pFactOptional, cpParentParameters, &cpTmpParameters,
                                                   pGoal, pProblem, pFactOptionalToSatisfy,
                                                   pDomain, pFactsAlreadychecked, currActionId), res);
         if (res == PossibleEffect::SATISFIED)
@@ -390,13 +394,13 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
 
 
 PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
+    const std::map<SetOfInferencesId, std::set<InferenceId>>& pInferenceSuccessions,
     const FactOptional& pFactOptional,
     std::map<Parameter, std::set<Entity>>& pParentParameters,
     std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
     bool pTryToGetAllPossibleParentParameterValues,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-    const FactToConditions& pConditionToInferences,
-    const std::map<InferenceId, Inference>& pInferences,
+    const std::map<SetOfInferencesId, SetOfInferences>& pInferences,
     const Goal& pGoal,
     const Problem& pProblem,
     const FactOptional& pFactOptionalToSatisfy,
@@ -404,27 +408,37 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto res = PossibleEffect::NOT_SATISFIED;
-  auto it = pConditionToInferences.find(pFactOptional.fact);
-  for (const auto& currInferenceId : it)
+
+  for (const auto& currSetOfInferencesSucc : pInferenceSuccessions)
   {
-    auto itInference = pInferences.find(currInferenceId);
-    if (itInference != pInferences.end())
+    auto itSetOfInferences = pInferences.find(currSetOfInferencesSucc.first);
+    if (itSetOfInferences != pInferences.end())
     {
-      auto& inference = itInference->second;
-      if (inference.factsToModify)
+      for (const auto& currInferenceIdSucc : currSetOfInferencesSucc.second)
       {
-        auto* newTreePtr = pTreeOfAlreadyDonePath.getNextInflectionTreeIfNotAnExistingLeaf(currInferenceId);
-        if (newTreePtr != nullptr)
-          res = _merge(_lookForAPossibleDeduction(*newTreePtr, inference.parameters, inference.condition,
-                                                  inference.factsToModify->clone(nullptr), pFactOptional,
-                                                  pParentParameters, pTmpParentParametersPtr,
-                                                  pGoal, pProblem, pFactOptionalToSatisfy,
-                                                  pDomain, pFactsAlreadychecked, currInferenceId), res);
-        if (res == PossibleEffect::SATISFIED && !pTryToGetAllPossibleParentParameterValues)
-          return res;
+        const auto& currInfrences = itSetOfInferences->second.inferences();
+        auto itInference = currInfrences.find(currInferenceIdSucc);
+        if (itInference != currInfrences.end())
+        {
+          auto& inference = itInference->second;
+          if (inference.factsToModify)
+          {
+            auto* newTreePtr = pTreeOfAlreadyDonePath.getNextInflectionTreeIfNotAnExistingLeaf(currInferenceIdSucc);
+            if (newTreePtr != nullptr)
+              res = _merge(_lookForAPossibleDeduction(*newTreePtr, inference.parameters, inference.condition,
+                                                      inference.factsToModify/*->clone(nullptr)*/,
+                                                      {}, pFactOptional,
+                                                      pParentParameters, pTmpParentParametersPtr,
+                                                      pGoal, pProblem, pFactOptionalToSatisfy,
+                                                      pDomain, pFactsAlreadychecked, currInferenceIdSucc), res);
+            if (res == PossibleEffect::SATISFIED && !pTryToGetAllPossibleParentParameterValues)
+              return res;
+          }
+        }
       }
     }
   }
+
   return res;
 }
 
@@ -433,7 +447,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              std::map<Parameter, std::set<Entity>>& pParameters,
                              bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                             const ProblemModification& pEffectToCheck,
+                             const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
+                             const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
                              const Goal& pGoal,
                              const Problem& pProblem,
                              const FactOptional& pFactOptionalToSatisfy,
@@ -442,30 +457,39 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              const std::string& pFromDeductionId)
 {
   // Check if the effect satisfy the objective
-  if (pEffectToCheck.canSatisfyObjective([&](const FactOptional& pFactOptional, std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity)
-      {
-        if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
-          return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.fluent() != pFactOptional.fact.fluent();
+  auto checkObjectiveCallback = [&](const FactOptional& pFactOptional, std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity)
+  {
+    if (pFactOptionalToSatisfy.isFactNegated != pFactOptional.isFactNegated)
+      return pFactOptionalToSatisfy.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pFactOptionalToSatisfy.fact.fluent() != pFactOptional.fact.fluent();
 
-        const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
-        ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
-        bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
-        std::map<Parameter, std::set<Entity>> newParameters;
-        bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
-                                                             pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
+    const ConditionNode* objNodePtr = pGoal.objective().fcNodePtr();
+    ConditionNodeType objNodeType = objNodePtr != nullptr ? objNodePtr->nodeType : ConditionNodeType::AND;
+    bool objIsAComparison = objNodeType == ConditionNodeType::SUPERIOR || objNodeType == ConditionNodeType::INFERIOR;
+    std::map<Parameter, std::set<Entity>> newParameters;
+    bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
+                                                         pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
 
-        if (res && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-          res = false;
+    if (res && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+      res = false;
 
-        if (res && pFactOptional.fact.fluent() && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
-        {
-          const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
-          if (objValPtr != nullptr)
-            res = compIntNb(pFactOptional.fact.fluent()->value, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
-        }
-        applyNewParams(pParameters, newParameters);
-        return res;
-      }, pParameters, pProblem.worldState, pFromDeductionId))
+    if (res && pFactOptional.fact.fluent() && objIsAComparison && objNodePtr != nullptr && objNodePtr->rightOperand)
+    {
+      const auto* objValPtr = objNodePtr->rightOperand->fcNbPtr();
+      if (objValPtr != nullptr)
+        res = compIntNb(pFactOptional.fact.fluent()->value, objValPtr->nb, objNodeType == ConditionNodeType::SUPERIOR);
+    }
+    applyNewParams(pParameters, newParameters);
+    return res;
+  };
+
+  if (pWorldStateModificationPtr1 &&
+      pWorldStateModificationPtr1->canSatisfyObjective(checkObjectiveCallback, pParameters, pProblem.worldState, pFromDeductionId))
+  {
+    pSatisfyObjective = true;
+    return true;
+  }
+  if (pWorldStateModificationPtr2 &&
+      pWorldStateModificationPtr2->canSatisfyObjective(checkObjectiveCallback, pParameters, pProblem.worldState, pFromDeductionId))
   {
     pSatisfyObjective = true;
     return true;
@@ -473,69 +497,67 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
 
   // Iterate on possible successions
   auto& setOfInferences = pDomain.getSetOfInferences();
-  return pEffectToCheck.canSatisfyObjective([&](const cp::FactOptional& pFactOptional,
-                                            std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
-                                            const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) {
-    // Condition only for optimization (seems not usefull)
-    if (pParameters.empty())
-    {
-      if (!pFactOptional.isFactNegated)
+  auto successionsCallback = [&](const Successions& pSuccessions,
+                                 const cp::FactOptional& pFactOptional,
+                                 std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
+                                 const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) {
+      // Condition only for optimization (seems not usefull)
+      if (pParameters.empty())
       {
-        if (pProblem.worldState.facts().count(pFactOptional.fact) > 0)
-          return false;
-      }
-      else
-      {
-        if (pProblem.worldState.facts().count(pFactOptional.fact) == 0)
-          return false;
-      }
-    }
-
-    if ((!pFactOptional.isFactNegated && pFactsAlreadychecked.factsToAdd.count(pFactOptional.fact) == 0) ||
-        (pFactOptional.isFactNegated && pFactsAlreadychecked.factsToRemove.count(pFactOptional.fact) == 0))
-    {
-      FactsAlreadyChecked subFactsAlreadychecked = pFactsAlreadychecked;
-      if (!pFactOptional.isFactNegated)
-        subFactsAlreadychecked.factsToAdd.insert(pFactOptional.fact);
-      else
-        subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
-
-      auto& preconditionToActions = !pFactOptional.isFactNegated ? pDomain.preconditionToActions() : pDomain.notPreconditionToActions();
-      PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pFactOptional, pParameters, pParametersToModifyInPlacePtr,
-                                                                                    pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
-                                                                                    preconditionToActions, pGoal, pProblem, pFactOptionalToSatisfy,
-                                                                                    pDomain, subFactsAlreadychecked);
-
-      if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-        possibleEffect = PossibleEffect::NOT_SATISFIED;
-
-      if (possibleEffect != PossibleEffect::SATISFIED)
-      {
-        for (auto& currSetOfInferences : setOfInferences)
+        if (!pFactOptional.isFactNegated)
         {
-          auto& inferences = currSetOfInferences.second.inferences();
-          auto& conditionToReachableInferences = !pFactOptional.isFactNegated ?
-                currSetOfInferences.second.reachableInferenceLinks().conditionToInferences :
-                currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pFactOptional, pParameters, pParametersToModifyInPlacePtr,
-                                                                                   pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
-                                                                                   conditionToReachableInferences, inferences,
-                                                                                   pGoal, pProblem, pFactOptionalToSatisfy,
-                                                                                   pDomain, subFactsAlreadychecked), possibleEffect);
-          if (possibleEffect == PossibleEffect::SATISFIED)
-            break;
+          if (pProblem.worldState.facts().count(pFactOptional.fact) > 0)
+            return false;
+        }
+        else
+        {
+          if (pProblem.worldState.facts().count(pFactOptional.fact) == 0)
+            return false;
         }
       }
 
-      if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-        possibleEffect = PossibleEffect::NOT_SATISFIED;
+      if ((!pFactOptional.isFactNegated && pFactsAlreadychecked.factsToAdd.count(pFactOptional.fact) == 0) ||
+          (pFactOptional.isFactNegated && pFactsAlreadychecked.factsToRemove.count(pFactOptional.fact) == 0))
+      {
+        FactsAlreadyChecked subFactsAlreadychecked = pFactsAlreadychecked;
+        if (!pFactOptional.isFactNegated)
+          subFactsAlreadychecked.factsToAdd.insert(pFactOptional.fact);
+        else
+          subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
 
-      if (possibleEffect != PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD)
-        pFactsAlreadychecked.swap(subFactsAlreadychecked);
-      return possibleEffect == PossibleEffect::SATISFIED;
-    }
-    return false;
-  }, pParameters, pProblem.worldState, pFromDeductionId);
+        PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pSuccessions.actions, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
+                                                                                      pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
+                                                                                      pGoal, pProblem, pFactOptionalToSatisfy,
+                                                                                      pDomain, subFactsAlreadychecked);
+
+        if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+          possibleEffect = PossibleEffect::NOT_SATISFIED;
+
+        if (possibleEffect != PossibleEffect::SATISFIED)
+        {
+          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pSuccessions.inferences, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
+                                                                                   pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
+                                                                                   setOfInferences, pGoal, pProblem, pFactOptionalToSatisfy,
+                                                                                   pDomain, subFactsAlreadychecked), possibleEffect);
+        }
+
+        if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+          possibleEffect = PossibleEffect::NOT_SATISFIED;
+
+        if (possibleEffect != PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD)
+          pFactsAlreadychecked.swap(subFactsAlreadychecked);
+        return possibleEffect == PossibleEffect::SATISFIED;
+      }
+      return false;
+    };
+
+  if (pWorldStateModificationPtr1)
+    if (pWorldStateModificationPtr1->iterateOnSuccessions(successionsCallback, pParameters, pProblem.worldState, pFromDeductionId))
+      return true;
+  if (pWorldStateModificationPtr2)
+    if (pWorldStateModificationPtr2->iterateOnSuccessions(successionsCallback, pParameters, pProblem.worldState, pFromDeductionId))
+      return true;
+  return false;
 }
 
 
@@ -670,7 +692,8 @@ void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult
       auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currAction);
       if (newTreePtr != nullptr && // To skip leaf of already seen path
           _lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, pTryToDoMoreOptimalSolution, *newTreePtr,
-                                  action.effect, pGoal, pProblem, pFactOptionalToSatisfy,
+                                  action.effect.worldStateModification, action.effect.potentialWorldStateModification,
+                                  pGoal, pProblem, pFactOptionalToSatisfy,
                                   pDomain, factsAlreadyChecked, currAction) &&
           (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parameters)))
       {

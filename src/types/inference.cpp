@@ -18,4 +18,26 @@ Inference::Inference(std::unique_ptr<Condition> pCondition,
 }
 
 
+void Inference::updateSuccessionCache(const Domain& pDomain,
+                                      const SetOfInferencesId& pSetOfInferencesIdOfThisInference,
+                                      const InferenceId& pInferenceIdOfThisInference)
+{
+  WorldStateModificationContainerId containerId;
+  containerId.setOfInferencesIdToExclude.emplace(pSetOfInferencesIdOfThisInference);
+  containerId.inferenceIdToExclude.emplace(pInferenceIdOfThisInference);
+
+  auto optionalFactsToIgnore = condition ? condition->getFactToIgnoreInCorrespondingEffect() : std::set<FactOptional>();
+  if (factsToModify)
+    factsToModify->updateSuccesions(pDomain, containerId, optionalFactsToIgnore);
+}
+
+std::string Inference::printSuccessionCache() const
+{
+  std::string res;
+  if (factsToModify)
+    factsToModify->printSuccesions(res);
+  return res;
+}
+
+
 } // !cp
