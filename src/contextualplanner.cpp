@@ -661,6 +661,7 @@ bool _isMoreOptimalNextAction(
 
 void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult,
                                              std::optional<PotentialNextActionComparisonCache>& pPotentialNextActionComparisonCacheOpt,
+                                             std::set<ActionId>& pAlreadyDoneActions,
                                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                                              const FactToConditions::ConstMapOfFactIterator& pActions,
                                              const Goal& pGoal,
@@ -675,6 +676,10 @@ void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult
   auto& domainActions = pDomain.actions();
   for (const auto& currAction : pActions)
   {
+    if (pAlreadyDoneActions.count(currAction) > 0)
+      continue;
+    pAlreadyDoneActions.insert(currAction);
+
     auto itAction = domainActions.find(currAction);
     if (itAction != domainActions.end())
     {
@@ -722,11 +727,12 @@ ActionId _findFirstActionForAGoal(
     const Historical* pGlobalHistorical)
 {
   PotentialNextAction res;
+  std::set<ActionId> alreadyDoneActions;
   std::optional<PotentialNextActionComparisonCache> potentialNextActionComparisonCacheOpt;
   for (const auto& currFact : pProblem.worldState.facts())
   {
     auto itPrecToActions = pDomain.preconditionToActions().find(currFact);
-    _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt,
+    _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt, alreadyDoneActions,
                                             pTreeOfAlreadyDonePath,
                                             itPrecToActions, pGoal,
                                             pProblem, pFactOptionalToSatisfy,
@@ -735,7 +741,7 @@ ActionId _findFirstActionForAGoal(
   }
 
   auto actionWithoutPrecondition = pDomain.actionsWithoutFactToAddInPrecondition().valuesWithoutFact();
-  _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt,
+  _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt, alreadyDoneActions,
                                           pTreeOfAlreadyDonePath,
                                           actionWithoutPrecondition, pGoal,
                                           pProblem, pFactOptionalToSatisfy,
