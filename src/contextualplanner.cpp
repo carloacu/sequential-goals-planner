@@ -343,7 +343,6 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
   {
     std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
     std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
-    std::size_t nbOfPossiblities = 0;
     auto& actions = pDomain.actions();
     for (const auto& currActionId : it)
     {
@@ -376,11 +375,10 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
           if (pTmpParentParametersPtr != nullptr)
             for (auto& currParam : cpTmpParameters)
               newPossibleTmpParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
-          ++nbOfPossiblities;
         }
       }
     }
-    if (nbOfPossiblities > 0)
+    if (!newPossibleParentParameters.empty())
     {
       pParentParameters = std::move(newPossibleParentParameters);
       if (pTmpParentParametersPtr != nullptr)
@@ -478,7 +476,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   return pEffectToCheck.canSatisfyObjective([&](const cp::FactOptional& pFactOptional,
                                             std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                                             const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) {
-    // Condition only for optimization
+    // Condition only for optimization (seems not usefull)
     if (pParameters.empty())
     {
       if (!pFactOptional.isFactNegated)
