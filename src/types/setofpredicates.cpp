@@ -52,8 +52,6 @@ Predicate SetOfPredicates::nameToPredicate(const std::string& pName) const
   if (it != _nameToPredicate.end())
     return it->second;
 
-  if (empty()) // For retrocompatibility
-    return Predicate(pName, {});
   throw std::runtime_error("\"" + pName + "\" is not a predicate name");
 }
 
@@ -71,11 +69,6 @@ std::string SetOfPredicates::toStr() const
     res += currNameToPredicate.second.toStr();
   }
   return res;
-}
-
-bool SetOfPredicates::empty() const
-{
-  return _nameToPredicate.empty();
 }
 
 } // !cp

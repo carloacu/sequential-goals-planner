@@ -16,14 +16,17 @@ void planningDummyExample()
   // Current clock to set to different functions
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
+  cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(userIsGreeted, ontology.types);
+
   // Initialize the domain with an action
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::WorldStateModification::fromStr(userIsGreeted, {}, {}, {})));
-  cp::Domain domain(actions);
+  actions.emplace(sayHi, cp::Action({}, cp::WorldStateModification::fromStr(userIsGreeted, ontology, {}, {})));
+  cp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy
   cp::Problem problem;
-  problem.goalStack.setGoals({cp::Goal(userIsGreeted, {}, {})}, problem.worldState, now);
+  problem.goalStack.setGoals({cp::Goal(userIsGreeted, ontology, {})}, problem.worldState, now);
 
   // Look for an action to do
   auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);

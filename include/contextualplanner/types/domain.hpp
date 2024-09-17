@@ -24,7 +24,7 @@ struct CONTEXTUALPLANNER_API Domain
    * @param[in] pActions Map of action identifiers to action.
    */
   Domain(const std::map<ActionId, Action>& pActions,
-         const Ontology& pOntology = {},
+         const Ontology& pOntology,
          const SetOfInferences& pSetOfInferences = {});
 
   // Actions

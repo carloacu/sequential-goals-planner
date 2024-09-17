@@ -138,7 +138,7 @@ void _wrong_condition_type()
   actionObj1.parameters = std::move(parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
@@ -166,7 +166,7 @@ void _number_type()
                         cp::WorldStateModification::fromStr("pred_b", ontology, entities, {}));
   actions.emplace(action1, actionObj1);
 
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
@@ -281,7 +281,7 @@ void _fluentEqualityInPrecoditionOfAnAction()
   actionObj2.parameters = std::move(action2Parameters);
   actions.emplace(action2, actionObj2);
 
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_d(lol_val)", ontology, entities)});
@@ -319,7 +319,7 @@ void _testIncrementOfVariables()
   actions.emplace(action_askQuestion2, cp::Action({}, cp::WorldStateModification::fromStr("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {})));
   actions.emplace(action_finisehdToAskQuestions, actionFinishToActActions);
   actions.emplace(action_sayQuestionBilan, actionSayQuestionBilan);
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
 
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   cp::Problem problem;
@@ -381,7 +381,7 @@ void _actionWithParametersInPreconditionsAndEffects()
   const std::string action1 = "action1";
   actions.emplace(action1, joke);
 
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
@@ -527,7 +527,7 @@ void _satisfyGoalWithSuperiorOperator()
 
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr("fact_a=100", ontology, {}, {})));
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;
@@ -559,7 +559,7 @@ void _parameterToFillFromConditionOfFirstAction()
                                         cp::WorldStateModification::fromStr("batteryLevel=100", ontology, {}, actionParameters));
   action1Obj.parameters = std::move(actionParameters);
   actions.emplace(action1, action1Obj);
-  cp::Domain domain(std::move(actions));
+  cp::Domain domain(std::move(actions), ontology);
   auto& setOfInferencesMap = domain.getSetOfInferences();
 
   cp::Problem problem;

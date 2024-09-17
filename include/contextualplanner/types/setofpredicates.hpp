@@ -26,7 +26,6 @@ struct CONTEXTUALPLANNER_API SetOfPredicates
   Predicate nameToPredicate(const std::string& pName) const;
 
   std::string toStr() const;
-  bool empty() const;
 
 private:
   std::map<std::string, Predicate> _nameToPredicate;
