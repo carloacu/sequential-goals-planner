@@ -374,7 +374,10 @@ void _test_goalToStr()
 void _test_factToStr()
 {
   cp::Ontology ontology;
-  assert_eq<std::string>("isEngaged(1)", _fact("isEngaged(1)", ontology).toStr());
+  ontology.types = cp::SetOfTypes::fromStr("human");
+  ontology.constants = cp::SetOfEntities::fromStr("h1 - human", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?h - human)", ontology.types);
+  assert_eq<std::string>("isEngaged(h1)", _fact("isEngaged(h1)", ontology).toStr());
 }
 
 
@@ -383,81 +386,130 @@ void _test_factToStr()
 void _test_conditionParameters()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location\n"
+                                           "entity\n"
+                                           "robot - physical_object");
+  ontology.constants = cp::SetOfEntities::fromStr("me self - robot\n"
+                                                  "pen - physical_object\n"
+                                                  "entrance kitchen - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
+                                                     "grab(?r - robot, ?e - entity)\n"
+                                                     "sf\n"
+                                                     "ent - entity\n"
+                                                     "n1 - number\n"
+                                                     "n2 - number\n"
+                                                     "a\n"
+                                                     "b\n"
+                                                     "loc - number\n"
+                                                     "at(?po - physical_object, ?l - location)\n"
+                                                     "distance(?po - physical_object, ?l - location) - number", ontology.types);
+
   assert_false(_condition_fromStr("", ontology).operator bool());
 
-  std::vector<cp::Parameter> parameters = {_parameter("?target", ontology), _parameter("?object", ontology)};
-  std::map<cp::Parameter, cp::Entity> parametersToEntities = {{_parameter("?target", ontology), _entityDeclaration("kitchen", ontology)}, {_parameter("?object", ontology), _entityDeclaration("chair", ontology)}};
-  assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", _condition_fromStr("location(me)=?target & grab(me, ?object)", ontology, parameters)->clone(&parametersToEntities)->toStr());
-  assert_eq<std::string>("location(me)=kitchen & grab(me, chair)", _condition_fromStr("and(location(me)=?target, grab(me, ?object))", ontology, parameters)->clone(&parametersToEntities)->toStr());
-  assert_eq<std::string>("location(me)=kitchen & grab(me, chair) & i", _condition_fromStr("and(location(me)=?target, grab(me, ?object), i)", ontology, parameters)->clone(&parametersToEntities)->toStr());
-  assert_eq<std::string>("location(me)=kitchen | grab(me, chair) | i", _condition_fromStr("location(me)=?target | grab(me, ?object) | i", ontology, parameters)->clone(&parametersToEntities)->toStr());
-  assert_eq<std::string>("location(me)=kitchen | grab(me, chair) | i", _condition_fromStr("or(location(me)=?target, grab(me, ?object), i)", ontology, parameters)->clone(&parametersToEntities)->toStr());
-  assert_eq<std::string>("equals(a, b + 3)", _condition_fromStr("equals(a, b + 3)", ontology)->toStr());
-  assert_eq<std::string>("!a", _condition_fromStr("!a", ontology)->toStr());
-  assert_eq<std::string>("!a", _condition_fromStr("not(a)", ontology)->toStr());
-  assert_eq<std::string>("a!=", _condition_fromStr("a!=", ontology)->toStr());
-  assert_eq<std::string>("a!=b", _condition_fromStr("a!=b", ontology)->toStr());
-  assert_eq<std::string>("a>3", _condition_fromStr("a>3", ontology)->toStr());
-  assert_eq<std::string>("a>3", _condition_fromStr(">(a, 3)", ontology)->toStr());
-  assert_eq<std::string>("a<3", _condition_fromStr("<(a, 3)", ontology)->toStr());
+  std::vector<cp::Parameter> parameters = {_parameter("?target - location", ontology), _parameter("?object - entity", ontology)};
+  std::map<cp::Parameter, cp::Entity> parametersToEntities = {{_parameter("?target - location", ontology), _entityDeclaration("kitchen - location", ontology)}, {_parameter("?object - location", ontology), _entityDeclaration("chair - entity", ontology)}};
+  assert_eq<std::string>("location(me)=kitchen & grab(me, chair)",
+                         _condition_fromStr("location(me)=?target & grab(me, ?object)", ontology, parameters)->clone(&parametersToEntities)->toStr());
+  assert_eq<std::string>("location(me)=kitchen & grab(me, chair)",
+                         _condition_fromStr("and(location(me)=?target, grab(me, ?object))", ontology, parameters)->clone(&parametersToEntities)->toStr());
+  assert_eq<std::string>("location(me)=kitchen & grab(me, chair) & sf",
+                         _condition_fromStr("and(location(me)=?target, grab(me, ?object), sf)", ontology, parameters)->clone(&parametersToEntities)->toStr());
+  assert_eq<std::string>("location(me)=kitchen | grab(me, chair) | sf",
+                         _condition_fromStr("location(me)=?target | grab(me, ?object) | sf", ontology, parameters)->clone(&parametersToEntities)->toStr());
+  assert_eq<std::string>("location(me)=kitchen | grab(me, chair) | sf",
+                         _condition_fromStr("or(location(me)=?target, grab(me, ?object), sf)", ontology, parameters)->clone(&parametersToEntities)->toStr());
+  assert_eq<std::string>("equals(n1, n2 + 3)", _condition_fromStr("equals(n1, n2 + 3)", ontology)->toStr());
+  assert_eq<std::string>("!sf", _condition_fromStr("!sf", ontology)->toStr());
+  assert_eq<std::string>("!sf", _condition_fromStr("not(sf)", ontology)->toStr());
+  assert_eq<std::string>("n1!=2", _condition_fromStr("n1!=2", ontology)->toStr());
+  assert_eq<std::string>("n1>3", _condition_fromStr("n1>3", ontology)->toStr());
+  assert_eq<std::string>("n1>3", _condition_fromStr(">(n1, 3)", ontology)->toStr());
+  assert_eq<std::string>("n1<3", _condition_fromStr("<(n1, 3)", ontology)->toStr());
   assert_eq<std::string>("!a=*", _condition_fromStr("=(a, undefined)", ontology)->toStr());
-  assert_eq<std::string>("!a(b)=*", _condition_fromStr("=(a(b), undefined)", ontology)->toStr());
-  assert_eq<std::string>("!a=*", _condition_fromStr("a=undefined", ontology)->toStr());
-  assert_eq<std::string>("!a(b)=*", _condition_fromStr("a(b)=undefined", ontology)->toStr());
-  assert_eq<std::string>("a=c", _condition_fromStr("=(a, c)", ontology)->toStr());
-  assert_eq<std::string>("a(b)=c", _condition_fromStr("=(a(b), c)", ontology)->toStr());
-  assert_eq<std::string>("equals(a, c)", _condition_fromStr("=(a, c())", ontology)->toStr());
-  assert_eq<std::string>("equals(a(b), c)", _condition_fromStr("=(a(b), c())", ontology)->toStr());
-  assert_eq<std::string>("equals(a, c)", _condition_fromStr("equals(a, c)", ontology)->toStr());
-  assert_eq<std::string>("equals(a(b), c)", _condition_fromStr("equals(a(b), c)", ontology)->toStr());
-  assert_eq<std::string>("equals(a, c)", _condition_fromStr("equals(a, c())", ontology)->toStr());
-  assert_eq<std::string>("equals(a(b), c)", _condition_fromStr("equals(a(b), c())", ontology)->toStr());
-  assert_eq<std::string>("exists(l, at(self, l))", _condition_fromStr("exists(l, at(self, l))", ontology)->toStr());
-  assert_eq<std::string>("exists(l, at(self, l) & at(pen, l))", _condition_fromStr("exists(l, at(self, l) & at(pen, l))", ontology)->toStr());
-  assert_eq<std::string>("!exists(l, at(self, l))", _condition_fromStr("not(exists(l, at(self, l)))", ontology)->toStr());
-  assert_eq<std::string>("!(equals(at(i, o), at(self, l)))", _condition_fromStr("not(equals(at(i, o), at(self, l)))", ontology)->toStr());
-  assert_eq<std::string>("!(equals(at(i, o), at(self, l)))", _condition_fromStr("not(=(at(i, o), at(self, l)))", ontology)->toStr());
+  assert_eq<std::string>("!location(me)=*", _condition_fromStr("=(location(me), undefined)", ontology)->toStr());
+  assert_eq<std::string>("!location(me)=*", _condition_fromStr("=(location(me), undefined)", ontology)->toStr());
+  assert_eq<std::string>("equals(n1, n2)", _condition_fromStr("=(n1, n2())", ontology)->toStr());
+  assert_eq<std::string>("location(me)=entrance", _condition_fromStr("=(location(me), entrance)", ontology)->toStr());
+  assert_eq<std::string>("equals(location(me), loc)", _condition_fromStr("=(location(me), loc())", ontology)->toStr());
+  assert_eq<std::string>("equals(n1, n2)", _condition_fromStr("equals(n1, n2())", ontology)->toStr());
+  assert_eq<std::string>("equals(location(me), loc)", _condition_fromStr("equals(location(me), loc())", ontology)->toStr());
+  assert_eq<std::string>("exists(?l - location, at(self, ?l))", _condition_fromStr("exists(?l - location, at(self, ?l))", ontology)->toStr());
+  assert_eq<std::string>("exists(?l - location, at(self, ?l) & at(pen, ?l))", _condition_fromStr("exists(?l - location, at(self, ?l) & at(pen, ?l))", ontology)->toStr());
+  assert_eq<std::string>("!exists(?l - location, at(self, ?l))", _condition_fromStr("not(exists(?l - location, at(self, ?l)))", ontology)->toStr());
+  assert_eq<std::string>("!(equals(distance(pen, entrance), distance(self, kitchen)))", _condition_fromStr("not(equals(distance(pen, entrance), distance(self, kitchen)))", ontology)->toStr());
+  assert_eq<std::string>("!(equals(distance(pen, entrance), distance(self, kitchen)))", _condition_fromStr("not(=(distance(pen, entrance), distance(self, kitchen)))", ontology)->toStr());
 }
 
 void _test_wsModificationToStr()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("location\n"
+                                           "entity\n"
+                                           "robot - physical_object");
+  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+                                                  "sweets - entity\n"
+                                                  "target - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
+                                                     "locationEntity(?e - entity) - location\n"
+                                                     "checkPointLocation - location\n"
+                                                     "grab(?e - entity)\n"
+                                                     "is_near(?e - entity, ?r - robot)\n"
+                                                     "a\n"
+                                                     "n1 - number\n"
+                                                     "n2 - number", ontology.types);
+
   assert_false(_worldStateModification_fromStr("", ontology).operator bool());
   assert_eq<std::string>("location(me)=target", _worldStateModification_fromStr("location(me)=target", ontology)->toStr());
   assert_eq<std::string>("location(me)=target & grab(sweets)", _worldStateModification_fromStr("location(me)=target & grab(sweets)", ontology)->toStr());
   assert_eq<std::string>("location(me)=target & grab(sweets)", _worldStateModification_fromStr("and(location(me)=target, grab(sweets))", ontology)->toStr());
-  assert_eq<std::string>("assign(a, b + 3)", _worldStateModification_fromStr("assign(a, b + 3)", ontology)->toStr());
-  assert_eq<std::string>("assign(a, b + 4 - 1)", _worldStateModification_fromStr("set(a, b + 4 - 1)", ontology)->toStr()); // set is depecated
-  assert_eq<std::string>("increase(a, 1)", _worldStateModification_fromStr("add(a, 1)", ontology)->toStr());
-  assert_eq<std::string>("increase(a, 1)", _worldStateModification_fromStr("increase(a, 1)", ontology)->toStr());
-  assert_eq<std::string>("decrease(a, 2)", _worldStateModification_fromStr("decrease(a, 2)", ontology)->toStr());
+  assert_eq<std::string>("assign(n1, n2 + 3)", _worldStateModification_fromStr("assign(n1, n2 + 3)", ontology)->toStr());
+  assert_eq<std::string>("assign(n1, n2 + 4 - 1)", _worldStateModification_fromStr("set(n1, n2 + 4 - 1)", ontology)->toStr()); // set is depecated
+  assert_eq<std::string>("increase(n1, 1)", _worldStateModification_fromStr("add(n1, 1)", ontology)->toStr());
+  assert_eq<std::string>("increase(n1, 1)", _worldStateModification_fromStr("increase(n1, 1)", ontology)->toStr());
+  assert_eq<std::string>("decrease(n1, 2)", _worldStateModification_fromStr("decrease(n1, 2)", ontology)->toStr());
   assert_eq<std::string>("!a", _worldStateModification_fromStr("!a", ontology)->toStr());
   assert_eq<std::string>("!a", _worldStateModification_fromStr("not(a)", ontology)->toStr());
-  assert_eq<std::string>("!a=*", _worldStateModification_fromStr("a=undefined", ontology)->toStr());
-  assert_eq<std::string>("!a=*", _worldStateModification_fromStr("assign(a, undefined)", ontology)->toStr());
-  assert_eq<std::string>("forall(a, f(a), d(a, c))", _worldStateModification_fromStr("forall(a, f(a), d(a, c))", ontology)->toStr());
-  assert_eq<std::string>("forall(a, f(a), d(a, c))", _worldStateModification_fromStr("forall(a, when(f(a), d(a, c)))", ontology)->toStr());
-  assert_eq<std::string>("forall(a, f(a), !d(a, c))", _worldStateModification_fromStr("forall(a, when(f(a), not(d(a, c))))", ontology)->toStr());
-  assert_eq<std::string>("assign(a(b), c(d))", _worldStateModification_fromStr("assign(a(b), c(d))", ontology)->toStr());
-  assert_eq<std::string>("assign(a(b), c(d))", _worldStateModification_fromStr("set(a(b), c(d))", ontology)->toStr()); // set is depecated
-  assert_eq<std::string>("assign(a(b), c())", _worldStateModification_fromStr("assign(a(b), c())", ontology)->toStr()); // c() means that c is a predicate
-  assert_eq<std::string>("a(b)=c", _worldStateModification_fromStr("assign(a(b), c)", ontology)->toStr());
-  assert_eq<std::string>("assign(a(b), c())", _worldStateModification_fromStr("set(a(b), c())", ontology)->toStr()); // set is depecated
-  assert_eq<std::string>("assign(a(b), c())", _worldStateModification_fromStr("set(a(b), c)", ontology)->toStr()); // set is depecated
+  assert_eq<std::string>("!n1=*", _worldStateModification_fromStr("assign(n1, undefined)", ontology)->toStr());
+  assert_eq<std::string>("forall(?e - entity, grab(?e), is_near(?e, me))", _worldStateModification_fromStr("forall(?e - entity, grab(?e), is_near(?e, me))", ontology)->toStr());
+  assert_eq<std::string>("forall(?e - entity, grab(?e), is_near(?e, me))", _worldStateModification_fromStr("forall(?e - entity, when(grab(?e), is_near(?e, me)))", ontology)->toStr());
+  assert_eq<std::string>("forall(?e - entity, grab(?e), !is_near(?e, me))", _worldStateModification_fromStr("forall(?e - entity, when(grab(?e), not(is_near(?e, me))))", ontology)->toStr());
+  assert_eq<std::string>("assign(location(me), locationEntity(sweets))", _worldStateModification_fromStr("assign(location(me), locationEntity(sweets))", ontology)->toStr());
+  assert_eq<std::string>("assign(location(me), locationEntity(sweets))", _worldStateModification_fromStr("set(location(me), locationEntity(sweets))", ontology)->toStr()); // set is depecated
+  assert_eq<std::string>("assign(location(me), checkPointLocation)", _worldStateModification_fromStr("assign(location(me), checkPointLocation())", ontology)->toStr()); // c() means that c is a predicate
+  assert_eq<std::string>("location(me)=target", _worldStateModification_fromStr("assign(location(me), target)", ontology)->toStr());
+  assert_eq<std::string>("assign(location(me), checkPointLocation)", _worldStateModification_fromStr("set(location(me), checkPointLocation())", ontology)->toStr()); // set is depecated
+  assert_eq<std::string>("assign(location(me), checkPointLocation)", _worldStateModification_fromStr("set(location(me), checkPointLocation)", ontology)->toStr()); // set is depecated
 }
 
 void _test_invertCondition()
 {
   cp::Ontology ontology;
-  assert_eq<std::string>("!location(me)=kitchen | grab(me, chair) | !i", _condition_fromStr("location(me)=kitchen & !grab(me, chair) & i)", ontology)->clone(nullptr, true)->toStr());
-  assert_eq<std::string>("!location(me)=kitchen & !grab(me, chair) & i", _condition_fromStr("location(me)=kitchen | grab(me, chair) | !i", ontology)->clone(nullptr, true)->toStr());
-  assert_eq<std::string>("equals(at(i, o), at(self, l))", _condition_fromStr("not(=(at(i, o), at(self, l)))", ontology)->clone(nullptr, true)->toStr());
+  ontology.types = cp::SetOfTypes::fromStr("location\n"
+                                           "entity\n"
+                                           "robot - physical_object");
+  ontology.constants = cp::SetOfEntities::fromStr("me self - robot\n"
+                                                  "chair - entity\n"
+                                                  "pen - physical_object\n"
+                                                  "kitchen entrance - location", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
+                                                     "locationEntity(?e - entity) - location\n"
+                                                     "grab(?r - robot, ?e - entity)\n"
+                                                     "distance(?po - physical_object, ?l - location) - number\n"
+                                                     "se", ontology.types);
+
+  assert_eq<std::string>("!location(me)=kitchen | grab(me, chair) | !se", _condition_fromStr("location(me)=kitchen & !grab(me, chair) & se)", ontology)->clone(nullptr, true)->toStr());
+  assert_eq<std::string>("!location(me)=kitchen & !grab(me, chair) & se", _condition_fromStr("location(me)=kitchen | grab(me, chair) | !se", ontology)->clone(nullptr, true)->toStr());
+  assert_eq<std::string>("equals(distance(pen, entrance), distance(self, kitchen))", _condition_fromStr("not(=(distance(pen, entrance), distance(self, kitchen)))", ontology)->clone(nullptr, true)->toStr());
 }
 
 
 void _test_checkCondition()
 {
   cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity");
+  ontology.constants = cp::SetOfEntities::fromStr("b c d - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("a - entity", ontology.types);
+
   cp::WorldState worldState;
   cp::GoalStack goalStack;
   std::map<cp::SetOfInferencesId, cp::SetOfInferences> setOfInferences;
@@ -3544,13 +3596,13 @@ void _derivedPredicate()
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - object", ontology)};
   cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", ontology, derPred1Parameters),
                                          _fact(_fact_c + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
-  for (auto& currInference : derivedPredicate1.toInferences({}, {}))
+  for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
 
   std::vector<cp::Parameter> derPred2Parameters{_parameter("?o - object", ontology)};
   cp::DerivedPredicate derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", ontology, derPred2Parameters),
                                          _fact(_fact_d + "(?o)", ontology, derPred2Parameters), derPred2Parameters);
-  for (auto& currInference : derivedPredicate2.toInferences({}, {}))
+  for (auto& currInference : derivedPredicate2.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
 
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
@@ -3802,7 +3854,7 @@ void _existWithEqualityInInference()
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
   cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
                                          _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
-  for (auto& currInference : derivedPredicate1.toInferences({}, {}))
+  for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
 
 
@@ -3855,7 +3907,7 @@ void _existWithEqualityInInference_withEqualityInverted()
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
   cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
                                          _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
-  for (auto& currInference : derivedPredicate1.toInferences({}, {}))
+  for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
 
 
@@ -3915,7 +3967,7 @@ void _fixInferenceWithFluentInParameter()
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?a - param", ontology), _parameter("?v - entity", ontology)};
   cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", ontology, derPred1Parameters),
                                          _fact(_fact_e + "(?a)=?v", ontology, derPred1Parameters), derPred1Parameters);
-  for (auto& currInference : derivedPredicate1.toInferences({}, {}))
+  for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
 
   cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));

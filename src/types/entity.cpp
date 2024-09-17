@@ -110,9 +110,6 @@ Entity Entity::fromUsage(const std::string& pStr,
     throw std::runtime_error("The parameter \"" + pStr + "\" is unknown");
   }
 
-  if (pOntology.empty())
-    return Entity(pStr, {});
-
   auto* entityPtr = pOntology.constants.valueToEntity(pStr);
   if (entityPtr != nullptr)
     return Entity(*entityPtr);

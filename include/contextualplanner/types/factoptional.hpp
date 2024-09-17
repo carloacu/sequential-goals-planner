@@ -62,7 +62,8 @@ struct CONTEXTUALPLANNER_API FactOptional
   bool operator!=(const FactOptional& pOther) const { return !operator==(pOther); }
 
   /// Serialize this optional fact to a string.
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr) const;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr,
+                    bool pPrintAnyFluent = true) const;
 
   /// Is the fact negated.
   bool isFactNegated;

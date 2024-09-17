@@ -59,7 +59,7 @@ struct WorldStateModificationNode : public WorldStateModification
   {
   }
 
-  std::string toStr() const override;
+  std::string toStr(bool pPrintAnyFluent) const override;
 
   bool hasFact(const Fact& pFact) const override
   {
@@ -167,7 +167,7 @@ struct WorldStateModificationFact : public WorldStateModification
   {
   }
 
-  std::string toStr() const override { return factOptional.toStr(); }
+  std::string toStr(bool pPrintAnyFluent) const override { return factOptional.toStr(nullptr, pPrintAnyFluent); }
 
   bool hasFact(const cp::Fact& pFact) const override
   {
@@ -247,7 +247,7 @@ struct WorldStateModificationNumber : public WorldStateModification
   {
   }
 
-  std::string toStr() const override
+  std::string toStr(bool) const override
   {
     std::stringstream ss;
     ss << nb;
@@ -274,7 +274,7 @@ struct WorldStateModificationNumber : public WorldStateModification
 
   std::optional<Entity> getFluent(const WorldState&) const override
   {
-    return Entity::createNumberEntity(toStr());
+    return Entity::createNumberEntity(toStr(true));
   }
 
   const FactOptional* getOptionalFact() const override
@@ -312,11 +312,15 @@ const WorldStateModificationNumber* _toWmNumber(const WorldStateModification& pO
 }
 
 
-std::string WorldStateModificationNode::toStr() const
+std::string WorldStateModificationNode::toStr(bool pPrintAnyFluent) const
 {
+  bool printAnyFluent = pPrintAnyFluent && nodeType != WorldStateModificationNodeType::ASSIGN &&
+      nodeType != WorldStateModificationNodeType::INCREASE && nodeType != WorldStateModificationNodeType::DECREASE &&
+      nodeType != WorldStateModificationNodeType::PLUS && nodeType != WorldStateModificationNodeType::MINUS;
+
   std::string leftOperandStr;
   if (leftOperand)
-    leftOperandStr = leftOperand->toStr();
+    leftOperandStr = leftOperand->toStr(printAnyFluent);
   std::string rightOperandStr;
   bool isRightOperandAFactWithoutParameter = false;
   if (rightOperand)
@@ -325,7 +329,7 @@ std::string WorldStateModificationNode::toStr() const
     if (rightOperandFactPtr != nullptr && rightOperandFactPtr->factOptional.fact.arguments().empty() &&
         !rightOperandFactPtr->factOptional.fact.fluent())
       isRightOperandAFactWithoutParameter = true;
-    rightOperandStr = rightOperand->toStr();
+    rightOperandStr = rightOperand->toStr(printAnyFluent);
   }
 
   switch (nodeType)
@@ -793,7 +797,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
       rightOpPtr = _expressionParsedToWsModification(secondArg, pOntology, pEntities, pParameters, false);
 
     res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::DECREASE,
-                                                       _expressionParsedToWsModification(firstArg, pOntology, pEntities, pParameters, false),
+                                                       _expressionParsedToWsModification(firstArg, pOntology, pEntities, pParameters, true),
                                                        std::move(rightOpPtr));
   }
   else

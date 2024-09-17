@@ -191,11 +191,6 @@ void _test_fact_initialization()
   catch(const std::exception& e) {
     assert_eq<std::string>("\"unknown_val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name2(toto, titi)=unknown_val\"", e.what());
   }
-
-
-  // Without ontology
-  assert_eq<std::string>("pred(, )", cp::Fact("pred(lol, mdr)", {}, {}, {}).predicate.toStr());
-  assert_eq<std::string>("pred(, ) - ", cp::Fact("pred(lol, mdr)=dd", {}, {}, {}).predicate.toStr());
 }
 
 

@@ -38,7 +38,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @brief Convert the world state modification to a string.
    * @return World state modification converted to a string.
    */
-  virtual std::string toStr() const = 0;
+  virtual std::string toStr(bool pPrintAnyFluent = true) const = 0;
 
   /// Check if this object contains a fact or the negation of the fact.
   virtual bool hasFact(const cp::Fact& pFact) const = 0;

@@ -14,8 +14,8 @@ namespace cp
 {
 namespace {
 
-void _parametersToStr(std::string& pStr,
-                      const std::vector<Entity>& pParameters)
+void _entitiesToStr(std::string& pStr,
+                    const std::vector<Entity>& pParameters)
 {
   bool firstIteration = true;
   for (auto& param : pParameters)
@@ -25,6 +25,20 @@ void _parametersToStr(std::string& pStr,
     else
       pStr += ", ";
     pStr += param.toStr();
+  }
+}
+
+void _entitiesToValueStr(std::string& pStr,
+                         const std::vector<Entity>& pParameters)
+{
+  bool firstIteration = true;
+  for (auto& param : pParameters)
+  {
+    if (firstIteration)
+      firstIteration = false;
+    else
+      pStr += ", ";
+    pStr += param.value;
   }
 }
 
@@ -168,9 +182,9 @@ bool Fact::operator<(const Fact& pOther) const
   if (_isValueNegated != pOther._isValueNegated)
     return _isValueNegated < pOther._isValueNegated;
   std::string paramStr;
-  _parametersToStr(paramStr, _arguments);
+  _entitiesToStr(paramStr, _arguments);
   std::string otherParamStr;
-  _parametersToStr(otherParamStr, pOther._arguments);
+  _entitiesToStr(otherParamStr, pOther._arguments);
   return paramStr < otherParamStr;
 }
 
@@ -458,17 +472,19 @@ void Fact::replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurren
   _resetFactSignatureCache();
 }
 
-std::string Fact::toStr() const
+std::string Fact::toStr(bool pPrintAnyFluent) const
 {
   std::string res = _name;
   if (!_arguments.empty())
   {
     res += "(";
-    _parametersToStr(res, _arguments);
+    _entitiesToValueStr(res, _arguments);
     res += ")";
   }
   if (_fluent)
   {
+    if (!pPrintAnyFluent && _fluent->isAnyValue())
+      return res;
     if (_isValueNegated)
       res += "!=" + _fluent->value;
     else
@@ -565,8 +581,7 @@ std::size_t Fact::fillFactFromStr(
       }
     }
 
-    if (!pOntology.empty())
-      predicate = pOntology.predicates.nameToPredicate(_name);
+    predicate = pOntology.predicates.nameToPredicate(_name);
     _finalizeInisilizationAndValidityChecks(pOntology, pEntities, false);
   }
   catch (const std::exception& e)
@@ -871,62 +886,51 @@ void Fact::_finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
                                                    const SetOfEntities& pEntities,
                                                    bool pIsOkIfFluentIsMissing)
 {
-  if (!pOntology.empty())
+  if (predicate.parameters.size() != _arguments.size())
+    throw std::runtime_error("The fact \"" + toStr() + "\" does not have the same number of parameters than the associated predicate \"" + predicate.toStr() + "\"");
+  for (auto i = 0; i < _arguments.size(); ++i)
   {
-    if (predicate.parameters.size() != _arguments.size())
-      throw std::runtime_error("The fact \"" + toStr() + "\" does not have the same number of parameters than the associated predicate \"" + predicate.toStr() + "\"");
-    for (auto i = 0; i < _arguments.size(); ++i)
+    if (!predicate.parameters[i].type)
+      throw std::runtime_error("\"" + predicate.parameters[i].name + "\" does not have a type, in fact predicate \"" + predicate.toStr() + "\"");
+    if (!_arguments[i].type && !_arguments[i].isAnyValue())
+      throw std::runtime_error("\"" + _arguments[i].value + "\" does not have a type");
+    if (_arguments[i].isAParameterToFill())
     {
-      if (!predicate.parameters[i].type)
-        throw std::runtime_error("\"" + predicate.parameters[i].name + "\" does not have a type, in fact predicate \"" + predicate.toStr() + "\"");
-      if (!_arguments[i].type && !_arguments[i].isAnyValue())
-        throw std::runtime_error("\"" + _arguments[i].value + "\" does not have a type");
-      if (_arguments[i].isAParameterToFill())
-      {
-        predicate.parameters[i].type = Type::getSmallerType(_arguments[i].type, predicate.parameters[i].type);
-        _arguments[i].type = predicate.parameters[i].type;
-        continue;
-      }
-      if (!_arguments[i].type->isA(*predicate.parameters[i].type))
-        throw std::runtime_error("\"" + _arguments[i].toStr() + "\" is not a \"" + predicate.parameters[i].type->name + "\" for predicate: \"" + predicate.toStr() + "\"");
+      predicate.parameters[i].type = Type::getSmallerType(_arguments[i].type, predicate.parameters[i].type);
+      _arguments[i].type = predicate.parameters[i].type;
+      continue;
     }
-
-    if (predicate.fluent)
-    {
-      if (_fluent)
-      {
-        if (!_fluent->type && !_fluent->isAnyValue())
-          throw std::runtime_error("\"" + _fluent->toStr() + "\" does not have type");
-
-        if (_fluent->isAParameterToFill())
-        {
-          predicate.fluent = Type::getSmallerType(_fluent->type, predicate.fluent);
-          _fluent->type = predicate.fluent;
-        }
-        else
-        {
-          if (!_fluent->type->isA(*predicate.fluent))
-            throw std::runtime_error("\"" + _fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" for predicate: \"" + predicate.toStr() + "\"");
-        }
-      }
-      else if (!pIsOkIfFluentIsMissing)
-      {
-        throw std::runtime_error("The fact \"" + toStr() + "\" does not have fluent but the associated predicate: \"" + predicate.toStr() + "\" has a fluent");
-      }
-
-    }
-    else if (_fluent)
-    {
-      throw std::runtime_error("The fact \"" + toStr() + "\" has a fluent but the associated predicate: \"" + predicate.toStr() + "\" does not have a fluent");
-    }
+    if (!_arguments[i].type->isA(*predicate.parameters[i].type))
+      throw std::runtime_error("\"" + _arguments[i].toStr() + "\" is not a \"" + predicate.parameters[i].type->name + "\" for predicate: \"" + predicate.toStr() + "\"");
   }
-  else
+
+  if (predicate.fluent)
   {
-    predicate.name = _name;
-    for (auto i = 0; i < _arguments.size(); ++i)
-      predicate.parameters.emplace_back("", std::shared_ptr<Type>());
     if (_fluent)
-      predicate.fluent = std::make_shared<Type>("");
+    {
+      if (!_fluent->type && !_fluent->isAnyValue())
+        throw std::runtime_error("\"" + _fluent->toStr() + "\" does not have type");
+
+      if (_fluent->isAParameterToFill())
+      {
+        predicate.fluent = Type::getSmallerType(_fluent->type, predicate.fluent);
+        _fluent->type = predicate.fluent;
+      }
+      else
+      {
+        if (!_fluent->type->isA(*predicate.fluent))
+          throw std::runtime_error("\"" + _fluent->toStr() + "\" is not a \"" + predicate.fluent->name + "\" for predicate: \"" + predicate.toStr() + "\"");
+      }
+    }
+    else if (!pIsOkIfFluentIsMissing)
+    {
+      throw std::runtime_error("The fact \"" + toStr() + "\" does not have fluent but the associated predicate: \"" + predicate.toStr() + "\" has a fluent");
+    }
+
+  }
+  else if (_fluent)
+  {
+    throw std::runtime_error("The fact \"" + toStr() + "\" has a fluent but the associated predicate: \"" + predicate.toStr() + "\" does not have a fluent");
   }
 }
 

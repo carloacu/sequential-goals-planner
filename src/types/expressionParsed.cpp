@@ -53,10 +53,6 @@ FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
     res.isFactNegated = true;
     res.fact.setFluentValue(Entity::anyEntityValue());
   }
-  else if (res.fact.isValueNegated() && value == "" && pOntology.empty())
-  {
-    res.fact.setFluent(Entity(value, {}));
-  }
   return res;
 }
 

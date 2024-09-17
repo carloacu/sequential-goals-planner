@@ -44,7 +44,7 @@ void test_setOfFacts()
   factToFacts.add(fact1);
 
   {
-    assert_eq<std::string>("[pred_name(toto - my_type)]", factToFacts.find(fact1).toStr());
+    assert_eq<std::string>("[pred_name(toto)]", factToFacts.find(fact1).toStr());
   }
 
   factToFacts.erase(fact1);
@@ -67,15 +67,15 @@ void test_setOfFacts()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    assert_eq<std::string>("[pred_name5(toto - my_type)=titi]", factToFacts.find(factWithParam).toStr());
-    assert_eq<std::string>("[pred_name5(toto - my_type)=titi, pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam, true).toStr());
+    assert_eq<std::string>("[pred_name5(toto)=titi]", factToFacts.find(factWithParam).toStr());
+    assert_eq<std::string>("[pred_name5(toto)=titi, pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p1 - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name5(?p1)=titi_const", ontology, entities, parameters);
-    assert_eq<std::string>("[pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam).toStr());
-    assert_eq<std::string>("[pred_name5(toto2 - my_type)=titi, pred_name5(toto - my_type)=titi, pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam, true).toStr());
+    assert_eq<std::string>("[pred_name5(toto)=titi_const]", factToFacts.find(factWithParam).toStr());
+    assert_eq<std::string>("[pred_name5(toto2)=titi, pred_name5(toto)=titi, pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
 
   auto factCopied = fact3;
@@ -84,7 +84,7 @@ void test_setOfFacts()
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
     assert_eq<std::string>("[]", factToFacts.find(factWithParam).toStr());
-    assert_eq<std::string>("[pred_name5(toto - my_type)=titi_const]", factToFacts.find(factWithParam, true).toStr());
+    assert_eq<std::string>("[pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
 
   auto fact4WithAnyValue = cp::Fact::fromStr("pred_name5(toto)=*", ontology, entities, {});

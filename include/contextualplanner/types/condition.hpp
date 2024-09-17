@@ -40,7 +40,8 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pFactWriterPtr Specific function to use to convert a fact to a string.
    * @return Condition converted to a string.
    */
-  virtual std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr) const = 0;
+  virtual std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr,
+                            bool pPrintAnyFluent = true) const = 0;
 
 
   /// Check if this condition contains a fact or the negation of the fact.
@@ -186,7 +187,8 @@ enum class ConditionNodeType
 /// Condition tree node that holds children.
 struct CONTEXTUALPLANNER_API ConditionNode : public Condition
 {
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
+                    bool pPrintAnyFluent) const override;
 
   ConditionNode(ConditionNodeType pNodeType,
                 std::unique_ptr<Condition> pLeftOperand,
@@ -246,7 +248,8 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
 /// Condition tree to manage exists operator.
 struct CONTEXTUALPLANNER_API ConditionExists : public Condition
 {
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
+                    bool pPrintAnyFluent) const override;
 
   ConditionExists(const Parameter& pParameter,
                   std::unique_ptr<Condition> pCondition);
@@ -309,7 +312,8 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
 /// Condition tree node that holds the negation of a condition.
 struct CONTEXTUALPLANNER_API ConditionNot : public Condition
 {
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
+                    bool pPrintAnyFluent) const override;
 
   ConditionNot(std::unique_ptr<Condition> pCondition);
 
@@ -369,7 +373,8 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
 /// Condition tree node that holds only an optional fact.
 struct CONTEXTUALPLANNER_API ConditionFact : public Condition
 {
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override { return factOptional.toStr(pFactWriterPtr); }
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
+                    bool pPrintAnyFluent) const override { return factOptional.toStr(pFactWriterPtr, pPrintAnyFluent); }
 
   ConditionFact(const FactOptional& pFactOptional);
 
@@ -427,7 +432,8 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
 /// Condition tree node that holds only a number.
 struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
 {
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr) const override;
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
+                    bool pPrintAnyFluent) const override;
 
   ConditionNumber(int pNb);
 

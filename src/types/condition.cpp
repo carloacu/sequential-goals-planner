@@ -406,14 +406,18 @@ std::unique_ptr<Condition> Condition::fromStr(const std::string& pStr,
   return _expressionParsedToCondition(expressionParsed, pOntology, pEntities, pParameters, false);
 }
 
-std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
+std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr,
+                                 bool pPrintAnyFluent) const
 {
+  bool printAnyFluent = pPrintAnyFluent && nodeType != ConditionNodeType::EQUALITY &&
+      nodeType != ConditionNodeType::SUPERIOR && nodeType != ConditionNodeType::INFERIOR;
+
   std::string leftOperandStr;
   if (leftOperand)
-    leftOperandStr = leftOperand->toStr(pFactWriterPtr);
+    leftOperandStr = leftOperand->toStr(pFactWriterPtr, printAnyFluent);
   std::string rightOperandStr;
   if (rightOperand)
-    rightOperandStr = rightOperand->toStr(pFactWriterPtr);
+    rightOperandStr = rightOperand->toStr(pFactWriterPtr, printAnyFluent);
 
   switch (nodeType)
   {
@@ -786,7 +790,8 @@ std::unique_ptr<Condition> ConditionNode::clone(const std::map<Parameter, Entity
 
 
 
-std::string ConditionExists::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
+std::string ConditionExists::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr,
+                                   bool pPrintAnyFluent) const
 {
   std::string conditionStr;
   if (condition)
@@ -919,7 +924,8 @@ std::unique_ptr<Condition> ConditionExists::clone(const std::map<Parameter, Enti
 
 
 
-std::string ConditionNot::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr) const
+std::string ConditionNot::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr,
+                                bool pPrintAnyFluent) const
 {
   std::string conditionStr;
   if (condition)
@@ -1123,7 +1129,8 @@ std::unique_ptr<Condition> ConditionFact::clone(const std::map<Parameter, Entity
 }
 
 
-std::string ConditionNumber::toStr(const std::function<std::string (const Fact&)>*) const
+std::string ConditionNumber::toStr(const std::function<std::string (const Fact&)>*,
+                                   bool) const
 {
   std::stringstream ss;
   ss << nb;
@@ -1145,7 +1152,7 @@ bool ConditionNumber::operator==(const Condition& pOther) const
 
 std::optional<Entity> ConditionNumber::getFluent(const WorldState&) const
 {
-  return Entity::createNumberEntity(toStr(nullptr));
+  return Entity::createNumberEntity(toStr(nullptr, true));
 }
 
 std::unique_ptr<Condition> ConditionNumber::clone(const std::map<Parameter, Entity>*,

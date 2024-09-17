@@ -166,7 +166,7 @@ struct CONTEXTUALPLANNER_API Fact
 
 
   /// Serialize this fact to a string.
-  std::string toStr() const;
+  std::string toStr(bool pPrintAnyFluent = true) const;
 
   /**
    * @brief Construct a fact from a string.

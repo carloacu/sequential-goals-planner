@@ -70,7 +70,6 @@ set(CHATBOTPLANNER_SRCS
     src/types/historical.cpp
     src/types/inference.cpp
     src/types/lookforanactionoutputinfos.cpp
-    src/types/ontology.cpp
     src/types/facttoconditions.cpp
     src/types/parameter.cpp
     src/types/predicate.cpp

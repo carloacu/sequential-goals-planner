@@ -15,8 +15,6 @@ struct CONTEXTUALPLANNER_API Ontology
   SetOfTypes types;
   SetOfPredicates predicates;
   SetOfEntities constants;
-
-  bool empty() const;
 };
 
 } // namespace cp
