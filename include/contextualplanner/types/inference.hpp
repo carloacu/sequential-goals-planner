@@ -27,8 +27,7 @@ struct CONTEXTUALPLANNER_API Inference
     : parameters(pInference.parameters),
       condition(pInference.condition ? pInference.condition->clone() : std::unique_ptr<Condition>()),
       factsToModify(pInference.factsToModify ? pInference.factsToModify->clone(nullptr) : std::unique_ptr<WorldStateModification>()),
-      goalsToAdd(pInference.goalsToAdd),
-      isReachable(pInference.isReachable)
+      goalsToAdd(pInference.goalsToAdd)
   {
     assert(condition);
     assert(factsToModify || !goalsToAdd.empty());
@@ -45,14 +44,6 @@ struct CONTEXTUALPLANNER_API Inference
   const std::unique_ptr<WorldStateModification> factsToModify;
   /// Goals to add if the condition is true.
   const std::map<int, std::vector<cp::Goal>> goalsToAdd;
-  /**
-   * If the inference is considered as reachable if this 2 conditions are satisfied:
-   * * The inference has other stuff to modify than just adding or removing unreachable facts (that will not modify the world state anyway).
-   * * The condition can be satisfied. For example if the condition needs an unreachable fact to be true the condition will never be satisfied.
-   *
-   * An inference not reachable, will never be applied but it can be usefull to motivate to do actions toward a goal.
-   */
-  const bool isReachable;
 };
 
 
