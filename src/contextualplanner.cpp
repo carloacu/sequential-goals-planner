@@ -659,17 +659,17 @@ bool _isMoreOptimalNextAction(
 }
 
 
-void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult,
-                                                  std::optional<PotentialNextActionComparisonCache>& pPotentialNextActionComparisonCacheOpt,
-                                                  TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                                                  const FactToConditions::ConstMapOfFactIterator& pActions,
-                                                  const Goal& pGoal,
-                                                  const Problem& pProblem,
-                                                  const FactOptional& pFactOptionalToSatisfy,
-                                                  const Domain& pDomain,
-                                                  bool pTryToDoMoreOptimalSolution,
-                                                  std::size_t pLength,
-                                                  const Historical* pGlobalHistorical)
+void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult,
+                                             std::optional<PotentialNextActionComparisonCache>& pPotentialNextActionComparisonCacheOpt,
+                                             TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
+                                             const FactToConditions::ConstMapOfFactIterator& pActions,
+                                             const Goal& pGoal,
+                                             const Problem& pProblem,
+                                             const FactOptional& pFactOptionalToSatisfy,
+                                             const Domain& pDomain,
+                                             bool pTryToDoMoreOptimalSolution,
+                                             std::size_t pLength,
+                                             const Historical* pGlobalHistorical)
 {
   PotentialNextAction newPotNextAction;
   auto& domainActions = pDomain.actions();
@@ -710,7 +710,7 @@ void _nextStepOfTheProblemForAGoalAndSetOfActions(PotentialNextAction& pCurrentR
 }
 
 
-ActionId _nextStepOfTheProblemForAGoal(
+ActionId _findFirstActionForAGoal(
     std::map<Parameter, std::set<Entity>>& pParameters,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
     const Goal& pGoal,
@@ -726,23 +726,40 @@ ActionId _nextStepOfTheProblemForAGoal(
   for (const auto& currFact : pProblem.worldState.facts())
   {
     auto itPrecToActions = pDomain.preconditionToActions().find(currFact);
-    _nextStepOfTheProblemForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt,
-                                                 pTreeOfAlreadyDonePath,
-                                                 itPrecToActions, pGoal,
-                                                 pProblem, pFactOptionalToSatisfy,
-                                                 pDomain, pTryToDoMoreOptimalSolution,
-                                                 pLength, pGlobalHistorical);
+    _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt,
+                                            pTreeOfAlreadyDonePath,
+                                            itPrecToActions, pGoal,
+                                            pProblem, pFactOptionalToSatisfy,
+                                            pDomain, pTryToDoMoreOptimalSolution,
+                                            pLength, pGlobalHistorical);
   }
 
   auto actionWithoutPrecondition = pDomain.actionsWithoutFactToAddInPrecondition().valuesWithoutFact();
-  _nextStepOfTheProblemForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt,
-                                               pTreeOfAlreadyDonePath,
-                                               actionWithoutPrecondition, pGoal,
-                                               pProblem, pFactOptionalToSatisfy,
-                                               pDomain, pTryToDoMoreOptimalSolution,
-                                               pLength, pGlobalHistorical);
+  _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt,
+                                          pTreeOfAlreadyDonePath,
+                                          actionWithoutPrecondition, pGoal,
+                                          pProblem, pFactOptionalToSatisfy,
+                                          pDomain, pTryToDoMoreOptimalSolution,
+                                          pLength, pGlobalHistorical);
   pParameters = std::move(res.parameters);
   return res.actionId;
+}
+
+const FactOptional* _getGoalToStatisfy(const Goal& pGoal,
+                                       const Problem& pProblem)
+{
+  const FactOptional* res = nullptr;
+  pGoal.objective().untilFalse(
+        [&](const FactOptional& pFactOptional)
+  {
+    if (!pProblem.worldState.isOptionalFactSatisfied(pFactOptional))
+    {
+      res = &pFactOptional;
+      return false;
+    }
+    return true;
+  }, pProblem.worldState);
+  return res;
 }
 
 
@@ -759,28 +776,18 @@ bool _lookForAnActionToDoRec(
 {
   pProblem.worldState.refreshCacheIfNeeded(pDomain);
   TreeOfAlreadyDonePath treeOfAlreadyDonePath;
-  for (int i = 0; i < 100; ++i)
+  // nb of retries if the plan is not valid
+  for (int i = 0; i < 5; ++i)
   {
     std::unique_ptr<ActionInvocationWithGoal> potentialRes;
-    const FactOptional* factOptionalToSatisfyPtr = nullptr;
-    pGoal.objective().untilFalse(
-          [&](const FactOptional& pFactOptional)
-    {
-      if (!pProblem.worldState.isOptionalFactSatisfied(pFactOptional))
-      {
-        factOptionalToSatisfyPtr = &pFactOptional;
-        return false;
-      }
-      return true;
-    }, pProblem.worldState);
-
+    const FactOptional* factOptionalToSatisfyPtr = _getGoalToStatisfy(pGoal, pProblem);
     if (factOptionalToSatisfyPtr != nullptr)
     {
       std::map<Parameter, std::set<Entity>> parameters;
       auto actionId =
-          _nextStepOfTheProblemForAGoal(parameters, treeOfAlreadyDonePath,
-                                        pGoal, pProblem, *factOptionalToSatisfyPtr,
-                                        pDomain, pTryToDoMoreOptimalSolution, 0, pGlobalHistorical);
+          _findFirstActionForAGoal(parameters, treeOfAlreadyDonePath,
+                                   pGoal, pProblem, *factOptionalToSatisfyPtr,
+                                   pDomain, pTryToDoMoreOptimalSolution, 0, pGlobalHistorical);
       if (!actionId.empty())
         potentialRes = std::make_unique<ActionInvocationWithGoal>(actionId, parameters, pGoal.clone(), pPriority);
     }
@@ -795,7 +802,7 @@ bool _lookForAnActionToDoRec(
       }
       else
       {
-        if (itAlreadyFoundAction->second > 10)
+        if (itAlreadyFoundAction->second > 3)
           return false;
         ++itAlreadyFoundAction->second;
       }
