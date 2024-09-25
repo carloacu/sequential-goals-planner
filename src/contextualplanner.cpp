@@ -341,53 +341,50 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto res = PossibleEffect::NOT_SATISFIED;
-  if (!pActionSuccessions.empty())
+  std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
+  std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
+  auto& actions = pDomain.actions();
+  for (const auto& currActionId : pActionSuccessions)
   {
-    std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
-    std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
-    auto& actions = pDomain.actions();
-    for (const auto& currActionId : pActionSuccessions)
+    auto itAction = actions.find(currActionId);
+    if (itAction != actions.end())
     {
-      auto itAction = actions.find(currActionId);
-      if (itAction != actions.end())
+      auto cpParentParameters = pParentParameters;
+      std::map<Parameter, std::set<Entity>> cpTmpParameters;
+      if (pTmpParentParametersPtr != nullptr)
+        cpTmpParameters = *pTmpParentParametersPtr;
+      auto& action = itAction->second;
+      auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currActionId);
+      if (newTreePtr != nullptr)
+        res = _merge(_lookForAPossibleDeduction(*newTreePtr, action.parameters, action.precondition,
+                                                action.effect.worldStateModification,
+                                                action.effect.potentialWorldStateModification,
+                                                pFactOptional, cpParentParameters, &cpTmpParameters,
+                                                pGoal, pProblem, pFactOptionalToSatisfy,
+                                                pDomain, pFactsAlreadychecked, currActionId), res);
+      if (res == PossibleEffect::SATISFIED)
       {
-        auto cpParentParameters = pParentParameters;
-        std::map<Parameter, std::set<Entity>> cpTmpParameters;
-        if (pTmpParentParametersPtr != nullptr)
-          cpTmpParameters = *pTmpParentParametersPtr;
-        auto& action = itAction->second;
-        auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currActionId);
-        if (newTreePtr != nullptr)
-          res = _merge(_lookForAPossibleDeduction(*newTreePtr, action.parameters, action.precondition,
-                                                  action.effect.worldStateModification,
-                                                  action.effect.potentialWorldStateModification,
-                                                  pFactOptional, cpParentParameters, &cpTmpParameters,
-                                                  pGoal, pProblem, pFactOptionalToSatisfy,
-                                                  pDomain, pFactsAlreadychecked, currActionId), res);
-        if (res == PossibleEffect::SATISFIED)
+        if (!pTryToGetAllPossibleParentParameterValues)
         {
-          if (!pTryToGetAllPossibleParentParameterValues)
-          {
-            pParentParameters = std::move(cpParentParameters);
-            if (pTmpParentParametersPtr != nullptr)
-              *pTmpParentParametersPtr = std::move(cpTmpParameters);
-            return res;
-          }
-
-          for (auto& currParam : cpParentParameters)
-            newPossibleParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
+          pParentParameters = std::move(cpParentParameters);
           if (pTmpParentParametersPtr != nullptr)
-            for (auto& currParam : cpTmpParameters)
-              newPossibleTmpParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
+            *pTmpParentParametersPtr = std::move(cpTmpParameters);
+          return res;
         }
+
+        for (auto& currParam : cpParentParameters)
+          newPossibleParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
+        if (pTmpParentParametersPtr != nullptr)
+          for (auto& currParam : cpTmpParameters)
+            newPossibleTmpParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
       }
     }
-    if (!newPossibleParentParameters.empty())
-    {
-      pParentParameters = std::move(newPossibleParentParameters);
-      if (pTmpParentParametersPtr != nullptr)
-        *pTmpParentParametersPtr = std::move(newPossibleTmpParentParameters);
-    }
+  }
+  if (!newPossibleParentParameters.empty())
+  {
+    pParentParameters = std::move(newPossibleParentParameters);
+    if (pTmpParentParametersPtr != nullptr)
+      *pTmpParentParametersPtr = std::move(newPossibleTmpParentParameters);
   }
   return res;
 }
@@ -408,7 +405,6 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto res = PossibleEffect::NOT_SATISFIED;
-
   for (const auto& currSetOfInferencesSucc : pInferenceSuccessions)
   {
     auto itSetOfInferences = pInferences.find(currSetOfInferencesSucc.first);
@@ -438,7 +434,6 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
       }
     }
   }
-
   return res;
 }
 
@@ -525,24 +520,27 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
         else
           subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
 
-        PossibleEffect possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pSuccessions.actions, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
-                                                                                      pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
-                                                                                      pGoal, pProblem, pFactOptionalToSatisfy,
-                                                                                      pDomain, subFactsAlreadychecked);
+        PossibleEffect possibleEffect = PossibleEffect::NOT_SATISFIED;
+        if (!pSuccessions.actions.empty())
+        {
+          possibleEffect = _lookForAPossibleExistingOrNotFactFromActions(pSuccessions.actions, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
+                                                                         pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
+                                                                         pGoal, pProblem, pFactOptionalToSatisfy,
+                                                                         pDomain, subFactsAlreadychecked);
 
-        if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-          possibleEffect = PossibleEffect::NOT_SATISFIED;
+          if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+            possibleEffect = PossibleEffect::NOT_SATISFIED;
+        }
 
-        if (possibleEffect != PossibleEffect::SATISFIED)
+        if (possibleEffect != PossibleEffect::SATISFIED && !pSuccessions.inferences.empty())
         {
           possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pSuccessions.inferences, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
                                                                                    pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
                                                                                    setOfInferences, pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
+          if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+            possibleEffect = PossibleEffect::NOT_SATISFIED;
         }
-
-        if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-          possibleEffect = PossibleEffect::NOT_SATISFIED;
 
         if (possibleEffect != PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD)
           pFactsAlreadychecked.swap(subFactsAlreadychecked);

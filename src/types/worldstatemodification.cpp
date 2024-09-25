@@ -343,6 +343,46 @@ struct WorldStateModificationNumber : public WorldStateModification
   int nb;
 };
 
+
+bool _isOkWithLocalParameters(const std::map<Parameter, std::set<Entity>>& pLocalParameterToFind,
+                              std::map<Parameter, std::set<Entity>>& pParametersToFill,
+                              const WorldStateModification& pWModif,
+                              const WorldState& pWorldState,
+                              std::map<Parameter, std::set<Entity>>& pParametersToModifyInPlace)
+{
+  if (!pParametersToFill.empty() &&
+      !pParametersToFill.begin()->second.empty())
+  {
+    bool res = false;
+    const auto* wSMFPtr = dynamic_cast<const WorldStateModificationFact*>(&pWModif);
+    if (wSMFPtr != nullptr)
+    {
+      std::set<Entity>& parameterPossibilities = pParametersToFill.begin()->second;
+
+      while (!parameterPossibilities.empty())
+      {
+        auto factWithValueToAssign = wSMFPtr->factOptional.fact;
+        factWithValueToAssign.replaceArguments(pLocalParameterToFind);
+        auto itBeginOfParamPoss = parameterPossibilities.begin();
+        factWithValueToAssign.setFluent(*itBeginOfParamPoss);
+
+        const auto& factAccessorsToFacts = pWorldState.factsMapping();
+        std::map<Parameter, std::set<Entity>> newParameters;
+        if (factWithValueToAssign.isInOtherFactsMap(factAccessorsToFacts, true, &newParameters, &pParametersToModifyInPlace))
+        {
+          res = true;
+          applyNewParams(pParametersToModifyInPlace, newParameters);
+          break;
+        }
+        parameterPossibilities.erase(itBeginOfParamPoss);
+      }
+    }
+    return res;
+  }
+  return true;
+}
+
+
 const WorldStateModificationNode* _toWmNode(const WorldStateModification& pOther)
 {
   return dynamic_cast<const WorldStateModificationNode*>(&pOther);
@@ -592,36 +632,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
         localParameterToFind[Parameter(factToCheck.fact.fluent()->value, factToCheck.fact.predicate.fluent)];
       }
       bool res = pFactCallback(factToCheck, &localParameterToFind, [&](const std::map<Parameter, std::set<Entity>>& pLocalParameterToFind){
-        if (!localParameterToFind.empty() &&
-            !localParameterToFind.begin()->second.empty())
-        {
-          res = false;
-          const auto* wSMFPtr = dynamic_cast<const WorldStateModificationFact*>(&*rightOperand);
-          if (wSMFPtr != nullptr)
-          {
-            std::set<Entity>& parameterPossibilities = localParameterToFind.begin()->second;
-
-            while (!parameterPossibilities.empty())
-            {
-              auto factWithValueToAssign = wSMFPtr->factOptional.fact;
-              factWithValueToAssign.replaceArguments(pLocalParameterToFind);
-              auto itBeginOfParamPoss = parameterPossibilities.begin();
-              factWithValueToAssign.setFluent(*itBeginOfParamPoss);
-
-              const auto& factAccessorsToFacts = pWorldState.factsMapping();
-              std::map<Parameter, std::set<Entity>> newParameters;
-              if (factWithValueToAssign.isInOtherFactsMap(factAccessorsToFacts, true, &newParameters, &pParameters))
-              {
-                res = true;
-                applyNewParams(pParameters, newParameters);
-                break;
-              }
-              parameterPossibilities.erase(itBeginOfParamPoss);
-            }
-          }
-          return res;
-        }
-        return true;
+        return _isOkWithLocalParameters(pLocalParameterToFind, localParameterToFind, *rightOperand, pWorldState, pParameters);
       });
       return res;
     }
@@ -689,36 +700,7 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
         localParameterToFind[Parameter(factToCheck.fact.fluent()->value, factToCheck.fact.predicate.fluent)];
       }
       bool res = pCallback(_successions, factToCheck, &localParameterToFind, [&](const std::map<Parameter, std::set<Entity>>& pLocalParameterToFind){
-        if (!localParameterToFind.empty() &&
-            !localParameterToFind.begin()->second.empty())
-        {
-          res = false;
-          const auto* wSMFPtr = dynamic_cast<const WorldStateModificationFact*>(&*rightOperand);
-          if (wSMFPtr != nullptr)
-          {
-            std::set<Entity>& parameterPossibilities = localParameterToFind.begin()->second;
-
-            while (!parameterPossibilities.empty())
-            {
-              auto factWithValueToAssign = wSMFPtr->factOptional.fact;
-              factWithValueToAssign.replaceArguments(pLocalParameterToFind);
-              auto itBeginOfParamPoss = parameterPossibilities.begin();
-              factWithValueToAssign.setFluent(*itBeginOfParamPoss);
-
-              const auto& factAccessorsToFacts = pWorldState.factsMapping();
-              std::map<Parameter, std::set<Entity>> newParameters;
-              if (factWithValueToAssign.isInOtherFactsMap(factAccessorsToFacts, true, &newParameters, &pParameters))
-              {
-                res = true;
-                applyNewParams(pParameters, newParameters);
-                break;
-              }
-              parameterPossibilities.erase(itBeginOfParamPoss);
-            }
-          }
-          return res;
-        }
-        return true;
+        return _isOkWithLocalParameters(pLocalParameterToFind, localParameterToFind, *rightOperand, pWorldState, pParameters);
       });
       return res;
     }
