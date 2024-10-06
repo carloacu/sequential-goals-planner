@@ -496,21 +496,6 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                                  const cp::FactOptional& pFactOptional,
                                  std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                                  const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) {
-      // Condition only for optimization (seems not usefull)
-      if (pParameters.empty())
-      {
-        if (!pFactOptional.isFactNegated)
-        {
-          if (pProblem.worldState.facts().count(pFactOptional.fact) > 0)
-            return false;
-        }
-        else
-        {
-          if (pProblem.worldState.facts().count(pFactOptional.fact) == 0)
-            return false;
-        }
-      }
-
       if ((!pFactOptional.isFactNegated && pFactsAlreadychecked.factsToAdd.count(pFactOptional.fact) == 0) ||
           (pFactOptional.isFactNegated && pFactsAlreadychecked.factsToRemove.count(pFactOptional.fact) == 0))
       {
