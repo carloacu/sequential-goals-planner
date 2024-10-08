@@ -1,27 +1,36 @@
-#include <contextualplanner/types/derivedpredicatebasedontwoinferences.hpp>
-#include <contextualplanner/types/inference.hpp>
-#include <contextualplanner/types/worldstatemodification.hpp>
+#include <contextualplanner/types/derivedpredicate.hpp>
+#include <contextualplanner/types/setofentities.hpp>
 
 namespace cp
 {
 
-DerivedPredicateBasedOnTwoInferences::DerivedPredicateBasedOnTwoInferences(std::unique_ptr<Condition> pCondition,
-                                   const Fact& pFact,
-                                   const std::vector<Parameter>& pParameters)
-  : parameters(pParameters),
-    condition(pCondition ? std::move(pCondition) : std::unique_ptr<Condition>()),
-    fact(pFact)
+DerivedPredicate::DerivedPredicate(const Predicate& pPredicate,
+                                   const std::string& pConditionStr,
+                                   const cp::Ontology& pOntology)
+  : predicate(pPredicate),
+    condition()
 {
+  std::vector<cp::Parameter> parameters;
+  for (const auto& currParam : pPredicate.parameters)
+    if (currParam.isAParameterToFill())
+      parameters.emplace_back(currParam);
+  if (pPredicate.fluent)
+    parameters.emplace_back(Parameter::fromType(pPredicate.fluent));
+
+  condition = cp::Condition::fromStr(pConditionStr, pOntology, {}, parameters);
 }
 
 
-std::list<Inference> DerivedPredicateBasedOnTwoInferences::toInferences(const Ontology& pOntology,
-                                                    const SetOfEntities& pEntities) const
+DerivedPredicate::DerivedPredicate(const DerivedPredicate& pDerivedPredicate)
+  : predicate(pDerivedPredicate.predicate),
+    condition(pDerivedPredicate.condition->clone())
 {
-  std::list<Inference> res;
-  res.emplace_back(condition->clone(), WorldStateModification::fromStr(fact.toStr(), pOntology, pEntities, parameters), parameters);
-  res.emplace_back(condition->clone(nullptr, true), WorldStateModification::fromStr("!" + fact.toStr(), pOntology, pEntities, parameters), parameters);
-  return res;
+}
+
+void DerivedPredicate::operator=(const DerivedPredicate& pDerivedPredicate)
+{
+  predicate = pDerivedPredicate.predicate;
+  condition = pDerivedPredicate.condition->clone();
 }
 
 

@@ -115,7 +115,13 @@ Fact::Fact(const std::string& pName,
     _name = _name.substr(0, _name.size() - 1);
   }
 
-  predicate = pOntology.predicates.nameToPredicate(_name);
+  auto* predicatePtr = pOntology.predicates.nameToPredicatePtr(_name);
+  if (predicatePtr == nullptr)
+    predicatePtr = pOntology.derivedPredicates.nameToPredicatePtr(_name);
+  if (predicatePtr == nullptr)
+    throw std::runtime_error("\"" + pName + "\" is not a predicate name or a derived predicate name");
+
+  predicate = *predicatePtr;
   for (auto& currParam : pArgumentStrs)
     if (!currParam.empty())
       _arguments.push_back(Entity::fromUsage(currParam, pOntology, pEntities, pParameters));
@@ -781,6 +787,25 @@ void Fact::replaceArgument(const Entity& pCurrent,
   for (auto& currParameter : _arguments)
     if (currParameter == pCurrent)
       currParameter = pNew;
+}
+
+
+std::map<Parameter, Entity> Fact::extratParameterToArguments() const
+{
+  if (_arguments.size() == predicate.parameters.size())
+  {
+    std::map<Parameter, Entity> res;
+    for (auto i = 0; i < _arguments.size(); ++i)
+      res.emplace(predicate.parameters[i], _arguments[i]);
+
+    if (_fluent && predicate.fluent)
+    {
+      res.emplace(Parameter::fromType(predicate.fluent), *_fluent);
+      return res;
+    }
+    throw std::runtime_error("Fluent difference between fact and predicate: " + toStr());
+  }
+  throw std::runtime_error("No same number of arguments vs predicate parameters: " + toStr());
 }
 
 

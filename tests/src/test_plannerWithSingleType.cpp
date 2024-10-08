@@ -3596,7 +3596,7 @@ void _orInCondition()
 }
 
 
-void _derivedPredicate()
+void _derivedPredicateBasedOnTwoInferences()
 {
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromStr("object");
@@ -3987,6 +3987,68 @@ void _fixInferenceWithFluentInParameter()
     setOfInferences.addInference(currInference);
 
   cp::Domain domain(std::move(actions), ontology, std::move(setOfInferences));
+
+  assert_eq<std::string>("action: action1\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "fact: fact_a(titi)=*\n"
+                         "inference: soi_from_constructor|inference\n"
+                         "\n"
+                         "\n"
+                         "inference: soi_from_constructor|inference\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "fact: fact_e(?a)=?v\n"
+                         "action: action2\n", domain.printSuccessionCache());
+
+  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Problem problem;
+  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
+  _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+  _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfInferencesMap, _now);
+
+  assert_eq(action1 + "(?p -> p2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+}
+
+
+void _derivedPredicates()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "param");
+  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+                                                  "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+                                                     _fact_b + "(?p - param) - entity\n" +
+                                                     _fact_c + "(?p - param) - entity\n" +
+                                                     _fact_d, ontology.types);
+  ontology.derivedPredicates.addDerivedPredicate(
+        cp::DerivedPredicate(cp::Predicate(_fact_e + "(?a - param) - entity", ontology.types),
+                             _fact_a + "(?a)=?entity", ontology));
+
+  std::map<std::string, cp::Action> actions;
+  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))", ontology, action1Parameters));
+  action1Obj.parameters = std::move(action1Parameters);
+  actions.emplace(action1, action1Obj);
+  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
+  cp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
+                        _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
+  action2Obj.parameters = std::move(action2Parameters);
+  actions.emplace(action2, action2Obj);
+
+  cp::SetOfInferences setOfInferences;
+
+  cp::Domain domain(std::move(actions), ontology, std::move(setOfInferences));
+  assert_eq<std::string>("action: action1\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "fact: fact_a(titi)=*\n"
+                         "action: action2\n", domain.printSuccessionCache());
+
   auto& setOfInferencesMap = domain.getSetOfInferences();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
@@ -4262,7 +4324,7 @@ void test_planWithSingleType()
   _notExists();
   _actionToSatisfyANotExists();
   _orInCondition();
-  _derivedPredicate();
+  _derivedPredicateBasedOnTwoInferences();
   _assignAnotherValueToSatisfyNotGoal();
   _assignUndefined();
   _assignAFact();
@@ -4272,6 +4334,7 @@ void test_planWithSingleType()
   _existWithEqualityInInference();
   _existWithEqualityInInference_withEqualityInverted();
   _fixInferenceWithFluentInParameter();
+  _derivedPredicates();
   _assignAFactTwoTimesInTheSamePlan();
   _checkTwoTimesTheEqualityOfAFact();
   _inferenceToRemoveAFactWithoutFluent();

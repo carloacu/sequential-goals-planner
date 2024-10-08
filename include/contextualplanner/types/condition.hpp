@@ -18,6 +18,7 @@ struct ConditionExists;
 struct ConditionNot;
 struct ConditionFact;
 struct ConditionNumber;
+struct SetOfDerivedPredicates;
 struct Entity;
 struct Parameter;
 
@@ -148,7 +149,8 @@ struct CONTEXTUALPLANNER_API Condition
    * @return A copy of this condition with arguments filling.
    */
   virtual std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr = nullptr,
-                                           bool pInvert = false) const = 0;
+                                           bool pInvert = false,
+                                           const SetOfDerivedPredicates* pDerivedPredicatesPtr = nullptr) const = 0;
 
   std::set<FactOptional> getFactToIgnoreInCorrespondingEffect() const;
 
@@ -228,7 +230,8 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
   std::optional<Entity> getFluent(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                   bool pInvert) const override;
+                                   bool pInvert,
+                                   const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return this; }
   ConditionNode* fcNodePtr() override { return this; }
@@ -291,7 +294,8 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
   std::optional<Entity> getFluent(const WorldState&) const override { return {}; }
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                   bool pInvert) const override;
+                                   bool pInvert,
+                                   const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
@@ -354,7 +358,8 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
   std::optional<Entity> getFluent(const WorldState&) const override { return {}; }
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                   bool pInvert) const override;
+                                   bool pInvert,
+                                   const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
@@ -413,7 +418,8 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
   std::optional<Entity> getFluent(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                   bool pInvert) const override;
+                                   bool pInvert,
+                                   const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
@@ -470,7 +476,8 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
   std::optional<Entity> getFluent(const WorldState& pWorldState) const override;
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                   bool pInvert) const override;
+                                   bool pInvert,
+                                   const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }

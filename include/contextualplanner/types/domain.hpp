@@ -99,6 +99,8 @@ struct CONTEXTUALPLANNER_API Domain
 
   const Ontology& getOntology() const { return _ontology; }
 
+  std::string printSuccessionCache() const;
+
 private:
   /// Universal unique identifier regenerated each time this object is modified.
   std::string _uuid;

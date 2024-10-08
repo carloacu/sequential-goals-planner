@@ -15,6 +15,16 @@ bool Action::operator==(const Action& pOther) const
 }
 
 
+Action Action::clone(const SetOfDerivedPredicates& pDerivedPredicates) const
+{
+  Action res(precondition ? precondition->clone(nullptr, false, &pDerivedPredicates) : std::unique_ptr<Condition>(),
+             effect,
+             preferInContext ? preferInContext->clone(nullptr, false, &pDerivedPredicates) : std::unique_ptr<Condition>());
+  res.parameters = parameters;
+  res.highImportanceOfNotRepeatingIt = highImportanceOfNotRepeatingIt;
+  return res;
+}
+
 bool Action::hasFact(const cp::Fact& pFact) const
 {
   return (precondition && precondition->hasFact(pFact)) ||

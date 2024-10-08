@@ -2,6 +2,7 @@
 #include <optional>
 #include <sstream>
 #include <contextualplanner/types/ontology.hpp>
+#include <contextualplanner/types/setofderivedpredicates.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/util.hpp>
 #include "expressionParsed.hpp"
@@ -769,13 +770,14 @@ std::optional<Entity> ConditionNode::getFluent(const WorldState& pWorldState) co
 
 
 std::unique_ptr<Condition> ConditionNode::clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                                bool pInvert) const
+                                                bool pInvert,
+                                                const SetOfDerivedPredicates* pDerivedPredicatesPtr) const
 {
   if (!pInvert)
     return std::make_unique<ConditionNode>(
           nodeType,
-          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>(),
-          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>());
+          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, false, pDerivedPredicatesPtr) : std::unique_ptr<Condition>(),
+          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, false, pDerivedPredicatesPtr) : std::unique_ptr<Condition>());
 
   std::optional<ConditionNodeType> invertedNodeOpt;
   switch (nodeType) {
@@ -789,14 +791,14 @@ std::unique_ptr<Condition> ConditionNode::clone(const std::map<Parameter, Entity
   if (invertedNodeOpt)
     return std::make_unique<ConditionNode>(
           *invertedNodeOpt,
-          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, true) : std::unique_ptr<Condition>(),
-          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, true) : std::unique_ptr<Condition>());
+          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, true, pDerivedPredicatesPtr) : std::unique_ptr<Condition>(),
+          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, true, pDerivedPredicatesPtr) : std::unique_ptr<Condition>());
 
   return std::make_unique<ConditionNot>(
         std::make_unique<ConditionNode>(
           nodeType,
-          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>(),
-          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>()));
+          leftOperand ? leftOperand->clone(pConditionParametersToArgumentPtr, false, pDerivedPredicatesPtr) : std::unique_ptr<Condition>(),
+          rightOperand ? rightOperand->clone(pConditionParametersToArgumentPtr, false, pDerivedPredicatesPtr) : std::unique_ptr<Condition>()));
 }
 
 
@@ -923,11 +925,12 @@ bool ConditionExists::operator==(const Condition& pOther) const
 }
 
 std::unique_ptr<Condition> ConditionExists::clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                                  bool pInvert) const
+                                                  bool pInvert,
+                                                  const SetOfDerivedPredicates* pDerivedPredicatesPtr) const
 {
   auto res = std::make_unique<ConditionExists>(
         parameter,
-        condition ? condition->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>());
+        condition ? condition->clone(pConditionParametersToArgumentPtr, false, pDerivedPredicatesPtr) : std::unique_ptr<Condition>());
   if (pInvert)
     return std::make_unique<ConditionNot>(std::move(res));
   return res;
@@ -1026,11 +1029,12 @@ bool ConditionNot::operator==(const Condition& pOther) const
 }
 
 std::unique_ptr<Condition> ConditionNot::clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                               bool pInvert) const
+                                               bool pInvert,
+                                               const SetOfDerivedPredicates* pDerivedPredicatesPtr) const
 {
   if (pInvert)
-    return condition ? condition->clone(pConditionParametersToArgumentPtr, false) : std::unique_ptr<Condition>();
-  return std::make_unique<ConditionNot>(condition ? condition->clone(pConditionParametersToArgumentPtr, pInvert) : std::unique_ptr<Condition>());
+    return condition ? condition->clone(pConditionParametersToArgumentPtr, false, pDerivedPredicatesPtr) : std::unique_ptr<Condition>();
+  return std::make_unique<ConditionNot>(condition ? condition->clone(pConditionParametersToArgumentPtr, pInvert, pDerivedPredicatesPtr) : std::unique_ptr<Condition>());
 }
 
 
@@ -1130,8 +1134,16 @@ std::optional<Entity> ConditionFact::getFluent(const WorldState& pWorldState) co
 }
 
 std::unique_ptr<Condition> ConditionFact::clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
-                                                bool pInvert) const
+                                                bool pInvert,
+                                                const SetOfDerivedPredicates* pDerivedPredicatesPtr) const
 {
+  if (pDerivedPredicatesPtr != nullptr)
+  {
+    auto condition = pDerivedPredicatesPtr->optFactToConditionPtr(factOptional);
+    if (condition)
+      return condition;
+  }
+
   auto res = std::make_unique<ConditionFact>(factOptional);
   if (pConditionParametersToArgumentPtr != nullptr)
     res->factOptional.fact.replaceArguments(*pConditionParametersToArgumentPtr);
@@ -1168,7 +1180,8 @@ std::optional<Entity> ConditionNumber::getFluent(const WorldState&) const
 }
 
 std::unique_ptr<Condition> ConditionNumber::clone(const std::map<Parameter, Entity>*,
-                                                  bool) const
+                                                  bool,
+                                                  const SetOfDerivedPredicates*) const
 {
   return std::make_unique<ConditionNumber>(nb);
 }

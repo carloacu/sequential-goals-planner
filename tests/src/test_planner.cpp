@@ -1,5 +1,4 @@
 #include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/types/derivedpredicatebasedontwoinferences.hpp>
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>

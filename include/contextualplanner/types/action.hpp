@@ -9,6 +9,7 @@
 
 namespace cp
 {
+struct SetOfDerivedPredicates;
 
 
 /// Axiomatic thing that the bot can do
@@ -67,6 +68,8 @@ struct CONTEXTUALPLANNER_API Action
   /// Check equality with another action.
   bool operator==(const Action& pOther) const;
   bool operator!=(const Action& pOther) const { return !operator==(pOther); }
+
+  Action clone(const SetOfDerivedPredicates& pDerivedPredicates) const;
 
   /// Check if this action contains a fact or the negation of the fact.
   bool hasFact(const cp::Fact& pFact) const;

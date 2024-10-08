@@ -9,6 +9,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/actioninvocation.hpp
     include/contextualplanner/types/actioninvocationwithgoal.hpp
     include/contextualplanner/types/condition.hpp
+    include/contextualplanner/types/derivedpredicate.hpp
     include/contextualplanner/types/derivedpredicatebasedontwoinferences.hpp
     include/contextualplanner/types/domain.hpp
     include/contextualplanner/types/entity.hpp
@@ -30,6 +31,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/setoffacts.hpp
     include/contextualplanner/types/setofinferences.hpp
     include/contextualplanner/types/setofpredicates.hpp
+    include/contextualplanner/types/setofderivedpredicates.hpp
     include/contextualplanner/types/setoftypes.hpp
     include/contextualplanner/types/type.hpp
     include/contextualplanner/types/worldstate.hpp
@@ -56,6 +58,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/actioninvocation.cpp
     src/types/actioninvocationwithgoal.cpp
     src/types/condition.cpp
+    src/types/derivedpredicatebasedontwoinferences.cpp
     src/types/derivedpredicate.cpp
     src/types/domain.cpp
     src/types/entity.cpp
@@ -76,6 +79,7 @@ set(CHATBOTPLANNER_SRCS
     src/types/problemmodification.cpp
     src/types/setofentities.cpp
     src/types/setoffacts.cpp
+    src/types/setofderivedpredicates.cpp
     src/types/setofinferences.cpp
     src/types/setofpredicates.cpp
     src/types/setoftypes.cpp
@@ -103,6 +107,9 @@ include_directories(include)
 add_library(contextualplanner SHARED
   ${CHATBOTPLANNER_HPPS}
   ${CHATBOTPLANNER_SRCS}
+  include/contextualplanner/types/setofderivedpredicates.hpp
+  src/types/setofderivedpredicates.cpp
+  src/types/derivedpredicatebasedontwoinferences.cpp
 )
 target_compile_features(contextualplanner PRIVATE cxx_std_14)
 

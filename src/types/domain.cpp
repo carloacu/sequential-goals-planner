@@ -83,18 +83,18 @@ void Domain::addAction(const ActionId& pActionId,
   if (_actions.count(pActionId) > 0 ||
       pAction.effect.empty())
     return;
-  _actions.emplace(pActionId, pAction);
+  const auto& action = _actions.emplace(pActionId, pAction.clone(_ontology.derivedPredicates)).first->second;
 
-  if (!_canWmDoSomething(pAction.effect.worldStateModification, pAction.precondition) &&
-      !_canWmDoSomething(pAction.effect.potentialWorldStateModification, pAction.precondition))
+  if (!_canWmDoSomething(action.effect.worldStateModification, action.precondition) &&
+      !_canWmDoSomething(action.effect.potentialWorldStateModification, action.precondition))
     return;
 
   _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
 
   bool hasAddedAFact = false;
-  if (pAction.precondition)
+  if (action.precondition)
   {
-    pAction.precondition->forAll(
+    action.precondition->forAll(
           [&](const FactOptional& pFactOptional,
               bool pIgnoreFluent)
     {
@@ -176,6 +176,44 @@ void Domain::clearInferences()
     _setOfInferences.clear();
     _updateSuccessions();
   }
+}
+
+
+std::string Domain::printSuccessionCache() const
+{
+  std::string res;
+   for (const auto& currAction : _actions)
+   {
+     const Action& action = currAction.second;
+     auto sc = action.printSuccessionCache();
+     if (!sc.empty())
+     {
+       if (!res.empty())
+         res += "\n\n";
+       res += "action: " + currAction.first + "\n";
+       res += "----------------------------------\n\n";
+       res += sc;
+     }
+   }
+
+   for (const auto& currSetOfInf : _setOfInferences)
+   {
+     for (const auto& currInf : currSetOfInf.second.inferences())
+     {
+       const Inference& inference = currInf.second;
+       auto sc = inference.printSuccessionCache();
+       if (!sc.empty())
+       {
+         if (!res.empty())
+           res += "\n\n";
+         res += "inference: " + currSetOfInf.first + "|" + currInf.first + "\n";
+         res += "----------------------------------\n\n";
+         res += sc;
+       }
+     }
+   }
+
+   return res;
 }
 
 

@@ -264,6 +264,7 @@ struct CONTEXTUALPLANNER_API Fact
   void replaceArgument(const Entity& pCurrent,
                        const Entity& pNew);
 
+  std::map<Parameter, Entity> extratParameterToArguments() const;
 
   const std::string& name() const { return _name; }
   const std::vector<Entity>& arguments() const { return _arguments; }

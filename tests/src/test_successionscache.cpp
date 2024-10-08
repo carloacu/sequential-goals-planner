@@ -103,4 +103,13 @@ void test_successionsCache()
     assert_eq<std::string>("", actionObj4.printSuccessionCache());
   }
 
+  assert_eq<std::string>("action: action1\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "fact: !fact_a\n"
+                         "action: action4\n"
+                         "\n"
+                         "fact: fact_b(?e)\n"
+                         "action: action2\n"
+                         "action: action5\n", domain.printSuccessionCache());
 }

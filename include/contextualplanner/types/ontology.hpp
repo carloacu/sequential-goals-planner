@@ -2,6 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_ONTOLOGY_HPP
 
 #include "../util/api.hpp"
+#include "setofderivedpredicates.hpp"
 #include "setofentities.hpp"
 #include "setofpredicates.hpp"
 #include "setoftypes.hpp"
@@ -15,6 +16,7 @@ struct CONTEXTUALPLANNER_API Ontology
   SetOfTypes types;
   SetOfPredicates predicates;
   SetOfEntities constants;
+  SetOfDerivedPredicates derivedPredicates;
 };
 
 } // namespace cp

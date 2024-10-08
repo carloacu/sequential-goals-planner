@@ -63,6 +63,11 @@ Parameter Parameter::fromStr(const std::string& pStr,
   throw std::runtime_error("\"" + pStr + "\" parameter should declare a type");
 }
 
+Parameter Parameter::fromType(const std::shared_ptr<Type>& pType)
+{
+  return Parameter("?" + pType->name, pType);
+}
+
 
 std::string Parameter::toStr() const
 {
@@ -75,6 +80,12 @@ Entity Parameter::toEntity() const
 {
   return Entity(name, type);
 }
+
+bool Parameter::isAParameterToFill() const
+{
+  return !name.empty() && (name[0] == '?' || name == Entity::anyEntityValue());
+}
+
 
 
 } // !cp
