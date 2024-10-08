@@ -1,11 +1,11 @@
-#include <contextualplanner/types/derivedpredicate.hpp>
+#include <contextualplanner/types/derivedpredicatebasedontwoinferences.hpp>
 #include <contextualplanner/types/inference.hpp>
 #include <contextualplanner/types/worldstatemodification.hpp>
 
 namespace cp
 {
 
-DerivedPredicate::DerivedPredicate(std::unique_ptr<Condition> pCondition,
+DerivedPredicateBasedOnTwoInferences::DerivedPredicateBasedOnTwoInferences(std::unique_ptr<Condition> pCondition,
                                    const Fact& pFact,
                                    const std::vector<Parameter>& pParameters)
   : parameters(pParameters),
@@ -15,7 +15,7 @@ DerivedPredicate::DerivedPredicate(std::unique_ptr<Condition> pCondition,
 }
 
 
-std::list<Inference> DerivedPredicate::toInferences(const Ontology& pOntology,
+std::list<Inference> DerivedPredicateBasedOnTwoInferences::toInferences(const Ontology& pOntology,
                                                     const SetOfEntities& pEntities) const
 {
   std::list<Inference> res;

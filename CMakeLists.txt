@@ -9,7 +9,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/actioninvocation.hpp
     include/contextualplanner/types/actioninvocationwithgoal.hpp
     include/contextualplanner/types/condition.hpp
-    include/contextualplanner/types/derivedpredicate.hpp
+    include/contextualplanner/types/derivedpredicatebasedontwoinferences.hpp
     include/contextualplanner/types/domain.hpp
     include/contextualplanner/types/entity.hpp
     include/contextualplanner/types/fact.hpp

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <assert.h>
 #include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/types/derivedpredicate.hpp>
+#include <contextualplanner/types/derivedpredicatebasedontwoinferences.hpp>
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofinferences.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
@@ -3610,13 +3610,13 @@ void _derivedPredicate()
   std::map<std::string, cp::Action> actions;
   cp::SetOfInferences setOfInferences;
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - object", ontology)};
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", ontology, derPred1Parameters),
+  cp::DerivedPredicateBasedOnTwoInferences derivedPredicate1(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", ontology, derPred1Parameters),
                                          _fact(_fact_c + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
 
   std::vector<cp::Parameter> derPred2Parameters{_parameter("?o - object", ontology)};
-  cp::DerivedPredicate derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", ontology, derPred2Parameters),
+  cp::DerivedPredicateBasedOnTwoInferences derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", ontology, derPred2Parameters),
                                          _fact(_fact_d + "(?o)", ontology, derPred2Parameters), derPred2Parameters);
   for (auto& currInference : derivedPredicate2.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
@@ -3868,7 +3868,7 @@ void _existWithEqualityInInference()
 
   cp::SetOfInferences setOfInferences;
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
+  cp::DerivedPredicateBasedOnTwoInferences derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
                                          _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
@@ -3921,7 +3921,7 @@ void _existWithEqualityInInference_withEqualityInverted()
 
   cp::SetOfInferences setOfInferences;
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
+  cp::DerivedPredicateBasedOnTwoInferences derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
                                          _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);
@@ -3981,7 +3981,7 @@ void _fixInferenceWithFluentInParameter()
 
   cp::SetOfInferences setOfInferences;
   std::vector<cp::Parameter> derPred1Parameters{_parameter("?a - param", ontology), _parameter("?v - entity", ontology)};
-  cp::DerivedPredicate derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", ontology, derPred1Parameters),
+  cp::DerivedPredicateBasedOnTwoInferences derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", ontology, derPred1Parameters),
                                          _fact(_fact_e + "(?a)=?v", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currInference : derivedPredicate1.toInferences(ontology, {}))
     setOfInferences.addInference(currInference);

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATE_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATE_HPP
+#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATEBAsedOnTWOINFERENCES_HPP
+#define INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATEBAsedOnTWOINFERENCES_HPP
 
 #include <assert.h>
 #include <list>
@@ -13,15 +13,15 @@ struct Inference;
 
 
 /// Specification what is a derived predicate.
-struct CONTEXTUALPLANNER_API DerivedPredicate
+struct CONTEXTUALPLANNER_API DerivedPredicateBasedOnTwoInferences
 {
   /// Construct a derived predicate.
-  DerivedPredicate(std::unique_ptr<Condition> pCondition,
-                   const Fact& pFact,
-                   const std::vector<Parameter>& pParameters = {});
+  DerivedPredicateBasedOnTwoInferences(std::unique_ptr<Condition> pCondition,
+                                       const Fact& pFact,
+                                       const std::vector<Parameter>& pParameters = {});
 
   /// Construct a copy.
-  DerivedPredicate(const DerivedPredicate& pOther)
+  DerivedPredicateBasedOnTwoInferences(const DerivedPredicateBasedOnTwoInferences& pOther)
     : parameters(pOther.parameters),
       condition(pOther.condition ? pOther.condition->clone() : std::unique_ptr<Condition>()),
       fact(pOther.fact)
@@ -50,4 +50,4 @@ struct CONTEXTUALPLANNER_API DerivedPredicate
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATE_HPP
+#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATEBAsedOnTWOINFERENCES_HPP
