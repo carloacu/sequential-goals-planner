@@ -23,9 +23,9 @@ EventId SetOfEvents::add(const Event& pEvent,
 
   _events.emplace(newId, pEvent);
 
-  if (pEvent.condition)
+  if (pEvent.precondition)
   {
-    pEvent.condition->forAll(
+    pEvent.precondition->forAll(
           [&](const FactOptional& pFactOptional,
           bool pIgnoreFluent)
     {
@@ -47,7 +47,7 @@ void SetOfEvents::remove(const EventId& pEventId)
     return;
   auto& eventThatWillBeRemoved = it->second;
 
-  if (eventThatWillBeRemoved.condition)
+  if (eventThatWillBeRemoved.precondition)
   {
     _reachableEventLinks.notConditionToEvents.erase(pEventId);
     _reachableEventLinks.conditionToEvents.erase(pEventId);

@@ -16,17 +16,17 @@ struct Event;
 struct CONTEXTUALPLANNER_API Axiom
 {
   /// Construct a derived predicate.
-  Axiom(std::unique_ptr<Condition> pCondition,
-        const Fact& pFact,
-        const std::vector<Parameter>& pParameters = {});
+  Axiom(std::unique_ptr<Condition> pImplies,
+        const Fact& pContext,
+        const std::vector<Parameter>& pVars = {});
 
   /// Construct a copy.
   Axiom(const Axiom& pOther)
-    : parameters(pOther.parameters),
-      condition(pOther.condition ? pOther.condition->clone() : std::unique_ptr<Condition>()),
-      fact(pOther.fact)
+    : vars(pOther.vars),
+      context(pOther.context ? pOther.context->clone() : std::unique_ptr<Condition>()),
+      implies(pOther.implies)
   {
-    assert(condition);
+    assert(context);
   }
 
   /// Convert this derived predicate to 2 events.
@@ -34,15 +34,14 @@ struct CONTEXTUALPLANNER_API Axiom
                             const SetOfEntities& pEntities) const;
 
   /// Parameter names of this derived predicate.
-  std::vector<Parameter> parameters;
+  std::vector<Parameter> vars;
   /**
-   * Condition to apply the facts and goals modification.
-   * The condition is true if the condition is a sub set of a corresponding world state.
+   * Condition to apply.
    */
-  const std::unique_ptr<Condition> condition;
+  const std::unique_ptr<Condition> context;
 
   /// Fact produced by the derived predicate.
-  const Fact fact;
+  const Fact implies;
 };
 
 

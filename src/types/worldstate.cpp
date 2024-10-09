@@ -591,7 +591,7 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
         std::map<Parameter, std::set<Entity>> parametersToValues;
         for (const auto& currParam : currEvent.parameters)
           parametersToValues[currParam];
-        if (!currEvent.condition || currEvent.condition->isTrue(*this, pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
+        if (!currEvent.precondition || currEvent.precondition->isTrue(*this, pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
                                                                         &parametersToValues))
         {
           if (currEvent.factsToModify)

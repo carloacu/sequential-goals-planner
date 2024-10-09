@@ -421,7 +421,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromEvents(
           {
             auto* newTreePtr = pTreeOfAlreadyDonePath.getNextInflectionTreeIfNotAnExistingLeaf(currEventIdSucc);
             if (newTreePtr != nullptr)
-              res = _merge(_lookForAPossibleDeduction(*newTreePtr, event.parameters, event.condition,
+              res = _merge(_lookForAPossibleDeduction(*newTreePtr, event.parameters, event.precondition,
                                                       event.factsToModify,
                                                       {}, pFactOptional,
                                                       pParentParameters, pTmpParentParametersPtr,

@@ -123,7 +123,7 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfEvents(const FactToConditions
     if (itEvent != pAllEvents.end())
     {
       const Event& event = itEvent->second;
-      if (!event.condition || event.condition->canBecomeTrue(_worldState, event.parameters))
+      if (!event.precondition || event.precondition->canBecomeTrue(_worldState, event.parameters))
         _feedAccessibleFactsFromDeduction(*event.factsToModify, event.parameters,
                                           pDomain, pFactsAlreadychecked);
     }

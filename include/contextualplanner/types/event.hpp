@@ -17,7 +17,7 @@ namespace cp
 struct CONTEXTUALPLANNER_API Event
 {
   /// Construct an event.
-  Event(std::unique_ptr<Condition> pCondition,
+  Event(std::unique_ptr<Condition> pPrecondition,
         std::unique_ptr<WorldStateModification> pFactsToModify,
         const std::vector<Parameter>& pParameters = {},
         const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
@@ -25,11 +25,11 @@ struct CONTEXTUALPLANNER_API Event
   /// Construct a copy.
   Event(const Event& pEvent)
     : parameters(pEvent.parameters),
-      condition(pEvent.condition ? pEvent.condition->clone() : std::unique_ptr<Condition>()),
+      precondition(pEvent.precondition ? pEvent.precondition->clone() : std::unique_ptr<Condition>()),
       factsToModify(pEvent.factsToModify ? pEvent.factsToModify->clone(nullptr) : std::unique_ptr<WorldStateModification>()),
       goalsToAdd(pEvent.goalsToAdd)
   {
-    assert(condition);
+    assert(precondition);
     assert(factsToModify || !goalsToAdd.empty());
   }
 
@@ -42,9 +42,9 @@ struct CONTEXTUALPLANNER_API Event
   std::vector<Parameter> parameters;
   /**
    * Condition to apply the facts and goals modification.
-   * The condition is true if the condition is a sub set of a corresponding world state.
+   * The precondition is true if the precondition is a sub set of a corresponding world state.
    */
-  const std::unique_ptr<Condition> condition;
+  const std::unique_ptr<Condition> precondition;
   /// Facts to add or to remove if the condition is true.
   const std::unique_ptr<WorldStateModification> factsToModify;
   /// Goals to add if the condition is true.
