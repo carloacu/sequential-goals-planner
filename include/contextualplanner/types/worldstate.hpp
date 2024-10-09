@@ -19,9 +19,9 @@ namespace cp
 struct Domain;
 struct Goal;
 struct GoalStack;
-struct Inference;
+struct Event;
 struct ActionInvocationWithGoal;
-struct SetOfInferences;
+struct SetOfEvents;
 struct WorldStateModification;
 struct WorldStateCache;
 
@@ -48,14 +48,14 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[out] pGoalChanged Set to true if the goal stack changed.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   void notifyActionDone(const ActionInvocationWithGoal& pOneStepOfPlannerResult,
                         const std::unique_ptr<WorldStateModification>& pEffect,
                         bool& pGoalChanged,
                         GoalStack& pGoalStack,
-                        const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                        const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                         const Ontology& pOntology,
                         const SetOfEntities& pEntities,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -75,12 +75,12 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFact Fact to add.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   bool addFact(const Fact& pFact,
                GoalStack& pGoalStack,
-               const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+               const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -90,13 +90,13 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFacts Facts to add.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   template<typename FACTS>
   bool addFacts(const FACTS& pFacts,
                 GoalStack& pGoalStack,
-                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                 const Ontology& pOntology,
                 const SetOfEntities& pEntities,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -109,12 +109,12 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFact Fact to remove.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
   */
   bool removeFact(const Fact& pFact,
                   GoalStack& pGoalStack,
-                  const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                  const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                   const Ontology& pOntology,
                   const SetOfEntities& pEntities,
                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -124,13 +124,13 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFacts Facts to remove.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   template<typename FACTS>
   bool removeFacts(const FACTS& pFacts,
                    GoalStack& pGoalStack,
-                   const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                   const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                    const Ontology& pOntology,
                    const SetOfEntities& pEntities,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -140,12 +140,12 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pWsModif Modification to do.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   bool modify(const std::unique_ptr<WorldStateModification>& pWsModif,
               GoalStack& pGoalStack,
-              const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+              const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
               const Ontology& pOntology,
               const SetOfEntities& pEntities,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -155,12 +155,12 @@ struct CONTEXTUALPLANNER_API WorldState
    * @param[in] pFacts New set of facts for the world.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   void setFacts(const std::set<Fact>& pFacts,
                 GoalStack& pGoalStack,
-                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                 const Ontology& pOntology,
                 const SetOfEntities& pEntities,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -299,12 +299,12 @@ private:
 
 
   /**
-   * @brief Add facts without inference deduction and raising a notification.
+   * @brief Add facts without event deduction and raising a notification.
    * @param[out] pWhatChanged Get what changed.
    * @param[in] pFacts Facts to add.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    * @return True if some facts were added, false otherwise.
    */
@@ -312,13 +312,13 @@ private:
   void _addFacts(WhatChanged& pWhatChanged,
                  const FACTS& pFacts,
                  GoalStack& pGoalStack,
-                 const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                 const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                  const Ontology& pOntology,
                  const SetOfEntities& pEntities,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
-   * @brief Remove facts without inference deduction and raising a notification.
+   * @brief Remove facts without event deduction and raising a notification.
    * @param[out] pWhatChanged Get what changed.
    * @param[in] pFacts Facts to remove.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
@@ -336,56 +336,56 @@ private:
                     const Fact& pFact);
 
   /**
-   * @brief Modify the world state without inference deduction and raising a notification.
+   * @brief Modify the world state without event deduction and raising a notification.
    * @param[out] pWhatChanged Get what changed.
    * @param[in] pWsModif Modification to do.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   void _modify(WhatChanged& pWhatChanged,
                const std::unique_ptr<WorldStateModification>& pWsModif,
                GoalStack& pGoalStack,
-               const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+               const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
-   * @brief Try to apply some inferences according to what changed in the world state.
-   * @param[in, out] pInferencesAlreadyApplied Cache of inferences that we already considered.
+   * @brief Try to apply some events according to what changed in the world state.
+   * @param[in, out] pEventsAlreadyApplied Cache of events that we already considered.
    * @param[in, out] pWhatChanged What changed in the world state.
    * @param[out] pGoalChanged Set to true if the goal stack changed.
-   * @param[in] pInferenceIds Inferences to consider.
-   * @param[in] pInferences All the inferences.
+   * @param[in] pEventIds events to consider.
+   * @param[in] pEvents All the events.
    * @param[in] pNow Current time.
-   * @return True if at least one inference was applied.
+   * @return True if at least one event was applied.
    */
-  bool _tryToApplyInferences(std::set<InferenceId>& pInferencesAlreadyApplied,
-                             WhatChanged& pWhatChanged,
-                             bool& pGoalChanged,
-                             GoalStack& pGoalStack,
-                             const FactToConditions::ConstMapOfFactIterator& pInferenceIds,
-                             const std::map<InferenceId, Inference>& pInferences,
-                             const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
-                             const Ontology& pOntology,
-                             const SetOfEntities& pEntities,
-                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  bool _tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
+                        WhatChanged& pWhatChanged,
+                        bool& pGoalChanged,
+                        GoalStack& pGoalStack,
+                        const FactToConditions::ConstMapOfFactIterator& pEventIds,
+                        const std::map<EventId, Event>& pEvents,
+                        const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                        const Ontology& pOntology,
+                        const SetOfEntities& pEntities,
+                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
-   * @brief Do inferences and raise the observables if some facts or goals changed.
+   * @brief Do events and raise the observables if some facts or goals changed.
    * @param[in, out] pWhatChanged Get what changed.
    * @param[out] pGoalChanged Set to true if the goal stack changed.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pSetOfInferences Inferences to apply indirect modifications according to the inferences.
+   * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   void _notifyWhatChanged(WhatChanged& pWhatChanged,
                           bool& pGoalChanged,
                           GoalStack& pGoalStack,
-                          const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                          const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                           const Ontology& pOntology,
                           const SetOfEntities& pEntities,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);

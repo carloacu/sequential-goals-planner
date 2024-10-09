@@ -1033,22 +1033,22 @@ void Successions::addSuccesionsOptFact(const FactOptional& pFactOptional,
       if (!pContainerId.isAction(currActionId))
         actions.insert(currActionId);
 
-    auto& setOfInferences = pDomain.getSetOfInferences();
-    for (auto& currSetOfInferences : setOfInferences)
+    auto& setOfEvents = pDomain.getSetOfEvents();
+    for (auto& currSetOfEvents : setOfEvents)
     {
-      std::set<InferenceId>* inferencesPtr = nullptr;
-      auto& conditionToReachableInferences = !pFactOptional.isFactNegated ?
-            currSetOfInferences.second.reachableInferenceLinks().conditionToInferences :
-            currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
+      std::set<EventId>* eventsPtr = nullptr;
+      auto& conditionToReachableEvents = !pFactOptional.isFactNegated ?
+            currSetOfEvents.second.reachableEventLinks().conditionToEvents :
+            currSetOfEvents.second.reachableEventLinks().notConditionToEvents;
 
-      auto inferencesFromCondtion = conditionToReachableInferences.find(pFactOptional.fact);
-      for (const auto& currInferenceId : inferencesFromCondtion)
+      auto eventsFromCondtion = conditionToReachableEvents.find(pFactOptional.fact);
+      for (const auto& currEventId : eventsFromCondtion)
       {
-        if (!pContainerId.isInference(currSetOfInferences.first, currInferenceId))
+        if (!pContainerId.isEvent(currSetOfEvents.first, currEventId))
         {
-          if (inferencesPtr == nullptr)
-            inferencesPtr = &inferences[currSetOfInferences.first];
-          inferencesPtr->insert(currInferenceId);
+          if (eventsPtr == nullptr)
+            eventsPtr = &events[currSetOfEvents.first];
+          eventsPtr->insert(currEventId);
         }
       }
     }
@@ -1066,9 +1066,9 @@ void Successions::print(std::string& pRes,
   pRes += "fact: " + pFactOptional.toStr() + "\n";
   for (const auto& currActionId : actions)
     pRes += "action: " + currActionId + "\n";
-  for (const auto& currInferenceSet : inferences)
-    for (const auto& currInferenceId : currInferenceSet.second)
-      pRes += "inference: " + currInferenceSet.first + "|" + currInferenceId + "\n";
+  for (const auto& currEventSet : events)
+    for (const auto& currEventId : currEventSet.second)
+      pRes += "event: " + currEventSet.first + "|" + currEventId + "\n";
 }
 
 

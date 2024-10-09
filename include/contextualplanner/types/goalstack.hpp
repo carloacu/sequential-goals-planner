@@ -7,7 +7,7 @@
 #include "../util/api.hpp"
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/goal.hpp>
-#include <contextualplanner/types/inference.hpp>
+#include <contextualplanner/types/event.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/observableunsafe.hpp>
 
@@ -16,7 +16,7 @@ namespace cp
 {
 struct Domain;
 struct ProblemModification;
-struct SetOfInferences;
+struct SetOfEvents;
 struct ActionInvocationWithGoal;
 struct LookForAnActionOutputInfos;
 

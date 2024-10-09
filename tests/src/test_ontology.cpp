@@ -5,7 +5,7 @@
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/goalstack.hpp>
 #include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 
 namespace
@@ -280,8 +280,8 @@ void _test_checkConditionWithOntology()
 
   cp::WorldState worldState;
   cp::GoalStack goalStack;
-  std::map<cp::SetOfInferencesId, cp::SetOfInferences> setOfInferences;
-  worldState.addFact(cp::Fact::fromStr("pred_name(toto)", ontology, {}, {}), goalStack, setOfInferences, ontology, {}, {});
+  std::map<cp::SetOfEventsId, cp::SetOfEvents> setOfEvents;
+  worldState.addFact(cp::Fact::fromStr("pred_name(toto)", ontology, {}, {}), goalStack, setOfEvents, ontology, {}, {});
   assert_false(cp::Condition::fromStr("pred_name(titi)", ontology, {}, {})->isTrue(worldState));
 
   {

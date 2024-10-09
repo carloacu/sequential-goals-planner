@@ -18,21 +18,21 @@ struct WorldState;
 struct CONTEXTUALPLANNER_API WorldStateModificationContainerId
 {
   bool isAction(const ActionId& pActionId) const { return actionIdToExclude && *actionIdToExclude == pActionId; }
-  bool isInference(const SetOfInferencesId& pSetOfInferencesId,
-                   const InferenceId& pInferenceId) const { return setOfInferencesIdToExclude && *setOfInferencesIdToExclude == pSetOfInferencesId &&
-        inferenceIdToExclude && *inferenceIdToExclude == pInferenceId; }
+  bool isEvent(const SetOfEventsId& pSetOfEventsId,
+                   const EventId& pEventId) const { return setOfEventsIdToExclude && *setOfEventsIdToExclude == pSetOfEventsId &&
+        eventIdToExclude && *eventIdToExclude == pEventId; }
 
   std::optional<ActionId> actionIdToExclude;
-  std::optional<SetOfInferencesId> setOfInferencesIdToExclude;
-  std::optional<InferenceId> inferenceIdToExclude;
+  std::optional<SetOfEventsId> setOfEventsIdToExclude;
+  std::optional<EventId> eventIdToExclude;
 };
 
 
 
 struct CONTEXTUALPLANNER_API Successions
 {
-  bool empty() const { return actions.empty() && inferences.empty(); }
-  void clear() { actions.clear(); inferences.clear(); }
+  bool empty() const { return actions.empty() && events.empty(); }
+  void clear() { actions.clear(); events.clear(); }
 
   void addSuccesionsOptFact(const FactOptional& pFactOptional,
                             const Domain& pDomain,
@@ -44,7 +44,7 @@ struct CONTEXTUALPLANNER_API Successions
 
   std::set<ActionId> actions;
 
-  std::map<SetOfInferencesId, std::set<InferenceId>> inferences;
+  std::map<SetOfEventsId, std::set<EventId>> events;
 };
 
 

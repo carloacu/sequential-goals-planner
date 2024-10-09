@@ -17,7 +17,7 @@ struct Ontology;
 struct SetOfEntities;
 struct SetOfFact;
 
-/// Axiomatic knowledge that can be contained in a world.
+/// Knowledge that can be contained in a world.
 struct CONTEXTUALPLANNER_API Fact
 {
   /**

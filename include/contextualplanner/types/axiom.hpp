@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATEBAsedOnTWOINFERENCES_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATEBAsedOnTWOINFERENCES_HPP
+#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_AXIOM_HPP
+#define INCLUDE_CONTEXTUALPLANNER_TYPES_AXIOM_HPP
 
 #include <assert.h>
 #include <list>
@@ -9,19 +9,19 @@
 
 namespace cp
 {
-struct Inference;
+struct Event;
 
 
 /// Specification what is a derived predicate.
-struct CONTEXTUALPLANNER_API DerivedPredicateBasedOnTwoInferences
+struct CONTEXTUALPLANNER_API Axiom
 {
   /// Construct a derived predicate.
-  DerivedPredicateBasedOnTwoInferences(std::unique_ptr<Condition> pCondition,
-                                       const Fact& pFact,
-                                       const std::vector<Parameter>& pParameters = {});
+  Axiom(std::unique_ptr<Condition> pCondition,
+        const Fact& pFact,
+        const std::vector<Parameter>& pParameters = {});
 
   /// Construct a copy.
-  DerivedPredicateBasedOnTwoInferences(const DerivedPredicateBasedOnTwoInferences& pOther)
+  Axiom(const Axiom& pOther)
     : parameters(pOther.parameters),
       condition(pOther.condition ? pOther.condition->clone() : std::unique_ptr<Condition>()),
       fact(pOther.fact)
@@ -29,9 +29,9 @@ struct CONTEXTUALPLANNER_API DerivedPredicateBasedOnTwoInferences
     assert(condition);
   }
 
-  /// Convert this derived predicate to 2 inferences.
-  std::list<Inference> toInferences(const Ontology& pOntology,
-                                    const SetOfEntities& pEntities) const;
+  /// Convert this derived predicate to 2 events.
+  std::list<Event> toEvents(const Ontology& pOntology,
+                            const SetOfEntities& pEntities) const;
 
   /// Parameter names of this derived predicate.
   std::vector<Parameter> parameters;
@@ -50,4 +50,4 @@ struct CONTEXTUALPLANNER_API DerivedPredicateBasedOnTwoInferences
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_DERIVEDPREDICATEBAsedOnTWOINFERENCES_HPP
+#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_AXIOM_HPP

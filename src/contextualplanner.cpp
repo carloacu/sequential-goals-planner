@@ -1,7 +1,7 @@
 #include <contextualplanner/contextualplanner.hpp>
 #include <algorithm>
 #include <optional>
-#include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/util/util.hpp>
 #include "types/factsalreadychecked.hpp"
 #include "types/treeofalreadydonepaths.hpp"
@@ -390,14 +390,14 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActions(
 }
 
 
-PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
-    const std::map<SetOfInferencesId, std::set<InferenceId>>& pInferenceSuccessions,
+PossibleEffect _lookForAPossibleExistingOrNotFactFromEvents(
+    const std::map<SetOfEventsId, std::set<EventId>>& pEventSuccessions,
     const FactOptional& pFactOptional,
     std::map<Parameter, std::set<Entity>>& pParentParameters,
     std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
     bool pTryToGetAllPossibleParentParameterValues,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-    const std::map<SetOfInferencesId, SetOfInferences>& pInferences,
+    const std::map<SetOfEventsId, SetOfEvents>& pEvents,
     const Goal& pGoal,
     const Problem& pProblem,
     const FactOptional& pFactOptionalToSatisfy,
@@ -405,28 +405,28 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromInferences(
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
   auto res = PossibleEffect::NOT_SATISFIED;
-  for (const auto& currSetOfInferencesSucc : pInferenceSuccessions)
+  for (const auto& currSetOfEventsSucc : pEventSuccessions)
   {
-    auto itSetOfInferences = pInferences.find(currSetOfInferencesSucc.first);
-    if (itSetOfInferences != pInferences.end())
+    auto itSetOfEvents = pEvents.find(currSetOfEventsSucc.first);
+    if (itSetOfEvents != pEvents.end())
     {
-      for (const auto& currInferenceIdSucc : currSetOfInferencesSucc.second)
+      for (const auto& currEventIdSucc : currSetOfEventsSucc.second)
       {
-        const auto& currInfrences = itSetOfInferences->second.inferences();
-        auto itInference = currInfrences.find(currInferenceIdSucc);
-        if (itInference != currInfrences.end())
+        const auto& currInfrences = itSetOfEvents->second.events();
+        auto itEvent = currInfrences.find(currEventIdSucc);
+        if (itEvent != currInfrences.end())
         {
-          auto& inference = itInference->second;
-          if (inference.factsToModify)
+          auto& event = itEvent->second;
+          if (event.factsToModify)
           {
-            auto* newTreePtr = pTreeOfAlreadyDonePath.getNextInflectionTreeIfNotAnExistingLeaf(currInferenceIdSucc);
+            auto* newTreePtr = pTreeOfAlreadyDonePath.getNextInflectionTreeIfNotAnExistingLeaf(currEventIdSucc);
             if (newTreePtr != nullptr)
-              res = _merge(_lookForAPossibleDeduction(*newTreePtr, inference.parameters, inference.condition,
-                                                      inference.factsToModify/*->clone(nullptr)*/,
+              res = _merge(_lookForAPossibleDeduction(*newTreePtr, event.parameters, event.condition,
+                                                      event.factsToModify,
                                                       {}, pFactOptional,
                                                       pParentParameters, pTmpParentParametersPtr,
                                                       pGoal, pProblem, pFactOptionalToSatisfy,
-                                                      pDomain, pFactsAlreadychecked, currInferenceIdSucc), res);
+                                                      pDomain, pFactsAlreadychecked, currEventIdSucc), res);
             if (res == PossibleEffect::SATISFIED && !pTryToGetAllPossibleParentParameterValues)
               return res;
           }
@@ -491,7 +491,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
   }
 
   // Iterate on possible successions
-  auto& setOfInferences = pDomain.getSetOfInferences();
+  auto& setOfEvents = pDomain.getSetOfEvents();
   auto successionsCallback = [&](const Successions& pSuccessions,
                                  const cp::FactOptional& pFactOptional,
                                  std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
@@ -517,11 +517,11 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
             possibleEffect = PossibleEffect::NOT_SATISFIED;
         }
 
-        if (possibleEffect != PossibleEffect::SATISFIED && !pSuccessions.inferences.empty())
+        if (possibleEffect != PossibleEffect::SATISFIED && !pSuccessions.events.empty())
         {
-          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromInferences(pSuccessions.inferences, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
+          possibleEffect = _merge(_lookForAPossibleExistingOrNotFactFromEvents(pSuccessions.events, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
                                                                                    pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
-                                                                                   setOfInferences, pGoal, pProblem, pFactOptionalToSatisfy,
+                                                                                   setOfEvents, pGoal, pProblem, pFactOptionalToSatisfy,
                                                                                    pDomain, subFactsAlreadychecked), possibleEffect);
           if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
             possibleEffect = PossibleEffect::NOT_SATISFIED;
@@ -869,9 +869,9 @@ void notifyActionStarted(Problem& pProblem,
     if (itAction->second.effect.worldStateModificationAtStart)
     {
       auto worldStateModificationAtStart = itAction->second.effect.worldStateModificationAtStart->cloneParamSet(pActionInvocationWithGoal.actionInvocation.parameters);
-      auto& setOfInferences = pDomain.getSetOfInferences();
+      auto& setOfEvents = pDomain.getSetOfEvents();
       const auto& ontology = pDomain.getOntology();
-      pProblem.worldState.modify(worldStateModificationAtStart, pProblem.goalStack, setOfInferences,
+      pProblem.worldState.modify(worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
                                  ontology, pProblem.entities, pNow);
     }
   }
@@ -887,10 +887,10 @@ void notifyActionDone(Problem& pProblem,
   auto itAction = actions.find(pOnStepOfPlannerResult.actionInvocation.actionId);
   if (itAction != actions.end())
   {
-    auto& setOfInferences = pDomain.getSetOfInferences();
+    auto& setOfEvents = pDomain.getSetOfEvents();
     bool goalChanged = false;
     const auto& ontology = pDomain.getOntology();
-    notifyActionInvocationDone(pProblem, goalChanged, setOfInferences, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification,
+    notifyActionInvocationDone(pProblem, goalChanged, setOfEvents, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification,
                                ontology, pNow,
                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                                nullptr);

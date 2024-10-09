@@ -13,7 +13,7 @@
 namespace cp
 {
 struct Domain;
-struct Inference;
+struct Event;
 struct FactsAlreadyChecked;
 struct WorldState;
 struct WorldStateModification;
@@ -58,7 +58,7 @@ private:
   /**
    * @brief Feed accessible facts from a set of actions.
    * @param[in] pActions Set of actions.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
+   * @param[in] pDomain Domain containing all the possible actions and events.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
   void _feedAccessibleFactsFromSetOfActions(const FactToConditions::ConstMapOfFactIterator& pActions,
@@ -66,22 +66,22 @@ private:
                                             FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**
-   * @brief Feed accessible facts from a set of inferences.
-   * @param[in] pInferences Set of inferences.
-   * @param[in] pAllInferences All inferences to consider.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
+   * @brief Feed accessible facts from a set of events.
+   * @param[in] pEvents Set of events.
+   * @param[in] pAllEvents All events to consider.
+   * @param[in] pDomain Domain containing all the possible actions and events.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
-  void _feedAccessibleFactsFromSetOfInferences(const FactToConditions::ConstMapOfFactIterator& pInferences,
-                                               const std::map<InferenceId, Inference>& pAllInferences,
-                                               const Domain& pDomain,
-                                               FactsAlreadyChecked& pFactsAlreadychecked);
+  void _feedAccessibleFactsFromSetOfEvents(const FactToConditions::ConstMapOfFactIterator& pEvents,
+                                           const std::map<EventId, Event>& pAllEvents,
+                                           const Domain& pDomain,
+                                           FactsAlreadyChecked& pFactsAlreadychecked);
 
   /**
    * @brief Feed accessible facts from a condition and an effect.
    * @param[in] pEffect Effect to apply.
    * @param[in] pParameters Parameters of the condition and effect.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
+   * @param[in] pDomain Domain containing all the possible actions and events.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
   void _feedAccessibleFactsFromDeduction(const WorldStateModification& pEffect,
@@ -92,7 +92,7 @@ private:
   /**
    * @brief Feed accessible facts from a fact.
    * @param[in] pFact A fact.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
+   * @param[in] pDomain Domain containing all the possible actions and events.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
   void _feedAccessibleFactsFromFact(const Fact& pFact,
@@ -102,7 +102,7 @@ private:
   /**
    * @brief Feed accessible facts from a negated fact.
    * @param[in] pFact A negated fact.
-   * @param[in] pDomain Domain containing all the possible actions and inferences.
+   * @param[in] pDomain Domain containing all the possible actions and events.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
   void _feedAccessibleFactsFromNotFact(const Fact& pFact,

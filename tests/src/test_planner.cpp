@@ -1,6 +1,6 @@
 #include <contextualplanner/contextualplanner.hpp>
 #include <contextualplanner/types/predicate.hpp>
-#include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -20,7 +20,7 @@
 namespace
 {
 const auto _now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
-const std::map<cp::SetOfInferencesId, cp::SetOfInferences> _emptySetOfInferences;
+const std::map<cp::SetOfEventsId, cp::SetOfEvents> _emptySetOfEvents;
 const std::string _fact_a = "fact_a";
 const std::string _fact_b = "fact_b";
 const std::string _fact_c = "fact_c";
@@ -105,10 +105,10 @@ void _simplest_plan_possible()
   actions.emplace(action1, actionObj1);
 
   cp::Domain domain(std::move(actions), ontology);
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
-  problem.worldState.addFact(cp::Fact("pred_a(toto)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("pred_a(toto)", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
   assert_eq<std::string>("action1(?pa -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -139,10 +139,10 @@ void _wrong_condition_type()
   actions.emplace(action1, actionObj1);
 
   cp::Domain domain(std::move(actions), ontology);
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
-  problem.worldState.addFact(cp::Fact("pred_a(titi)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("pred_a(titi)", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
   assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -167,11 +167,11 @@ void _number_type()
   actions.emplace(action1, actionObj1);
 
   cp::Domain domain(std::move(actions), ontology);
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
   assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-  problem.worldState.addFact(cp::Fact("pred_a(toto)=10", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("pred_a(toto)=10", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
   _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
@@ -179,7 +179,7 @@ void _number_type()
 }
 
 
-void _planWithActionThenInferenceWithFluentParameter()
+void _planWithActionThenEventWithFluentParameter()
 {
   const std::string action1 = "action1";
   std::map<std::string, cp::Action> actions;
@@ -196,21 +196,21 @@ void _planWithActionThenInferenceWithFluentParameter()
                         cp::WorldStateModification::fromStr("pred_a=toto", ontology, entities, {}));
   actions.emplace(action1, actionObj1);
 
-  cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
-  cp::Inference inference(cp::Condition::fromStr("pred_a=?e", ontology, entities, inferenceParameters),
-                          cp::WorldStateModification::fromStr("pred_b(?e)", ontology, entities, inferenceParameters));
-  inference.parameters = std::move(inferenceParameters);
-  setOfInferences.addInference(inference);
+  cp::SetOfEvents setOfEvents;
+  std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
+  cp::Event event(cp::Condition::fromStr("pred_a=?e", ontology, entities, eventParameters),
+                          cp::WorldStateModification::fromStr("pred_b(?e)", ontology, entities, eventParameters));
+  event.parameters = std::move(eventParameters);
+  setOfEvents.add(event);
 
-  cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
+  cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_b(toto)", ontology, entities)});
  assert_eq<std::string>(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
-void _planWithActionThenInferenceWithAssign()
+void _planWithActionThenEventWithAssign()
 {
   const std::string action1 = "action1";
   std::map<std::string, cp::Action> actions;
@@ -233,18 +233,18 @@ void _planWithActionThenInferenceWithAssign()
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
-  cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{cp::Parameter::fromStr("?t - other_type", ontology.types)};
-  cp::Inference inference(cp::Condition::fromStr("pred_a=?t", ontology, entities, inferenceParameters),
-                          cp::WorldStateModification::fromStr("pred_d=?t", ontology, entities, inferenceParameters));
-  inference.parameters = std::move(inferenceParameters);
-  setOfInferences.addInference(inference);
+  cp::SetOfEvents setOfEvents;
+  std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?t - other_type", ontology.types)};
+  cp::Event event(cp::Condition::fromStr("pred_a=?t", ontology, entities, eventParameters),
+                          cp::WorldStateModification::fromStr("pred_d=?t", ontology, entities, eventParameters));
+  event.parameters = std::move(eventParameters);
+  setOfEvents.add(event);
 
-  cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
+  auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_d=v", ontology, entities)});
-  problem.worldState.addFact(cp::Fact("pred_b(toto)=v", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("pred_b(toto)=v", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   assert_eq<std::string>(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -282,12 +282,12 @@ void _fluentEqualityInPrecoditionOfAnAction()
   actions.emplace(action2, actionObj2);
 
   cp::Domain domain(std::move(actions), ontology);
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal("pred_d(lol_val)", ontology, entities)});
-  problem.worldState.addFact(cp::Fact("pred_b(toto)=v", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("pred_b(toto)=v", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("pred_c(lol_val)=v", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("pred_c(lol_val)=v", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   assert_eq<std::string>(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -323,7 +323,7 @@ void _testIncrementOfVariables()
 
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   cp::Problem problem;
-  problem.worldState.modify(cp::WorldStateModification::fromStr(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfInferences, ontology, entities, _now);
+  problem.worldState.modify(cp::WorldStateModification::fromStr(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
   assert(cp::Condition::fromStr(initFactsStr, ontology, entities, {})->isTrue(problem.worldState));
   assert(!actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -342,9 +342,9 @@ void _testIncrementOfVariables()
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
     problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
-                              _emptySetOfInferences, ontology, entities, _now);
+                              _emptySetOfEvents, ontology, entities, _now);
     problem.worldState.modify(cp::WorldStateModification::fromStr("!ask_all_the_questions", ontology, entities, {}),
-                              problem.goalStack, _emptySetOfInferences, ontology, entities, _now);
+                              problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
   }
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -355,12 +355,12 @@ void _testIncrementOfVariables()
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
   problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
-                            _emptySetOfInferences, ontology, entities, _now);
+                            _emptySetOfEvents, ontology, entities, _now);
   assert_eq<std::string>(action_sayQuestionBilan, _lookForAnActionToDo(problem, domain).actionInvocation.toStr());
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(actionSayQuestionBilan.precondition->isTrue(problem.worldState));
   problem.worldState.modify(actionSayQuestionBilan.effect.worldStateModification, problem.goalStack,
-                            _emptySetOfInferences, ontology, entities, _now);
+                            _emptySetOfEvents, ontology, entities, _now);
 }
 
 
@@ -382,10 +382,10 @@ void _actionWithParametersInPreconditionsAndEffects()
   actions.emplace(action1, joke);
 
   cp::Domain domain(std::move(actions), ontology);
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  auto& setOfEventsMap = domain.getSetOfEvents();
 
   cp::Problem problem;
-  problem.worldState.addFact(cp::Fact("isEngaged(1)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("isEngaged(1)", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
   _setGoalsForAPriority(problem, {cp::Goal("isHappy(1)", ontology, entities)});
@@ -419,7 +419,7 @@ void _testQuiz()
   actions.emplace(action_sayQuestionBilan, actionSayQuestionBilan);
 
   cp::Domain domain(std::move(actions), {},
-                    cp::Inference(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
+                    cp::Event(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
                                   cp::WorldStateModification::fromStr("ask_all_the_questions", ontology, entities, {})));
 
   auto initFacts = cp::WorldStateModification::fromStr("numberOfQuestion=0 & maxNumberOfQuestions=3", ontology, entities, {});
@@ -427,8 +427,8 @@ void _testQuiz()
   cp::Problem problem;
 
   _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
-  auto& setOfInferencesMap = domain.getSetOfInferences();
-  problem.worldState.modify(initFacts, problem.goalStack, setOfInferencesMap, {}, {}, _now);
+  auto& setOfEventsMap = domain.getSetOfEvents();
+  problem.worldState.modify(initFacts, problem.goalStack, setOfEventsMap, {}, {}, _now);
   for (std::size_t i = 0; i < 3; ++i)
   {
     auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
@@ -440,7 +440,7 @@ void _testQuiz()
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
     problem.worldState.modify(itAction->second.effect.worldStateModification,
-                              problem.goalStack, setOfInferencesMap, {}, {}, _now);
+                              problem.goalStack, setOfEventsMap, {}, {}, _now);
   }
 
   auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
@@ -481,30 +481,30 @@ void _doNextActionThatBringsToTheSmallerCost()
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(action_ungrab, ungrabAction);
 
-  cp::SetOfInferences setOfInferences;
-  std::vector<cp::Parameter> inferenceParameters{cp::Parameter::fromStr("?object - object", ontology.types), cp::Parameter::fromStr("?location - location", ontology.types)};
-  cp::Inference inference(cp::Condition::fromStr("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, inferenceParameters),
-                          cp::WorldStateModification::fromStr("locationOfObject(?object)=?location", ontology, {}, inferenceParameters));
-  inference.parameters = std::move(inferenceParameters);
-  setOfInferences.addInference(inference);
-  cp::Domain domain(std::move(actions), {}, std::move(setOfInferences));
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  cp::SetOfEvents setOfEvents;
+  std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?object - object", ontology.types), cp::Parameter::fromStr("?location - location", ontology.types)};
+  cp::Event event(cp::Condition::fromStr("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, eventParameters),
+                          cp::WorldStateModification::fromStr("locationOfObject(?object)=?location", ontology, {}, eventParameters));
+  event.parameters = std::move(eventParameters);
+  setOfEvents.add(event);
+  cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
+  auto& setOfEventsMap = domain.getSetOfEvents();
 
   cp::Problem problem;
   auto& entities = problem.entities;
   entities = cp::SetOfEntities::fromStr("obj1 obj2 - object\n"
                                         "livingRoom kitchen bedroom - location", ontology.types);
-  problem.worldState.addFact(cp::Fact("objectGrabable(obj1)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("objectGrabable(obj1)", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("objectGrabable(obj2)", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("objectGrabable(obj2)", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=livingRoom", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("locationOfRobot(me)=livingRoom", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("grab(me)=obj2", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("grab(me)=obj2", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("locationOfObject(obj2)=livingRoom", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("locationOfObject(obj2)=livingRoom", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("locationOfObject(obj1)=kitchen", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("locationOfObject(obj1)=kitchen", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   auto secondProblem = problem;
   // Here it will will be quicker for the second goal if we ungrab the obj2 right away
@@ -528,11 +528,11 @@ void _satisfyGoalWithSuperiorOperator()
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr("fact_a=100", ontology, {}, {})));
   cp::Domain domain(std::move(actions), ontology);
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  auto& setOfEventsMap = domain.getSetOfEvents();
 
   cp::Problem problem;
   auto& entities = problem.entities;
-  problem.worldState.addFact(cp::Fact("fact_a=10", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("fact_a=10", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   _setGoalsForAPriority(problem, {cp::Goal("fact_a>50", ontology, entities)});
 
@@ -560,15 +560,15 @@ void _parameterToFillFromConditionOfFirstAction()
   action1Obj.parameters = std::move(actionParameters);
   actions.emplace(action1, action1Obj);
   cp::Domain domain(std::move(actions), ontology);
-  auto& setOfInferencesMap = domain.getSetOfInferences();
+  auto& setOfEventsMap = domain.getSetOfEvents();
 
   cp::Problem problem;
   auto& entities = problem.entities;
-  problem.worldState.addFact(cp::Fact("locationOfRobot=czLocation", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("locationOfRobot=czLocation", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("declaredLocationOfChargingZone(cz)=czLocation", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("declaredLocationOfChargingZone(cz)=czLocation", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  problem.worldState.addFact(cp::Fact("batteryLevel=40", ontology, entities, {}), problem.goalStack, setOfInferencesMap,
+  problem.worldState.addFact(cp::Fact("batteryLevel=40", ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   _setGoalsForAPriority(problem, {cp::Goal("batteryLevel=100", ontology, entities)});
 
@@ -596,8 +596,8 @@ int main(int argc, char *argv[])
   _simplest_plan_possible();
   _wrong_condition_type();
   _number_type();
-  _planWithActionThenInferenceWithFluentParameter();
-  _planWithActionThenInferenceWithAssign();
+  _planWithActionThenEventWithFluentParameter();
+  _planWithActionThenEventWithAssign();
   _fluentEqualityInPrecoditionOfAnAction();
   _testIncrementOfVariables();
   _actionWithParametersInPreconditionsAndEffects();

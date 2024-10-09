@@ -1,10 +1,10 @@
-#include <contextualplanner/types/inference.hpp>
+#include <contextualplanner/types/event.hpp>
 
 namespace cp
 {
 
 
-Inference::Inference(std::unique_ptr<Condition> pCondition,
+Event::Event(std::unique_ptr<Condition> pCondition,
                      std::unique_ptr<WorldStateModification> pFactsToModify,
                      const std::vector<Parameter>& pParameters,
                      const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd)
@@ -18,20 +18,20 @@ Inference::Inference(std::unique_ptr<Condition> pCondition,
 }
 
 
-void Inference::updateSuccessionCache(const Domain& pDomain,
-                                      const SetOfInferencesId& pSetOfInferencesIdOfThisInference,
-                                      const InferenceId& pInferenceIdOfThisInference)
+void Event::updateSuccessionCache(const Domain& pDomain,
+                                      const SetOfEventsId& pSetOfEventsIdOfThisEvent,
+                                      const EventId& pEventIdOfThisEvent)
 {
   WorldStateModificationContainerId containerId;
-  containerId.setOfInferencesIdToExclude.emplace(pSetOfInferencesIdOfThisInference);
-  containerId.inferenceIdToExclude.emplace(pInferenceIdOfThisInference);
+  containerId.setOfEventsIdToExclude.emplace(pSetOfEventsIdOfThisEvent);
+  containerId.eventIdToExclude.emplace(pEventIdOfThisEvent);
 
   auto optionalFactsToIgnore = condition ? condition->getFactToIgnoreInCorrespondingEffect() : std::set<FactOptional>();
   if (factsToModify)
     factsToModify->updateSuccesions(pDomain, containerId, optionalFactsToIgnore);
 }
 
-std::string Inference::printSuccessionCache() const
+std::string Event::printSuccessionCache() const
 {
   std::string res;
   if (factsToModify)

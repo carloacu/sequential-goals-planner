@@ -112,19 +112,19 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const FactToCondition
 }
 
 
-void WorldStateCache::_feedAccessibleFactsFromSetOfInferences(const FactToConditions::ConstMapOfFactIterator& pInferences,
-                                                              const std::map<InferenceId, Inference>& pAllInferences,
-                                                              const Domain& pDomain,
-                                                              FactsAlreadyChecked& pFactsAlreadychecked)
+void WorldStateCache::_feedAccessibleFactsFromSetOfEvents(const FactToConditions::ConstMapOfFactIterator& pEvents,
+                                                          const std::map<EventId, Event>& pAllEvents,
+                                                          const Domain& pDomain,
+                                                          FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  for (const auto& currInference : pInferences)
+  for (const auto& currEvent : pEvents)
   {
-    auto itInference = pAllInferences.find(currInference);
-    if (itInference != pAllInferences.end())
+    auto itEvent = pAllEvents.find(currEvent);
+    if (itEvent != pAllEvents.end())
     {
-      const Inference& inference = itInference->second;
-      if (!inference.condition || inference.condition->canBecomeTrue(_worldState, inference.parameters))
-        _feedAccessibleFactsFromDeduction(*inference.factsToModify, inference.parameters,
+      const Event& event = itEvent->second;
+      if (!event.condition || event.condition->canBecomeTrue(_worldState, event.parameters))
+        _feedAccessibleFactsFromDeduction(*event.factsToModify, event.parameters,
                                           pDomain, pFactsAlreadychecked);
     }
   }
@@ -210,13 +210,13 @@ void WorldStateCache::_feedAccessibleFactsFromFact(const Fact& pFact,
   auto itPrecToActions = pDomain.preconditionToActions().find(pFact);
   _feedAccessibleFactsFromSetOfActions(itPrecToActions, pDomain, pFactsAlreadychecked);
 
-  const auto& setOfInferences = pDomain.getSetOfInferences();
-  for (const auto& currSetOfInferences : setOfInferences)
+  const auto& setOfEvents = pDomain.getSetOfEvents();
+  for (const auto& currSetOfEvents : setOfEvents)
   {
-    auto& allInferences = currSetOfInferences.second.inferences();
-    auto& conditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().conditionToInferences;
-    auto itCondToReachableInferences = conditionToReachableInferences.find(pFact);
-    _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences, allInferences, pDomain, pFactsAlreadychecked);
+    auto& allEvents = currSetOfEvents.second.events();
+    auto& conditionToReachableEvents = currSetOfEvents.second.reachableEventLinks().conditionToEvents;
+    auto itCondToReachableEvents = conditionToReachableEvents.find(pFact);
+    _feedAccessibleFactsFromSetOfEvents(itCondToReachableEvents, allEvents, pDomain, pFactsAlreadychecked);
   }
 }
 
@@ -231,13 +231,13 @@ void WorldStateCache::_feedAccessibleFactsFromNotFact(const Fact& pFact,
   auto itPrecToActions = pDomain.notPreconditionToActions().find(pFact);
   _feedAccessibleFactsFromSetOfActions(itPrecToActions, pDomain, pFactsAlreadychecked);
 
-  const auto& setOfInferences = pDomain.getSetOfInferences();
-  for (const auto& currSetOfInferences : setOfInferences)
+  const auto& setOfEvents = pDomain.getSetOfEvents();
+  for (const auto& currSetOfEvents : setOfEvents)
   {
-    auto& allInferences = currSetOfInferences.second.inferences();
-    auto& notConditionToReachableInferences = currSetOfInferences.second.reachableInferenceLinks().notConditionToInferences;
-    auto itCondToReachableInferences = notConditionToReachableInferences.find(pFact);
-    _feedAccessibleFactsFromSetOfInferences(itCondToReachableInferences, allInferences, pDomain, pFactsAlreadychecked);
+    auto& allEvents = currSetOfEvents.second.events();
+    auto& notconditionToReachableEvents = currSetOfEvents.second.reachableEventLinks().notConditionToEvents;
+    auto itCondToReachableEvents = notconditionToReachableEvents.find(pFact);
+    _feedAccessibleFactsFromSetOfEvents(itCondToReachableEvents, allEvents, pDomain, pFactsAlreadychecked);
   }
 }
 

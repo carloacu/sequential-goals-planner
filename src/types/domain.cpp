@@ -5,7 +5,7 @@
 
 namespace cp
 {
-const SetOfInferencesId Domain::setOfInferencesIdFromConstructor = "soi_from_constructor";
+const SetOfEventsId Domain::setOfEventsIdFromConstructor = "soe_from_constructor";
 
 namespace
 {
@@ -51,27 +51,27 @@ Domain::Domain()
     _preconditionToActions(),
     _notPreconditionToActions(),
     _actionsWithoutFactToAddInPrecondition(),
-    _setOfInferences()
+    _setOfEvents()
 {
 }
 
 
 Domain::Domain(const std::map<ActionId, Action>& pActions,
                const Ontology& pOntology,
-               const SetOfInferences& pSetOfInferences)
+               const SetOfEvents& pSetOfEvents)
   : _uuid(generateUuid()),
     _ontology(pOntology),
     _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
     _actionsWithoutFactToAddInPrecondition(),
-    _setOfInferences()
+    _setOfEvents()
 {
   for (const auto& currAction : pActions)
     addAction(currAction.first, currAction.second);
 
-  if (!pSetOfInferences.empty())
-    _setOfInferences.emplace(setOfInferencesIdFromConstructor, pSetOfInferences);
+  if (!pSetOfEvents.empty())
+    _setOfEvents.emplace(setOfEventsIdFromConstructor, pSetOfEvents);
 
   _updateSuccessions();
 }
@@ -141,39 +141,39 @@ void Domain::removeAction(const ActionId& pActionId)
 
 
 
-SetOfInferencesId Domain::addSetOfInferences(const SetOfInferences& pSetOfInferences,
-                                             const SetOfInferencesId& pSetOfInferencesId)
+SetOfEventsId Domain::addSetOfEvents(const SetOfEvents& pSetOfEvents,
+                                             const SetOfEventsId& pSetOfEventsId)
 {
   _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
   auto isIdOkForInsertion = [this](const std::string& pId)
   {
-    return _setOfInferences.count(pId) == 0;
+    return _setOfEvents.count(pId) == 0;
   };
 
-  auto newId = incrementLastNumberUntilAConditionIsSatisfied(pSetOfInferencesId, isIdOkForInsertion);
-  _setOfInferences.emplace(newId, pSetOfInferences);
+  auto newId = incrementLastNumberUntilAConditionIsSatisfied(pSetOfEventsId, isIdOkForInsertion);
+  _setOfEvents.emplace(newId, pSetOfEvents);
   _updateSuccessions();
   return newId;
 }
 
 
-void Domain::removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId)
+void Domain::removeSetOfEvents(const SetOfEventsId& pSetOfEventsId)
 {
-  auto it = _setOfInferences.find(pSetOfInferencesId);
-  if (it != _setOfInferences.end())
+  auto it = _setOfEvents.find(pSetOfEventsId);
+  if (it != _setOfEvents.end())
   {
     _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
-    _setOfInferences.erase(it);
+    _setOfEvents.erase(it);
     _updateSuccessions();
   }
 }
 
-void Domain::clearInferences()
+void Domain::clearEvents()
 {
-  if (!_setOfInferences.empty())
+  if (!_setOfEvents.empty())
   {
     _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
-    _setOfInferences.clear();
+    _setOfEvents.clear();
     _updateSuccessions();
   }
 }
@@ -196,17 +196,17 @@ std::string Domain::printSuccessionCache() const
      }
    }
 
-   for (const auto& currSetOfInf : _setOfInferences)
+   for (const auto& currSetOfEv : _setOfEvents)
    {
-     for (const auto& currInf : currSetOfInf.second.inferences())
+     for (const auto& currEv : currSetOfEv.second.events())
      {
-       const Inference& inference = currInf.second;
-       auto sc = inference.printSuccessionCache();
+       const Event& event = currEv.second;
+       auto sc = event.printSuccessionCache();
        if (!sc.empty())
        {
          if (!res.empty())
            res += "\n\n";
-         res += "inference: " + currSetOfInf.first + "|" + currInf.first + "\n";
+         res += "event: " + currSetOfEv.first + "|" + currEv.first + "\n";
          res += "----------------------------------\n\n";
          res += sc;
        }
@@ -222,11 +222,11 @@ void Domain::_updateSuccessions()
   for (auto& currAction: _actions)
     currAction.second.updateSuccessionCache(*this, currAction.first);
 
-  for (auto& currSetOfInferences : _setOfInferences)
+  for (auto& currSetOfEvents : _setOfEvents)
   {
-    const auto& currSetOfInferencesId = currSetOfInferences.first;
-    for (auto& currInference : currSetOfInferences.second.inferences())
-      currInference.second.updateSuccessionCache(*this, currSetOfInferencesId, currInference.first);
+    const auto& currSetOfEventsId = currSetOfEvents.first;
+    for (auto& currEvent : currSetOfEvents.second.events())
+      currEvent.second.updateSuccessionCache(*this, currSetOfEventsId, currEvent.first);
   }
 }
 

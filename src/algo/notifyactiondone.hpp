@@ -16,7 +16,7 @@ struct Goal;
 struct Problem;
 struct Historical;
 struct LookForAnActionOutputInfos;
-struct SetOfInferences;
+struct SetOfEvents;
 struct WorldStateModification;
 struct Ontology;
 struct SetOfEntities;
@@ -24,7 +24,7 @@ struct SetOfEntities;
 
 void notifyActionInvocationDone(Problem& pProblem,
                                 bool& pGoalChanged,
-                                const std::map<SetOfInferencesId, SetOfInferences>& pSetOfInferences,
+                                const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                                 const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                 const std::unique_ptr<WorldStateModification>& pEffect,
                                 const Ontology& pOntology,

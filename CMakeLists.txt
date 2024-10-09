@@ -8,18 +8,17 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/action.hpp
     include/contextualplanner/types/actioninvocation.hpp
     include/contextualplanner/types/actioninvocationwithgoal.hpp
+    include/contextualplanner/types/axiom.hpp
     include/contextualplanner/types/condition.hpp
     include/contextualplanner/types/derivedpredicate.hpp
-    include/contextualplanner/types/derivedpredicatebasedontwoinferences.hpp
     include/contextualplanner/types/domain.hpp
     include/contextualplanner/types/entity.hpp
+    include/contextualplanner/types/event.hpp
     include/contextualplanner/types/fact.hpp
-
     include/contextualplanner/types/factoptional.hpp
     include/contextualplanner/types/goal.hpp
     include/contextualplanner/types/goalstack.hpp
     include/contextualplanner/types/historical.hpp
-    include/contextualplanner/types/inference.hpp
     include/contextualplanner/types/lookforanactionoutputinfos.hpp
     include/contextualplanner/types/facttoconditions.hpp
     include/contextualplanner/types/ontology.hpp
@@ -28,8 +27,8 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/problem.hpp
     include/contextualplanner/types/problemmodification.hpp
     include/contextualplanner/types/setofentities.hpp
+    include/contextualplanner/types/setofevents.hpp
     include/contextualplanner/types/setoffacts.hpp
-    include/contextualplanner/types/setofinferences.hpp
     include/contextualplanner/types/setofpredicates.hpp
     include/contextualplanner/types/setofderivedpredicates.hpp
     include/contextualplanner/types/setoftypes.hpp
@@ -57,30 +56,29 @@ set(CHATBOTPLANNER_SRCS
     src/types/action.cpp
     src/types/actioninvocation.cpp
     src/types/actioninvocationwithgoal.cpp
+    src/types/axiom.cpp
     src/types/condition.cpp
-    src/types/derivedpredicatebasedontwoinferences.cpp
     src/types/derivedpredicate.cpp
     src/types/domain.cpp
     src/types/entity.cpp
     src/types/expressionParsed.hpp
     src/types/expressionParsed.cpp
+    src/types/event.cpp
     src/types/fact.cpp
-
     src/types/factoptional.cpp
     src/types/factsalreadychecked.hpp
     src/types/goal.cpp
     src/types/goalstack.cpp
     src/types/historical.cpp
-    src/types/inference.cpp
     src/types/lookforanactionoutputinfos.cpp
     src/types/facttoconditions.cpp
     src/types/parameter.cpp
     src/types/predicate.cpp
     src/types/problemmodification.cpp
     src/types/setofentities.cpp
+    src/types/setofevents.cpp
     src/types/setoffacts.cpp
     src/types/setofderivedpredicates.cpp
-    src/types/setofinferences.cpp
     src/types/setofpredicates.cpp
     src/types/setoftypes.cpp
     src/types/treeofalreadydonepaths.hpp
@@ -109,7 +107,7 @@ add_library(contextualplanner SHARED
   ${CHATBOTPLANNER_SRCS}
   include/contextualplanner/types/setofderivedpredicates.hpp
   src/types/setofderivedpredicates.cpp
-  src/types/derivedpredicatebasedontwoinferences.cpp
+  src/types/axiom.cpp
 )
 target_compile_features(contextualplanner PRIVATE cxx_std_14)
 

@@ -12,7 +12,7 @@ namespace cp
 struct SetOfDerivedPredicates;
 
 
-/// Axiomatic thing that the bot can do
+/// Thing that the bot can do
 struct CONTEXTUALPLANNER_API Action
 {
   /**

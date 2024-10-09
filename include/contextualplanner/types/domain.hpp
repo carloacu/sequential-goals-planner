@@ -8,7 +8,7 @@
 #include <contextualplanner/types/action.hpp>
 #include <contextualplanner/types/facttoconditions.hpp>
 #include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/types/setofevents.hpp>
 
 namespace cp
 {
@@ -29,7 +29,7 @@ struct CONTEXTUALPLANNER_API Domain
    */
   Domain(const std::map<ActionId, Action>& pActions,
          const Ontology& pOntology,
-         const SetOfInferences& pSetOfInferences = {});
+         const SetOfEvents& pSetOfEvents = {});
 
   // Actions
   // -------
@@ -64,38 +64,38 @@ struct CONTEXTUALPLANNER_API Domain
 
 
 
-  // Inferences
-  // ----------
+  // Events
+  // ------
 
   /**
-   * @brief Add a set of inferences.
-   * @param pSetOfInferences Set of inferences to add.
-   * @param pSetOfInferencesId Identifier of the set of inferences to add.
+   * @brief Add a set of events.
+   * @param pSetOfEvents Set of events to add.
+   * @param pSetOfEventsId Identifier of the set of events to add.
    *
    * If the identifier is already used, the addition will not be done.
    */
-  SetOfInferencesId addSetOfInferences(const SetOfInferences& pSetOfInferences,
-                                       const SetOfInferencesId& pSetOfInferencesId = "soi");
+  SetOfEventsId addSetOfEvents(const SetOfEvents& pSetOfEvents,
+                               const SetOfEventsId& pSetOfEventsId = "soe");
 
   /**
-   * @brief Remove a set of inferences.
-   * @param pSetOfInferencesId Identifier of the set of inferences to remove.
+   * @brief Remove a set of events.
+   * @param pSetOfEventsId Identifier of the set of events to remove.
    *
-   * If the inference is not found, this function will have no effect.
+   * If the event is not found, this function will have no effect.
    * No exception will be raised.
    */
-  void removeSetOfInferences(const SetOfInferencesId& pSetOfInferencesId);
+  void removeSetOfEvents(const SetOfEventsId& pSetOfEventsId);
 
-  /// Remove all the inferences.
-  void clearInferences();
+  /// Remove all the events.
+  void clearEvents();
 
-  /// Get the set of inferences.
-  const std::map<SetOfInferencesId, SetOfInferences>& getSetOfInferences() const { return _setOfInferences; }
+  /// Get the set of events.
+  const std::map<SetOfEventsId, SetOfEvents>& getSetOfEvents() const { return _setOfEvents; }
 
   /// Get the universal unique identifier regenerated each time this object is modified.
   const std::string& getUuid() const { return _uuid; }
 
-  static const SetOfInferencesId setOfInferencesIdFromConstructor;
+  static const SetOfEventsId setOfEventsIdFromConstructor;
 
   const Ontology& getOntology() const { return _ontology; }
 
@@ -113,8 +113,8 @@ private:
   FactToConditions _notPreconditionToActions;
   /// Set of action identifiers of the actions without precondtion.
   FactToConditions _actionsWithoutFactToAddInPrecondition;
-  /// Map set of inferences identifiers to the set of inferences.
-  std::map<SetOfInferencesId, SetOfInferences> _setOfInferences;
+  /// Map set of events identifiers to the set of events.
+  std::map<SetOfEventsId, SetOfEvents> _setOfEvents;
 
   void _updateSuccessions();
 };

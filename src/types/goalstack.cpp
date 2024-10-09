@@ -3,7 +3,7 @@
 #include <sstream>
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/actioninvocationwithgoal.hpp>
-#include <contextualplanner/types/setofinferences.hpp>
+#include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/util/util.hpp>
 #include <contextualplanner/types/lookforanactionoutputinfos.hpp>
 
