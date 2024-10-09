@@ -803,6 +803,8 @@ std::map<Parameter, Entity> Fact::extratParameterToArguments() const
       res.emplace(Parameter::fromType(predicate.fluent), *_fluent);
       return res;
     }
+    if (!_fluent && !predicate.fluent)
+      return res;
     throw std::runtime_error("Fluent difference between fact and predicate: " + toStr());
   }
   throw std::runtime_error("No same number of arguments vs predicate parameters: " + toStr());
