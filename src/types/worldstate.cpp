@@ -362,25 +362,6 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
   return false;
 }
 
-bool WorldState::canFactNameBeModified(const std::string& pFactName) const
-{
-  const auto& accessibleFacts = _cache->accessibleFacts();
-  for (const auto& currAccessibleFact : accessibleFacts.facts())
-    if (currAccessibleFact.name() == pFactName)
-      return true;
-
-  const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
-  for (const auto& currAccessibleFact : accessibleFactsWithAnyValues)
-    if (currAccessibleFact.name() == pFactName)
-      return true;
-
-  const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
-  for (const auto& currRemovableFact : removableFactsWithAnyValues)
-    if (currRemovableFact.name() == pFactName)
-      return true;
-  return false;
-}
-
 std::optional<Entity> WorldState::getFactFluent(const cp::Fact& pFact) const
 {
   auto factMatchingInWs = _factsMapping.find(pFact, true);

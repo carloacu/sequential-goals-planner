@@ -303,8 +303,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
         tryToMatchWothFactOfTheWorld = true;
         const auto& swFactAccessorsToFacts = pProblem.worldState.factsMapping();
         pCondition->forAll([&](const FactOptional& pConditionFactOptional, bool) {
-          if (!pConditionFactOptional.isFactNegated &&
-              !pProblem.worldState.canFactNameBeModified(pConditionFactOptional.fact.name()))
+          if (!pConditionFactOptional.isFactNegated)
           {
             auto condFactMatchInWs = swFactAccessorsToFacts.find(pConditionFactOptional.fact);
             for (const auto& currWorldFact : condFactMatchInWs)
