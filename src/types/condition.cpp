@@ -523,30 +523,30 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
       {
         if (leftFact.factOptional.fact.areEqualWithoutFluentConsideration(pFactFromEffect, &pFactFromEffectParameters, pFactFromEffectTmpParametersPtr))
         {
-          return _forEachValueUntil(
+          bool potRes = _forEachValueUntil(
                 [&](const Entity& pValue)
           {
             auto factToCheck = leftFact.factOptional.fact;
             factToCheck.setFluent(pValue);
             return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
           }, true, *rightOperand, pWorldState, &pConditionParametersToPossibleArguments);
+          if (potRes)
+            return true;
         }
-        else
+
+        auto* rightFactPtr = rightOperand->fcFactPtr();
+        if (rightFactPtr != nullptr)
         {
-          auto* rightFactPtr = rightOperand->fcFactPtr();
-          if (rightFactPtr != nullptr)
+          const auto& rightFact = *rightFactPtr;
+          if (rightFact.factOptional.fact.areEqualWithoutFluentConsideration(pFactFromEffect, &pFactFromEffectParameters, pFactFromEffectTmpParametersPtr))
           {
-            const auto& rightFact = *rightFactPtr;
-            if (rightFact.factOptional.fact.areEqualWithoutFluentConsideration(pFactFromEffect, &pFactFromEffectParameters, pFactFromEffectTmpParametersPtr))
+            return _forEachValueUntil(
+                  [&](const Entity& pValue)
             {
-              return _forEachValueUntil(
-                    [&](const Entity& pValue)
-              {
-                auto factToCheck = rightFact.factOptional.fact;
-                factToCheck.setFluent(pValue);
-                return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
-              }, true, *leftOperand, pWorldState, &pConditionParametersToPossibleArguments);
-            }
+              auto factToCheck = rightFact.factOptional.fact;
+              factToCheck.setFluent(pValue);
+              return pDoesConditionFactMatchFactFromEffect(FactOptional(factToCheck));
+            }, true, *leftOperand, pWorldState, &pConditionParametersToPossibleArguments);
           }
         }
       }
