@@ -152,7 +152,7 @@ struct CONTEXTUALPLANNER_API Condition
                                            bool pInvert = false,
                                            const SetOfDerivedPredicates* pDerivedPredicatesPtr = nullptr) const = 0;
 
-  std::set<FactOptional> getFactToIgnoreInCorrespondingEffect() const;
+  std::set<FactOptional> getAllOptFacts() const;
 
   /// Cast to ConditionNode* is possible.
   virtual const ConditionNode* fcNodePtr() const = 0;

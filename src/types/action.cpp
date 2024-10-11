@@ -45,7 +45,7 @@ void Action::updateSuccessionCache(const Domain& pDomain,
   WorldStateModificationContainerId containerId;
   containerId.actionIdToExclude.emplace(pIdOfThisAction);
 
-  auto optionalFactsToIgnore = precondition ? precondition->getFactToIgnoreInCorrespondingEffect() : std::set<FactOptional>();
+  auto optionalFactsToIgnore = precondition ? precondition->getAllOptFacts() : std::set<FactOptional>();
   if (effect.worldStateModification)
     effect.worldStateModification->updateSuccesions(pDomain, containerId, optionalFactsToIgnore);
   if (effect.potentialWorldStateModification)

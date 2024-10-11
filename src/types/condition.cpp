@@ -408,11 +408,10 @@ std::unique_ptr<Condition> Condition::fromStr(const std::string& pStr,
 }
 
 
-std::set<FactOptional> Condition::getFactToIgnoreInCorrespondingEffect() const
+std::set<FactOptional> Condition::getAllOptFacts() const
 {
   std::set<FactOptional> res;
-  forAll([&](const FactOptional& pFactOptional, bool pIgnoreFluent) {
-    if (!pIgnoreFluent)
+  forAll([&](const FactOptional& pFactOptional, bool) {
       res.insert(pFactOptional);
   });
   return res;
