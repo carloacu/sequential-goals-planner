@@ -143,10 +143,43 @@ void _test_notActionSuccessions()
                          "not action: action2\n", domain.printSuccessionCache());
 }
 
+void _test_impossibleSuccessions()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+
+  std::map<std::string, cp::Action> actions;
+
+  cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr("fact_a\n"
+                                                     "fact_b\n"
+                                                     "fact_c",
+                                                     ontology.types);
+
+  {
+    cp::Action actionObj1({},
+                          cp::WorldStateModification::fromStr("fact_a & fact_b", ontology, {}, {}));
+    actions.emplace(action1, actionObj1);
+  }
+
+  {
+    cp::Action actionObj2(cp::Condition::fromStr("fact_a & not(fact_b)", ontology, {}, {}),
+                          cp::WorldStateModification::fromStr("fact_c", ontology, {}, {}));
+    actions.emplace(action2, actionObj2);
+  }
+
+  Domain domain(actions, ontology);
+  assert_eq<std::string>("action: action1\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "not action: action2\n", domain.printSuccessionCache());
+}
+
 }
 
 void test_successionsCache()
 {
   _test_actionSuccessions();
   _test_notActionSuccessions();
+  _test_impossibleSuccessions();
 }

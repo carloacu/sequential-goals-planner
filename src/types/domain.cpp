@@ -24,10 +24,19 @@ struct ActionWithConditionAndFactFacts
   {
   }
 
+  bool isImpossibleSuccession(const ActionWithConditionAndFactFacts& pOther) const
+  {
+    for (auto& effectOptFact : factsFromEffect)
+      if (!effectOptFact.fact.hasAParameter(false))
+        for (auto& otherCondOptFact : pOther.factsFromCondition)
+          if (effectOptFact.isFactNegated != otherCondOptFact.isFactNegated &&
+              effectOptFact.fact == otherCondOptFact.fact)
+            return true;
+    return false;
+  }
+
   bool doesSuccessionsHasAnInterest(const ActionWithConditionAndFactFacts& pOther) const
   {
-    if (actionId == pOther.actionId)
-      return false;
     for (auto& effectOptFact : factsFromEffect)
     {
       if (effectOptFact.fact.hasAParameter(true))
@@ -38,6 +47,12 @@ struct ActionWithConditionAndFactFacts
           if (effectOptFact.isFactNegated == otherCondOptFact.isFactNegated &&
               effectOptFact.fact.areEqualExceptAnyValuesAndFluent(otherCondOptFact.fact))
             return true;
+
+      if (!effectOptFact.fact.hasAParameter(false))
+        for (auto& otherCondOptFact : pOther.factsFromCondition)
+          if (effectOptFact.isFactNegated != otherCondOptFact.isFactNegated &&
+              effectOptFact.fact == otherCondOptFact.fact)
+            return false;
 
       bool hasAnInterest = false;
       for (auto& otherEffectOptFact : pOther.factsFromEffect)
@@ -295,7 +310,10 @@ void Domain::_updateSuccessions()
 
     for (auto& currActionSucc : actionTmpData)
     {
-      if (!tmpData.doesSuccessionsHasAnInterest(currActionSucc.second))
+      if (tmpData.actionId == currActionSucc.second.actionId)
+         tmpData.action.actionsSuccessionsWithoutInterestCache.insert(currActionSucc.second.actionId);
+      else if (tmpData.isImpossibleSuccession(currActionSucc.second) ||
+               !tmpData.doesSuccessionsHasAnInterest(currActionSucc.second))
       {
         tmpData.action.actionsSuccessionsWithoutInterestCache.insert(currActionSucc.second.actionId);
         tmpData.action.removePossibleSuccessionCache(currActionSucc.second.actionId);
