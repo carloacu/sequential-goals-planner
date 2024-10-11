@@ -39,28 +39,43 @@ void updateProblemForNextPotentialPlannerResult(
     Historical* pGlobalHistorical,
     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
-  auto itAction = pDomain.actions().find(pOneStepOfPlannerResult.actionInvocation.actionId);
-  if (itAction != pDomain.actions().end())
+  auto* actionPtr = pDomain.getActionPtr(pOneStepOfPlannerResult.actionInvocation.actionId);
+  if (actionPtr != nullptr)
+    updateProblemForNextPotentialPlannerResultWithAction(pProblem, pGoalChanged,
+                                                         pOneStepOfPlannerResult, *actionPtr,
+                                                         pDomain, pNow, pGlobalHistorical,
+                                                         pLookForAnActionOutputInfosPtr);
+}
+
+
+void updateProblemForNextPotentialPlannerResultWithAction(
+    Problem& pProblem,
+    bool& pGoalChanged,
+    const ActionInvocationWithGoal& pOneStepOfPlannerResult,
+    const Action& pOneStepAction,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    Historical* pGlobalHistorical,
+    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
+{
+  if (pGlobalHistorical != nullptr)
+    pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
+  auto& setOfEvents = pDomain.getSetOfEvents();
+
+  const auto& ontology = pDomain.getOntology();
+  pProblem.worldState.modify(pOneStepAction.effect.worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
+                             ontology, pProblem.entities, pNow);
+
+  notifyActionInvocationDone(pProblem, pGoalChanged, setOfEvents, pOneStepOfPlannerResult, pOneStepAction.effect.worldStateModification,
+                             ontology, pNow,
+                             &pOneStepAction.effect.goalsToAdd, &pOneStepAction.effect.goalsToAddInCurrentPriority,
+                             pLookForAnActionOutputInfosPtr);
+
+  if (pOneStepAction.effect.potentialWorldStateModification)
   {
-    if (pGlobalHistorical != nullptr)
-      pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
-    auto& setOfEvents = pDomain.getSetOfEvents();
-
-    const auto& ontology = pDomain.getOntology();
-    pProblem.worldState.modify(itAction->second.effect.worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
+    auto potentialEffect = pOneStepAction.effect.potentialWorldStateModification->cloneParamSet(pOneStepOfPlannerResult.actionInvocation.parameters);
+    pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfEvents,
                                ontology, pProblem.entities, pNow);
-
-    notifyActionInvocationDone(pProblem, pGoalChanged, setOfEvents, pOneStepOfPlannerResult, itAction->second.effect.worldStateModification,
-                               ontology, pNow,
-                               &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
-                               pLookForAnActionOutputInfosPtr);
-
-    if (itAction->second.effect.potentialWorldStateModification)
-    {
-      auto potentialEffect = itAction->second.effect.potentialWorldStateModification->cloneParamSet(pOneStepOfPlannerResult.actionInvocation.parameters);
-      pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfEvents,
-                                 ontology, pProblem.entities, pNow);
-    }
   }
 }
 

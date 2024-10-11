@@ -2432,7 +2432,7 @@ void _moveAndUngrabObject()
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   cp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
-                      _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
+                  _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -2503,7 +2503,7 @@ void _failToMoveAnUnknownObject()
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   cp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
-                      _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
+                  _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -2572,7 +2572,7 @@ void _completeMovingObjectScenario()
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{_parameter("?object - entity", ontology), _parameter("?location - loc_type", ontology)};
   cp::Event event(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object", ontology, eventParameters),
-                      _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
+                  _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -2631,7 +2631,7 @@ void _eventWithANegatedFactWithParameter()
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
   cp::Event event(_condition_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, eventParameters),
-                      _worldStateModification_fromStr("!grab(me, ?object)", ontology, eventParameters));
+                  _worldStateModification_fromStr("!grab(me, ?object)", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
@@ -2714,7 +2714,7 @@ void _useTwoTimesAnEvent()
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
   cp::Event event(_condition_fromStr(_fact_a + " & " + _fact_b + "(?object)", ontology, eventParameters),
-                      _worldStateModification_fromStr(_fact_c + "(?object)", ontology, eventParameters));
+                  _worldStateModification_fromStr(_fact_c + "(?object)", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
@@ -4175,19 +4175,19 @@ void _eventToRemoveAFactWithoutFluent()
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> inf1Parameters{_parameter("?l - loc_type", ontology)};
   cp::Event event1(_condition_fromStr("locationOfRobot(me)=?l", ontology, inf1Parameters),
-                       _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf1Parameters));
+                   _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf1Parameters));
   event1.parameters = std::move(inf1Parameters);
   setOfEvents.add(event1);
 
   std::vector<cp::Parameter> inf2Parameters{_parameter("?l - loc_type", ontology)};
   cp::Event event2(_condition_fromStr("exists(?loc - loc_type, locationOfRobot(me)=?loc & within(?loc)=?l)", ontology, inf2Parameters),
-                       _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf2Parameters));
+                   _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf2Parameters));
   event2.parameters = std::move(inf2Parameters);
   setOfEvents.add(event2);
 
   std::vector<cp::Parameter> inf3Parameters{_parameter("?l - loc_type", ontology)};
   cp::Event event3(_condition_fromStr("!locationOfRobot(me)=?l", ontology, inf3Parameters),
-                       _worldStateModification_fromStr("forall(?ll - loc_type, robotAt(me, ?ll), !robotAt(me, ?ll))", ontology, inf3Parameters));
+                   _worldStateModification_fromStr("forall(?ll - loc_type, robotAt(me, ?ll), !robotAt(me, ?ll))", ontology, inf3Parameters));
   event3.parameters = std::move(inf3Parameters);
   setOfEvents.add(event3);
   cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));

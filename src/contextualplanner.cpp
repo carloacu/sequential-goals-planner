@@ -59,6 +59,19 @@ struct PotentialNextActionComparisonCache
 };
 
 
+struct ActionPtrWithGoal
+{
+  ActionPtrWithGoal(const Action* pActionPtr,
+                    const cp::Goal& pGoal)
+   : actionPtr(pActionPtr),
+     goal(pGoal)
+  {
+  }
+
+  const Action* actionPtr;
+  const cp::Goal& goal;
+};
+
 struct PotentialNextAction
 {
   PotentialNextAction()
@@ -94,6 +107,13 @@ PotentialNextAction::PotentialNextAction(const ActionId& pActionId,
     parameters[currParam];
 }
 
+std::list<ActionInvocationWithGoal> _planForMoreImportantGoalPossible(Problem& pProblem,
+                                                                     const Domain& pDomain,
+                                                                     bool pTryToDoMoreOptimalSolution,
+                                                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                                                     const Historical* pGlobalHistorical,
+                                                                     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr,
+                                                                     const ActionPtrWithGoal* pPreviousActionPtr);
 
 void _getPreferInContextStatistics(std::size_t& nbOfPreconditionsSatisfied,
                                    std::size_t& nbOfPreconditionsNotSatisfied,
@@ -548,10 +568,10 @@ PlanCost _extractPlanCost(
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical,
-    LookForAnActionOutputInfos& pLookForAnActionOutputInfos)
+    LookForAnActionOutputInfos& pLookForAnActionOutputInfos,
+    const ActionPtrWithGoal& pPreviousAction)
 {
   PlanCost res;
-  const bool tryToDoMoreOptimalSolution = false;
   std::set<std::string> actionAlreadyInPlan;
   bool shouldBreak = false;
   while (!pProblem.goalStack.goals().empty())
@@ -561,8 +581,8 @@ PlanCost _extractPlanCost(
       res.success = false;
       break;
     }
-    auto subPlan = planForMoreImportantGoalPossible(pProblem, pDomain, tryToDoMoreOptimalSolution,
-                                                    pNow, pGlobalHistorical, &pLookForAnActionOutputInfos);
+    auto subPlan = _planForMoreImportantGoalPossible(pProblem, pDomain, false,
+                                                     pNow, pGlobalHistorical, &pLookForAnActionOutputInfos, &pPreviousAction);
     if (subPlan.empty())
       break;
     for (const auto& currActionInSubPlan : subPlan)
@@ -595,6 +615,7 @@ bool _isMoreOptimalNextAction(
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
     std::size_t pLength,
+    const Goal& pCurrentGoal,
     const Historical* pGlobalHistorical)
 {
   if (pTryToDoMoreOptimalSolution &&
@@ -614,7 +635,8 @@ bool _isMoreOptimalNextAction(
       bool goalChanged = false;
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
       updateProblemForNextPotentialPlannerResult(localProblem1, goalChanged, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
-      newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr, lookForAnActionOutputInfos);
+      ActionPtrWithGoal actionPtrWithGoal(pNewPotentialNextAction.actionPtr, pCurrentGoal);
+      newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr, lookForAnActionOutputInfos, actionPtrWithGoal);
     }
 
     if (!pPotentialNextActionComparisonCacheOpt)
@@ -624,7 +646,8 @@ bool _isMoreOptimalNextAction(
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
       updateProblemForNextPotentialPlannerResult(localProblem2, goalChanged, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       pPotentialNextActionComparisonCacheOpt = PotentialNextActionComparisonCache();
-      pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr, lookForAnActionOutputInfos);
+      ActionPtrWithGoal actionPtrWithGoal(pCurrentNextAction.actionPtr, pCurrentGoal);
+      pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr, lookForAnActionOutputInfos, actionPtrWithGoal);
     }
 
     if (newCost.isBetterThan(pPotentialNextActionComparisonCacheOpt->currentCost))
@@ -681,7 +704,7 @@ void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult
       {
         while (true)
         {
-          if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotRes, newPotNextAction, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGlobalHistorical))
+          if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotRes, newPotNextAction, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGoal, pGlobalHistorical))
           {
             assert(newPotRes.actionPtr != nullptr);
             newPotNextAction = newPotRes;
@@ -693,7 +716,7 @@ void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult
     }
   }
 
-  if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotNextAction, pCurrentResult, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGlobalHistorical))
+  if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotNextAction, pCurrentResult, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGoal, pGlobalHistorical))
   {
     assert(newPotNextAction.actionPtr != nullptr);
     pCurrentResult = newPotNextAction;
@@ -710,10 +733,15 @@ ActionId _findFirstActionForAGoal(
     const Domain& pDomain,
     bool pTryToDoMoreOptimalSolution,
     std::size_t pLength,
-    const Historical* pGlobalHistorical)
+    const Historical* pGlobalHistorical,
+    const ActionPtrWithGoal* pPreviousActionPtr)
 {
   PotentialNextAction res;
   std::set<ActionId> alreadyDoneActions;
+  if (pPreviousActionPtr != nullptr &&
+      pPreviousActionPtr->goal == pGoal &&
+      pPreviousActionPtr->actionPtr != nullptr)
+    alreadyDoneActions = pPreviousActionPtr->actionPtr->actionsSuccessionsWithoutInterestCache;
   std::optional<PotentialNextActionComparisonCache> potentialNextActionComparisonCacheOpt;
   for (const auto& currFact : pProblem.worldState.facts())
   {
@@ -764,7 +792,8 @@ bool _goalToPlanRec(
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     const Historical* pGlobalHistorical,
     const Goal& pGoal,
-    int pPriority)
+    int pPriority,
+    const ActionPtrWithGoal* pPreviousActionPtr)
 {
   pProblem.worldState.refreshCacheIfNeeded(pDomain);
   TreeOfAlreadyDonePath treeOfAlreadyDonePath;
@@ -777,7 +806,7 @@ bool _goalToPlanRec(
     auto actionId =
         _findFirstActionForAGoal(parameters, treeOfAlreadyDonePath,
                                  pGoal, pProblem, *factOptionalToSatisfyPtr,
-                                 pDomain, pTryToDoMoreOptimalSolution, 0, pGlobalHistorical);
+                                 pDomain, pTryToDoMoreOptimalSolution, 0, pGlobalHistorical, pPreviousActionPtr);
     if (!actionId.empty())
       potentialRes = std::make_unique<ActionInvocationWithGoal>(actionId, parameters, pGoal.clone(), pPriority);
   }
@@ -799,14 +828,22 @@ bool _goalToPlanRec(
 
     auto problemForPlanCost = pProblem;
     bool goalChanged = false;
-    updateProblemForNextPotentialPlannerResult(problemForPlanCost, goalChanged, *potentialRes, pDomain, pNow, nullptr, nullptr);
-    if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
-        _goalToPlanRec(pActionInvocations, problemForPlanCost, pActionAlreadyInPlan,
-                       pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority))
+
+    auto* potActionPtr = pDomain.getActionPtr(potentialRes->actionInvocation.actionId);
+    if (potActionPtr != nullptr)
     {
-      potentialRes->fromGoal->notifyActivity();
-      pActionInvocations.emplace_front(std::move(*potentialRes));
-      return true;
+      updateProblemForNextPotentialPlannerResultWithAction(problemForPlanCost, goalChanged,
+                                                           *potentialRes, *potActionPtr,
+                                                           pDomain, pNow, nullptr, nullptr);
+      ActionPtrWithGoal previousAction(potActionPtr, pGoal);
+      if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
+          _goalToPlanRec(pActionInvocations, problemForPlanCost, pActionAlreadyInPlan,
+                         pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority, &previousAction))
+      {
+        potentialRes->fromGoal->notifyActivity();
+        pActionInvocations.emplace_front(std::move(*potentialRes));
+        return true;
+      }
     }
   }
   else
@@ -816,27 +853,39 @@ bool _goalToPlanRec(
   return false;
 }
 
-}
-
-
-std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
-    Problem& pProblem,
-    const Domain& pDomain,
-    bool pTryToDoMoreOptimalSolution,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-    const Historical* pGlobalHistorical,
-    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
+std::list<ActionInvocationWithGoal> _planForMoreImportantGoalPossible(Problem& pProblem,
+                                                                     const Domain& pDomain,
+                                                                     bool pTryToDoMoreOptimalSolution,
+                                                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                                                     const Historical* pGlobalHistorical,
+                                                                     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr,
+                                                                     const ActionPtrWithGoal* pPreviousActionPtr)
 {
   std::list<ActionInvocationWithGoal> res;
   pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(
         [&](const Goal& pGoal, int pPriority){
             std::map<std::string, std::size_t> actionAlreadyInPlan;
             return _goalToPlanRec(res, pProblem, actionAlreadyInPlan,
-                                  pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority);
+                                  pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority,
+                                  pPreviousActionPtr);
           },
         pProblem.worldState, pNow,
         pLookForAnActionOutputInfosPtr);
   return res;
+}
+
+}
+
+
+std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(Problem& pProblem,
+                                                                     const Domain& pDomain,
+                                                                     bool pTryToDoMoreOptimalSolution,
+                                                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                                                                     const Historical* pGlobalHistorical,
+                                                                     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
+{
+  return _planForMoreImportantGoalPossible(pProblem, pDomain, pTryToDoMoreOptimalSolution, pNow,
+                                           pGlobalHistorical, pLookForAnActionOutputInfosPtr, nullptr);
 }
 
 
@@ -911,8 +960,8 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
   LookForAnActionOutputInfos lookForAnActionOutputInfos;
   while (!pProblem.goalStack.goals().empty())
   {
-    auto subPlan = planForMoreImportantGoalPossible(pProblem, pDomain, tryToDoMoreOptimalSolution,
-                                                     pNow, pGlobalHistorical, &lookForAnActionOutputInfos);
+    auto subPlan = _planForMoreImportantGoalPossible(pProblem, pDomain, tryToDoMoreOptimalSolution,
+                                                     pNow, pGlobalHistorical, &lookForAnActionOutputInfos, nullptr);
     if (subPlan.empty())
       break;
     for (auto& currActionInSubPlan : subPlan)

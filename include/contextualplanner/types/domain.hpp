@@ -53,6 +53,8 @@ struct CONTEXTUALPLANNER_API Domain
    */
   void removeAction(const ActionId& pActionId);
 
+  const Action* getActionPtr(const ActionId& pActionId) const;
+
   /// All action identifiers to action.
   const std::map<ActionId, Action>& actions() const { return _actions; }
   /// All facts in precondition to action identifiers.

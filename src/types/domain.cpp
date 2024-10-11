@@ -17,10 +17,10 @@ static const std::vector<Parameter> _emptyParameters;
 struct ActionWithConditionAndFactFacts
 {
   ActionWithConditionAndFactFacts(const ActionId& pActionId, Action& pAction)
-   : actionId(pActionId),
-     action(pAction),
-     factsFromCondition(),
-     factsFromEffect()
+    : actionId(pActionId),
+      action(pAction),
+      factsFromCondition(),
+      factsFromEffect()
   {
   }
 
@@ -96,7 +96,7 @@ bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorld
   if (pWorldStateModification->forAllUntilTrue(
         [&](const FactOptional& pFactOptional)
   {
-      return !pSatisfiedConditionPtr ||
+        return !pSatisfiedConditionPtr ||
         !pSatisfiedConditionPtr->containsFactOpt(pFactOptional,
                                                  _emptyParametersWithValues, nullptr,
                                                  _emptyParameters);
@@ -162,7 +162,7 @@ void Domain::addAction(const ActionId& pActionId,
   {
     action.precondition->forAll(
           [&](const FactOptional& pFactOptional,
-              bool pIgnoreFluent)
+          bool pIgnoreFluent)
     {
       if (pFactOptional.isFactNegated)
       {
@@ -205,10 +205,17 @@ void Domain::removeAction(const ActionId& pActionId)
   _updateSuccessions();
 }
 
+const Action* Domain::getActionPtr(const ActionId& pActionId) const
+{
+  auto it = _actions.find(pActionId);
+  if (it != _actions.end())
+    return &it->second;
+  return nullptr;
+}
 
 
 SetOfEventsId Domain::addSetOfEvents(const SetOfEvents& pSetOfEvents,
-                                             const SetOfEventsId& pSetOfEventsId)
+                                     const SetOfEventsId& pSetOfEventsId)
 {
   _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
   auto isIdOkForInsertion = [this](const std::string& pId)
@@ -248,38 +255,38 @@ void Domain::clearEvents()
 std::string Domain::printSuccessionCache() const
 {
   std::string res;
-   for (const auto& currAction : _actions)
-   {
-     const Action& action = currAction.second;
-     auto sc = action.printSuccessionCache(currAction.first);
-     if (!sc.empty())
-     {
-       if (!res.empty())
-         res += "\n\n";
-       res += "action: " + currAction.first + "\n";
-       res += "----------------------------------\n\n";
-       res += sc;
-     }
-   }
+  for (const auto& currAction : _actions)
+  {
+    const Action& action = currAction.second;
+    auto sc = action.printSuccessionCache(currAction.first);
+    if (!sc.empty())
+    {
+      if (!res.empty())
+        res += "\n\n";
+      res += "action: " + currAction.first + "\n";
+      res += "----------------------------------\n\n";
+      res += sc;
+    }
+  }
 
-   for (const auto& currSetOfEv : _setOfEvents)
-   {
-     for (const auto& currEv : currSetOfEv.second.events())
-     {
-       const Event& event = currEv.second;
-       auto sc = event.printSuccessionCache();
-       if (!sc.empty())
-       {
-         if (!res.empty())
-           res += "\n\n";
-         res += "event: " + currSetOfEv.first + "|" + currEv.first + "\n";
-         res += "----------------------------------\n\n";
-         res += sc;
-       }
-     }
-   }
+  for (const auto& currSetOfEv : _setOfEvents)
+  {
+    for (const auto& currEv : currSetOfEv.second.events())
+    {
+      const Event& event = currEv.second;
+      auto sc = event.printSuccessionCache();
+      if (!sc.empty())
+      {
+        if (!res.empty())
+          res += "\n\n";
+        res += "event: " + currSetOfEv.first + "|" + currEv.first + "\n";
+        res += "----------------------------------\n\n";
+        res += sc;
+      }
+    }
+  }
 
-   return res;
+  return res;
 }
 
 
@@ -311,7 +318,7 @@ void Domain::_updateSuccessions()
     for (auto& currActionSucc : actionTmpData)
     {
       if (tmpData.actionId == currActionSucc.second.actionId)
-         tmpData.action.actionsSuccessionsWithoutInterestCache.insert(currActionSucc.second.actionId);
+        tmpData.action.actionsSuccessionsWithoutInterestCache.insert(currActionSucc.second.actionId);
       else if (tmpData.isImpossibleSuccession(currActionSucc.second) ||
                !tmpData.doesSuccessionsHasAnInterest(currActionSucc.second))
       {

@@ -10,6 +10,7 @@
 
 namespace cp
 {
+struct Action;
 struct ActionInvocationWithGoal;
 struct Domain;
 struct Goal;
@@ -38,6 +39,17 @@ void updateProblemForNextPotentialPlannerResult(
     Problem& pProblem,
     bool& pGoalChanged,
     const ActionInvocationWithGoal& pOneStepOfPlannerResult,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    Historical* pGlobalHistorical,
+    LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
+
+
+void updateProblemForNextPotentialPlannerResultWithAction(
+    Problem& pProblem,
+    bool& pGoalChanged,
+    const ActionInvocationWithGoal& pOneStepOfPlannerResult,
+    const Action& pOneStepAction,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical,
