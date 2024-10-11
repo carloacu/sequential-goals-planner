@@ -75,5 +75,13 @@ std::string FactOptional::toStr(const std::function<std::string (const Fact&)>* 
   return polarityStr + fact.toStr(pPrintAnyFluent);
 }
 
+bool FactOptional::doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const FactOptional& pOptFact) const
+{
+  if (isFactNegated != pOptFact.isFactNegated)
+    return true;
+  return fact.doesFactEffectOfSuccessorGiveAnInterestForSuccessor(pOptFact.fact);
+}
+
+
 
 } // !cp

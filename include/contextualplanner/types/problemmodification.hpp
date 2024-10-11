@@ -87,11 +87,12 @@ struct CONTEXTUALPLANNER_API ProblemModification
   void replaceArgument(const Entity& pOldFact,
                        const Entity& pNewFact);
 
+  std::set<FactOptional> getAllOptFactsThatCanBeModified() const;
+
   /// Convert the worldStateModification to a string or to an empty string if it is not defined.
   std::string worldStateModification_str() const { return worldStateModification ? worldStateModification->toStr() : ""; }
   /// Convert the potentialWorldStateModification to a string or to an empty string if it is not defined.
   std::string potentialWorldStateModification_str() const { return potentialWorldStateModification ? potentialWorldStateModification->toStr() : ""; }
-
 
   /// World modifications declared and that will be applied to the world.
   std::unique_ptr<cp::WorldStateModification> worldStateModification;

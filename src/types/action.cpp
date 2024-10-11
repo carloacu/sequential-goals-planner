@@ -40,25 +40,45 @@ void Action::replaceArgument(const Entity& pOld,
 
 
 void Action::updateSuccessionCache(const Domain& pDomain,
-                                   const ActionId& pIdOfThisAction)
+                                   const ActionId& pIdOfThisAction,
+                                   const std::set<FactOptional>& pFactsFromCondition)
 {
   WorldStateModificationContainerId containerId;
   containerId.actionIdToExclude.emplace(pIdOfThisAction);
 
-  auto optionalFactsToIgnore = precondition ? precondition->getAllOptFacts() : std::set<FactOptional>();
   if (effect.worldStateModification)
-    effect.worldStateModification->updateSuccesions(pDomain, containerId, optionalFactsToIgnore);
+    effect.worldStateModification->updateSuccesions(pDomain, containerId, pFactsFromCondition);
   if (effect.potentialWorldStateModification)
-    effect.potentialWorldStateModification->updateSuccesions(pDomain, containerId, optionalFactsToIgnore);
+    effect.potentialWorldStateModification->updateSuccesions(pDomain, containerId, pFactsFromCondition);
 }
 
-std::string Action::printSuccessionCache() const
+void Action::removePossibleSuccessionCache(const ActionId& pActionIdToRemove)
+{
+  if (effect.worldStateModification)
+    effect.worldStateModification->removePossibleSuccession(pActionIdToRemove);
+  if (effect.potentialWorldStateModification)
+    effect.potentialWorldStateModification->removePossibleSuccession(pActionIdToRemove);
+}
+
+
+std::string Action::printSuccessionCache(const ActionId& pIdOfThisAction) const
 {
   std::string res;
   if (effect.worldStateModification)
     effect.worldStateModification->printSuccesions(res);
   if (effect.potentialWorldStateModification)
     effect.potentialWorldStateModification->printSuccesions(res);
+
+  std::string actionWithoutInterestStr = "";
+  for (const auto& currActionId : actionsSuccessionsWithoutInterestCache)
+    if (currActionId != pIdOfThisAction)
+      actionWithoutInterestStr += "not action: " + currActionId + "\n";
+  if (!actionWithoutInterestStr.empty())
+  {
+    if (res != "")
+      res += "\n";
+    res += actionWithoutInterestStr;
+  }
   return res;
 }
 

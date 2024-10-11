@@ -13,6 +13,57 @@ static const WorldState _emptyWorldState;
 static const std::map<Parameter, std::set<Entity>> _emptyParametersWithValues;
 static const std::vector<Parameter> _emptyParameters;
 
+
+struct ActionWithConditionAndFactFacts
+{
+  ActionWithConditionAndFactFacts(const ActionId& pActionId, Action& pAction)
+   : actionId(pActionId),
+     action(pAction),
+     factsFromCondition(),
+     factsFromEffect()
+  {
+  }
+
+  bool doesSuccessionsHasAnInterest(const ActionWithConditionAndFactFacts& pOther) const
+  {
+    if (actionId == pOther.actionId)
+      return false;
+    for (auto& effectOptFact : factsFromEffect)
+    {
+      if (effectOptFact.fact.hasAParameter(true))
+        return true;
+
+      if (effectOptFact.fact.fluent() && effectOptFact.fact.fluent()->isAnyValue())
+        for (auto& otherCondOptFact : pOther.factsFromCondition)
+          if (effectOptFact.isFactNegated == otherCondOptFact.isFactNegated &&
+              effectOptFact.fact.areEqualExceptAnyValuesAndFluent(otherCondOptFact.fact))
+            return true;
+
+      bool hasAnInterest = false;
+      for (auto& otherEffectOptFact : pOther.factsFromEffect)
+      {
+        if (!effectOptFact.doesFactEffectOfSuccessorGiveAnInterestForSuccessor(otherEffectOptFact))
+        {
+          hasAnInterest = false;
+          break;
+        }
+        else
+        {
+          hasAnInterest = true;
+        }
+      }
+      if (hasAnInterest)
+        return true;
+    }
+    return false;
+  }
+
+  ActionId actionId;
+  Action& action;
+  std::set<FactOptional> factsFromCondition;
+  std::set<FactOptional> factsFromEffect;
+};
+
 /**
  * @brief Check if a world state modification can do some modification if we assume the world already satisfies a condition.
  * @param[in] pWorldStateModification World state modification to check.
@@ -185,7 +236,7 @@ std::string Domain::printSuccessionCache() const
    for (const auto& currAction : _actions)
    {
      const Action& action = currAction.second;
-     auto sc = action.printSuccessionCache();
+     auto sc = action.printSuccessionCache(currAction.first);
      if (!sc.empty())
      {
        if (!res.empty())
@@ -219,14 +270,37 @@ std::string Domain::printSuccessionCache() const
 
 void Domain::_updateSuccessions()
 {
-  for (auto& currAction: _actions)
-    currAction.second.updateSuccessionCache(*this, currAction.first);
+  std::map<ActionId, ActionWithConditionAndFactFacts> actionTmpData;
+  for (auto& currAction : _actions)
+  {
+    Action& action = currAction.second;
+    ActionWithConditionAndFactFacts tmpData(currAction.first, action);
+    tmpData.factsFromCondition = action.precondition ? action.precondition->getAllOptFacts() : std::set<FactOptional>();
+    tmpData.factsFromEffect = action.effect.getAllOptFactsThatCanBeModified();
+    action.updateSuccessionCache(*this, currAction.first, tmpData.factsFromCondition);
+    actionTmpData.emplace(currAction.first, std::move(tmpData));
+  }
 
   for (auto& currSetOfEvents : _setOfEvents)
   {
     const auto& currSetOfEventsId = currSetOfEvents.first;
     for (auto& currEvent : currSetOfEvents.second.events())
       currEvent.second.updateSuccessionCache(*this, currSetOfEventsId, currEvent.first);
+  }
+
+  for (auto& currAction : actionTmpData)
+  {
+    ActionWithConditionAndFactFacts& tmpData = currAction.second;
+    tmpData.action.actionsSuccessionsWithoutInterestCache.clear();
+
+    for (auto& currActionSucc : actionTmpData)
+    {
+      if (!tmpData.doesSuccessionsHasAnInterest(currActionSucc.second))
+      {
+        tmpData.action.actionsSuccessionsWithoutInterestCache.insert(currActionSucc.second.actionId);
+        tmpData.action.removePossibleSuccessionCache(currActionSucc.second.actionId);
+      }
+    }
   }
 }
 

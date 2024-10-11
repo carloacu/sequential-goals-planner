@@ -14,4 +14,23 @@ bool ProblemModification::operator==(const ProblemModification& pOther) const
       goalsToAddInCurrentPriority == pOther.goalsToAddInCurrentPriority;
 }
 
+
+std::set<FactOptional> ProblemModification::getAllOptFactsThatCanBeModified() const
+{
+  std::set<FactOptional> res;
+  if (worldStateModification)
+  {
+    worldStateModification->forAllThatCanBeModified([&](const FactOptional& pFactOptional) {
+        res.insert(pFactOptional);
+    });
+  }
+  if (potentialWorldStateModification)
+  {
+    potentialWorldStateModification->forAllThatCanBeModified([&](const FactOptional& pFactOptional) {
+        res.insert(pFactOptional);
+    });
+  }
+  return res;
+}
+
 } // !cp

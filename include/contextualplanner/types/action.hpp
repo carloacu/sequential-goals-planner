@@ -29,7 +29,8 @@ struct CONTEXTUALPLANNER_API Action
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<Condition>()),
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<Condition>()),
       effect(pEffect),
-      highImportanceOfNotRepeatingIt(false)
+      highImportanceOfNotRepeatingIt(false),
+      actionsSuccessionsWithoutInterestCache()
   {
   }
 
@@ -41,7 +42,8 @@ struct CONTEXTUALPLANNER_API Action
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<Condition>()),
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<Condition>()),
       effect(std::move(pEffect)),
-      highImportanceOfNotRepeatingIt(false)
+      highImportanceOfNotRepeatingIt(false),
+      actionsSuccessionsWithoutInterestCache()
   {
   }
 
@@ -51,7 +53,8 @@ struct CONTEXTUALPLANNER_API Action
       precondition(pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<Condition>()),
       preferInContext(pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<Condition>()),
       effect(pAction.effect),
-      highImportanceOfNotRepeatingIt(pAction.highImportanceOfNotRepeatingIt)
+      highImportanceOfNotRepeatingIt(pAction.highImportanceOfNotRepeatingIt),
+      actionsSuccessionsWithoutInterestCache(pAction.actionsSuccessionsWithoutInterestCache)
   {
   }
 
@@ -63,6 +66,7 @@ struct CONTEXTUALPLANNER_API Action
     preferInContext = pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<Condition>();
     effect = pAction.effect;
     highImportanceOfNotRepeatingIt = pAction.highImportanceOfNotRepeatingIt;
+    actionsSuccessionsWithoutInterestCache = pAction.actionsSuccessionsWithoutInterestCache;
   }
 
   /// Check equality with another action.
@@ -83,8 +87,10 @@ struct CONTEXTUALPLANNER_API Action
                        const Entity& pNew);
 
   void updateSuccessionCache(const Domain& pDomain,
-                             const ActionId& pIdOfThisAction);
-  std::string printSuccessionCache() const;
+                             const ActionId& pIdOfThisAction,
+                             const std::set<FactOptional>& pFactsFromCondition);
+  void removePossibleSuccessionCache(const ActionId& pActionIdToRemove);
+  std::string printSuccessionCache(const ActionId& pIdOfThisAction) const;
 
   // TODO: remove that function?
   void throwIfNotValid(const WorldState& pWorldState);
@@ -105,6 +111,8 @@ struct CONTEXTUALPLANNER_API Action
   ProblemModification effect;
   /// If it is important to not repeat this action.
   bool highImportanceOfNotRepeatingIt = false;
+
+  std::set<ActionId> actionsSuccessionsWithoutInterestCache;
 
 private:
   void _throwIfNotValidForACondition(const std::unique_ptr<Condition>& pPrecondition);

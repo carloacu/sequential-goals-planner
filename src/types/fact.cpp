@@ -321,6 +321,29 @@ bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
 }
 
 
+bool Fact::doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const Fact& pFact) const
+{
+  if (pFact._name != _name ||
+      pFact._arguments.size() != _arguments.size() &&
+      pFact._fluent.has_value() == _fluent.has_value())
+    return true;
+
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pFact._arguments.begin();
+  while (itParam != _arguments.end())
+  {
+    if (!(itParam->isAnyValue() && itOtherParam->isAnyValue()) &&
+        (itParam->isAParameterToFill() || itOtherParam->isAParameterToFill() || *itParam != *itOtherParam))
+      return true;
+    ++itParam;
+    ++itOtherParam;
+  }
+
+  if (pFact._fluent.has_value() && _fluent.has_value())
+    return *pFact._fluent != *_fluent && !(pFact._fluent->isAParameterToFill() && _fluent->isAParameterToFill());
+  return false;
+}
+
 bool Fact::isPunctual() const
 {
   return _name.compare(0, punctualPrefix.size(), punctualPrefix) == 0;

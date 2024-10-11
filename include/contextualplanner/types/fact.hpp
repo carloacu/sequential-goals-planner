@@ -104,6 +104,8 @@ struct CONTEXTUALPLANNER_API Fact
                                         const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2 = nullptr,
                                         const std::vector<Parameter>* pThisFactParametersToConsiderAsAnyValuePtr = nullptr) const;
 
+  bool doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const Fact& pFact) const;
+
   /**
    * @brief Is it a punctual fact.<br/>
    * A punctual fact is a fact that is considered punctually but never stored in the world.

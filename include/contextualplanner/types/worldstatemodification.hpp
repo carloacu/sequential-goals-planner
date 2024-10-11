@@ -101,6 +101,8 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                       const WorldState& pWorldState) const = 0;
 
+  virtual void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
+
   /**
    * @brief Iterate over all the optional facts that can be accessible.
    * @param[in] pFactCallback Callback called for each optional fact that can be accessible.
@@ -137,6 +139,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   virtual void updateSuccesions(const Domain& pDomain,
                                 const WorldStateModificationContainerId& pContainerId,
                                 const std::set<FactOptional>& pOptionalFactsToIgnore) = 0;
+  virtual void removePossibleSuccession(const ActionId& pActionIdToRemove) = 0;
   virtual void printSuccesions(std::string& pRes) const = 0;
 
   /// Equality operators.

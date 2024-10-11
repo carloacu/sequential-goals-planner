@@ -99,6 +99,9 @@ struct WorldStateModificationNode : public WorldStateModification
 
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const WorldState& pWorldState) const override;
+
+  void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const override;
+
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                                      const WorldState& pWorldState) const;
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
@@ -114,6 +117,7 @@ struct WorldStateModificationNode : public WorldStateModification
   void updateSuccesions(const Domain& pDomain,
                         const WorldStateModificationContainerId& pContainerId,
                         const std::set<FactOptional>& pOptionalFactsToIgnore) override;
+  void removePossibleSuccession(const ActionId& pActionIdToRemove) override;
   void printSuccesions(std::string& pRes) const override;
 
   bool operator==(const WorldStateModification& pOther) const override;
@@ -203,6 +207,8 @@ struct WorldStateModificationFact : public WorldStateModification
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const WorldState&) const override { pFactCallback(factOptional); }
 
+  void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const override { pFactCallback(factOptional); }
+
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                                      const WorldState&) const override { pFactCallback(factOptional); }
 
@@ -236,6 +242,11 @@ struct WorldStateModificationFact : public WorldStateModification
   {
     _successions.clear();
     _successions.addSuccesionsOptFact(factOptional, pDomain, pContainerId, pOptionalFactsToIgnore);
+  }
+
+  void removePossibleSuccession(const ActionId& pActionIdToRemove) override
+  {
+    _successions.actions.erase(pActionIdToRemove);
   }
 
   void printSuccesions(std::string& pRes) const override
@@ -301,6 +312,7 @@ struct WorldStateModificationNumber : public WorldStateModification
                        const Entity&) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
               const WorldState&) const override {}
+  void forAllThatCanBeModified(const std::function<void (const FactOptional&)>&) const override {}
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>&,
                                      const WorldState&) const override {}
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>&,
@@ -316,6 +328,7 @@ struct WorldStateModificationNumber : public WorldStateModification
   void updateSuccesions(const Domain&,
                         const WorldStateModificationContainerId&,
                         const std::set<FactOptional>&) override {}
+  void removePossibleSuccession(const ActionId&) override {}
   void printSuccesions(std::string& pRes) const override {}
 
   bool operator==(const WorldStateModification& pOther) const override;
@@ -494,6 +507,42 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
       factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
       return pFactCallback(factToCheck);
     }
+  }
+}
+
+
+void WorldStateModificationNode::forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const
+{
+  if (nodeType == WorldStateModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->forAllThatCanBeModified(pFactCallback);
+    if (rightOperand)
+      rightOperand->forAllThatCanBeModified(pFactCallback);
+  }
+  else if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand)
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+      return pFactCallback(leftFactPtr->factOptional);
+  }
+  else if (nodeType == WorldStateModificationNodeType::FOR_ALL && rightOperand)
+  {
+    auto* rightFactPtr = _toWmFact(*rightOperand);
+    if (rightFactPtr != nullptr)
+      return pFactCallback(rightFactPtr->factOptional);
+  }
+  else if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand)
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+      return pFactCallback(leftFactPtr->factOptional);
+  }
+  else if (nodeType == WorldStateModificationNodeType::DECREASE && leftOperand && rightOperand)
+  {
+    auto* leftFactPtr = _toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+      return pFactCallback(leftFactPtr->factOptional);
   }
 }
 
@@ -773,6 +822,31 @@ void WorldStateModificationNode::updateSuccesions(const Domain& pDomain,
   {
     if (rightOperand)
       rightOperand->updateSuccesions(pDomain, pContainerId, pOptionalFactsToIgnore);
+  }
+}
+
+void WorldStateModificationNode::removePossibleSuccession(const ActionId& pActionIdToRemove)
+{
+  _successions.actions.erase(pActionIdToRemove);
+
+  if (nodeType == WorldStateModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->removePossibleSuccession(pActionIdToRemove);
+    if (rightOperand)
+      rightOperand->removePossibleSuccession(pActionIdToRemove);
+  }
+  else if (nodeType == WorldStateModificationNodeType::ASSIGN ||
+           nodeType == WorldStateModificationNodeType::INCREASE ||
+           nodeType == WorldStateModificationNodeType::DECREASE)
+  {
+    if (leftOperand)
+      leftOperand->removePossibleSuccession(pActionIdToRemove);
+  }
+  else if (nodeType == WorldStateModificationNodeType::FOR_ALL)
+  {
+    if (rightOperand)
+      rightOperand->removePossibleSuccession(pActionIdToRemove);
   }
 }
 

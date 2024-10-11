@@ -14,10 +14,8 @@ void assert_eq(const TYPE& pExpected,
   if (pExpected != pValue)
     assert(false);
 }
-}
 
-
-void test_successionsCache()
+void _test_actionSuccessions()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -37,20 +35,21 @@ void test_successionsCache()
                                                      "fact_c\n"
                                                      "fact_d\n"
                                                      "fact_e\n"
+                                                     "fact_f\n"
                                                      "locked(?r - resource)",
                                                      ontology.types);
 
   {
     std::vector<cp::Parameter> parameters1(1, cp::Parameter::fromStr("?e - e1", ontology.types));
-    cp::Action actionObj1(cp::Condition::fromStr("not(locked(moves))", ontology, {}, parameters1),
-                          cp::WorldStateModification::fromStr("not(locked(moves)) & not(fact_a) & fact_b(?e)", ontology, {}, parameters1));
+    cp::Action actionObj1(cp::Condition::fromStr("not(locked(moves)) & fact_f", ontology, {}, parameters1),
+                          cp::WorldStateModification::fromStr("not(locked(moves)) & fact_f & not(fact_a) & fact_b(?e)", ontology, {}, parameters1));
     actionObj1.parameters = std::move(parameters1);
     actions.emplace(action1, actionObj1);
   }
 
   {
     std::vector<cp::Parameter> parameters2(1, cp::Parameter::fromStr("?e - e1", ontology.types));
-    cp::Action actionObj2(cp::Condition::fromStr("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters2),
+    cp::Action actionObj2(cp::Condition::fromStr("not(locked(moves)) & fact_b(?e) & fact_f", ontology, {}, parameters2),
                           cp::WorldStateModification::fromStr("not(locked(moves)) & fact_c", ontology, {}, parameters2));
     actionObj2.parameters = std::move(parameters2);
     actions.emplace(action2, actionObj2);
@@ -80,29 +79,6 @@ void test_successionsCache()
 
   Domain domain(actions, ontology);
 
-  const auto& actionsFromDomain = domain.actions();
-  {
-    const Action& actionObj1 = actionsFromDomain.find(action1)->second;
-    assert_eq<std::string>("fact: !fact_a\n"
-                           "action: action4\n"
-                           "\n"
-                           "fact: fact_b(?e)\n"
-                           "action: action2\n"
-                           "action: action5\n", actionObj1.printSuccessionCache());
-  }
-  {
-    const Action& actionObj2 = actionsFromDomain.find(action2)->second;
-    assert_eq<std::string>("", actionObj2.printSuccessionCache());
-  }
-  {
-    const Action& actionObj3 = actionsFromDomain.find(action3)->second;
-    assert_eq<std::string>("", actionObj3.printSuccessionCache());
-  }
-  {
-    const Action& actionObj4 = actionsFromDomain.find(action4)->second;
-    assert_eq<std::string>("", actionObj4.printSuccessionCache());
-  }
-
   assert_eq<std::string>("action: action1\n"
                          "----------------------------------\n"
                          "\n"
@@ -111,5 +87,66 @@ void test_successionsCache()
                          "\n"
                          "fact: fact_b(?e)\n"
                          "action: action2\n"
-                         "action: action5\n", domain.printSuccessionCache());
+                         "action: action5\n"
+                         "\n"
+                         "\n"
+                         "action: action3\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "not action: action5\n"
+                         "\n"
+                         "\n"
+                         "action: action5\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "not action: action3\n", domain.printSuccessionCache());
+}
+
+
+void _test_notActionSuccessions()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+
+  std::map<std::string, cp::Action> actions;
+
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+                                           "location");
+  ontology.constants = cp::SetOfEntities::fromStr("e1 e2 - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("fact_a\n"
+                                                     "fact_b(?e - entity)\n"
+                                                     "fact_c(?e - entity) - location\n"
+                                                     "fact_d - location",
+                                                     ontology.types);
+
+  {
+    cp::Action actionObj1({},
+                          cp::WorldStateModification::fromStr("fact_a & assign(fact_c(e1), fact_d())", ontology, {}, {}));
+    actions.emplace(action1, actionObj1);
+  }
+
+  {
+    std::vector<cp::Parameter> parameters2{
+      cp::Parameter::fromStr("?e - entity", ontology.types),
+      cp::Parameter::fromStr("?l - location", ontology.types)};
+    cp::Action actionObj2(cp::Condition::fromStr("fact_a", ontology, {}, parameters2),
+                          cp::WorldStateModification::fromStr("fact_a & fact_b(?e) & fact_c(e1)=?l", ontology, {}, parameters2));
+    actionObj2.parameters = std::move(parameters2);
+    actions.emplace(action2, actionObj2);
+  }
+
+  Domain domain(actions, ontology);
+  assert_eq<std::string>("action: action1\n"
+                         "----------------------------------\n"
+                         "\n"
+                         "not action: action2\n", domain.printSuccessionCache());
+}
+
+}
+
+void test_successionsCache()
+{
+  _test_actionSuccessions();
+  _test_notActionSuccessions();
 }
