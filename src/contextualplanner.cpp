@@ -739,7 +739,7 @@ ActionId _findFirstActionForAGoal(
   PotentialNextAction res;
   std::set<ActionId> alreadyDoneActions;
   if (pPreviousActionPtr != nullptr &&
-      pPreviousActionPtr->goal == pGoal &&
+      pPreviousActionPtr->goal.objective() == pGoal.objective() &&
       pPreviousActionPtr->actionPtr != nullptr)
     alreadyDoneActions = pPreviousActionPtr->actionPtr->actionsSuccessionsWithoutInterestCache;
   std::optional<PotentialNextActionComparisonCache> potentialNextActionComparisonCacheOpt;
