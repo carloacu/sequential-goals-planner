@@ -134,7 +134,7 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
     _setOfEvents()
 {
   for (const auto& currAction : pActions)
-    addAction(currAction.first, currAction.second);
+    _addAction(currAction.first, currAction.second);
 
   if (!pSetOfEvents.empty())
     _setOfEvents.emplace(setOfEventsIdFromConstructor, pSetOfEvents);
@@ -145,6 +145,14 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
 
 void Domain::addAction(const ActionId& pActionId,
                        const Action& pAction)
+{
+  _addAction(pActionId, pAction);
+  _updateSuccessions();
+}
+
+
+void Domain::_addAction(const ActionId& pActionId,
+                        const Action& pAction)
 {
   if (_actions.count(pActionId) > 0 ||
       pAction.effect.empty())
@@ -179,9 +187,7 @@ void Domain::addAction(const ActionId& pActionId,
 
   if (!hasAddedAFact)
     _actionsWithoutFactToAddInPrecondition.addValueWithoutFact(pActionId);
-  _updateSuccessions();
 }
-
 
 void Domain::removeAction(const ActionId& pActionId)
 {

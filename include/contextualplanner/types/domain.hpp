@@ -118,6 +118,9 @@ private:
   /// Map set of events identifiers to the set of events.
   std::map<SetOfEventsId, SetOfEvents> _setOfEvents;
 
+  void _addAction(const ActionId& pActionId,
+                  const Action& pAction);
+
   void _updateSuccessions();
 };
 
