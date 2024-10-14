@@ -20,6 +20,7 @@ struct ExpressionParsed
   std::string name;
   std::list<ExpressionParsed> arguments;
   std::string value;
+  bool isValueNegated = false;
   bool isAFunction = false;
 
   char separatorToFollowingExp;

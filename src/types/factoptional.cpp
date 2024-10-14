@@ -15,12 +15,13 @@ FactOptional::FactOptional(bool pIsFactNegated,
                            const std::string& pName,
                            const std::vector<std::string>& pArgumentStrs,
                            const std::string& pFluentStr,
+                           bool pIsFluentNegated,
                            const Ontology& pOntology,
                            const SetOfEntities& pEntities,
                            const std::vector<Parameter>& pParameters,
                            bool pIsOkIfFluentIsMissing)
   : isFactNegated(pIsFactNegated),
-    fact(Fact(pName, pArgumentStrs, pFluentStr, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing))
+    fact(pName, pArgumentStrs, pFluentStr, pIsFluentNegated, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing)
 {
 }
 
@@ -38,11 +39,10 @@ FactOptional::FactOptional(const std::string& pStr,
                            const Ontology& pOntology,
                            const SetOfEntities& pEntities,
                            const std::vector<Parameter>& pParameters,
-                           const char* pSeparatorPtr,
                            std::size_t pBeginPos,
                            std::size_t* pResPos)
   : isFactNegated(false),
-    fact(pStr, pOntology, pEntities, pParameters, pSeparatorPtr, &isFactNegated, pBeginPos, pResPos)
+    fact(pStr, false, pOntology, pEntities, pParameters, &isFactNegated, pBeginPos, pResPos)
 {
 }
 

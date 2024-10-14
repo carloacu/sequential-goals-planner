@@ -26,6 +26,7 @@ struct CONTEXTUALPLANNER_API FactOptional
                const std::string& pName,
                const std::vector<std::string>& pArgumentStrs,
                const std::string& pFluentStr,
+               bool pIsFluentNegated,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
                const std::vector<Parameter>& pParameters,
@@ -49,7 +50,6 @@ struct CONTEXTUALPLANNER_API FactOptional
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
                const std::vector<Parameter>& pParameters,
-               const char* pSeparatorPtr = nullptr,
                std::size_t pBeginPos = 0,
                std::size_t* pResPos = nullptr);
 

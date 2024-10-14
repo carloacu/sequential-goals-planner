@@ -29,10 +29,10 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[out] pResPos End postion of the fact in pStr after the parsing.
    */
   Fact(const std::string& pStr,
+       bool pStrPDDLFormated,
        const Ontology& pOntology,
        const SetOfEntities& pEntities,
        const std::vector<Parameter>& pParameters,
-       const char* pSeparatorPtr = nullptr,
        bool* pIsFactNegatedPtr = nullptr,
        std::size_t pBeginPos = 0,
        std::size_t* pResPos = nullptr);
@@ -40,6 +40,7 @@ struct CONTEXTUALPLANNER_API Fact
   Fact(const std::string& pName,
        const std::vector<std::string>& pArgumentStrs,
        const std::string& pFluentStr,
+       bool pIsFluentNegated,
        const Ontology& pOntology,
        const SetOfEntities& pEntities,
        const std::vector<Parameter>& pParameters,
@@ -182,21 +183,11 @@ struct CONTEXTUALPLANNER_API Fact
                       const std::vector<Parameter>& pParameters,
                       bool* pIsFactNegatedPtr = nullptr);
 
-  /**
-   * @brief Deserialize a part of a string to this fact.
-   * @param pStr[in] String containing the part to deserialize.
-   * @param pSeparatorPtr[in] Character to indicate the end of the fact in pStr. Nullptr can be set if there is only one fact in the string.
-   * @param pBeginPos[in] Begin position in pStr.
-   * @param pIsFactNegatedPtr[out] Is the fact constructed negated or not.
-   * @return End index of the deserialization.
-   */
-  std::size_t fillFactFromStr(const std::string& pStr,
-                              const Ontology& pOntology,
-                              const SetOfEntities& pEntities,
-                              const std::vector<Parameter>& pParameters,
-                              const char* pSeparatorPtr,
-                              std::size_t pBeginPos,
-                              bool* pIsFactNegatedPtr);
+  static Fact fromPDDL(const std::string& pStr,
+                       const Ontology& pOntology,
+                       const SetOfEntities& pEntities,
+                       const std::vector<Parameter>& pParameters,
+                       bool* pIsFactNegatedPtr = nullptr);
 
   /**
    * @brief Set "any value" to all of the specified arguments.
@@ -271,7 +262,7 @@ struct CONTEXTUALPLANNER_API Fact
   const std::string& name() const { return _name; }
   const std::vector<Entity>& arguments() const { return _arguments; }
   const std::optional<Entity>& fluent() const { return _fluent; }
-  bool isValueNegated() const { return _isValueNegated; }
+  bool isValueNegated() const { return _isFluentNegated; }
 
   std::string factSignature() const;
   std::string generateFactSignature() const;
@@ -298,7 +289,7 @@ private:
   /// Fluent of the fact.
   std::optional<Entity> _fluent;
   /// Is the value of the fact negated.
-  bool _isValueNegated;
+  bool _isFluentNegated;
   std::string _factSignature;
 
   void _resetFactSignatureCache();

@@ -19,6 +19,8 @@ add_executable(
   src/test_plannerWithSingleType.cpp
   src/test_ontology.hpp
   src/test_ontology.cpp
+  src/test_pddl_serialization.hpp
+  src/test_pddl_serialization.cpp
   src/test_setoffacts.hpp
   src/test_setoffacts.cpp
   src/test_arithmeticevaluator.hpp
@@ -31,6 +33,8 @@ add_executable(
   src/docexamples/test_planningExampleWithAPreconditionSolve.cpp
   src/test_util.hpp
   src/test_util.cpp
+  src/test_pddl_serialization.cpp
+  src/test_pddl_serialization.hpp
 )
 
 

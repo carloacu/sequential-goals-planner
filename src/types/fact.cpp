@@ -9,6 +9,7 @@
 #include <contextualplanner/types/parameter.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/util/util.hpp>
+#include "expressionParsed.hpp"
 
 namespace cp
 {
@@ -75,10 +76,10 @@ const Entity Fact::undefinedValue = Entity("undefined", {});
 std::string Fact::punctualPrefix = "~punctual~";
 
 Fact::Fact(const std::string& pStr,
+           bool pStrPDDLFormated,
            const Ontology& pOntology,
            const SetOfEntities& pEntities,
            const std::vector<Parameter>& pParameters,
-           const char* pSeparatorPtr,
            bool* pIsFactNegatedPtr,
            std::size_t pBeginPos,
            std::size_t* pResPos)
@@ -86,18 +87,47 @@ Fact::Fact(const std::string& pStr,
     _name(),
     _arguments(),
     _fluent(),
-    _isValueNegated(false),
+    _isFluentNegated(false),
     _factSignature()
 {
-  auto resPos = fillFactFromStr(pStr, pOntology, pEntities, pParameters, pSeparatorPtr, pBeginPos, pIsFactNegatedPtr);
-  if (pResPos != nullptr)
-    *pResPos = resPos;
+  try
+  {
+    auto expressionParsed = ExpressionParsed::fromStr(pStr, pBeginPos);
+    if (!expressionParsed.name.empty() && expressionParsed.name[0] == '!')
+    {
+      if (pIsFactNegatedPtr != nullptr)
+         *pIsFactNegatedPtr = true;
+      _name = expressionParsed.name.substr(1, expressionParsed.name.size() - 1);
+    }
+    else
+    {
+      _name = expressionParsed.name;
+    }
+
+    for (auto& currArgument : expressionParsed.arguments)
+      _arguments.push_back(Entity::fromUsage(currArgument.name, pOntology, pEntities, pParameters));
+
+    _isFluentNegated = expressionParsed.isValueNegated;
+    if (expressionParsed.value != "")
+      _fluent.emplace(Entity::fromUsage(expressionParsed.value, pOntology, pEntities, pParameters));
+
+    predicate = pOntology.predicates.nameToPredicate(_name);
+    _finalizeInisilizationAndValidityChecks(pOntology, pEntities, false);
+    _resetFactSignatureCache();
+    if (pResPos != nullptr)
+      *pResPos = pBeginPos;
+  }
+  catch (const std::exception& e)
+  {
+    throw std::runtime_error(std::string(e.what()) + ". The exception was thrown while parsing fact: \"" + pStr + "\"");
+  }
 }
 
 
 Fact::Fact(const std::string& pName,
            const std::vector<std::string>& pArgumentStrs,
            const std::string& pFluentStr,
+           bool pIsFluentNegated,
            const Ontology& pOntology,
            const SetOfEntities& pEntities,
            const std::vector<Parameter>& pParameters,
@@ -106,15 +136,9 @@ Fact::Fact(const std::string& pName,
     _name(pName),
     _arguments(),
     _fluent(),
-    _isValueNegated(false),
+    _isFluentNegated(pIsFluentNegated),
     _factSignature()
 {
-  if (!_name.empty() && _name[_name.size() - 1] == '!')
-  {
-    _isValueNegated = true;
-    _name = _name.substr(0, _name.size() - 1);
-  }
-
   auto* predicatePtr = pOntology.predicates.nameToPredicatePtr(_name);
   if (predicatePtr == nullptr)
     predicatePtr = pOntology.derivedPredicates.nameToPredicatePtr(_name);
@@ -143,7 +167,7 @@ Fact::Fact(const Fact& pOther)
     _name(pOther._name),
     _arguments(pOther._arguments),
     _fluent(pOther._fluent),
-    _isValueNegated(pOther._isValueNegated),
+    _isFluentNegated(pOther._isFluentNegated),
     _factSignature(pOther._factSignature)
 {
 }
@@ -153,7 +177,7 @@ Fact::Fact(Fact&& pOther) noexcept
     _name(std::move(pOther._name)),
     _arguments(std::move(pOther._arguments)),
     _fluent(std::move(pOther._fluent)),
-    _isValueNegated(std::move(pOther._isValueNegated)),
+    _isFluentNegated(std::move(pOther._isFluentNegated)),
     _factSignature(std::move(pOther._factSignature))
 {
 }
@@ -163,7 +187,7 @@ Fact& Fact::operator=(const Fact& pOther) {
   _name = pOther._name;
   _arguments = pOther._arguments;
   _fluent = pOther._fluent;
-  _isValueNegated = pOther._isValueNegated;
+  _isFluentNegated = pOther._isFluentNegated;
   _factSignature = pOther._factSignature;
   return *this;
 }
@@ -173,7 +197,7 @@ Fact& Fact::operator=(Fact&& pOther) noexcept {
     _name = std::move(pOther._name);
     _arguments = std::move(pOther._arguments);
     _fluent = std::move(pOther._fluent);
-    _isValueNegated = std::move(pOther._isValueNegated);
+    _isFluentNegated = std::move(pOther._isFluentNegated);
     _factSignature = std::move(pOther._factSignature);
     return *this;
 }
@@ -185,8 +209,8 @@ bool Fact::operator<(const Fact& pOther) const
     return _name < pOther._name;
   if (_fluent != pOther._fluent)
     return _fluent < pOther._fluent;
-  if (_isValueNegated != pOther._isValueNegated)
-    return _isValueNegated < pOther._isValueNegated;
+  if (_isFluentNegated != pOther._isFluentNegated)
+    return _isFluentNegated < pOther._isFluentNegated;
   std::string paramStr;
   _entitiesToStr(paramStr, _arguments);
   std::string otherParamStr;
@@ -197,7 +221,7 @@ bool Fact::operator<(const Fact& pOther) const
 bool Fact::operator==(const Fact& pOther) const
 {
   return _name == pOther._name && _arguments == pOther._arguments &&
-      _fluent == pOther._fluent && _isValueNegated == pOther._isValueNegated &&
+      _fluent == pOther._fluent && _isFluentNegated == pOther._isFluentNegated &&
       predicate == pOther.predicate;
 }
 
@@ -278,21 +302,21 @@ bool Fact::areEqualExceptAnyValues(const Fact& pOther,
   }
 
   if (!_fluent && !pOther._fluent)
-    return _isValueNegated == pOther._isValueNegated;
+    return _isFluentNegated == pOther._isFluentNegated;
   if (_fluent &&
       (_fluent->isAnyValue() ||
        _isInside(*_fluent, pThisFactParametersToConsiderAsAnyValuePtr)))
-    return _isValueNegated == pOther._isValueNegated;
+    return _isFluentNegated == pOther._isFluentNegated;
   if (pOther._fluent &&
       (pOther._fluent->isAnyValue() ||
        _isInside(*pOther._fluent, pOtherFactParametersToConsiderAsAnyValuePtr) ||
        _isInside(*pOther._fluent, pOtherFactParametersToConsiderAsAnyValuePtr2)))
-    return _isValueNegated == pOther._isValueNegated;
+    return _isFluentNegated == pOther._isFluentNegated;
 
   if ((_fluent && !pOther._fluent) || (!_fluent && pOther._fluent) || *_fluent != *pOther._fluent)
-    return _isValueNegated != pOther._isValueNegated;
+    return _isFluentNegated != pOther._isFluentNegated;
 
-  return _isValueNegated == pOther._isValueNegated;
+  return _isFluentNegated == pOther._isFluentNegated;
 }
 
 
@@ -317,7 +341,7 @@ bool Fact::areEqualExceptAnyValuesAndFluent(const Fact& pOther,
     ++itOtherParam;
   }
 
-  return _isValueNegated == pOther._isValueNegated;
+  return _isFluentNegated == pOther._isFluentNegated;
 }
 
 
@@ -379,7 +403,7 @@ std::optional<Entity> Fact::tryToExtractArgumentFromExample(const Parameter& pPa
                                                             const Fact& pExampleFact) const
 {
   if (_name != pExampleFact._name ||
-      _isValueNegated != pExampleFact._isValueNegated ||
+      _isFluentNegated != pExampleFact._isFluentNegated ||
       _arguments.size() != pExampleFact._arguments.size())
     return {};
 
@@ -404,7 +428,7 @@ std::optional<Entity> Fact::tryToExtractArgumentFromExampleWithoutFluentConsider
     const Fact& pExampleFact) const
 {
   if (_name != pExampleFact._name ||
-      _isValueNegated != pExampleFact._isValueNegated ||
+      _isFluentNegated != pExampleFact._isFluentNegated ||
       _arguments.size() != pExampleFact._arguments.size())
     return {};
 
@@ -428,7 +452,7 @@ bool Fact::isPatternOf(
     const Fact& pFactExample) const
 {
   if (_name != pFactExample._name ||
-      _isValueNegated != pFactExample._isValueNegated ||
+      _isFluentNegated != pFactExample._isFluentNegated ||
       _arguments.size() != pFactExample._arguments.size())
     return false;
 
@@ -514,7 +538,7 @@ std::string Fact::toStr(bool pPrintAnyFluent) const
   {
     if (!pPrintAnyFluent && _fluent->isAnyValue())
       return res;
-    if (_isValueNegated)
+    if (_isFluentNegated)
       res += "!=" + _fluent->value;
     else
       res += "=" + _fluent->value;
@@ -529,97 +553,17 @@ Fact Fact::fromStr(const std::string& pStr,
                    const std::vector<Parameter>& pParameters,
                    bool* pIsFactNegatedPtr)
 {
-  return Fact(pStr, pOntology, pEntities, pParameters, nullptr, pIsFactNegatedPtr);
+  return Fact(pStr, false, pOntology, pEntities, pParameters, pIsFactNegatedPtr);
 }
 
 
-std::size_t Fact::fillFactFromStr(
-    const std::string& pStr,
-    const Ontology& pOntology,
-    const SetOfEntities& pEntities,
-    const std::vector<Parameter>& pParameters,
-    const char* pSeparatorPtr,
-    std::size_t pBeginPos,
-    bool* pIsFactNegatedPtr)
+Fact Fact::fromPDDL(const std::string& pStr,
+                   const Ontology& pOntology,
+                   const SetOfEntities& pEntities,
+                   const std::vector<Parameter>& pParameters,
+                   bool* pIsFactNegatedPtr)
 {
-  static const char separatorOfParameters = ',';
-  std::size_t pos = pBeginPos;
-  try
-  {
-    while (pos < pStr.size())
-    {
-      if (pStr[pos] == ' ')
-      {
-        ++pos;
-        continue;
-      }
-      if (pStr[pos] == '!')
-      {
-        if (pIsFactNegatedPtr != nullptr)
-          *pIsFactNegatedPtr = true;
-        ++pos;
-        continue;
-      }
-      if ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ')')
-        return pos;
-
-      bool insideParenthesis = false;
-      auto beginPos = pos;
-      while (pos < pStr.size())
-      {
-        if (!insideParenthesis && ((pSeparatorPtr != nullptr && pStr[pos] == *pSeparatorPtr) || pStr[pos] == ' ' || pStr[pos] == ')'))
-          break;
-        if (pStr[pos] == '!')
-        {
-          _isValueNegated = true;
-          if (_name.empty())
-            _name = pStr.substr(beginPos, pos - beginPos);
-          ++pos;
-          continue;
-        }
-        if (pStr[pos] == '(' || pStr[pos] == separatorOfParameters)
-        {
-          insideParenthesis = true;
-          if (_name.empty())
-            _name = pStr.substr(beginPos, pos - beginPos);
-          ++pos;
-          auto argumentName = cp::Fact(pStr, pOntology, pEntities, pParameters, &separatorOfParameters, &_isValueNegated, pos, &pos).toStr();
-          if (!argumentName.empty())
-            _arguments.push_back(Entity::fromUsage(argumentName, pOntology, pEntities, pParameters));
-          beginPos = pos;
-          continue;
-        }
-        if (pStr[pos] == ')' || pStr[pos] == '=')
-        {
-          insideParenthesis = false;
-          if (_name.empty())
-            _name = pStr.substr(beginPos, pos - beginPos);
-          ++pos;
-          beginPos = pos;
-          continue;
-        }
-        ++pos;
-      }
-      if (_name.empty())
-        _name = pStr.substr(beginPos, pos - beginPos);
-      else if (pos > beginPos)
-      {
-        auto fluentStr = pStr.substr(beginPos, pos - beginPos);
-        if (!fluentStr.empty())
-          _fluent = Entity::fromUsage(fluentStr, pOntology, pEntities, pParameters);
-      }
-    }
-
-    predicate = pOntology.predicates.nameToPredicate(_name);
-    _finalizeInisilizationAndValidityChecks(pOntology, pEntities, false);
-  }
-  catch (const std::exception& e)
-  {
-    throw std::runtime_error(std::string(e.what()) + ". The exception was thrown while parsing fact: \"" + pStr + "\"");
-  }
-
-  _resetFactSignatureCache();
-  return pos;
+  return Fact(pStr, true, pOntology, pEntities, pParameters, pIsFactNegatedPtr);
 }
 
 
@@ -751,24 +695,24 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   std::optional<bool> resOpt;
   if (pIgnoreFluents || (!_fluent && !pOtherFact._fluent))
   {
-    resOpt.emplace(pOtherFact._isValueNegated == _isValueNegated);
+    resOpt.emplace(pOtherFact._isFluentNegated == _isFluentNegated);
   }
   else if (_fluent && pOtherFact._fluent)
   {
     if (pParametersAreForTheFact)
     {
       if (doesItMatch(*_fluent, *pOtherFact._fluent))
-        resOpt.emplace(pOtherFact._isValueNegated == _isValueNegated);
+        resOpt.emplace(pOtherFact._isFluentNegated == _isFluentNegated);
     }
     else
     {
       if (doesItMatch(*pOtherFact._fluent, *_fluent))
-        resOpt.emplace(pOtherFact._isValueNegated == _isValueNegated);
+        resOpt.emplace(pOtherFact._isFluentNegated == _isFluentNegated);
     }
   }
 
   if (!resOpt)
-    resOpt.emplace(pOtherFact._isValueNegated != _isValueNegated);
+    resOpt.emplace(pOtherFact._isFluentNegated != _isFluentNegated);
 
   if (*resOpt)
   {

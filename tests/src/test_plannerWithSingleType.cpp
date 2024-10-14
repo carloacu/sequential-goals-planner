@@ -87,7 +87,7 @@ void assert_false(const TYPE& pValue)
 cp::Fact _fact(const std::string& pStr,
                const cp::Ontology& pOntology,
                const std::vector<cp::Parameter>& pParameters = {}) {
-  return cp::Fact(pStr, pOntology, {}, pParameters);
+  return cp::Fact(pStr, false, pOntology, {}, pParameters);
 }
 
 cp::Parameter _parameter(const std::string& pStr,
@@ -209,7 +209,7 @@ void _setFacts(cp::WorldState& pWorldState,
                const std::map<cp::SetOfEventsId, cp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents) {
   std::set<cp::Fact> facts;
   for (auto& currFactStr : pFactStrs)
-    facts.emplace(currFactStr, pOntology, cp::SetOfEntities(), std::vector<cp::Parameter>());
+    facts.emplace(currFactStr, false, pOntology, cp::SetOfEntities(), std::vector<cp::Parameter>());
   pWorldState.setFacts(facts, pGoalStack, pSetOfEvents, pOntology, cp::SetOfEntities(), _now);
 }
 

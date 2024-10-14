@@ -57,10 +57,9 @@ Goal::Goal(const std::string& pStr,
   {
     goalStr = goalStr.substr(_implyPrefixSize, goalStr.size() - _implyPrefixSize - 1);
 
-    char separator = ',';
     bool isFactNegated = false;
     std::size_t endPos = 0;
-    auto conditionFact = Fact(goalStr, pOntology, pEntities, {}, &separator, &isFactNegated, 0, &endPos);
+    auto conditionFact = Fact(goalStr, false, pOntology, pEntities, {}, &isFactNegated, 0, &endPos);
     _conditionFactPtr = std::make_unique<FactOptional>(conditionFact, isFactNegated);
 
     ++endPos;

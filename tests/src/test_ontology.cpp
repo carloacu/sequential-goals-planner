@@ -128,12 +128,12 @@ void _test_fact_initialization()
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?v - my_type)\n"
                                                      "pred_name2(?v - my_type, ?o - my_type2) - return_type", ontology.types);
 
-  cp::Fact("pred_name(toto)", ontology, {}, {});
-  cp::Fact("pred_name(sub_toto)", ontology, {}, {});
+  cp::Fact("pred_name(toto)", false, ontology, {}, {});
+  cp::Fact("pred_name(sub_toto)", false, ontology, {}, {});
 
   try
   {
-    cp::Fact("pred_that_does_not_exist(titi)", ontology, {}, {});
+    cp::Fact("pred_that_does_not_exist(titi)", false, ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -141,7 +141,7 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name(unknown_value)", ontology, {}, {});
+    cp::Fact("pred_name(unknown_value)", false, ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -149,7 +149,7 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name", ontology, {}, {});
+    cp::Fact("pred_name", false, ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -157,7 +157,7 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name(titi)", ontology, {}, {});
+    cp::Fact("pred_name(titi)", false, ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
@@ -165,27 +165,27 @@ void _test_fact_initialization()
   }
   try
   {
-    cp::Fact("pred_name(toto)=val", ontology, {}, {});
+    cp::Fact("pred_name(toto)=val", false, ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {
     assert_eq<std::string>("\"val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name(toto)=val\"", e.what());
   }
 
-  cp::Fact("pred_name2(toto, titi)=res", ontology, {}, {});
+  cp::Fact("pred_name2(toto, titi)=res", false, ontology, {}, {});
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?v - my_type2", ontology.types));
-    cp::Fact("pred_name2(toto, ?v)=res", ontology, {}, parameters);
+    cp::Fact("pred_name2(toto, ?v)=res", false, ontology, {}, parameters);
   }
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?v - my_type2", ontology.types));
     parameters.push_back( cp::Parameter::fromStr("?r - return_type", ontology.types));
-    cp::Fact("pred_name2(toto, ?v)=?r", ontology, {}, parameters);
+    cp::Fact("pred_name2(toto, ?v)=?r", false, ontology, {}, parameters);
   }
 
   try
   {
-    cp::Fact("pred_name2(toto, titi)=unknown_val", ontology, {}, {});
+    cp::Fact("pred_name2(toto, titi)=unknown_val", false, ontology, {}, {});
     assert_true(false);
   }
   catch(const std::exception& e) {

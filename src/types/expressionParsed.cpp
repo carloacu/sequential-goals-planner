@@ -17,7 +17,7 @@ bool _isASeparatorForTheBeginOfAFollowingExpression(char pChar)
 
 bool _isASeparator(char pChar)
 {
-  return pChar == ' ' || pChar == '(' || pChar == ')' || pChar == ',' || pChar == '=' ||
+  return pChar == ' ' || pChar == '(' || pChar == ')' || pChar == ',' || pChar == '=' || pChar == '!' ||
       _isASeparatorForTheBeginOfAFollowingExpression(pChar);
 }
 
@@ -47,7 +47,7 @@ FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
     factName = name;
   }
 
-  FactOptional res(isFactNegated, factName, argumentStrs, value, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing);
+  FactOptional res(isFactNegated, factName, argumentStrs, value, isValueNegated, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing);
   if (value == Fact::undefinedValue.value && !res.isFactNegated)
   {
     res.isFactNegated = true;
@@ -125,6 +125,11 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
   // extract value
   if (pPos < strSize)
   {
+    if (pStr[pPos] == '!')
+    {
+      res.isValueNegated = true;
+      ++pPos;
+    }
     if (pStr[pPos] == '=')
     {
       res.isAFunction = true;
