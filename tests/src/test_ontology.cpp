@@ -76,19 +76,19 @@ void _test_setOfTypes_fromStr()
 void _test_predicateToStr()
 {
   auto setOfTypes = cp::SetOfTypes::fromStr("my_type my_type2 return_type");
-  assert_eq<std::string>("pred_name(?v - my_type)", cp::Predicate("pred_name(?v - my_type)", setOfTypes).toStr());
-  assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2)", cp::Predicate("pred_name(?v - my_type, ?o - my_type2)", setOfTypes).toStr());
-  assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2) - return_type", cp::Predicate("pred_name(?v - my_type, ?o - my_type2) - return_type", setOfTypes).toStr());
+  assert_eq<std::string>("pred_name(?v - my_type)", cp::Predicate("pred_name(?v - my_type)", false, setOfTypes).toStr());
+  assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2)", cp::Predicate("pred_name(?v - my_type, ?o - my_type2)", false, setOfTypes).toStr());
+  assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2) - return_type", cp::Predicate("pred_name(?v - my_type, ?o - my_type2) - return_type", false, setOfTypes).toStr());
 
   auto otherSetOfTypes = cp::SetOfTypes::fromStr("a b");
   try {
-    cp::Predicate("pred_name(?v - my_type)", otherSetOfTypes);
+    cp::Predicate("pred_name(?v - my_type)", false, otherSetOfTypes);
     assert_true(false);
   } catch (const std::exception& e) {
     assert_eq<std::string>("\"my_type\" is not a valid type name", e.what());
   }
   try {
-    cp::Predicate("pred_name(?v - a, ?o - b) - return_type", otherSetOfTypes);
+    cp::Predicate("pred_name(?v - a, ?o - b) - return_type", false, otherSetOfTypes);
     assert_true(false);
   } catch (const std::exception& e) {
     assert_eq<std::string>("\"return_type\" is not a valid type name", e.what());

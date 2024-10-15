@@ -1,4 +1,5 @@
 #include <contextualplanner/types/predicate.hpp>
+#include <stdexcept>
 #include <contextualplanner/types/setoftypes.hpp>
 #include "expressionParsed.hpp"
 
@@ -24,13 +25,18 @@ void _parametersToStr(std::string& pStr,
 }
 
 Predicate::Predicate(const std::string& pStr,
-                     const SetOfTypes& pSetOfTypes)
+                     bool pStrPddlFormated,
+                     const SetOfTypes& pSetOfTypes,
+                     std::size_t pBeginPos,
+                     std::size_t* pResPos)
   : name(),
     parameters(),
     fluent()
 {
-  std::size_t pos = 0;
-  auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
+  std::size_t pos = pBeginPos;
+  auto expressionParsed = pStrPddlFormated ?
+        ExpressionParsed::fromPddl(pStr, pos) :
+        ExpressionParsed::fromStr(pStr, pos);
 
   name = expressionParsed.name;
   for (auto& currArg : expressionParsed.arguments)
@@ -41,6 +47,13 @@ Predicate::Predicate(const std::string& pStr,
     }
   if (expressionParsed.followingExpression) {
     fluent = pSetOfTypes.nameToType(expressionParsed.followingExpression->name);
+  }
+
+  if (pResPos != nullptr)
+  {
+    if (pos <= pBeginPos)
+      throw std::runtime_error("Failed to parse a predicate in str " + pStr.substr(pBeginPos, pStr.size() - pBeginPos));
+    *pResPos = pos;
   }
 }
 

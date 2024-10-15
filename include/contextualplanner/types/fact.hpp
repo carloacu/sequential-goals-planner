@@ -29,7 +29,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[out] pResPos End postion of the fact in pStr after the parsing.
    */
   Fact(const std::string& pStr,
-       bool pStrPDDLFormated,
+       bool pStrPddlFormated,
        const Ontology& pOntology,
        const SetOfEntities& pEntities,
        const std::vector<Parameter>& pParameters,

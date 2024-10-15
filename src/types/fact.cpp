@@ -76,14 +76,14 @@ const Entity Fact::undefinedValue = Entity("undefined", {});
 std::string Fact::punctualPrefix = "~punctual~";
 
 Fact::Fact(const std::string& pStr,
-           bool pStrPDDLFormated,
+           bool pStrPddlFormated,
            const Ontology& pOntology,
            const SetOfEntities& pEntities,
            const std::vector<Parameter>& pParameters,
            bool* pIsFactNegatedPtr,
            std::size_t pBeginPos,
            std::size_t* pResPos)
-  : predicate("_not_set", pOntology.types),
+  : predicate("_not_set", pStrPddlFormated, pOntology.types),
     _name(),
     _arguments(),
     _fluent(),
@@ -132,7 +132,7 @@ Fact::Fact(const std::string& pName,
            const SetOfEntities& pEntities,
            const std::vector<Parameter>& pParameters,
            bool pIsOkIfFluentIsMissing)
-  : predicate("_not_set", pOntology.types),
+  : predicate("_not_set", true, pOntology.types),
     _name(pName),
     _arguments(),
     _fluent(),

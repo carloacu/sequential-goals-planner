@@ -14,7 +14,10 @@ namespace cp
 struct CONTEXTUALPLANNER_API Predicate
 {
   Predicate(const std::string& pStr,
-            const SetOfTypes& pSetOfTypes);
+            bool pStrPddlFormated,
+            const SetOfTypes& pSetOfTypes,
+            std::size_t pBeginPos = 0,
+            std::size_t* pResPos = nullptr);
 
   std::string toStr() const;
 

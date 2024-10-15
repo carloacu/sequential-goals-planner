@@ -4025,7 +4025,7 @@ void _derivedPredicates()
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d, ontology.types);
   ontology.derivedPredicates.addDerivedPredicate(
-        cp::DerivedPredicate(cp::Predicate(_fact_e + "(?a - param) - entity", ontology.types),
+        cp::DerivedPredicate(cp::Predicate(_fact_e + "(?a - param) - entity", false, ontology.types),
                              _fact_a + "(?a)=?entity", ontology));
 
   std::map<std::string, cp::Action> actions;

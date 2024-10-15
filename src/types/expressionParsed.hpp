@@ -23,7 +23,7 @@ struct ExpressionParsed
   bool isValueNegated = false;
   bool isAFunction = false;
 
-  char separatorToFollowingExp;
+  char separatorToFollowingExp = ' ';
   std::unique_ptr<ExpressionParsed> followingExpression;
 
   FactOptional toFact(const Ontology& pOntology,
@@ -33,6 +33,12 @@ struct ExpressionParsed
 
   static ExpressionParsed fromStr(const std::string& pStr,
                                   std::size_t& pPos);
+
+  static ExpressionParsed fromPddl(const std::string& pStr,
+                                   std::size_t& pPos);
+
+  static void skipSpaces(const std::string& pStr,
+                         std::size_t& pPos);
 };
 
 

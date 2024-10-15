@@ -21,7 +21,6 @@ bool _isASeparator(char pChar)
       _isASeparatorForTheBeginOfAFollowingExpression(pChar);
 }
 
-
 }
 
 
@@ -61,7 +60,6 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
                                            std::size_t& pPos)
 {
   ExpressionParsed res;
-
   auto strSize = pStr.size();
   std::size_t beginOfNamePos = pPos;
 
@@ -173,5 +171,101 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
   return res;
 }
 
+
+ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
+                                            std::size_t& pPos)
+{
+  ExpressionParsed res;
+  auto strSize = pStr.size();
+
+  skipSpaces(pStr, pPos);
+  std::size_t beginOfTokenPos = pPos;
+
+  if (pPos >= strSize)
+    return res;
+
+  if (pStr[pPos] == '(')
+  {
+    ++pPos;
+    beginOfTokenPos = pPos;
+
+    bool inName = true;
+    while (pPos < strSize)
+    {
+      if (pStr[pPos] == ')')
+      {
+        ++pPos;
+        break;
+      }
+      else if (_isASeparator(pStr[pPos]))
+      {
+        if (inName)
+        {
+          res.name = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
+          inName = false;
+          continue;
+        }
+        auto prePos = pPos;
+        res.arguments.emplace_back(fromPddl(pStr, pPos));
+        if (pPos > prePos)
+          continue;
+      }
+      ++pPos;
+    }
+
+  }
+  else
+  {
+    while (pPos < strSize)
+    {
+      if (_isASeparator(pStr[pPos]))
+      {
+        res.name = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
+        break;
+      }
+      ++pPos;
+    }
+    if (res.name.empty())
+    {
+      res.name = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
+      if (res.name.empty())
+        throw std::runtime_error("Empty name in str " + pStr.substr(beginOfTokenPos, strSize - beginOfTokenPos));
+    }
+  }
+
+  // extract following expression
+  while (pPos < strSize)
+  {
+    if (pStr[pPos] == ' ')
+    {
+      ++pPos;
+      continue;
+    }
+
+    if (_isASeparatorForTheBeginOfAFollowingExpression(pStr[pPos]))
+    {
+      res.separatorToFollowingExp = pStr[pPos];
+      ++pPos;
+      res.followingExpression = std::make_unique<ExpressionParsed>(fromPddl(pStr, pPos));
+    }
+
+    break;
+  }
+
+  skipSpaces(pStr, pPos);
+  return res;
+}
+
+void ExpressionParsed::skipSpaces(const std::string& pStr,
+                                  std::size_t& pPos)
+{
+  auto strSize = pStr.size();
+  while (pPos < strSize)
+  {
+    if (pStr[pPos] != ' ' && pStr[pPos] != '\n' && pStr[pPos] != '\t')
+      break;
+    ++pPos;
+  }
+}
 
 } // !cp
