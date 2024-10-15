@@ -39,6 +39,15 @@ struct ExpressionParsed
 
   static void skipSpaces(const std::string& pStr,
                          std::size_t& pPos);
+
+  static void moveUntilEndOfLine(const std::string& pStr,
+                                 std::size_t& pPos);
+
+  static void moveUntilClosingParenthesis(const std::string& pStr,
+                                          std::size_t& pPos);
+
+  static std::string parseToken(const std::string& pStr,
+                                std::size_t& pPos);
 };
 
 

@@ -2,6 +2,7 @@
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/util.hpp>
 #include "../util/uuid.hpp"
+#include "expressionParsed.hpp"
 
 namespace cp
 {
@@ -140,6 +141,75 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
     _setOfEvents.emplace(setOfEventsIdFromConstructor, pSetOfEvents);
 
   _updateSuccessions();
+}
+
+
+Domain Domain::fromPddl(const std::string& pStr)
+{
+  std::string domainName = "";
+  cp::Ontology ontology;
+  std::map<ActionId, Action> actions;
+
+  const std::string defineToken = "(define";
+  std::size_t found = pStr.find(defineToken);
+  if (found != std::string::npos)
+  {
+    auto strSize = pStr.size();
+    std::size_t pos = found + defineToken.size();
+
+    while (pos < strSize)
+    {
+      if (pStr[pos] == ';')
+      {
+        ExpressionParsed::moveUntilEndOfLine(pStr, pos);
+        ++pos;
+        continue;
+      }
+
+      if (pStr[pos] == '(')
+      {
+        ++pos;
+        auto token = ExpressionParsed::parseToken(pStr, pos);
+
+        if (token == "domain")
+        {
+          domainName = ExpressionParsed::parseToken(pStr, pos);
+        }
+        else if (token == ":extends")
+        {
+          ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
+        }
+        else if (token == ":requirements")
+        {
+          ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
+        }
+        else if (token == ":types")
+        {
+          std::size_t beginPos = pos;
+          ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
+          std::string typesStr = pStr.substr(beginPos, pos - beginPos);
+          ontology.types = cp::SetOfTypes::fromStr(typesStr);
+        }
+        else if (token == ":constants")
+        {
+          std::size_t beginPos = pos;
+          ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
+          std::string constantsStr = pStr.substr(beginPos, pos - beginPos);
+          ontology.constants = cp::SetOfEntities::fromStr(constantsStr, ontology.types);
+        }
+        else if (token == ":predicates")
+        {
+          cp::SetOfPredicates::fromPddl(pStr, pos, ontology.types);
+        }
+      }
+
+      ++pos;
+    }
+
+  } else {
+    throw std::runtime_error("No '(define' found in domain file");
+  }
+  return Domain(actions, ontology);
 }
 
 

@@ -90,10 +90,13 @@ Fact::Fact(const std::string& pStr,
     _isFluentNegated(false),
     _factSignature()
 {
+  std::size_t pos = pBeginPos;
   try
   {
-    auto expressionParsed = ExpressionParsed::fromStr(pStr, pBeginPos);
-    if (!expressionParsed.name.empty() && expressionParsed.name[0] == '!')
+    auto expressionParsed = pStrPddlFormated ?
+        ExpressionParsed::fromPddl(pStr, pos) :
+        ExpressionParsed::fromStr(pStr, pos);
+    if (!pStrPddlFormated && !expressionParsed.name.empty() && expressionParsed.name[0] == '!')
     {
       if (pIsFactNegatedPtr != nullptr)
          *pIsFactNegatedPtr = true;
@@ -115,7 +118,11 @@ Fact::Fact(const std::string& pStr,
     _finalizeInisilizationAndValidityChecks(pOntology, pEntities, false);
     _resetFactSignatureCache();
     if (pResPos != nullptr)
-      *pResPos = pBeginPos;
+    {
+      if (pos <= pBeginPos)
+        throw std::runtime_error("Failed to parse a predicate in str " + pStr.substr(pBeginPos, pStr.size() - pBeginPos));
+      *pResPos = pos;
+    }
   }
   catch (const std::exception& e)
   {
@@ -561,9 +568,10 @@ Fact Fact::fromPDDL(const std::string& pStr,
                    const Ontology& pOntology,
                    const SetOfEntities& pEntities,
                    const std::vector<Parameter>& pParameters,
-                   bool* pIsFactNegatedPtr)
+                   std::size_t pBeginPos,
+                   std::size_t* pResPos)
 {
-  return Fact(pStr, true, pOntology, pEntities, pParameters, pIsFactNegatedPtr);
+  return Fact(pStr, true, pOntology, pEntities, pParameters, nullptr, pBeginPos, pResPos);
 }
 
 

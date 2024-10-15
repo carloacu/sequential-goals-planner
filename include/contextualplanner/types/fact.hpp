@@ -187,7 +187,8 @@ struct CONTEXTUALPLANNER_API Fact
                        const Ontology& pOntology,
                        const SetOfEntities& pEntities,
                        const std::vector<Parameter>& pParameters,
-                       bool* pIsFactNegatedPtr = nullptr);
+                       std::size_t pBeginPos = 0,
+                       std::size_t* pResPos = nullptr);
 
   /**
    * @brief Set "any value" to all of the specified arguments.

@@ -21,6 +21,11 @@ bool _isASeparator(char pChar)
       _isASeparatorForTheBeginOfAFollowingExpression(pChar);
 }
 
+bool _isEndOfTokenSeparator(char pChar)
+{
+  return pChar == ' ' || pChar == '\n' || pChar == ')' || pChar == '(';
+}
+
 }
 
 
@@ -177,17 +182,14 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
 {
   ExpressionParsed res;
   auto strSize = pStr.size();
-
   skipSpaces(pStr, pPos);
-  std::size_t beginOfTokenPos = pPos;
-
   if (pPos >= strSize)
     return res;
 
   if (pStr[pPos] == '(')
   {
     ++pPos;
-    beginOfTokenPos = pPos;
+    std::size_t beginOfTokenPos = pPos;
 
     bool inName = true;
     while (pPos < strSize)
@@ -216,21 +218,7 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
   }
   else
   {
-    while (pPos < strSize)
-    {
-      if (_isASeparator(pStr[pPos]))
-      {
-        res.name = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
-        break;
-      }
-      ++pPos;
-    }
-    if (res.name.empty())
-    {
-      res.name = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
-      if (res.name.empty())
-        throw std::runtime_error("Empty name in str " + pStr.substr(beginOfTokenPos, strSize - beginOfTokenPos));
-    }
+    res.name = parseToken(pStr, pPos);
   }
 
   // extract following expression
@@ -267,5 +255,67 @@ void ExpressionParsed::skipSpaces(const std::string& pStr,
     ++pPos;
   }
 }
+
+void ExpressionParsed::moveUntilEndOfLine(const std::string& pStr,
+                                          std::size_t& pPos)
+{
+  auto strSize = pStr.size();
+  while (pPos < strSize)
+  {
+    if (pStr[pPos] == '\n')
+      break;
+    ++pPos;
+  }
+}
+
+void ExpressionParsed::moveUntilClosingParenthesis(const std::string& pStr,
+                                                   std::size_t& pPos)
+{
+  auto strSize = pStr.size();
+  while (pPos < strSize)
+  {
+    if (pStr[pPos] == ')')
+      break;
+    ++pPos;
+  }
+}
+
+
+std::string ExpressionParsed::parseToken(const std::string& pStr,
+                                         std::size_t& pPos)
+{
+  auto strSize = pStr.size();
+  skipSpaces(pStr, pPos);
+  std::string res = "";
+  std::size_t beginOfTokenPos = pPos;
+  while (pPos < strSize)
+  {
+    if (pStr[pPos] == ';')
+    {
+      res = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
+      if (res.empty())
+        throw std::runtime_error("Empty token in str " + pStr.substr(beginOfTokenPos, strSize - beginOfTokenPos));
+
+      ExpressionParsed::moveUntilEndOfLine(pStr, pPos);
+      ++pPos;
+      return res;
+    }
+
+    if (_isEndOfTokenSeparator(pStr[pPos]))
+    {
+      res = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
+      break;
+    }
+    ++pPos;
+  }
+  if (res.empty())
+  {
+    res = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
+    if (res.empty())
+      throw std::runtime_error("Empty token in str " + pStr.substr(beginOfTokenPos, strSize - beginOfTokenPos));
+  }
+  return res;
+}
+
 
 } // !cp
