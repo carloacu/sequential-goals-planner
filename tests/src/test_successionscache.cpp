@@ -2,6 +2,7 @@
 #include <contextualplanner/types/action.hpp>
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/ontology.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
 
 using namespace cp;
 
@@ -147,14 +148,17 @@ void _test_impossibleSuccessions()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
+  const std::string action3 = "action3";
 
   std::map<std::string, cp::Action> actions;
-
   cp::Ontology ontology;
+  cp::SetOfConstFacts timelessFacts;
   ontology.predicates = cp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b\n"
-                                                     "fact_c",
+                                                     "fact_c\n"
+                                                     "fact_d",
                                                      ontology.types);
+  timelessFacts.add(cp::Fact("fact_d", false, ontology, {}, {}));
 
   {
     cp::Action actionObj1({},
@@ -168,12 +172,22 @@ void _test_impossibleSuccessions()
     actions.emplace(action2, actionObj2);
   }
 
-  Domain domain(actions, ontology);
+  // Do not consider action that can never be true
+
+  {
+    cp::Action actionObj3(cp::Condition::fromStr("fact_a & !fact_d", ontology, {}, {}),
+                          cp::WorldStateModification::fromStr("fact_c", ontology, {}, {}));
+    actions.emplace(action3, actionObj3);
+  }
+
+  Domain domain(actions, ontology, {}, timelessFacts);
   assert_eq<std::string>("action: action1\n"
                          "----------------------------------\n"
                          "\n"
                          "not action: action2\n", domain.printSuccessionCache());
 }
+
+
 
 }
 

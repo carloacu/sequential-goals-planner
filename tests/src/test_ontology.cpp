@@ -196,7 +196,7 @@ void _test_fact_initialization()
 
 void _test_action_initialization()
 {
-  cp::WorldState worldState;
+  cp::SetOfFact setOfFacts;
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromStr("my_type my_type2 return_type\n"
                                            "sub_my_type - my_type");
@@ -212,14 +212,14 @@ void _test_action_initialization()
 
   cp::Action action(cp::Condition::fromStr("pred_name(toto)", ontology, entities, {}),
                     cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, {}));
-  action.throwIfNotValid(worldState);
+  action.throwIfNotValid(setOfFacts);
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
     cp::Action action2(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
                       cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, parameters));
     action2.parameters = std::move(parameters);
-    action2.throwIfNotValid(worldState);
+    action2.throwIfNotValid(setOfFacts);
   }
 
   {
@@ -227,14 +227,14 @@ void _test_action_initialization()
     cp::Action action3(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
                       cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, parameters));
     action3.parameters = std::move(parameters);
-    action3.throwIfNotValid(worldState);
+    action3.throwIfNotValid(setOfFacts);
   }
 
   try
   {
     cp::Action action4(cp::Condition::fromStr("pred_name(?p)", ontology, entities, {}),
                        cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, {}));
-    action4.throwIfNotValid(worldState);
+    action4.throwIfNotValid(setOfFacts);
     assert_true(false);
   }
   catch (const std::exception& e)
@@ -249,7 +249,7 @@ void _test_action_initialization()
       cp::Action action5(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
                          cp::WorldStateModification::fromStr("pred_name2(toto, titi)=?r", ontology, entities, parameters));
       action5.parameters = std::move(parameters);
-      action5.throwIfNotValid(worldState);
+      action5.throwIfNotValid(setOfFacts);
       assert_true(false);
     }
     catch (const std::exception& e)

@@ -16,6 +16,20 @@ void assert_eq(const TYPE& pExpected,
   if (pExpected != pValue)
     assert(false);
 }
+
+template <typename TYPE>
+void assert_true(const TYPE& pValue)
+{
+  if (!pValue)
+    assert(false);
+}
+
+template <typename TYPE>
+void assert_false(const TYPE& pValue)
+{
+  if (pValue)
+    assert(false);
+}
 }
 
 
@@ -47,7 +61,7 @@ void test_setOfFacts()
     assert_eq<std::string>("[pred_name(toto)]", factToFacts.find(fact1).toStr());
   }
 
-  factToFacts.erase(fact1);
+  assert_true(factToFacts.erase(fact1));
 
   {
     assert_eq<std::string>("[]", factToFacts.find(fact1).toStr());
@@ -57,7 +71,11 @@ void test_setOfFacts()
   // tests with pred_name5
 
   auto fact2 = cp::Fact::fromStr("pred_name5(toto2)=titi", ontology, entities, {});
-  factToFacts.add(fact2);
+  factToFacts.add(fact2, false);
+  assert_false(factToFacts.erase(fact2));
+  {
+    assert_eq<std::string>("[]", factToFacts.find(fact1).toStr());
+  }
 
   auto fact3 = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
   factToFacts.add(fact3);

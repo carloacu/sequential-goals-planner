@@ -1,4 +1,5 @@
 #include <contextualplanner/types/domain.hpp>
+#include <contextualplanner/types/condition.hpp>
 #include <contextualplanner/types/worldstate.hpp>
 #include <contextualplanner/util/util.hpp>
 #include "../util/uuid.hpp"
@@ -10,7 +11,7 @@ const SetOfEventsId Domain::setOfEventsIdFromConstructor = "soe_from_constructor
 
 namespace
 {
-static const WorldState _emptyWorldState;
+static const SetOfFact _emptySetOfFact;
 static const std::map<Parameter, std::set<Entity>> _emptyParametersWithValues;
 static const std::vector<Parameter> _emptyParameters;
 
@@ -101,7 +102,7 @@ bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorld
         !pSatisfiedConditionPtr->containsFactOpt(pFactOptional,
                                                  _emptyParametersWithValues, nullptr,
                                                  _emptyParameters);
-}, _emptyWorldState))
+}, _emptySetOfFact))
   {
     return true;
   }
@@ -114,6 +115,7 @@ bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorld
 Domain::Domain()
   : _uuid(),
     _ontology(),
+    _timelessFacts(),
     _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
@@ -125,9 +127,11 @@ Domain::Domain()
 
 Domain::Domain(const std::map<ActionId, Action>& pActions,
                const Ontology& pOntology,
-               const SetOfEvents& pSetOfEvents)
+               const SetOfEvents& pSetOfEvents,
+               const SetOfConstFacts& pTimelessFacts)
   : _uuid(generateUuid()),
     _ontology(pOntology),
+    _timelessFacts(pTimelessFacts),
     _actions(),
     _preconditionToActions(),
     _notPreconditionToActions(),
@@ -149,6 +153,8 @@ Domain Domain::fromPddl(const std::string& pStr)
   std::string domainName = "";
   cp::Ontology ontology;
   std::map<ActionId, Action> actions;
+  SetOfEvents setOfEvents;
+  SetOfConstFacts timelessFacts;
 
   const std::string defineToken = "(define";
   std::size_t found = pStr.find(defineToken);
@@ -209,7 +215,7 @@ Domain Domain::fromPddl(const std::string& pStr)
   } else {
     throw std::runtime_error("No '(define' found in domain file");
   }
-  return Domain(actions, ontology);
+  return Domain(actions, ontology, setOfEvents, timelessFacts);
 }
 
 
@@ -227,10 +233,25 @@ void Domain::_addAction(const ActionId& pActionId,
   if (_actions.count(pActionId) > 0 ||
       pAction.effect.empty())
     return;
-  const auto& action = _actions.emplace(pActionId, pAction.clone(_ontology.derivedPredicates)).first->second;
+  Action clonedAction = pAction.clone(_ontology.derivedPredicates);
 
-  if (!_canWmDoSomething(action.effect.worldStateModification, action.precondition) &&
-      !_canWmDoSomething(action.effect.potentialWorldStateModification, action.precondition))
+  if (clonedAction.canThisActionBeUsedByThePlanner)
+  {
+    const auto& constFacts = _timelessFacts.setOfFacts();
+    if (!constFacts.empty() &&
+        clonedAction.precondition &&
+        !clonedAction.precondition->untilFalse([&](const FactOptional& pFactOptional) {
+          return !(pFactOptional.isFactNegated &&
+                 !constFacts.find(pFactOptional.fact).empty());
+       }, constFacts))
+      clonedAction.canThisActionBeUsedByThePlanner = false;
+    else if (!_canWmDoSomething(clonedAction.effect.worldStateModification, clonedAction.precondition) &&
+             !_canWmDoSomething(clonedAction.effect.potentialWorldStateModification, clonedAction.precondition))
+      clonedAction.canThisActionBeUsedByThePlanner = false;
+  }
+
+  const Action& action = _actions.emplace(pActionId, std::move(clonedAction)).first->second;
+  if (!action.canThisActionBeUsedByThePlanner)
     return;
 
   _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
@@ -372,6 +393,8 @@ void Domain::_updateSuccessions()
   for (auto& currAction : _actions)
   {
     Action& action = currAction.second;
+    if (!action.canThisActionBeUsedByThePlanner)
+      continue;
     ActionWithConditionAndFactFacts tmpData(currAction.first, action);
     tmpData.factsFromCondition = action.precondition ? action.precondition->getAllOptFacts() : std::set<FactOptional>();
     tmpData.factsFromEffect = action.effect.getAllOptFactsThatCanBeModified();

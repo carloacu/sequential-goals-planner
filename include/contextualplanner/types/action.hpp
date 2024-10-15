@@ -30,6 +30,7 @@ struct CONTEXTUALPLANNER_API Action
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<Condition>()),
       effect(pEffect),
       highImportanceOfNotRepeatingIt(false),
+      canThisActionBeUsedByThePlanner(true),
       actionsSuccessionsWithoutInterestCache()
   {
   }
@@ -43,6 +44,7 @@ struct CONTEXTUALPLANNER_API Action
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<Condition>()),
       effect(std::move(pEffect)),
       highImportanceOfNotRepeatingIt(false),
+      canThisActionBeUsedByThePlanner(true),
       actionsSuccessionsWithoutInterestCache()
   {
   }
@@ -54,6 +56,7 @@ struct CONTEXTUALPLANNER_API Action
       preferInContext(pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<Condition>()),
       effect(pAction.effect),
       highImportanceOfNotRepeatingIt(pAction.highImportanceOfNotRepeatingIt),
+      canThisActionBeUsedByThePlanner(pAction.canThisActionBeUsedByThePlanner),
       actionsSuccessionsWithoutInterestCache(pAction.actionsSuccessionsWithoutInterestCache)
   {
   }
@@ -66,6 +69,7 @@ struct CONTEXTUALPLANNER_API Action
     preferInContext = pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<Condition>();
     effect = pAction.effect;
     highImportanceOfNotRepeatingIt = pAction.highImportanceOfNotRepeatingIt;
+    canThisActionBeUsedByThePlanner = pAction.canThisActionBeUsedByThePlanner;
     actionsSuccessionsWithoutInterestCache = pAction.actionsSuccessionsWithoutInterestCache;
   }
 
@@ -93,7 +97,7 @@ struct CONTEXTUALPLANNER_API Action
   std::string printSuccessionCache(const ActionId& pIdOfThisAction) const;
 
   // TODO: remove that function?
-  void throwIfNotValid(const WorldState& pWorldState);
+  void throwIfNotValid(const SetOfFact& pSetOfFact);
 
   /// Print the precondition in string.
   std::string precondition_str() const { return precondition ? precondition->toStr() : ""; }
@@ -112,12 +116,13 @@ struct CONTEXTUALPLANNER_API Action
   /// If it is important to not repeat this action.
   bool highImportanceOfNotRepeatingIt = false;
 
+  bool canThisActionBeUsedByThePlanner;
   std::set<ActionId> actionsSuccessionsWithoutInterestCache;
 
 private:
   void _throwIfNotValidForACondition(const std::unique_ptr<Condition>& pPrecondition);
   void _throwIfNotValidForAnWordStateModif(const std::unique_ptr<WorldStateModification>& pWs,
-                                           const WorldState& pWorldState);
+                                           const SetOfFact& pSetOfFact);
   void _throwIfNotValidForAFact(const Fact& pFact);
 };
 

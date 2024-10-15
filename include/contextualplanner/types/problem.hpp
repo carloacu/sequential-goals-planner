@@ -23,6 +23,14 @@ namespace cp
  */
 struct CONTEXTUALPLANNER_API Problem
 {
+  Problem(const SetOfConstFacts* pTimelessFactsPtr = nullptr)
+    : entities(),
+      goalStack(),
+      worldState(pTimelessFactsPtr),
+      historical()
+  {
+  }
+
   SetOfEntities entities;
 
   /// Objectives that the bot wants to do.

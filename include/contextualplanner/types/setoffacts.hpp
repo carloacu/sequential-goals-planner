@@ -15,15 +15,17 @@ namespace cp
 {
 struct Fact;
 struct FactAccessor;
+struct Entity;
 
 
 struct CONTEXTUALPLANNER_API SetOfFact
 {
   SetOfFact();
 
-  void add(const Fact& pFact);
+  void add(const Fact& pFact,
+           bool pCanBeRemoved = true);
 
-  void erase(const Fact& pValue);
+  bool erase(const Fact& pValue);
 
   void clear();
 
@@ -75,11 +77,29 @@ struct CONTEXTUALPLANNER_API SetOfFact
   SetOfFactIterator find(const Fact& pFact,
                          bool pIgnoreFluent = false) const;
 
-  const std::set<Fact>& facts() const { return _facts; }
+  const std::map<Fact, bool>& facts() const { return _facts; }
 
+  /**
+   * @brief Get the value of a fact in the world state.
+   * @param[in] pFact Fact to extract the value.
+   * @return The value of the fact in the world state, an empty string if the fact is not in the world state.
+   */
+  std::optional<Entity> getFactFluent(const Fact& pFact) const;
+
+  /**
+   * @brief Extract the potential arguments of a fact parameter.
+   * @param[out] pPotentialArgumentsOfTheParameter The extracted the potential arguments of a fact parameter.
+   * @param[in] pFact Fact to consider for the parameter.
+   * @param[in] pParameter Parameter to consider in the fact.
+   */
+  void extractPotentialArgumentsOfAFactParameter(std::set<Entity>& pPotentialArgumentsOfTheParameter,
+                                                 const Fact& pFact,
+                                                 const std::string& pParameter) const;
+
+  bool empty() const { return _facts.empty(); }
 
 private:
-  std::set<Fact> _facts;
+  std::map<Fact, bool> _facts;
   std::optional<std::map<std::string, std::list<Fact>>> _exactCallToListsOpt;
   std::optional<std::map<std::string, std::list<Fact>>> _exactCallWithoutFluentToListsOpt;
   struct ParameterToValues

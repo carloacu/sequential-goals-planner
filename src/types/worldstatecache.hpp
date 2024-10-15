@@ -30,7 +30,7 @@ struct CONTEXTUALPLANNER_API WorldStateCache
   void notifyAboutANewFact(const Fact& pNewFact);
 
   void refreshIfNeeded(const Domain& pDomain,
-                       const std::set<Fact>& pFacts);
+                       const std::map<Fact, bool>& pFacts);
 
   /// Clear accessible and removable facts.
   void clear();

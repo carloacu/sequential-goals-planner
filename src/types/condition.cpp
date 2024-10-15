@@ -27,9 +27,10 @@ bool _forEachValueUntil(const std::function<bool (const Entity&)>& pValueCallbac
                         const WorldState& pWorldState,
                         const std::map<Parameter, std::set<Entity>>* pParametersPtr)
 {
+  const auto& setOfFacts = pWorldState.factsMapping();
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    auto fluentOpt = pCondition.getFluent(pWorldState);
+    auto fluentOpt = pCondition.getFluent(setOfFacts);
     if (fluentOpt)
       return pValueCallback(*fluentOpt);
   }
@@ -39,7 +40,7 @@ bool _forEachValueUntil(const std::function<bool (const Entity&)>& pValueCallbac
   for (auto& currParamPoss : paramPossibilities)
   {
     auto condToExtractValue = pCondition.clone(&currParamPoss);
-    auto fluentOpt = condToExtractValue->getFluent(pWorldState);
+    auto fluentOpt = condToExtractValue->getFluent(setOfFacts);
     if (fluentOpt && pValueCallback(*fluentOpt) == pUntilValue)
       return pUntilValue;
   }
@@ -67,9 +68,10 @@ void _forEach(const std::function<void (const Entity&, const Fact*)>& pValueCall
               const WorldState& pWorldState,
               const std::map<Parameter, std::set<Entity>>* pParametersPtr)
 {
+  const auto& setOfFacts = pWorldState.factsMapping();
   if (pParametersPtr == nullptr || pParametersPtr->empty())
   {
-    auto fluentOpt = pCondition.getFluent(pWorldState);
+    auto fluentOpt = pCondition.getFluent(setOfFacts);
     if (fluentOpt)
       pValueCallback(*fluentOpt, nullptr);
     return;
@@ -80,7 +82,7 @@ void _forEach(const std::function<void (const Entity&, const Fact*)>& pValueCall
   for (auto& currParamPoss : paramPossibilities)
   {
     auto factToExtractValue = pCondition.clone(&currParamPoss);
-    auto fluentOpt = factToExtractValue->getFluent(pWorldState);
+    auto fluentOpt = factToExtractValue->getFluent(setOfFacts);
     if (fluentOpt)
       pValueCallback(*fluentOpt, nullptr);
   }
@@ -561,13 +563,13 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
 
 
 bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const WorldState& pWorldState) const
+                               const SetOfFact& pSetOfFact) const
 {
   if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR)
   {
-    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pWorldState))
+    if (leftOperand && !leftOperand->untilFalse(pFactCallback, pSetOfFact))
       return false;
-    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pWorldState))
+    if (rightOperand && !rightOperand->untilFalse(pFactCallback, pSetOfFact))
       return false;
   }
   else if (leftOperand && rightOperand)
@@ -579,7 +581,7 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
       if (nodeType == ConditionNodeType::EQUALITY)
       {
         auto factToCheck = leftFact.factOptional.fact;
-        factToCheck.setFluent(rightOperand->getFluent(pWorldState));
+        factToCheck.setFluent(rightOperand->getFluent(pSetOfFact));
         return pFactCallback(FactOptional(factToCheck));
       }
       else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
@@ -734,7 +736,8 @@ bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
     if (leftFactPtr != nullptr && rightFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional.fact;
-      factToCheck.setFluent(pWorldState.getFactFluent(rightFactPtr->factOptional.fact));
+      const auto& setOfFacts = pWorldState.factsMapping();
+      factToCheck.setFluent(setOfFacts.getFactFluent(rightFactPtr->factOptional.fact));
       return pWorldState.canFactBecomeTrue(factToCheck, pParameters);
     }
   }
@@ -750,18 +753,18 @@ bool ConditionNode::operator==(const Condition& pOther) const
       _areEqual(rightOperand, otherNodePtr->rightOperand);
 }
 
-std::optional<Entity> ConditionNode::getFluent(const WorldState& pWorldState) const
+std::optional<Entity> ConditionNode::getFluent(const SetOfFact& pSetOfFact) const
 {
   if (nodeType == ConditionNodeType::PLUS)
   {
-    auto leftValue = leftOperand->getFluent(pWorldState);
-    auto rightValue = rightOperand->getFluent(pWorldState);
+    auto leftValue = leftOperand->getFluent(pSetOfFact);
+    auto rightValue = rightOperand->getFluent(pSetOfFact);
     return plusIntOrStr(leftValue, rightValue);
   }
   if (nodeType == ConditionNodeType::MINUS)
   {
-    auto leftValue = leftOperand->getFluent(pWorldState);
-    auto rightValue = rightOperand->getFluent(pWorldState);
+    auto leftValue = leftOperand->getFluent(pSetOfFact);
+    auto rightValue = rightOperand->getFluent(pSetOfFact);
     return minusIntOrStr(leftValue, rightValue);
   }
   return {};
@@ -900,8 +903,9 @@ bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
     {
       const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
       std::set<Entity> potentialArgumentsOfTheParameter;
-      pWorldState.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter,
-                                                            factToOfCondition, parameter.name);
+      const auto& setOfFacts = pWorldState.factsMapping();
+      setOfFacts.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter,
+                                                           factToOfCondition, parameter.name);
       for (auto& currPot : potentialArgumentsOfTheParameter)
       {
         auto factToCheck = factToOfCondition;
@@ -1127,9 +1131,9 @@ bool ConditionFact::operator==(const Condition& pOther) const
       factOptional == otherFactPtr->factOptional;
 }
 
-std::optional<Entity> ConditionFact::getFluent(const WorldState& pWorldState) const
+std::optional<Entity> ConditionFact::getFluent(const SetOfFact& pSetOfFact) const
 {
-  return pWorldState.getFactFluent(factOptional.fact);
+  return pSetOfFact.getFactFluent(factOptional.fact);
 }
 
 std::unique_ptr<Condition> ConditionFact::clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
@@ -1173,7 +1177,7 @@ bool ConditionNumber::operator==(const Condition& pOther) const
       nb == otherNbPtr->nb;
 }
 
-std::optional<Entity> ConditionNumber::getFluent(const WorldState&) const
+std::optional<Entity> ConditionNumber::getFluent(const SetOfFact&) const
 {
   return Entity::createNumberEntity(toStr(nullptr, true));
 }

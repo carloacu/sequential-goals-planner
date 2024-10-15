@@ -22,6 +22,7 @@ struct GoalStack;
 struct Event;
 struct ActionInvocationWithGoal;
 struct SetOfEvents;
+struct SetOfConstFacts;
 struct WorldStateModification;
 struct WorldStateCache;
 
@@ -33,7 +34,7 @@ struct WorldStateCache;
 struct CONTEXTUALPLANNER_API WorldState
 {
   /// Construct a world state.
-  WorldState();
+  WorldState(const SetOfConstFacts* pTimelessFactsPtr = nullptr);
   /// Construct a world state from another world state.
   WorldState(const WorldState& pOther);
 
@@ -62,7 +63,7 @@ struct CONTEXTUALPLANNER_API WorldState
 
 
   /// Be notified when facts changed.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsChanged;
+  cpstd::observable::ObservableUnsafe<void (const std::map<Fact, bool>&)> onFactsChanged;
   /// Be notified when punctual facts changed.
   cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onPunctualFacts;
   /// Be notified when facts are added.
@@ -183,25 +184,8 @@ struct CONTEXTUALPLANNER_API WorldState
   bool canFactBecomeTrue(const Fact& pFact,
                          const std::vector<Parameter>& pParameters) const;
 
-  /**
-   * @brief Get the value of a fact in the world state.
-   * @param[in] pFact Fact to extract the value.
-   * @return The value of the fact in the world state, an empty string if the fact is not in the world state.
-   */
-  std::optional<Entity> getFactFluent(const Fact& pFact) const;
-
-  /**
-   * @brief Extract the potential arguments of a fact parameter.
-   * @param[out] pPotentialArgumentsOfTheParameter The extracted the potential arguments of a fact parameter.
-   * @param[in] pFact Fact to consider for the parameter.
-   * @param[in] pParameter Parameter to consider in the fact.
-   */
-  void extractPotentialArgumentsOfAFactParameter(std::set<Entity>& pPotentialArgumentsOfTheParameter,
-                                                 const Fact& pFact,
-                                                 const std::string& pParameter) const;
-
   /// Facts of the world.
-  const std::set<Fact>& facts() const { return _factsMapping.facts(); }
+  const std::map<Fact, bool>& facts() const { return _factsMapping.facts(); }
   /// Fact names to facts in the world.
   const SetOfFact& factsMapping() const { return _factsMapping; }
 

@@ -118,7 +118,7 @@ std::list<ActionInvocationWithGoal> _planForMoreImportantGoalPossible(Problem& p
 void _getPreferInContextStatistics(std::size_t& nbOfPreconditionsSatisfied,
                                    std::size_t& nbOfPreconditionsNotSatisfied,
                                    const Action& pAction,
-                                   const std::set<Fact>& pFacts)
+                                   const std::map<Fact, bool>& pFacts)
 {
   auto onFact = [&](const FactOptional& pFactOptional,
                     bool)
@@ -691,7 +691,9 @@ void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult
     auto itAction = domainActions.find(currAction);
     if (itAction != domainActions.end())
     {
-      auto& action = itAction->second;
+      const Action& action = itAction->second;
+      if (!action.canThisActionBeUsedByThePlanner)
+        continue;
       FactsAlreadyChecked factsAlreadyChecked;
       auto newPotRes = PotentialNextAction(currAction, action);
       auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currAction);
@@ -745,7 +747,7 @@ ActionId _findFirstActionForAGoal(
   std::optional<PotentialNextActionComparisonCache> potentialNextActionComparisonCacheOpt;
   for (const auto& currFact : pProblem.worldState.facts())
   {
-    auto itPrecToActions = pDomain.preconditionToActions().find(currFact);
+    auto itPrecToActions = pDomain.preconditionToActions().find(currFact.first);
     _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt, alreadyDoneActions,
                                             pTreeOfAlreadyDonePath,
                                             itPrecToActions, pGoal,
@@ -768,6 +770,7 @@ ActionId _findFirstActionForAGoal(
 const FactOptional* _getGoalToStatisfy(const Goal& pGoal,
                                        const Problem& pProblem)
 {
+  const auto& setOfFacts = pProblem.worldState.factsMapping();
   const FactOptional* res = nullptr;
   pGoal.objective().untilFalse(
         [&](const FactOptional& pFactOptional)
@@ -778,7 +781,7 @@ const FactOptional* _getGoalToStatisfy(const Goal& pGoal,
       return false;
     }
     return true;
-  }, pProblem.worldState);
+  }, setOfFacts);
   return res;
 }
 

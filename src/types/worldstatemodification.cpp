@@ -98,14 +98,14 @@ struct WorldStateModificationNode : public WorldStateModification
   }
 
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const WorldState& pWorldState) const override;
+              const SetOfFact& pSetOfFact) const override;
 
   void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const override;
 
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                                     const WorldState& pWorldState) const;
+                                     const SetOfFact& pSetOfFact) const;
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                       const WorldState& pWorldState) const override;
+                       const SetOfFact& pSetOfFact) const override;
   bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pFactCallback,
                            std::map<Parameter, std::set<Entity>>& pParameters,
                            const WorldState& pWorldState,
@@ -122,18 +122,18 @@ struct WorldStateModificationNode : public WorldStateModification
 
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::optional<Entity> getFluent(const WorldState& pWorldState) const override
+  std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const override
   {
     if (nodeType == WorldStateModificationNodeType::PLUS)
     {
-      auto leftValue = leftOperand->getFluent(pWorldState);
-      auto rightValue = rightOperand->getFluent(pWorldState);
+      auto leftValue = leftOperand->getFluent(pSetOfFact);
+      auto rightValue = rightOperand->getFluent(pSetOfFact);
       return plusIntOrStr(leftValue, rightValue);
     }
     if (nodeType == WorldStateModificationNodeType::MINUS)
     {
-      auto leftValue = leftOperand->getFluent(pWorldState);
-      auto rightValue = rightOperand->getFluent(pWorldState);
+      auto leftValue = leftOperand->getFluent(pSetOfFact);
+      auto rightValue = rightOperand->getFluent(pSetOfFact);
       return minusIntOrStr(leftValue, rightValue);
     }
     return {};
@@ -172,7 +172,7 @@ private:
   Successions _successions;
 
   void _forAllInstruction(const std::function<void (const WorldStateModification&)>& pCallback,
-                          const WorldState& pWorldState) const;
+                          const SetOfFact& pSetOfFact) const;
 };
 
 
@@ -205,15 +205,15 @@ struct WorldStateModificationFact : public WorldStateModification
   }
 
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-              const WorldState&) const override { pFactCallback(factOptional); }
+              const SetOfFact&) const override { pFactCallback(factOptional); }
 
   void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const override { pFactCallback(factOptional); }
 
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                                     const WorldState&) const override { pFactCallback(factOptional); }
+                                     const SetOfFact&) const override { pFactCallback(factOptional); }
 
 
-  bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const WorldState&) const override
+  bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback, const SetOfFact&) const override
   {
     return pFactCallback(factOptional);
   }
@@ -256,9 +256,9 @@ struct WorldStateModificationFact : public WorldStateModification
 
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::optional<Entity> getFluent(const WorldState& pWorldState) const override
+  std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const override
   {
-    return pWorldState.getFactFluent(factOptional.fact);
+    return pSetOfFact.getFactFluent(factOptional.fact);
   }
 
   const FactOptional* getOptionalFact() const override
@@ -311,12 +311,12 @@ struct WorldStateModificationNumber : public WorldStateModification
   void replaceArgument(const Entity&,
                        const Entity&) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
-              const WorldState&) const override {}
+              const SetOfFact&) const override {}
   void forAllThatCanBeModified(const std::function<void (const FactOptional&)>&) const override {}
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>&,
-                                     const WorldState&) const override {}
+                                     const SetOfFact&) const override {}
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>&,
-                       const WorldState&) const override { return false; }
+                       const SetOfFact&) const override { return false; }
   bool canSatisfyObjective(const std::function<bool (const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>&,
                            std::map<Parameter, std::set<Entity>>&,
                            const WorldState&,
@@ -333,7 +333,7 @@ struct WorldStateModificationNumber : public WorldStateModification
 
   bool operator==(const WorldStateModification& pOther) const override;
 
-  std::optional<Entity> getFluent(const WorldState&) const override
+  std::optional<Entity> getFluent(const SetOfFact&) const override
   {
     return Entity::createNumberEntity(toStr(true));
   }
@@ -461,14 +461,14 @@ std::string WorldStateModificationNode::toStr(bool pPrintAnyFluent) const
 
 
 void WorldStateModificationNode::forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                                        const WorldState& pWorldState) const
+                                        const SetOfFact& pSetOfFact) const
 {
   if (nodeType == WorldStateModificationNodeType::AND)
   {
     if (leftOperand)
-      leftOperand->forAll(pFactCallback, pWorldState);
+      leftOperand->forAll(pFactCallback, pSetOfFact);
     if (rightOperand)
-      rightOperand->forAll(pFactCallback, pWorldState);
+      rightOperand->forAll(pFactCallback, pSetOfFact);
   }
   else if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand)
   {
@@ -476,7 +476,7 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(rightOperand->getFluent(pWorldState));
+      factToCheck.fact.setFluent(rightOperand->getFluent(pSetOfFact));
       return pFactCallback(factToCheck);
     }
   }
@@ -485,8 +485,8 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     _forAllInstruction(
           [&](const WorldStateModification& pWsModification)
     {
-      pWsModification.forAll(pFactCallback, pWorldState);
-    }, pWorldState);
+      pWsModification.forAll(pFactCallback, pSetOfFact);
+    }, pSetOfFact);
   }
   else if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand && rightOperand)
   {
@@ -494,7 +494,7 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pSetOfFact), rightOperand->getFluent(pSetOfFact)));
       return pFactCallback(factToCheck);
     }
   }
@@ -504,7 +504,7 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pSetOfFact), rightOperand->getFluent(pSetOfFact)));
       return pFactCallback(factToCheck);
     }
   }
@@ -549,14 +549,14 @@ void WorldStateModificationNode::forAllThatCanBeModified(const std::function<voi
 
 void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     const std::function<void (const FactOptional&)>& pFactCallback,
-    const WorldState& pWorldState) const
+    const SetOfFact& pSetOfFact) const
 {
   if (nodeType == WorldStateModificationNodeType::AND)
   {
     if (leftOperand)
-      leftOperand->iterateOverAllAccessibleFacts(pFactCallback, pWorldState);
+      leftOperand->iterateOverAllAccessibleFacts(pFactCallback, pSetOfFact);
     if (rightOperand)
-      rightOperand->iterateOverAllAccessibleFacts(pFactCallback, pWorldState);
+      rightOperand->iterateOverAllAccessibleFacts(pFactCallback, pSetOfFact);
   }
   else if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand)
   {
@@ -564,7 +564,7 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(rightOperand->getFluent(pWorldState));
+      factToCheck.fact.setFluent(rightOperand->getFluent(pSetOfFact));
       if (!factToCheck.fact.fluent())
         factToCheck.fact.setFluentValue(Entity::anyEntityValue());
       return pFactCallback(factToCheck);
@@ -575,8 +575,8 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     _forAllInstruction(
           [&](const WorldStateModification& pWsModification)
     {
-      pWsModification.iterateOverAllAccessibleFacts(pFactCallback, pWorldState);
-    }, pWorldState);
+      pWsModification.iterateOverAllAccessibleFacts(pFactCallback, pSetOfFact);
+    }, pSetOfFact);
   }
   else if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand && rightOperand)
   {
@@ -584,7 +584,7 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pSetOfFact), rightOperand->getFluent(pSetOfFact)));
       return pFactCallback(factToCheck);
     }
   }
@@ -594,7 +594,7 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pSetOfFact), rightOperand->getFluent(pSetOfFact)));
       return pFactCallback(factToCheck);
     }
   }
@@ -602,11 +602,11 @@ void WorldStateModificationNode::iterateOverAllAccessibleFacts(
 
 
 bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                                                 const WorldState& pWorldState) const
+                                                 const SetOfFact& pSetOfFact) const
 {
   if (nodeType == WorldStateModificationNodeType::AND)
-    return (leftOperand && leftOperand->forAllUntilTrue(pFactCallback, pWorldState)) ||
-        (rightOperand && rightOperand->forAllUntilTrue(pFactCallback, pWorldState));
+    return (leftOperand && leftOperand->forAllUntilTrue(pFactCallback, pSetOfFact)) ||
+        (rightOperand && rightOperand->forAllUntilTrue(pFactCallback, pSetOfFact));
 
   if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand)
   {
@@ -614,7 +614,7 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(rightOperand->getFluent(pWorldState));
+      factToCheck.fact.setFluent(rightOperand->getFluent(pSetOfFact));
       return pFactCallback(factToCheck);
     }
   }
@@ -626,8 +626,8 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
           [&](const WorldStateModification& pWsModification)
     {
       if (!res)
-        res = pWsModification.forAllUntilTrue(pFactCallback, pWorldState);
-    }, pWorldState);
+        res = pWsModification.forAllUntilTrue(pFactCallback, pSetOfFact);
+    }, pSetOfFact);
     return res;
   }
 
@@ -637,7 +637,7 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pSetOfFact), rightOperand->getFluent(pSetOfFact)));
       return pFactCallback(factToCheck);
     }
   }
@@ -648,7 +648,7 @@ bool WorldStateModificationNode::forAllUntilTrue(const std::function<bool (const
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pSetOfFact), rightOperand->getFluent(pSetOfFact)));
       return pFactCallback(factToCheck);
     }
   }
@@ -662,6 +662,8 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
                                                      const WorldState& pWorldState,
                                                      const std::string& pFromDeductionId) const
 {
+  const auto& setOfFacts = pWorldState.factsMapping();
+
   if (nodeType == WorldStateModificationNodeType::AND)
     return (leftOperand && leftOperand->canSatisfyObjective(pFactCallback, pParameters, pWorldState, pFromDeductionId)) ||
         (rightOperand && rightOperand->canSatisfyObjective(pFactCallback, pParameters, pWorldState, pFromDeductionId));
@@ -672,7 +674,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(rightOperand->getFluent(pWorldState));
+      factToCheck.fact.setFluent(rightOperand->getFluent(setOfFacts));
       std::map<Parameter, std::set<Entity>> localParameterToFind;
 
       if (!factToCheck.fact.fluent())
@@ -695,7 +697,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     {
       if (!res)
         res = pWsModification.canSatisfyObjective(pFactCallback, pParameters, pWorldState, pFromDeductionId);
-    }, pWorldState);
+    }, setOfFacts);
     return res;
   }
 
@@ -705,7 +707,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(setOfFacts), rightOperand->getFluent(setOfFacts)));
       return pFactCallback(factToCheck, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
     }
   }
@@ -716,7 +718,7 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(setOfFacts), rightOperand->getFluent(setOfFacts)));
       return pFactCallback(factToCheck, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
     }
   }
@@ -730,6 +732,8 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
                                                       const WorldState& pWorldState,
                                                       const std::string& pFromDeductionId) const
 {
+  const auto& setOfFacts = pWorldState.factsMapping();
+
   if (nodeType == WorldStateModificationNodeType::AND)
     return (leftOperand && leftOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId)) ||
         (rightOperand && rightOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId));
@@ -740,7 +744,7 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(rightOperand->getFluent(pWorldState));
+      factToCheck.fact.setFluent(rightOperand->getFluent(setOfFacts));
       std::map<Parameter, std::set<Entity>> localParameterToFind;
 
       if (!factToCheck.fact.fluent())
@@ -763,7 +767,7 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
     {
       if (!res)
         res = pWsModification.iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId);
-    }, pWorldState);
+    }, setOfFacts);
     return res;
   }
 
@@ -773,7 +777,7 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(plusIntOrStr(leftOperand->getFluent(setOfFacts), rightOperand->getFluent(setOfFacts)));
       return pCallback(_successions, factToCheck, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
     }
   }
@@ -784,7 +788,7 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
     if (leftFactPtr != nullptr)
     {
       auto factToCheck = leftFactPtr->factOptional;
-      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(pWorldState), rightOperand->getFluent(pWorldState)));
+      factToCheck.fact.setFluent(minusIntOrStr(leftOperand->getFluent(setOfFacts), rightOperand->getFluent(setOfFacts)));
       return pCallback(_successions, factToCheck, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
     }
   }
@@ -889,7 +893,7 @@ bool WorldStateModificationNode::operator==(const WorldStateModification& pOther
 }
 
 void WorldStateModificationNode::_forAllInstruction(const std::function<void (const WorldStateModification &)>& pCallback,
-                                                    const WorldState& pWorldState) const
+                                                    const SetOfFact& pSetOfFact) const
 {
   if (leftOperand && rightOperand && parameterOpt)
   {
@@ -897,7 +901,7 @@ void WorldStateModificationNode::_forAllInstruction(const std::function<void (co
     if (leftFactPtr != nullptr)
     {
       std::set<Entity> parameterValues;
-      pWorldState.extractPotentialArgumentsOfAFactParameter(parameterValues, leftFactPtr->factOptional.fact, parameterOpt->name);
+      pSetOfFact.extractPotentialArgumentsOfAFactParameter(parameterValues, leftFactPtr->factOptional.fact, parameterOpt->name);
       if (!parameterValues.empty())
       {
         for (const auto& paramValue : parameterValues)

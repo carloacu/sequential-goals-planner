@@ -9,6 +9,7 @@
 #include <contextualplanner/types/facttoconditions.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setofevents.hpp>
+#include <contextualplanner/types/setofconstfacts.hpp>
 
 namespace cp
 {
@@ -29,7 +30,8 @@ struct CONTEXTUALPLANNER_API Domain
    */
   Domain(const std::map<ActionId, Action>& pActions,
          const Ontology& pOntology,
-         const SetOfEvents& pSetOfEvents = {});
+         const SetOfEvents& pSetOfEvents = {},
+         const SetOfConstFacts& pTimelessFacts = {});
 
   static Domain fromPddl(const std::string& pStr);
 
@@ -103,12 +105,15 @@ struct CONTEXTUALPLANNER_API Domain
 
   const Ontology& getOntology() const { return _ontology; }
 
+  const SetOfConstFacts& getTimelessFacts() const { return _timelessFacts; }
+
   std::string printSuccessionCache() const;
 
 private:
   /// Universal unique identifier regenerated each time this object is modified.
   std::string _uuid;
   Ontology _ontology;
+  SetOfConstFacts _timelessFacts;
   /// Map of action identifiers to action.
   std::map<ActionId, Action> _actions;
   /// Map of facts in precondition to action identifiers.

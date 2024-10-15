@@ -1,5 +1,6 @@
 #include <contextualplanner/contextualplanner.hpp>
 #include <contextualplanner/types/predicate.hpp>
+#include <contextualplanner/types/setofconstfacts.hpp>
 #include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
@@ -524,14 +525,19 @@ void _satisfyGoalWithSuperiorOperator()
 {
   const std::string action1 = "action1";
   cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("fact_a - number", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr("fact_a - number\n"
+                                                     "fact_b", ontology.types);
+
+  cp::SetOfConstFacts timelessFacts;
+  timelessFacts.add(cp::Fact("fact_b", false, ontology, {}, {}));
 
   std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, cp::WorldStateModification::fromStr("fact_a=100", ontology, {}, {})));
-  cp::Domain domain(std::move(actions), ontology);
+  actions.emplace(action1, cp::Action(cp::Condition::fromStr("fact_b", ontology, {}, {}),
+                                      cp::WorldStateModification::fromStr("fact_a=100", ontology, {}, {})));
+  cp::Domain domain(std::move(actions), ontology, {}, timelessFacts);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  cp::Problem problem(&timelessFacts);
   auto& entities = problem.entities;
   problem.worldState.addFact(cp::Fact("fact_a=10", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);

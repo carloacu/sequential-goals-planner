@@ -63,7 +63,7 @@ void WorldStateCache::notifyAboutANewFact(const Fact& pNewFact)
 
 
 void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
-                                      const std::set<Fact>& pFacts)
+                                      const std::map<Fact, bool>& pFacts)
 {
   if (_uuidOfLastDomainUsed == pDomain.getUuid())
     return;
@@ -74,9 +74,9 @@ void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
     FactsAlreadyChecked factsAlreadychecked;
     for (const auto& currFact : pFacts)
     {
-      if (_accessibleFacts.facts().count(currFact) == 0)
+      if (_accessibleFacts.facts().count(currFact.first) == 0)
       {
-        auto itPrecToActions = pDomain.preconditionToActions().find(currFact);
+        auto itPrecToActions = pDomain.preconditionToActions().find(currFact.first);
         _feedAccessibleFactsFromSetOfActions(itPrecToActions, pDomain, factsAlreadychecked);
       }
     }
@@ -141,6 +141,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
   std::set<Fact> removableFactsToAdd;
   std::vector<Fact> removableFactsToAddWithAnyValues;
 
+  const auto& setOfFacts = _worldState.factsMapping();
   pEffect.iterateOverAllAccessibleFacts([&](const cp::FactOptional& pFactOpt) {
     if (!pFactOpt.isFactNegated)
     {
@@ -179,7 +180,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
         }
       }
     }
-  }, _worldState);
+  }, setOfFacts);
 
   if (!accessibleFactsToAdd.empty() || !accessibleFactsToAddWithAnyValues.empty() ||
       !removableFactsToAdd.empty() || !removableFactsToAddWithAnyValues.empty())

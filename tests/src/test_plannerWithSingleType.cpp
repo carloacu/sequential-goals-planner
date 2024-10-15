@@ -1703,10 +1703,10 @@ void _factChangedNotification()
   actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn + "&" + _fact_punctual_p1, ontology)));
   cp::Domain domain(std::move(actions), ontology);
 
-  std::set<cp::Fact> factsChangedFromSubscription;
+  std::map<cp::Fact, bool> factsChangedFromSubscription;
   cp::Problem problem;
   _addFact(problem.worldState, _fact_beginOfConversation, problem.goalStack, ontology);
-  auto factsChangedConnection = problem.worldState.onFactsChanged.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+  auto factsChangedConnection = problem.worldState.onFactsChanged.connectUnsafe([&](const std::map<cp::Fact, bool>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
   std::list<cp::Fact> punctualFactsAdded;
@@ -1727,7 +1727,8 @@ void _factChangedNotification()
 
   auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   assert_eq<std::string>(_action_greet, plannerResult.actionInvocation.actionId);
-  assert_eq({_fact(_fact_beginOfConversation, ontology), _fact(_fact_greeted, ontology)}, factsChangedFromSubscription);
+  assert_eq({{_fact(_fact_beginOfConversation, ontology), true},
+             {_fact(_fact_greeted, ontology), true}}, factsChangedFromSubscription);
   assert_eq({}, punctualFactsAdded);
   assert_eq({_fact(_fact_greeted, ontology)}, factsAdded);
   factsAdded.clear();
@@ -1735,12 +1736,15 @@ void _factChangedNotification()
 
   plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   assert_eq<std::string>(_action_checkIn, plannerResult.actionInvocation.actionId);
-  assert_eq({_fact(_fact_beginOfConversation, ontology), _fact(_fact_greeted, ontology), _fact(_fact_checkedIn, ontology)}, factsChangedFromSubscription);
+  assert_eq({{_fact(_fact_beginOfConversation, ontology), true},
+             {_fact(_fact_greeted, ontology), true},
+             {_fact(_fact_checkedIn, ontology), true}}, factsChangedFromSubscription);
   assert_eq({_fact(_fact_punctual_p1, ontology)}, punctualFactsAdded);
   assert_eq({_fact(_fact_checkedIn, ontology)}, factsAdded);
   assert_eq({}, factsRemoved);
   _removeFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
-  assert_eq({_fact(_fact_beginOfConversation, ontology), _fact(_fact_checkedIn, ontology)}, factsChangedFromSubscription);
+  assert_eq({{_fact(_fact_beginOfConversation, ontology), true},
+             {_fact(_fact_checkedIn, ontology), true}}, factsChangedFromSubscription);
   assert_eq({_fact(_fact_punctual_p1, ontology)}, punctualFactsAdded);
   assert_eq({_fact(_fact_checkedIn, ontology)}, factsAdded);
   assert_eq({_fact(_fact_greeted, ontology)}, factsRemoved);
@@ -2318,7 +2322,8 @@ void _actionNavigationAndGrabObjectWithParameters()
   cp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
-  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)=*", ontology))->value);
+  const auto& setOfFacts = problem.worldState.factsMapping();
+  assert_eq<std::string>("kitchen", setOfFacts.getFactFluent(_fact("location(sweets)=*", ontology))->value);
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)",
                          _solveStr(problem, actions, ontology));
@@ -2350,7 +2355,8 @@ void _actionNavigationAndGrabObjectWithParameters2()
   cp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
-  assert_eq<std::string>("kitchen", problem.worldState.getFactFluent(_fact("location(sweets)=*", ontology))->value);
+  const auto& setOfFacts = problem.worldState.factsMapping();
+  assert_eq<std::string>("kitchen", setOfFacts.getFactFluent(_fact("location(sweets)=*", ontology))->value);
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   assert_eq<std::string>(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)",
                          _solveStr(problem, actions, ontology));

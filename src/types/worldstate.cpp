@@ -2,6 +2,7 @@
 #include <list>
 #include <contextualplanner/types/goalstack.hpp>
 #include <contextualplanner/types/actioninvocationwithgoal.hpp>
+#include <contextualplanner/types/setofconstfacts.hpp>
 #include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/types/worldstatemodification.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -15,12 +16,12 @@ namespace
 
 bool _isNegatedFactCompatibleWithFacts(
     const Fact& pNegatedFact,
-    const std::set<Fact>& pFacts)
+    const std::map<Fact, bool>& pFacts)
 {
   for (const auto& currFact : pFacts)
-    if (currFact.areEqualWithoutFluentConsideration(pNegatedFact) &&
-        ((currFact.isValueNegated() && currFact.fluent() == pNegatedFact.fluent()) ||
-         (!currFact.isValueNegated() && currFact.fluent() != pNegatedFact.fluent())))
+    if (currFact.first.areEqualWithoutFluentConsideration(pNegatedFact) &&
+        ((currFact.first.isValueNegated() && currFact.first.fluent() == pNegatedFact.fluent()) ||
+         (!currFact.first.isValueNegated() && currFact.first.fluent() != pNegatedFact.fluent())))
       return true;
   return false;
 }
@@ -28,12 +29,12 @@ bool _isNegatedFactCompatibleWithFacts(
 }
 
 
-WorldState::WorldState()
+WorldState::WorldState(const SetOfConstFacts* pTimelessFactsPtr)
   : onFactsChanged(),
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
-    _factsMapping(),
+    _factsMapping(pTimelessFactsPtr != nullptr ? pTimelessFactsPtr->setOfFacts() : SetOfFact()),
     _cache(std::make_unique<WorldStateCache>(*this))
 {
 }
@@ -260,7 +261,7 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
       factsToRemove.emplace_back(pFactOptional.fact);
     else
       factsToAdd.emplace_back(pFactOptional.fact);
-  }, *this);
+  }, _factsMapping);
 
   _addFacts(pWhatChanged, factsToAdd, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
   _removeFacts(pWhatChanged, factsToRemove, pGoalStack, pNow);
@@ -360,51 +361,6 @@ bool WorldState::canFactBecomeTrue(const Fact& pFact,
         return true;
   }
   return false;
-}
-
-std::optional<Entity> WorldState::getFactFluent(const cp::Fact& pFact) const
-{
-  auto factMatchingInWs = _factsMapping.find(pFact, true);
-  for (const auto& currFact : factMatchingInWs)
-    if (currFact.arguments() == pFact.arguments())
-      return currFact.fluent();
-  return {};
-}
-
-
-void WorldState::extractPotentialArgumentsOfAFactParameter(
-    std::set<Entity>& pPotentialArgumentsOfTheParameter,
-    const Fact& pFact,
-    const std::string& pParameter) const
-{
-  auto factMatchingInWs = _factsMapping.find(pFact);
-  for (const auto& currFact : factMatchingInWs)
-  {
-    if (currFact.arguments().size() == pFact.arguments().size())
-    {
-      std::set<Entity> potentialNewValues;
-      bool doesItMatch = true;
-      for (auto i = 0; i < pFact.arguments().size(); ++i)
-      {
-        if (pFact.arguments()[i].value == pParameter)
-        {
-          potentialNewValues.insert(currFact.arguments()[i]);
-          continue;
-        }
-        if (pFact.arguments()[i] == currFact.arguments()[i])
-          continue;
-        doesItMatch = false;
-        break;
-      }
-      if (doesItMatch)
-      {
-        if (pPotentialArgumentsOfTheParameter.empty())
-          pPotentialArgumentsOfTheParameter = std::move(potentialNewValues);
-        else
-          pPotentialArgumentsOfTheParameter.insert(potentialNewValues.begin(), potentialNewValues.end());
-      }
-    }
-  }
 }
 
 

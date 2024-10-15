@@ -96,28 +96,28 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state.
    * @param[in] pFactCallback Callback called for each optional fact of this object.
-   * @param[in] pWorldState World state use to extract value of the facts.
+   * @param[in] pSetOfFact Facts to use to extract value of the facts.
    */
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                      const WorldState& pWorldState) const = 0;
+                      const SetOfFact& pSetOfFact) const = 0;
 
   virtual void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
 
   /**
    * @brief Iterate over all the optional facts that can be accessible.
    * @param[in] pFactCallback Callback called for each optional fact that can be accessible.
-   * @param[in] pWorldState World state use to extract value of the facts.
+   * @param[in] pSetOfFact Facts to use to extract value of the facts.
    */
   virtual void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                                             const WorldState& pWorldState) const = 0;
+                                             const SetOfFact& pSetOfFact) const = 0;
 
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state until the callback returns true.
    * @param[in] pFactCallback Callback called for each optional fact of this object.
-   * @param[in] pWorldState World state use to extract value of the facts.
+   * @param[in] pSetOfFact Facts to use to extract value of the facts.
    */
   virtual bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const WorldState& pWorldState) const = 0;
+                               const SetOfFact& pSetOfFact) const = 0;
 
   /**
    * @brief Iterate over all the optional facts until one can satisfy the objective.
@@ -151,7 +151,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pWorldState World state use to extract value of the facts.
    * @return The world state modification converted to a string value.
    */
-  virtual std::optional<Entity> getFluent(const WorldState& pWorldState) const = 0;
+  virtual std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const = 0;
 
   /// Convert this world state modification to an optional fact if possible.
   virtual const FactOptional* getOptionalFact() const = 0;

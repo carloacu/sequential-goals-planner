@@ -32,6 +32,7 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/setofpredicates.hpp
     include/contextualplanner/types/setofderivedpredicates.hpp
     include/contextualplanner/types/setoftypes.hpp
+    include/contextualplanner/types/setofconstfacts.hpp
     include/contextualplanner/types/type.hpp
     include/contextualplanner/types/worldstate.hpp
     include/contextualplanner/types/worldstatemodification.hpp
@@ -108,6 +109,7 @@ add_library(contextualplanner SHARED
   include/contextualplanner/types/setofderivedpredicates.hpp
   src/types/setofderivedpredicates.cpp
   src/types/axiom.cpp
+  include/contextualplanner/types/setofconstfacts.hpp
 )
 target_compile_features(contextualplanner PRIVATE cxx_std_14)
 

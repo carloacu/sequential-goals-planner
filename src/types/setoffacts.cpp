@@ -53,9 +53,10 @@ SetOfFact::SetOfFact()
 }
 
 
-void SetOfFact::add(const Fact& pFact)
+void SetOfFact::add(const Fact& pFact,
+                    bool pCanBeRemoved)
 {
-  auto insertionResult = _facts.insert(pFact);
+  auto insertionResult = _facts.emplace(pFact, pCanBeRemoved);
 
   if (!pFact.hasAParameter())
   {
@@ -100,17 +101,15 @@ void SetOfFact::add(const Fact& pFact)
 }
 
 
-void SetOfFact::erase(const Fact& pFact)
+bool SetOfFact::erase(const Fact& pFact)
 {
-  if (!_erase(pFact))
-  {
-    auto factIt = find(pFact);
-    for (const auto& currFact : factIt)
-    {
-      _erase(currFact);
-      break;
-    }
-  }
+  if (_erase(pFact))
+    return true;
+
+  auto factIt = find(pFact);
+  for (const auto& currFact : factIt)
+    return _erase(currFact);
+  return false;
 }
 
 
@@ -119,6 +118,10 @@ bool SetOfFact::_erase(const Fact& pFact)
   auto it = _facts.find(pFact);
   if (it != _facts.end())
   {
+    // Do not allow to remove if this fact is marked as cannot be removed
+    if (!it->second)
+      return false;
+
     if (!pFact.hasAParameter())
     {
       auto exactCallStr = _getExactCall(pFact);
@@ -290,6 +293,51 @@ typename SetOfFact::SetOfFactIterator SetOfFact::find(const Fact& pFact,
   if (resPtr != nullptr)
     return SetOfFactIterator(resPtr);
   return SetOfFactIterator(exactMatchPtr);
+}
+
+std::optional<Entity> SetOfFact::getFactFluent(const cp::Fact& pFact) const
+{
+  auto factMatchingInWs = find(pFact, true);
+  for (const auto& currFact : factMatchingInWs)
+    if (currFact.arguments() == pFact.arguments())
+      return currFact.fluent();
+  return {};
+}
+
+
+void SetOfFact::extractPotentialArgumentsOfAFactParameter(
+    std::set<Entity>& pPotentialArgumentsOfTheParameter,
+    const Fact& pFact,
+    const std::string& pParameter) const
+{
+  auto factMatchingInWs = find(pFact);
+  for (const auto& currFact : factMatchingInWs)
+  {
+    if (currFact.arguments().size() == pFact.arguments().size())
+    {
+      std::set<Entity> potentialNewValues;
+      bool doesItMatch = true;
+      for (auto i = 0; i < pFact.arguments().size(); ++i)
+      {
+        if (pFact.arguments()[i].value == pParameter)
+        {
+          potentialNewValues.insert(currFact.arguments()[i]);
+          continue;
+        }
+        if (pFact.arguments()[i] == currFact.arguments()[i])
+          continue;
+        doesItMatch = false;
+        break;
+      }
+      if (doesItMatch)
+      {
+        if (pPotentialArgumentsOfTheParameter.empty())
+          pPotentialArgumentsOfTheParameter = std::move(potentialNewValues);
+        else
+          pPotentialArgumentsOfTheParameter.insert(potentialNewValues.begin(), potentialNewValues.end());
+      }
+    }
+  }
 }
 
 
