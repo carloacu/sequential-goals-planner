@@ -37,6 +37,8 @@ set(CHATBOTPLANNER_HPPS
     include/contextualplanner/types/worldstate.hpp
     include/contextualplanner/types/worldstatemodification.hpp
     include/contextualplanner/util/exportsymbols/macro.hpp
+    include/contextualplanner/util/serializer/deserializefrompddl.hpp
+    include/contextualplanner/util/serializer/serializeinpddl.hpp
     include/contextualplanner/util/trackers/goalsremovedtracker.hpp
     include/contextualplanner/util/api.hpp
     include/contextualplanner/util/alias.hpp
@@ -89,6 +91,10 @@ set(CHATBOTPLANNER_SRCS
     src/types/worldstatecache.hpp
     src/types/worldstatecache.cpp
     src/types/worldstatemodification.cpp
+    src/types/worldstatemodificationprivate.hpp
+    src/types/worldstatemodificationprivate.cpp
+    src/util/serializer/deserializefrompddl.cpp
+    src/util/serializer/serializeinpddl.cpp
     src/util/trackers/goalsremovedtracker.cpp
     src/util/arithmeticevaluator.cpp
     src/util/print.cpp

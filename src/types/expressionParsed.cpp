@@ -21,13 +21,38 @@ bool _isASeparator(char pChar)
       _isASeparatorForTheBeginOfAFollowingExpression(pChar);
 }
 
-bool _isEndOfTokenSeparator(char pChar)
+}
+
+
+ExpressionParsed ExpressionParsed::clone() const
 {
-  return pChar == ' ' || pChar == '\n' || pChar == ')' || pChar == '(';
+  ExpressionParsed res;
+  res.name = name;
+  for (const auto& arg : arguments)
+     res.arguments.emplace_back(arg.clone());
+  res.value = value;
+  res.isValueNegated = isValueNegated;
+  res.isAFunction = isAFunction;
+  res.separatorToFollowingExp = separatorToFollowingExp;
+  if (followingExpression)
+    res.followingExpression = std::make_unique<ExpressionParsed>(followingExpression->clone());
+  return res;
 }
 
+std::string ExpressionParsed::toStr() const
+{
+  std::string res = name + "(";
+  bool firstIteration = true;
+  for (const auto& currArg : arguments)
+  {
+    if (firstIteration)
+      res += ", ";
+    else
+      firstIteration = false;
+    res += currArg.toStr();
+  }
+  return res + ")";
 }
-
 
 
 FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
@@ -199,7 +224,7 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
         ++pPos;
         break;
       }
-      else if (_isASeparator(pStr[pPos]))
+      else if (!inName || isEndOfTokenSeparator(pStr[pPos]))
       {
         if (inName)
         {
@@ -284,6 +309,20 @@ void ExpressionParsed::moveUntilClosingParenthesis(const std::string& pStr,
 std::string ExpressionParsed::parseToken(const std::string& pStr,
                                          std::size_t& pPos)
 {
+  std::size_t beginOfTokenPos = pPos;
+  auto res = parseTokenThatCanBeEmpty(pStr, pPos);
+  if (res.empty())
+  {
+    auto strSize = pStr.size();
+    throw std::runtime_error("Empty token in str " + pStr.substr(beginOfTokenPos, strSize - beginOfTokenPos));
+  }
+  return res;
+}
+
+
+std::string ExpressionParsed::parseTokenThatCanBeEmpty(const std::string& pStr,
+                                                       std::size_t& pPos)
+{
   auto strSize = pStr.size();
   skipSpaces(pStr, pPos);
   std::string res = "";
@@ -293,15 +332,12 @@ std::string ExpressionParsed::parseToken(const std::string& pStr,
     if (pStr[pPos] == ';')
     {
       res = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
-      if (res.empty())
-        throw std::runtime_error("Empty token in str " + pStr.substr(beginOfTokenPos, strSize - beginOfTokenPos));
-
       ExpressionParsed::moveUntilEndOfLine(pStr, pPos);
       ++pPos;
       return res;
     }
 
-    if (_isEndOfTokenSeparator(pStr[pPos]))
+    if (isEndOfTokenSeparator(pStr[pPos]))
     {
       res = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
       break;
@@ -311,10 +347,14 @@ std::string ExpressionParsed::parseToken(const std::string& pStr,
   if (res.empty())
   {
     res = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
-    if (res.empty())
-      throw std::runtime_error("Empty token in str " + pStr.substr(beginOfTokenPos, strSize - beginOfTokenPos));
   }
   return res;
+}
+
+
+bool ExpressionParsed::isEndOfTokenSeparator(char pChar)
+{
+  return pChar == ' ' || pChar == '\n' || pChar == ')' || pChar == '(';
 }
 
 

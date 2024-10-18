@@ -82,7 +82,7 @@ std::string Action::printSuccessionCache(const ActionId& pIdOfThisAction) const
   return res;
 }
 
-void Action::throwIfNotValid(const SetOfFact& pSetOfFact)
+void Action::throwIfNotValid(const SetOfFacts& pSetOfFact)
 {
   _throwIfNotValidForACondition(precondition);
   _throwIfNotValidForACondition(preferInContext);
@@ -102,7 +102,7 @@ void Action::_throwIfNotValidForACondition(const std::unique_ptr<Condition>& pPr
 
 
 void Action::_throwIfNotValidForAnWordStateModif(const std::unique_ptr<WorldStateModification>& pWs,
-                                                 const SetOfFact& pSetOfFact)
+                                                 const SetOfFacts& pSetOfFact)
 {
   if (pWs)
     pWs->forAll([&](const FactOptional& pFactOptional) {

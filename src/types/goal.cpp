@@ -1,6 +1,7 @@
 #include <contextualplanner/types/goal.hpp>
 #include <assert.h>
 #include <contextualplanner/util/util.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace cp
 {
@@ -66,7 +67,7 @@ Goal::Goal(const std::string& pStr,
     goalStr = goalStr.substr(endPos, goalStr.size() - endPos);
   }
 
-  _objective = Condition::fromStr(goalStr, pOntology, pEntities, {});
+  _objective = strToCondition(goalStr, pOntology, pEntities, {});
   assert(_objective);
 }
 

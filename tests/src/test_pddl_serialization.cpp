@@ -6,7 +6,8 @@
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofentities.hpp>
 #include <contextualplanner/types/setofpredicates.hpp>
-
+#include <contextualplanner/types/worldstatemodification.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace
 {
@@ -46,24 +47,33 @@ void _test_pddlSerializationParts()
   {
     std::size_t pos = 0;
     ontology.predicates = cp::SetOfPredicates::fromPddl("(pred_a ?e - entity)\n"
-                                                        "pred_b", pos, ontology.types);
-    assert_eq<std::string>("pred_a(?e - entity)\n"
+                                                        "pred_b\n"
+                                                        "(battery-amount ?t - type1) - number", pos, ontology.types);
+    assert_eq<std::string>("battery-amount(?t - type1) - number\n"
+                           "pred_a(?e - entity)\n"
                            "pred_b()", ontology.predicates.toStr());
   }
 
   {
     std::size_t pos = 0;
-    auto fact = cp::Fact::fromPDDL("(pred_a toto)", ontology, {}, {}, pos, &pos);
+    cp::Fact fact = cp::Fact::fromPddl("(pred_a toto)", ontology, {}, {}, pos, &pos);
+    assert_eq<std::string>("(pred_a toto)", fact.toPddl(true));
     assert_eq<std::string>("pred_a(toto)", fact.toStr());
   }
 
-  std::cout << "PDDL serialization is ok !!!!" << std::endl;
+  {
+    std::size_t pos = 0;
+    std::unique_ptr<cp::WorldStateModification> ws = cp::pddlToWsModification("(decrease (battery-amount toto) 4)", pos, ontology, {}, {});
+    if (!ws)
+      assert_true(false);
+    assert_eq<std::string>("decrease(battery-amount(toto), 4)", ws->toStr());
+  }
 }
 
 
 void _test_loadPddlDomain()
 {
-  auto domain = cp::Domain::fromPddl(R"(
+  auto domain = cp::pddlToDomain(R"(
 (define
     (domain construction)
     (:extends building)
@@ -71,8 +81,10 @@ void _test_loadPddlDomain()
     (:types
         site material - object
         bricks cables windows - material
+        car
     )
-    (:constants mainsite - site)
+    (:constants mainsite - site
+      maincar - car)
 
     ;(:domain-variables ) ;deprecated
 
@@ -86,12 +98,26 @@ void _test_loadPddlDomain()
         (material-used ?m - material)
     )
 
+    (:functions
+        (battery-amount ?r - car)
+    )
+
     (:timeless (foundations-set mainsite))
 
     ;(:safety
         ;(forall
         ;    (?s - site) (walls-built ?s)))
         ;deprecated
+
+    (:axiom
+        :vars (?s - site)
+        :context (and
+            (walls-built ?s)
+            (windows-fitted ?s)
+            (cables-installed ?s)
+        )
+        :implies (site-built ?s)
+    )
 
     (:action BUILD-WALL
         :parameters (?s - site ?b - bricks)
@@ -108,46 +134,28 @@ void _test_loadPddlDomain()
         ; :expansion ;deprecated
     )
 
-    (:axiom
-        :vars (?s - site)
-        :context (and
-            (walls-built ?s)
-            (windows-fitted ?s)
-            (cables-installed ?s)
-        )
-        :implies (site-built ?s)
-    )
-
-    ;Actions omitted for brevity
-
-    (:durative-action move
+    (:durative-action BUILD-WALL-DURATIVE
         :parameters
-            (?r - rover
-             ?fromwp - waypoint
-             ?towp - waypoint)
+          (?s - site ?b - bricks)
 
         :duration
-            (= ?duration 5)
+            (= ?duration 1)
 
         :condition
           (and
-              (at start (rover ?rover))
-              (at start (waypoint ?from-waypoint))
-              (at start (waypoint ?to-waypoint))
-              (over all (can-move ?from-waypoint ?to-waypoint))
-              (at start (at ?rover ?from-waypoint))
-              (at start (> (battery-amount ?rover) 8)))
+            (at start (on-site ?b ?s))
+            (at start (foundations-set ?s))
+            (over all (not (walls-built ?s)))
+            (at start (not (material-used ?b)))
+          )
 
         :effect
           (and
-                (decrease (fuel-level ?t) (* 2 #t))
-              (at end (at ?rover ?to-waypoint))
-              (at end (been-at ?rover ?to-waypoint))
-              (at start (not (at ?rover ?from-waypoint)))
-              (at start (decrease (battery-amount ?rover) 8))
-                (at end (increase (distance-travelled) 5))
-                )
-  )
+            (at start (walls-built ?s))
+            (at end (material-used ?b))
+            (at end (decrease (battery-amount maincar) 4))
+          )
+    )
 
 )
 )");

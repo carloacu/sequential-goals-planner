@@ -30,7 +30,8 @@ void _entitiesToStr(std::string& pStr,
 }
 
 void _entitiesToValueStr(std::string& pStr,
-                         const std::vector<Entity>& pParameters)
+                         const std::vector<Entity>& pParameters,
+                         const std::string& pSeparator)
 {
   bool firstIteration = true;
   for (auto& param : pParameters)
@@ -38,7 +39,7 @@ void _entitiesToValueStr(std::string& pStr,
     if (firstIteration)
       firstIteration = false;
     else
-      pStr += ", ";
+      pStr += pSeparator;
     pStr += param.value;
   }
 }
@@ -532,13 +533,39 @@ void Fact::replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurren
   _resetFactSignatureCache();
 }
 
+std::string Fact::toPddl(bool pInEffectContext,
+                         bool pPrintAnyFluent) const
+{
+  std::string res = "(" + _name;
+  if (!_arguments.empty())
+  {
+    res += " ";
+    _entitiesToValueStr(res, _arguments, " ");
+  }
+  res += ")";
+  if (_fluent)
+  {
+    if (!pPrintAnyFluent && _fluent->isAnyValue())
+      return res;
+    res = (pInEffectContext ? "(assign " : "(= ") + res + " " + _fluent->value + ")";
+    if (_isFluentNegated)
+    {
+      if (pInEffectContext)
+        throw std::runtime_error("Fluent should not be negated in effect: " + toStr(pPrintAnyFluent));
+      res += "(not " + res + ")";
+    }
+    res += ")";
+  }
+  return res;
+}
+
 std::string Fact::toStr(bool pPrintAnyFluent) const
 {
   std::string res = _name;
   if (!_arguments.empty())
   {
     res += "(";
-    _entitiesToValueStr(res, _arguments);
+    _entitiesToValueStr(res, _arguments, ", ");
     res += ")";
   }
   if (_fluent)
@@ -564,7 +591,7 @@ Fact Fact::fromStr(const std::string& pStr,
 }
 
 
-Fact Fact::fromPDDL(const std::string& pStr,
+Fact Fact::fromPddl(const std::string& pStr,
                    const Ontology& pOntology,
                    const SetOfEntities& pEntities,
                    const std::vector<Parameter>& pParameters,
@@ -616,7 +643,7 @@ bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
 }
 
 
-bool Fact::isInOtherFactsMap(const SetOfFact& pOtherFacts,
+bool Fact::isInOtherFactsMap(const SetOfFacts& pOtherFacts,
                              bool pParametersAreForTheFact,
                              std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
                              const std::map<Parameter, std::set<Entity>>* pParametersPtr,

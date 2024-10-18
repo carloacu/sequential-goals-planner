@@ -7,6 +7,7 @@
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/types/worldstate.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace
 {
@@ -196,7 +197,7 @@ void _test_fact_initialization()
 
 void _test_action_initialization()
 {
-  cp::SetOfFact setOfFacts;
+  cp::SetOfFacts setOfFacts;
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromStr("my_type my_type2 return_type\n"
                                            "sub_my_type - my_type");
@@ -210,30 +211,30 @@ void _test_action_initialization()
 
   cp::SetOfEntities entities;
 
-  cp::Action action(cp::Condition::fromStr("pred_name(toto)", ontology, entities, {}),
-                    cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, {}));
+  cp::Action action(cp::strToCondition("pred_name(toto)", ontology, entities, {}),
+                    cp::strToWsModification("pred_name2(toto, titi)=res", ontology, entities, {}));
   action.throwIfNotValid(setOfFacts);
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
-    cp::Action action2(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
-                      cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, parameters));
+    cp::Action action2(cp::strToCondition("pred_name(?p)", ontology, entities, parameters),
+                      cp::strToWsModification("pred_name2(toto, titi)=res", ontology, entities, parameters));
     action2.parameters = std::move(parameters);
     action2.throwIfNotValid(setOfFacts);
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - sub_my_type", ontology.types));
-    cp::Action action3(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
-                      cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, parameters));
+    cp::Action action3(cp::strToCondition("pred_name(?p)", ontology, entities, parameters),
+                      cp::strToWsModification("pred_name2(toto, titi)=res", ontology, entities, parameters));
     action3.parameters = std::move(parameters);
     action3.throwIfNotValid(setOfFacts);
   }
 
   try
   {
-    cp::Action action4(cp::Condition::fromStr("pred_name(?p)", ontology, entities, {}),
-                       cp::WorldStateModification::fromStr("pred_name2(toto, titi)=res", ontology, entities, {}));
+    cp::Action action4(cp::strToCondition("pred_name(?p)", ontology, entities, {}),
+                       cp::strToWsModification("pred_name2(toto, titi)=res", ontology, entities, {}));
     action4.throwIfNotValid(setOfFacts);
     assert_true(false);
   }
@@ -246,8 +247,8 @@ void _test_action_initialization()
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
     try
     {
-      cp::Action action5(cp::Condition::fromStr("pred_name(?p)", ontology, entities, parameters),
-                         cp::WorldStateModification::fromStr("pred_name2(toto, titi)=?r", ontology, entities, parameters));
+      cp::Action action5(cp::strToCondition("pred_name(?p)", ontology, entities, parameters),
+                         cp::strToWsModification("pred_name2(toto, titi)=?r", ontology, entities, parameters));
       action5.parameters = std::move(parameters);
       action5.throwIfNotValid(setOfFacts);
       assert_true(false);
@@ -258,14 +259,14 @@ void _test_action_initialization()
     }
   }
 
-  cp::Condition::fromStr("exists(?obj - my_type2, pred_name2(toto, ?obj)=res)", ontology, entities, {});
-  cp::Condition::fromStr("exists(?obj - my_type2, =(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
-  cp::Condition::fromStr("=(pred_name3(tutu), undefined)", ontology, entities, {});
-  cp::Condition::fromStr("=(pred_name3(tutu), res)", ontology, entities, {});
-  cp::WorldStateModification::fromStr("forAll(?obj - my_type2, pred_name2(toto, ?obj)=res, set(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
-  cp::WorldStateModification::fromStr("assign(pred_name3(tutu), res)", ontology, entities, {});
+  cp::strToCondition("exists(?obj - my_type2, pred_name2(toto, ?obj)=res)", ontology, entities, {});
+  cp::strToCondition("exists(?obj - my_type2, =(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
+  cp::strToCondition("=(pred_name3(tutu), undefined)", ontology, entities, {});
+  cp::strToCondition("=(pred_name3(tutu), res)", ontology, entities, {});
+  cp::strToWsModification("forAll(?obj - my_type2, pred_name2(toto, ?obj)=res, set(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
+  cp::strToWsModification("assign(pred_name3(tutu), res)", ontology, entities, {});
   std::vector<cp::Parameter> returnParameter(1, cp::Parameter::fromStr("?r - return_type", ontology.types));
-  cp::WorldStateModification::fromStr("assign(pred_name3(tutu), ?r)", ontology, entities, returnParameter);
+  cp::strToWsModification("assign(pred_name3(tutu), ?r)", ontology, entities, returnParameter);
 }
 
 
@@ -282,18 +283,18 @@ void _test_checkConditionWithOntology()
   cp::GoalStack goalStack;
   std::map<cp::SetOfEventsId, cp::SetOfEvents> setOfEvents;
   worldState.addFact(cp::Fact::fromStr("pred_name(toto)", ontology, {}, {}), goalStack, setOfEvents, ontology, {}, {});
-  assert_false(cp::Condition::fromStr("pred_name(titi)", ontology, {}, {})->isTrue(worldState));
+  assert_false(cp::strToCondition("pred_name(titi)", ontology, {}, {})->isTrue(worldState));
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
     auto parametersMap = _toParameterMap(parameters);
-    assert_true(cp::Condition::fromStr("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
+    assert_true(cp::strToCondition("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type2", ontology.types));
     auto parametersMap = _toParameterMap(parameters);
-    assert_false(cp::Condition::fromStr("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
+    assert_false(cp::strToCondition("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
   }
 }
 

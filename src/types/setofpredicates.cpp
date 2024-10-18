@@ -28,14 +28,20 @@ SetOfPredicates SetOfPredicates::fromStr(const std::string& pStr,
 
 SetOfPredicates SetOfPredicates::fromPddl(const std::string& pStr,
                                           std::size_t& pPos,
-                                          const SetOfTypes& pSetOfTypes)
+                                          const SetOfTypes& pSetOfTypes,
+                                          const std::shared_ptr<Type>& pDefaultFluent)
 {
   auto strSize = pStr.size();
   ExpressionParsed::skipSpaces(pStr, pPos);
 
   SetOfPredicates res;
   while (pPos < strSize && pStr[pPos] != ')')
-    res.addPredicate(Predicate(pStr, true, pSetOfTypes, pPos, &pPos));
+  {
+    Predicate predicate(pStr, true, pSetOfTypes, pPos, &pPos);
+    if (pDefaultFluent && !predicate.fluent)
+      predicate.fluent = pDefaultFluent;
+    res.addPredicate(std::move(predicate));
+  }
   return res;
 }
 

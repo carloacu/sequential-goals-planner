@@ -16,7 +16,6 @@ struct SetOfEntities;
 
 struct ExpressionParsed
 {
-
   std::string name;
   std::list<ExpressionParsed> arguments;
   std::string value;
@@ -25,6 +24,12 @@ struct ExpressionParsed
 
   char separatorToFollowingExp = ' ';
   std::unique_ptr<ExpressionParsed> followingExpression;
+
+  bool empty() const { return name.empty(); }
+
+  ExpressionParsed clone() const;
+
+  std::string toStr() const;
 
   FactOptional toFact(const Ontology& pOntology,
                       const SetOfEntities& pEntities,
@@ -48,6 +53,11 @@ struct ExpressionParsed
 
   static std::string parseToken(const std::string& pStr,
                                 std::size_t& pPos);
+
+  static std::string parseTokenThatCanBeEmpty(const std::string& pStr,
+                                              std::size_t& pPos);
+
+  static bool isEndOfTokenSeparator(char pChar);
 };
 
 

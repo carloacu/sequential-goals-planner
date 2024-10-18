@@ -3,6 +3,8 @@
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+
 
 using namespace cp;
 
@@ -42,38 +44,38 @@ void _test_actionSuccessions()
 
   {
     std::vector<cp::Parameter> parameters1(1, cp::Parameter::fromStr("?e - e1", ontology.types));
-    cp::Action actionObj1(cp::Condition::fromStr("not(locked(moves)) & fact_f", ontology, {}, parameters1),
-                          cp::WorldStateModification::fromStr("not(locked(moves)) & fact_f & not(fact_a) & fact_b(?e)", ontology, {}, parameters1));
+    cp::Action actionObj1(cp::strToCondition("not(locked(moves)) & fact_f", ontology, {}, parameters1),
+                          cp::strToWsModification("not(locked(moves)) & fact_f & not(fact_a) & fact_b(?e)", ontology, {}, parameters1));
     actionObj1.parameters = std::move(parameters1);
     actions.emplace(action1, actionObj1);
   }
 
   {
     std::vector<cp::Parameter> parameters2(1, cp::Parameter::fromStr("?e - e1", ontology.types));
-    cp::Action actionObj2(cp::Condition::fromStr("not(locked(moves)) & fact_b(?e) & fact_f", ontology, {}, parameters2),
-                          cp::WorldStateModification::fromStr("not(locked(moves)) & fact_c", ontology, {}, parameters2));
+    cp::Action actionObj2(cp::strToCondition("not(locked(moves)) & fact_b(?e) & fact_f", ontology, {}, parameters2),
+                          cp::strToWsModification("not(locked(moves)) & fact_c", ontology, {}, parameters2));
     actionObj2.parameters = std::move(parameters2);
     actions.emplace(action2, actionObj2);
   }
 
   {
     std::vector<cp::Parameter> parameters3(1, cp::Parameter::fromStr("?e - e2", ontology.types));
-    cp::Action actionObj3(cp::Condition::fromStr("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters3),
-                          cp::WorldStateModification::fromStr("not(locked(moves)) & fact_d", ontology, {}, parameters3));
+    cp::Action actionObj3(cp::strToCondition("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters3),
+                          cp::strToWsModification("not(locked(moves)) & fact_d", ontology, {}, parameters3));
     actionObj3.parameters = std::move(parameters3);
     actions.emplace(action3, actionObj3);
   }
 
   {
-    cp::Action actionObj4(cp::Condition::fromStr("not(locked(moves)) & not(fact_a)", ontology, {}, {}),
-                          cp::WorldStateModification::fromStr("not(locked(moves)) & fact_e", ontology, {}, {}));
+    cp::Action actionObj4(cp::strToCondition("not(locked(moves)) & not(fact_a)", ontology, {}, {}),
+                          cp::strToWsModification("not(locked(moves)) & fact_e", ontology, {}, {}));
     actions.emplace(action4, actionObj4);
   }
 
   {
     std::vector<cp::Parameter> parameters5(1, cp::Parameter::fromStr("?e - entity", ontology.types));
-    cp::Action actionObj5(cp::Condition::fromStr("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters5),
-                          cp::WorldStateModification::fromStr("not(locked(moves)) & fact_d", ontology, {}, parameters5));
+    cp::Action actionObj5(cp::strToCondition("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters5),
+                          cp::strToWsModification("not(locked(moves)) & fact_d", ontology, {}, parameters5));
     actionObj5.parameters = std::move(parameters5);
     actions.emplace(action5, actionObj5);
   }
@@ -123,7 +125,7 @@ void _test_notActionSuccessions()
 
   {
     cp::Action actionObj1({},
-                          cp::WorldStateModification::fromStr("fact_a & assign(fact_c(e1), fact_d())", ontology, {}, {}));
+                          cp::strToWsModification("fact_a & assign(fact_c(e1), fact_d())", ontology, {}, {}));
     actions.emplace(action1, actionObj1);
   }
 
@@ -131,8 +133,8 @@ void _test_notActionSuccessions()
     std::vector<cp::Parameter> parameters2{
       cp::Parameter::fromStr("?e - entity", ontology.types),
       cp::Parameter::fromStr("?l - location", ontology.types)};
-    cp::Action actionObj2(cp::Condition::fromStr("fact_a", ontology, {}, parameters2),
-                          cp::WorldStateModification::fromStr("fact_a & fact_b(?e) & fact_c(e1)=?l", ontology, {}, parameters2));
+    cp::Action actionObj2(cp::strToCondition("fact_a", ontology, {}, parameters2),
+                          cp::strToWsModification("fact_a & fact_b(?e) & fact_c(e1)=?l", ontology, {}, parameters2));
     actionObj2.parameters = std::move(parameters2);
     actions.emplace(action2, actionObj2);
   }
@@ -162,21 +164,21 @@ void _test_impossibleSuccessions()
 
   {
     cp::Action actionObj1({},
-                          cp::WorldStateModification::fromStr("fact_a & fact_b", ontology, {}, {}));
+                          cp::strToWsModification("fact_a & fact_b", ontology, {}, {}));
     actions.emplace(action1, actionObj1);
   }
 
   {
-    cp::Action actionObj2(cp::Condition::fromStr("fact_a & not(fact_b)", ontology, {}, {}),
-                          cp::WorldStateModification::fromStr("fact_c", ontology, {}, {}));
+    cp::Action actionObj2(cp::strToCondition("fact_a & not(fact_b)", ontology, {}, {}),
+                          cp::strToWsModification("fact_c", ontology, {}, {}));
     actions.emplace(action2, actionObj2);
   }
 
   // Do not consider action that can never be true
 
   {
-    cp::Action actionObj3(cp::Condition::fromStr("fact_a & !fact_d", ontology, {}, {}),
-                          cp::WorldStateModification::fromStr("fact_c", ontology, {}, {}));
+    cp::Action actionObj3(cp::strToCondition("fact_a & !fact_d", ontology, {}, {}),
+                          cp::strToWsModification("fact_c", ontology, {}, {}));
     actions.emplace(action3, actionObj3);
   }
 

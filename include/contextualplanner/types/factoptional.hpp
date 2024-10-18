@@ -68,12 +68,18 @@ struct CONTEXTUALPLANNER_API FactOptional
   std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr,
                     bool pPrintAnyFluent = true) const;
 
+  std::string toPddl(bool pInEffectContext,
+                     bool pPrintAnyFluent = true) const;
+
   bool doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const FactOptional& pOptFact) const;
 
   /// Is the fact negated.
   bool isFactNegated;
   /// Fact contained in this goal.
   Fact fact;
+
+private:
+  void _simplify();
 };
 
 } // !cp

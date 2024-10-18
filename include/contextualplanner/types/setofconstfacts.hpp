@@ -10,12 +10,21 @@ namespace cp
 
 struct CONTEXTUALPLANNER_API SetOfConstFacts
 {
+  static SetOfConstFacts fromPddl(const std::string& pStr,
+                                  std::size_t& pPos,
+                                  const Ontology& pOntology,
+                                  const SetOfEntities& pEntities) {
+    SetOfConstFacts res;
+    res._setOfFacts = SetOfFacts::fromPddl(pStr, pPos, pOntology, pEntities, false);
+    return res;
+  }
+
   void add(const Fact& pFact) { _setOfFacts.add(pFact, false); }
 
-  const SetOfFact& setOfFacts() const { return _setOfFacts; }
+  const SetOfFacts& setOfFacts() const { return _setOfFacts; }
 
 private:
-  SetOfFact _setOfFacts{};
+  SetOfFacts _setOfFacts{};
 };
 
 } // !cp

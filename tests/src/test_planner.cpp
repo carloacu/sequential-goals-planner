@@ -2,6 +2,7 @@
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofconstfacts.hpp>
 #include <contextualplanner/types/setofevents.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -101,8 +102,8 @@ void _simplest_plan_possible()
   const cp::SetOfEntities entities;
 
   std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?pa - type1", ontology.types));
-  cp::Action actionObj1(cp::Condition::fromStr("pred_a(?pa)", ontology, entities, parameters),
-                        cp::WorldStateModification::fromStr("pred_b", ontology, entities, parameters));
+  cp::Action actionObj1(cp::strToCondition("pred_a(?pa)", ontology, entities, parameters),
+                        cp::strToWsModification("pred_b", ontology, entities, parameters));
   actionObj1.parameters = std::move(parameters);
   actions.emplace(action1, actionObj1);
 
@@ -135,8 +136,8 @@ void _wrong_condition_type()
   const cp::SetOfEntities entities;
 
   std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?pa - type1", ontology.types));
-  cp::Action actionObj1(cp::Condition::fromStr("pred_a(?pa)", ontology, entities, parameters),
-                        cp::WorldStateModification::fromStr("pred_b", ontology, entities, parameters));
+  cp::Action actionObj1(cp::strToCondition("pred_a(?pa)", ontology, entities, parameters),
+                        cp::strToWsModification("pred_b", ontology, entities, parameters));
   actionObj1.parameters = std::move(parameters);
   actions.emplace(action1, actionObj1);
 
@@ -164,8 +165,8 @@ void _number_type()
 
   const cp::SetOfEntities entities;
 
-  cp::Action actionObj1(cp::Condition::fromStr("pred_a(toto)=10", ontology, entities, {}),
-                        cp::WorldStateModification::fromStr("pred_b", ontology, entities, {}));
+  cp::Action actionObj1(cp::strToCondition("pred_a(toto)=10", ontology, entities, {}),
+                        cp::strToWsModification("pred_b", ontology, entities, {}));
   actions.emplace(action1, actionObj1);
 
   cp::Domain domain(std::move(actions), ontology);
@@ -195,13 +196,13 @@ void _planWithActionThenEventWithFluentParameter()
   const cp::SetOfEntities entities;
 
   cp::Action actionObj1({},
-                        cp::WorldStateModification::fromStr("pred_a=toto", ontology, entities, {}));
+                        cp::strToWsModification("pred_a=toto", ontology, entities, {}));
   actions.emplace(action1, actionObj1);
 
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
-  cp::Event event(cp::Condition::fromStr("pred_a=?e", ontology, entities, eventParameters),
-                          cp::WorldStateModification::fromStr("pred_b(?e)", ontology, entities, eventParameters));
+  cp::Event event(cp::strToCondition("pred_a=?e", ontology, entities, eventParameters),
+                          cp::strToWsModification("pred_b(?e)", ontology, entities, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
@@ -231,14 +232,14 @@ void _planWithActionThenEventWithAssign()
 
   std::vector<cp::Parameter> actionParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
   cp::Action actionObj1({},
-                        cp::WorldStateModification::fromStr("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
+                        cp::strToWsModification("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?t - other_type", ontology.types)};
-  cp::Event event(cp::Condition::fromStr("pred_a=?t", ontology, entities, eventParameters),
-                          cp::WorldStateModification::fromStr("pred_d=?t", ontology, entities, eventParameters));
+  cp::Event event(cp::strToCondition("pred_a=?t", ontology, entities, eventParameters),
+                          cp::strToWsModification("pred_d=?t", ontology, entities, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
@@ -272,14 +273,14 @@ void _fluentEqualityInPrecoditionOfAnAction()
   const std::string action1 = "action1";
   std::vector<cp::Parameter> actionParameters{cp::Parameter::fromStr("?e - entity", ontology.types)};
   cp::Action actionObj1({},
-                        cp::WorldStateModification::fromStr("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
+                        cp::strToWsModification("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
   const std::string action2 = "action2";
   std::vector<cp::Parameter> action2Parameters{cp::Parameter::fromStr("?l - lol", ontology.types)};
-  cp::Action actionObj2(cp::Condition::fromStr("=(pred_a, pred_c(?l))", ontology, entities, action2Parameters),
-                        cp::WorldStateModification::fromStr("pred_d(?l)", ontology, entities, action2Parameters));
+  cp::Action actionObj2(cp::strToCondition("=(pred_a, pred_c(?l))", ontology, entities, action2Parameters),
+                        cp::strToWsModification("pred_d(?l)", ontology, entities, action2Parameters));
   actionObj2.parameters = std::move(action2Parameters);
   actions.emplace(action2, actionObj2);
 
@@ -312,26 +313,26 @@ void _testIncrementOfVariables()
   const std::string action_sayQuestionBilan = "say_question_bilan";
 
   std::map<std::string, cp::Action> actions;
-  const cp::Action actionQ1({}, cp::WorldStateModification::fromStr("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {}));
-  const cp::Action actionFinishToActActions(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
-                                            cp::WorldStateModification::fromStr("ask_all_the_questions", ontology, entities, {}));
-  const cp::Action actionSayQuestionBilan(cp::Condition::fromStr("ask_all_the_questions", ontology, entities, {}),
-                                          cp::WorldStateModification::fromStr("finished_to_ask_questions", ontology, entities, {}));
+  const cp::Action actionQ1({}, cp::strToWsModification("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {}));
+  const cp::Action actionFinishToActActions(cp::strToCondition("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
+                                            cp::strToWsModification("ask_all_the_questions", ontology, entities, {}));
+  const cp::Action actionSayQuestionBilan(cp::strToCondition("ask_all_the_questions", ontology, entities, {}),
+                                          cp::strToWsModification("finished_to_ask_questions", ontology, entities, {}));
   actions.emplace(action_askQuestion1, actionQ1);
-  actions.emplace(action_askQuestion2, cp::Action({}, cp::WorldStateModification::fromStr("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {})));
+  actions.emplace(action_askQuestion2, cp::Action({}, cp::strToWsModification("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {})));
   actions.emplace(action_finisehdToAskQuestions, actionFinishToActActions);
   actions.emplace(action_sayQuestionBilan, actionSayQuestionBilan);
   cp::Domain domain(std::move(actions), ontology);
 
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   cp::Problem problem;
-  problem.worldState.modify(cp::WorldStateModification::fromStr(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
-  assert(cp::Condition::fromStr(initFactsStr, ontology, entities, {})->isTrue(problem.worldState));
+  problem.worldState.modify(cp::strToWsModification(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
+  assert(cp::strToCondition(initFactsStr, ontology, entities, {})->isTrue(problem.worldState));
   assert(!actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
-  assert(cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 3)", ontology, entities, {})->isTrue(problem.worldState));
-  assert(!cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4)", ontology, entities, {})->isTrue(problem.worldState));
-  assert(cp::Condition::fromStr("equals(maxNumberOfQuestions, numberOfQuestion + 4 - 1)", ontology, entities, {})->isTrue(problem.worldState));
+  assert(cp::strToCondition("equals(maxNumberOfQuestions, numberOfQuestion + 3)", ontology, entities, {})->isTrue(problem.worldState));
+  assert(!cp::strToCondition("equals(maxNumberOfQuestions, numberOfQuestion + 4)", ontology, entities, {})->isTrue(problem.worldState));
+  assert(cp::strToCondition("equals(maxNumberOfQuestions, numberOfQuestion + 4 - 1)", ontology, entities, {})->isTrue(problem.worldState));
   for (std::size_t i = 0; i < 3; ++i)
   {
     _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
@@ -345,7 +346,7 @@ void _testIncrementOfVariables()
     assert(itAction != domain.actions().end());
     problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
                               _emptySetOfEvents, ontology, entities, _now);
-    problem.worldState.modify(cp::WorldStateModification::fromStr("!ask_all_the_questions", ontology, entities, {}),
+    problem.worldState.modify(cp::strToWsModification("!ask_all_the_questions", ontology, entities, {}),
                               problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
   }
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
@@ -377,8 +378,8 @@ void _actionWithParametersInPreconditionsAndEffects()
 
   std::map<std::string, cp::Action> actions;
   std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?human - number", ontology.types));
-  cp::Action joke(cp::Condition::fromStr("isEngaged(?human)", ontology, entities, parameters),
-                  cp::WorldStateModification::fromStr("isHappy(?human)", ontology, entities, parameters));
+  cp::Action joke(cp::strToCondition("isEngaged(?human)", ontology, entities, parameters),
+                  cp::strToWsModification("isHappy(?human)", ontology, entities, parameters));
   joke.parameters = std::move(parameters);
   const std::string action1 = "action1";
   actions.emplace(action1, joke);
@@ -411,20 +412,20 @@ void _testQuiz()
   const std::string action_sayQuestionBilan = "say_question_bilan";
 
   std::map<std::string, cp::Action> actions;
-  cp::ProblemModification questionEffect(cp::WorldStateModification::fromStr("add(numberOfQuestion, 1)", ontology, entities, {}));
-  questionEffect.potentialWorldStateModification = cp::WorldStateModification::fromStr("ask_all_the_questions", ontology, entities, {});
+  cp::ProblemModification questionEffect(cp::strToWsModification("add(numberOfQuestion, 1)", ontology, entities, {}));
+  questionEffect.potentialWorldStateModification = cp::strToWsModification("ask_all_the_questions", ontology, entities, {});
   const cp::Action actionQ1({}, questionEffect);
-  const cp::Action actionSayQuestionBilan(cp::Condition::fromStr("ask_all_the_questions", ontology, entities, {}),
-                                          cp::WorldStateModification::fromStr("finished_to_ask_questions", ontology, entities, {}));
+  const cp::Action actionSayQuestionBilan(cp::strToCondition("ask_all_the_questions", ontology, entities, {}),
+                                          cp::strToWsModification("finished_to_ask_questions", ontology, entities, {}));
   actions.emplace(action_askQuestion1, actionQ1);
   actions.emplace(action_askQuestion2, cp::Action({}, questionEffect));
   actions.emplace(action_sayQuestionBilan, actionSayQuestionBilan);
 
   cp::Domain domain(std::move(actions), {},
-                    cp::Event(cp::Condition::fromStr("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
-                                  cp::WorldStateModification::fromStr("ask_all_the_questions", ontology, entities, {})));
+                    cp::Event(cp::strToCondition("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
+                                  cp::strToWsModification("ask_all_the_questions", ontology, entities, {})));
 
-  auto initFacts = cp::WorldStateModification::fromStr("numberOfQuestion=0 & maxNumberOfQuestions=3", ontology, entities, {});
+  auto initFacts = cp::strToWsModification("numberOfQuestion=0 & maxNumberOfQuestions=3", ontology, entities, {});
 
   cp::Problem problem;
 
@@ -468,25 +469,25 @@ void _doNextActionThatBringsToTheSmallerCost()
 
   std::map<std::string, cp::Action> actions;
   std::vector<cp::Parameter> navParameters{cp::Parameter::fromStr("?targetPlace - location", ontology.types)};
-  cp::Action navAction({}, cp::WorldStateModification::fromStr("locationOfRobot(me)=?targetPlace", ontology, {}, navParameters));
+  cp::Action navAction({}, cp::strToWsModification("locationOfRobot(me)=?targetPlace", ontology, {}, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(action_navigate, navAction);
 
   std::vector<cp::Parameter> grabParameters{cp::Parameter::fromStr("?object - object", ontology.types)};
-  cp::Action grabAction(cp::Condition::fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & !grab(me)=*", ontology, {}, grabParameters),
-                        cp::WorldStateModification::fromStr("grab(me)=?object", ontology, {}, grabParameters));
+  cp::Action grabAction(cp::strToCondition("equals(locationOfRobot(me), locationOfObject(?object)) & !grab(me)=*", ontology, {}, grabParameters),
+                        cp::strToWsModification("grab(me)=?object", ontology, {}, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(action_grab, grabAction);
 
   std::vector<cp::Parameter> ungrabParameters{cp::Parameter::fromStr("?object - object", ontology.types)};
-  cp::Action ungrabAction({}, cp::WorldStateModification::fromStr("!grab(me)=?object", ontology, {}, ungrabParameters));
+  cp::Action ungrabAction({}, cp::strToWsModification("!grab(me)=?object", ontology, {}, ungrabParameters));
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(action_ungrab, ungrabAction);
 
   cp::SetOfEvents setOfEvents;
   std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?object - object", ontology.types), cp::Parameter::fromStr("?location - location", ontology.types)};
-  cp::Event event(cp::Condition::fromStr("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, eventParameters),
-                          cp::WorldStateModification::fromStr("locationOfObject(?object)=?location", ontology, {}, eventParameters));
+  cp::Event event(cp::strToCondition("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, eventParameters),
+                          cp::strToWsModification("locationOfObject(?object)=?location", ontology, {}, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
@@ -532,8 +533,8 @@ void _satisfyGoalWithSuperiorOperator()
   timelessFacts.add(cp::Fact("fact_b", false, ontology, {}, {}));
 
   std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action(cp::Condition::fromStr("fact_b", ontology, {}, {}),
-                                      cp::WorldStateModification::fromStr("fact_a=100", ontology, {}, {})));
+  actions.emplace(action1, cp::Action(cp::strToCondition("fact_b", ontology, {}, {}),
+                                      cp::strToWsModification("fact_a=100", ontology, {}, {})));
   cp::Domain domain(std::move(actions), ontology, {}, timelessFacts);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
@@ -562,8 +563,8 @@ void _parameterToFillFromConditionOfFirstAction()
 
   std::map<std::string, cp::Action> actions;
   std::vector<cp::Parameter> actionParameters{cp::Parameter::fromStr("?cz - chargingZone", ontology.types)};
-  cp::Action action1Obj(cp::Condition::fromStr("=(locationOfRobot, declaredLocationOfChargingZone(?cz))", ontology, {}, actionParameters),
-                                        cp::WorldStateModification::fromStr("batteryLevel=100", ontology, {}, actionParameters));
+  cp::Action action1Obj(cp::strToCondition("=(locationOfRobot, declaredLocationOfChargingZone(?cz))", ontology, {}, actionParameters),
+                                        cp::strToWsModification("batteryLevel=100", ontology, {}, actionParameters));
   action1Obj.parameters = std::move(actionParameters);
   actions.emplace(action1, action1Obj);
   cp::Domain domain(std::move(actions), ontology);

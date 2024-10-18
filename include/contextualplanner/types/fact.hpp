@@ -15,7 +15,7 @@ namespace cp
 struct FactOptional;
 struct Ontology;
 struct SetOfEntities;
-struct SetOfFact;
+struct SetOfFacts;
 
 /// Knowledge that can be contained in a world.
 struct CONTEXTUALPLANNER_API Fact
@@ -167,6 +167,8 @@ struct CONTEXTUALPLANNER_API Fact
    */
   void replaceArguments(const std::map<Parameter, std::set<Entity>>& pCurrentArgumentsToNewArgument);
 
+  std::string toPddl(bool pInEffectContext,
+                     bool pPrintAnyFluent = true) const;
 
   /// Serialize this fact to a string.
   std::string toStr(bool pPrintAnyFluent = true) const;
@@ -183,7 +185,7 @@ struct CONTEXTUALPLANNER_API Fact
                       const std::vector<Parameter>& pParameters,
                       bool* pIsFactNegatedPtr = nullptr);
 
-  static Fact fromPDDL(const std::string& pStr,
+  static Fact fromPddl(const std::string& pStr,
                        const Ontology& pOntology,
                        const SetOfEntities& pEntities,
                        const std::vector<Parameter>& pParameters,
@@ -224,7 +226,7 @@ struct CONTEXTUALPLANNER_API Fact
    * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
    * @return True if the fact matches any of the other facts.
    */
-  bool isInOtherFactsMap(const SetOfFact& pOtherFacts,
+  bool isInOtherFactsMap(const SetOfFacts& pOtherFacts,
                          bool pParametersAreForTheFact,
                          std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
                          const std::map<Parameter, std::set<Entity>>* pParametersPtr,
@@ -264,6 +266,7 @@ struct CONTEXTUALPLANNER_API Fact
   const std::vector<Entity>& arguments() const { return _arguments; }
   const std::optional<Entity>& fluent() const { return _fluent; }
   bool isValueNegated() const { return _isFluentNegated; }
+  void setValueNegated(bool pIsFluentNegated) { _isFluentNegated = pIsFluentNegated; }
 
   std::string factSignature() const;
   std::string generateFactSignature() const;

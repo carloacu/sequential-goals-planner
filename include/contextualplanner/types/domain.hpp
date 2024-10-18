@@ -33,7 +33,6 @@ struct CONTEXTUALPLANNER_API Domain
          const SetOfEvents& pSetOfEvents = {},
          const SetOfConstFacts& pTimelessFacts = {});
 
-  static Domain fromPddl(const std::string& pStr);
 
   // Actions
   // -------

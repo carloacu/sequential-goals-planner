@@ -11,14 +11,6 @@ namespace cp
 {
 namespace
 {
-const char* _equalsFunctionName = "equals";
-const char* _equalsCharFunctionName = "=";
-const char* _existsFunctionName = "exists";
-const char* _notFunctionName = "not";
-const char* _superiorFunctionName = ">";
-const char* _inferiorFunctionName = "<";
-const char* _andFunctionName = "and";
-const char* _orFunctionName = "or";
 
 
 bool _forEachValueUntil(const std::function<bool (const Entity&)>& pValueCallback,
@@ -111,150 +103,6 @@ bool _areEqual(
   if (pCond1 && pCond2)
     return *pCond1 == *pCond2;
   return false;
-}
-
-
-std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& pExpressionParsed,
-                                                        const Ontology& pOntology,
-                                                        const SetOfEntities& pEntities,
-                                                        const std::vector<Parameter>& pParameters,
-                                                        bool pIsOkIfFluentIsMissing)
-{
-  std::unique_ptr<Condition> res;
-
-  auto nodeType = ConditionNodeType::AND;
-  if (pExpressionParsed.followingExpression)
-  {
-    if (pExpressionParsed.separatorToFollowingExp == '+')
-      nodeType = ConditionNodeType::PLUS;
-    else if (pExpressionParsed.separatorToFollowingExp == '-')
-      nodeType = ConditionNodeType::MINUS;
-    else if (pExpressionParsed.separatorToFollowingExp == '>')
-      nodeType = ConditionNodeType::SUPERIOR;
-    else if (pExpressionParsed.separatorToFollowingExp == '<')
-      nodeType = ConditionNodeType::INFERIOR;
-    else if (pExpressionParsed.separatorToFollowingExp == '|')
-      nodeType = ConditionNodeType::OR;
-  }
-
-  if ((pExpressionParsed.name == _equalsFunctionName || pExpressionParsed.name == _equalsCharFunctionName) &&
-      pExpressionParsed.arguments.size() == 2)
-  {
-    auto leftOperand = _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities, pParameters, true);
-    auto* leftFactPtr = leftOperand->fcFactPtr();
-
-    const auto& rightOperandExp = *(++pExpressionParsed.arguments.begin());
-    if (leftFactPtr != nullptr && !leftFactPtr->factOptional.isFactNegated &&
-        rightOperandExp.arguments.empty() &&
-        !rightOperandExp.followingExpression && rightOperandExp.value == "")
-    {
-      if (rightOperandExp.name == Fact::undefinedValue.value)
-      {
-        leftFactPtr->factOptional.isFactNegated = true;
-        leftFactPtr->factOptional.fact.setFluentValue(Entity::anyEntityValue());
-        res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
-      }
-      else if (pExpressionParsed.name == _equalsCharFunctionName && !rightOperandExp.isAFunction &&
-               rightOperandExp.name != "")
-      {
-        leftFactPtr->factOptional.fact.setFluent(
-              Entity::fromUsage(rightOperandExp.name, pOntology, pEntities, pParameters));
-        res = std::make_unique<ConditionFact>(std::move(*leftFactPtr));
-      }
-    }
-
-    if (!res)
-    {
-      auto rightOperand = _expressionParsedToCondition(rightOperandExp, pOntology, pEntities, pParameters, true);
-      res = std::make_unique<ConditionNode>(ConditionNodeType::EQUALITY,
-                                            std::move(leftOperand), std::move(rightOperand));
-    }
-  }
-  else if (pExpressionParsed.name == _existsFunctionName &&
-           pExpressionParsed.arguments.size() == 2)
-  {
-    auto itArg = pExpressionParsed.arguments.begin();
-    auto& firstArg = *itArg;
-    std::shared_ptr<Type> paramType;
-    if (firstArg.followingExpression)
-      paramType = pOntology.types.nameToType(firstArg.followingExpression->name);
-    Parameter existsParameter(firstArg.name, paramType);
-    auto newParameters = pParameters;
-    newParameters.push_back(existsParameter);
-    res = std::make_unique<ConditionExists>(existsParameter,
-                                            _expressionParsedToCondition(*(++itArg), pOntology, pEntities, newParameters, false));
-  }
-  else if (pExpressionParsed.name == _notFunctionName &&
-           pExpressionParsed.arguments.size() == 1)
-  {
-    auto& expNegationned = pExpressionParsed.arguments.front();
-
-    res = _expressionParsedToCondition(expNegationned, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing);
-    if (res)
-    {
-       auto* factPtr = res->fcFactPtr();
-       if (factPtr != nullptr)
-         factPtr->factOptional.isFactNegated = !factPtr->factOptional.isFactNegated;
-       else
-         res = std::make_unique<ConditionNot>(std::move(res));
-    }
-  }
-  else if (pExpressionParsed.name == _superiorFunctionName &&
-           pExpressionParsed.arguments.size() == 2)
-  {
-    res = std::make_unique<ConditionNode>(ConditionNodeType::SUPERIOR,
-                                          _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities, pParameters, true),
-                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities, pParameters, true));
-  }
-  else if (pExpressionParsed.name == _inferiorFunctionName &&
-           pExpressionParsed.arguments.size() == 2)
-  {
-    res = std::make_unique<ConditionNode>(ConditionNodeType::INFERIOR,
-                                          _expressionParsedToCondition(pExpressionParsed.arguments.front(), pOntology, pEntities, pParameters, true),
-                                          _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities, pParameters, true));
-  }
-  else if ((pExpressionParsed.name == _andFunctionName || pExpressionParsed.name == _orFunctionName) &&
-           pExpressionParsed.arguments.size() >= 2)
-  {
-    auto listNodeType = pExpressionParsed.name == _andFunctionName ? ConditionNodeType::AND : ConditionNodeType::OR;
-    std::list<std::unique_ptr<Condition>> elts;
-    for (auto& currExp : pExpressionParsed.arguments)
-      elts.emplace_back(_expressionParsedToCondition(currExp, pOntology, pEntities, pParameters, false));
-
-    res = std::make_unique<ConditionNode>(listNodeType, std::move(*(--(--elts.end()))), std::move(elts.back()));
-    elts.pop_back();
-    elts.pop_back();
-
-    while (!elts.empty())
-    {
-      res = std::make_unique<ConditionNode>(listNodeType, std::move(elts.back()), std::move(res));
-      elts.pop_back();
-    }
-  }
-  else
-  {
-    if (pExpressionParsed.arguments.empty() && pExpressionParsed.value == "")
-    {
-      try {
-        res = std::make_unique<ConditionNumber>(lexical_cast<int>(pExpressionParsed.name));
-      }  catch (...) {}
-    }
-
-    if (!res)
-    {
-      bool isOkIfFluentIsMissing = pIsOkIfFluentIsMissing || nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR;
-      res = std::make_unique<ConditionFact>(pExpressionParsed.toFact(pOntology, pEntities, pParameters, isOkIfFluentIsMissing));
-    }
-  }
-
-  if (pExpressionParsed.followingExpression)
-  {
-    res = std::make_unique<ConditionNode>(nodeType,
-                                          std::move(res),
-                                          _expressionParsedToCondition(*pExpressionParsed.followingExpression, pOntology, pEntities, pParameters, false));
-  }
-
-  return res;
 }
 
 
@@ -366,7 +214,7 @@ bool _existsIsTrueRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
 void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
                            const std::map<Parameter, std::set<Entity>>& pConditionParametersToPossibleArguments,
                            const Condition& pCondition,
-                           const SetOfFact& pFacts,
+                           const SetOfFacts& pFacts,
                            const Fact& pFactFromEffect,
                            const Parameter& pParameter,
                            bool pIsNegated)
@@ -394,19 +242,6 @@ void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToV
   }
 }
 
-}
-
-
-std::unique_ptr<Condition> Condition::fromStr(const std::string& pStr,
-                                              const Ontology& pOntology,
-                                              const SetOfEntities& pEntities,
-                                              const std::vector<Parameter>& pParameters)
-{
-  if (pStr.empty())
-    return {};
-  std::size_t pos = 0;
-  auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
-  return _expressionParsedToCondition(expressionParsed, pOntology, pEntities, pParameters, false);
 }
 
 
@@ -440,7 +275,7 @@ std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>*
   case ConditionNodeType::OR:
     return leftOperandStr + " | " + rightOperandStr;
   case ConditionNodeType::EQUALITY:
-    return std::string(_equalsFunctionName) + "(" + leftOperandStr + ", " + rightOperandStr + ")";
+    return "equals(" + leftOperandStr + ", " + rightOperandStr + ")";
   case ConditionNodeType::PLUS:
     return leftOperandStr + " + " + rightOperandStr;
   case ConditionNodeType::MINUS:
@@ -563,7 +398,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
 
 
 bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const SetOfFact& pSetOfFact) const
+                               const SetOfFacts& pSetOfFact) const
 {
   if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR)
   {
@@ -753,7 +588,7 @@ bool ConditionNode::operator==(const Condition& pOther) const
       _areEqual(rightOperand, otherNodePtr->rightOperand);
 }
 
-std::optional<Entity> ConditionNode::getFluent(const SetOfFact& pSetOfFact) const
+std::optional<Entity> ConditionNode::getFluent(const SetOfFacts& pSetOfFact) const
 {
   if (nodeType == ConditionNodeType::PLUS)
   {
@@ -807,12 +642,12 @@ std::unique_ptr<Condition> ConditionNode::clone(const std::map<Parameter, Entity
 
 
 std::string ConditionExists::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr,
-                                   bool pPrintAnyFluent) const
+                                   bool) const
 {
   std::string conditionStr;
   if (condition)
     conditionStr = condition->toStr(pFactWriterPtr);
-  return std::string(_existsFunctionName) + "(" + parameter.toStr() + ", " + conditionStr + ")";
+  return "exists(" + parameter.toStr() + ", " + conditionStr + ")";
 }
 
 ConditionExists::ConditionExists(const Parameter& pParameter,
@@ -1131,7 +966,7 @@ bool ConditionFact::operator==(const Condition& pOther) const
       factOptional == otherFactPtr->factOptional;
 }
 
-std::optional<Entity> ConditionFact::getFluent(const SetOfFact& pSetOfFact) const
+std::optional<Entity> ConditionFact::getFluent(const SetOfFacts& pSetOfFact) const
 {
   return pSetOfFact.getFactFluent(factOptional.fact);
 }
@@ -1177,7 +1012,7 @@ bool ConditionNumber::operator==(const Condition& pOther) const
       nb == otherNbPtr->nb;
 }
 
-std::optional<Entity> ConditionNumber::getFluent(const SetOfFact&) const
+std::optional<Entity> ConditionNumber::getFluent(const SetOfFacts&) const
 {
   return Entity::createNumberEntity(toStr(nullptr, true));
 }

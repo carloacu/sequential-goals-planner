@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_SETOFFACT_HPP
-#define INCLUDE_CONTEXTUALPLANNER_SETOFFACT_HPP
+#ifndef INCLUDE_CONTEXTUALPLANNER_SETOFFACTS_HPP
+#define INCLUDE_CONTEXTUALPLANNER_SETOFFACTS_HPP
 
 #include "../util/api.hpp"
 #include <list>
@@ -16,11 +16,19 @@ namespace cp
 struct Fact;
 struct FactAccessor;
 struct Entity;
+struct Ontology;
+struct SetOfEntities;
 
 
-struct CONTEXTUALPLANNER_API SetOfFact
+struct CONTEXTUALPLANNER_API SetOfFacts
 {
-  SetOfFact();
+  SetOfFacts();
+
+  static SetOfFacts fromPddl(const std::string& pStr,
+                             std::size_t& pPos,
+                             const Ontology& pOntology,
+                             const SetOfEntities& pEntities,
+                             bool pCanFactsBeRemoved = true);
 
   void add(const Fact& pFact,
            bool pCanBeRemoved = true);
@@ -130,4 +138,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_SETOFFACT_HPP
+#endif // INCLUDE_CONTEXTUALPLANNER_SETOFFACTS_HPP

@@ -52,16 +52,6 @@ struct CONTEXTUALPLANNER_API Successions
 struct CONTEXTUALPLANNER_API WorldStateModification
 {
   /**
-   * @brief Create a world state modification from a string.
-   * @param[in] pStr String to convert.
-   * @return New world state modification created.
-   */
-  static std::unique_ptr<WorldStateModification> fromStr(const std::string& pStr,
-                                                         const Ontology& pOntology,
-                                                         const SetOfEntities& pEntities,
-                                                         const std::vector<Parameter>& pParameters);
-
-  /**
    * @brief Create a world state modification by concatenating two existing world state modifications.
    * @param[in] pWsModif1 First world state modification to concatenate.
    * @param[in] pWsModif2 Second world state modification to concatenate.
@@ -99,7 +89,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pSetOfFact Facts to use to extract value of the facts.
    */
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
-                      const SetOfFact& pSetOfFact) const = 0;
+                      const SetOfFacts& pSetOfFact) const = 0;
 
   virtual void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
 
@@ -109,7 +99,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pSetOfFact Facts to use to extract value of the facts.
    */
   virtual void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                                             const SetOfFact& pSetOfFact) const = 0;
+                                             const SetOfFacts& pSetOfFact) const = 0;
 
   /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state until the callback returns true.
@@ -117,7 +107,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pSetOfFact Facts to use to extract value of the facts.
    */
   virtual bool forAllUntilTrue(const std::function<bool (const FactOptional&)>& pFactCallback,
-                               const SetOfFact& pSetOfFact) const = 0;
+                               const SetOfFacts& pSetOfFact) const = 0;
 
   /**
    * @brief Iterate over all the optional facts until one can satisfy the objective.
@@ -151,7 +141,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
    * @param[in] pWorldState World state use to extract value of the facts.
    * @return The world state modification converted to a string value.
    */
-  virtual std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const = 0;
+  virtual std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const = 0;
 
   /// Convert this world state modification to an optional fact if possible.
   virtual const FactOptional* getOptionalFact() const = 0;

@@ -52,7 +52,7 @@ void test_setOfFacts()
                                              "titi2 - my_type2\n"
                                              "titi3 - sub_my_type2", ontology.types);
 
-  SetOfFact factToFacts;
+  SetOfFacts factToFacts;
 
   auto fact1 = cp::Fact::fromStr("pred_name(toto)", ontology, entities, {});
   factToFacts.add(fact1);

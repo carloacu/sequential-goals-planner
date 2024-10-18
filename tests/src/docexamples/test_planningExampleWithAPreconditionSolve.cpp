@@ -3,6 +3,8 @@
 #include <memory>
 #include <assert.h>
 #include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+
 
 
 void planningExampleWithAPreconditionSolve()
@@ -24,9 +26,9 @@ void planningExampleWithAPreconditionSolve()
 
   // Initialize the domain with a set of actions
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::WorldStateModification::fromStr(userIsGreeted, ontology, {}, {})));
-  actions.emplace(askHowICanHelp, cp::Action(cp::Condition::fromStr(userIsGreeted, ontology, {}, {}),
-                                             cp::WorldStateModification::fromStr(proposedOurHelpToUser, ontology, {}, {})));
+  actions.emplace(sayHi, cp::Action({}, cp::strToWsModification(userIsGreeted, ontology, {}, {})));
+  actions.emplace(askHowICanHelp, cp::Action(cp::strToCondition(userIsGreeted, ontology, {}, {}),
+                                             cp::strToWsModification(proposedOurHelpToUser, ontology, {}, {})));
   cp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy

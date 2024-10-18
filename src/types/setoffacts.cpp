@@ -3,6 +3,7 @@
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/util/util.hpp>
+#include "expressionParsed.hpp"
 
 namespace cp
 {
@@ -44,7 +45,7 @@ void _addFluentToExactCall(std::string& pRes,
 
 
 
-SetOfFact::SetOfFact()
+SetOfFacts::SetOfFacts()
  : _facts(),
    _exactCallToListsOpt(),
    _exactCallWithoutFluentToListsOpt(),
@@ -53,8 +54,24 @@ SetOfFact::SetOfFact()
 }
 
 
-void SetOfFact::add(const Fact& pFact,
-                    bool pCanBeRemoved)
+SetOfFacts SetOfFacts::fromPddl(const std::string& pStr,
+                                std::size_t& pPos,
+                                const Ontology& pOntology,
+                                const SetOfEntities& pEntities,
+                                bool pCanFactsBeRemoved)
+{
+  auto strSize = pStr.size();
+  ExpressionParsed::skipSpaces(pStr, pPos);
+
+  SetOfFacts res;
+  while (pPos < strSize && pStr[pPos] != ')')
+    res.add(Fact(pStr, true, pOntology, pEntities, {}, nullptr, pPos, &pPos), pCanFactsBeRemoved);
+  return res;
+}
+
+
+void SetOfFacts::add(const Fact& pFact,
+                     bool pCanBeRemoved)
 {
   auto insertionResult = _facts.emplace(pFact, pCanBeRemoved);
 
@@ -101,7 +118,7 @@ void SetOfFact::add(const Fact& pFact,
 }
 
 
-bool SetOfFact::erase(const Fact& pFact)
+bool SetOfFacts::erase(const Fact& pFact)
 {
   if (_erase(pFact))
     return true;
@@ -113,7 +130,7 @@ bool SetOfFact::erase(const Fact& pFact)
 }
 
 
-bool SetOfFact::_erase(const Fact& pFact)
+bool SetOfFacts::_erase(const Fact& pFact)
 {
   auto it = _facts.find(pFact);
   if (it != _facts.end())
@@ -191,7 +208,7 @@ bool SetOfFact::_erase(const Fact& pFact)
 }
 
 
-std::string SetOfFact::SetOfFactIterator::toStr() const
+std::string SetOfFacts::SetOfFactIterator::toStr() const
 {
   std::stringstream ss;
   ss << "[";
@@ -209,7 +226,7 @@ std::string SetOfFact::SetOfFactIterator::toStr() const
 }
 
 
-void SetOfFact::clear()
+void SetOfFacts::clear()
 {
   _facts.clear();
   if (_exactCallToListsOpt)
@@ -220,7 +237,7 @@ void SetOfFact::clear()
 }
 
 
-typename SetOfFact::SetOfFactIterator SetOfFact::find(const Fact& pFact,
+typename SetOfFacts::SetOfFactIterator SetOfFacts::find(const Fact& pFact,
                                                       bool pIgnoreFluent) const
 {
   const std::list<Fact>* exactMatchPtr = nullptr;
@@ -242,7 +259,7 @@ typename SetOfFact::SetOfFactIterator SetOfFact::find(const Fact& pFact,
 
   const std::list<Fact>* resPtr = nullptr;
   auto _matchArg = [&](const std::map<std::string, std::list<Fact>>& pArgValueToValues,
-                       const std::string& pArgValue) -> std::optional<typename SetOfFact::SetOfFactIterator> {
+                       const std::string& pArgValue) -> std::optional<typename SetOfFacts::SetOfFactIterator> {
     auto itForThisValue = pArgValueToValues.find(pArgValue);
     if (itForThisValue != pArgValueToValues.end())
     {
@@ -295,7 +312,7 @@ typename SetOfFact::SetOfFactIterator SetOfFact::find(const Fact& pFact,
   return SetOfFactIterator(exactMatchPtr);
 }
 
-std::optional<Entity> SetOfFact::getFactFluent(const cp::Fact& pFact) const
+std::optional<Entity> SetOfFacts::getFactFluent(const cp::Fact& pFact) const
 {
   auto factMatchingInWs = find(pFact, true);
   for (const auto& currFact : factMatchingInWs)
@@ -305,7 +322,7 @@ std::optional<Entity> SetOfFact::getFactFluent(const cp::Fact& pFact) const
 }
 
 
-void SetOfFact::extractPotentialArgumentsOfAFactParameter(
+void SetOfFacts::extractPotentialArgumentsOfAFactParameter(
     std::set<Entity>& pPotentialArgumentsOfTheParameter,
     const Fact& pFact,
     const std::string& pParameter) const
@@ -341,7 +358,7 @@ void SetOfFact::extractPotentialArgumentsOfAFactParameter(
 }
 
 
-void SetOfFact::_removeAValueForList(std::list<Fact>& pList,
+void SetOfFacts::_removeAValueForList(std::list<Fact>& pList,
                                      const Fact& pValue) const
 {
   for (auto it = pList.begin(); it != pList.end(); ++it)
@@ -355,7 +372,7 @@ void SetOfFact::_removeAValueForList(std::list<Fact>& pList,
 }
 
 
-const std::list<Fact>* SetOfFact::_findAnExactCall(
+const std::list<Fact>* SetOfFacts::_findAnExactCall(
     const std::optional<std::map<std::string, std::list<Fact>>>& pExactCalls,
     const std::string& pExactCall) const
 {

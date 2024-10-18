@@ -21,21 +21,12 @@ struct ConditionNumber;
 struct SetOfDerivedPredicates;
 struct Entity;
 struct Parameter;
+struct ExpressionParsed;
 
 
 /// Condition with a tree structure to check in a world.
 struct CONTEXTUALPLANNER_API Condition
 {
-  /**
-   * @brief Create a condition from a string.
-   * @param[in] pStr String to convert as a condition.
-   * @return New condition created.
-   */
-  static std::unique_ptr<Condition> fromStr(const std::string& pStr,
-                                            const Ontology& pOntology,
-                                            const SetOfEntities& pEntities,
-                                            const std::vector<Parameter>& pParameters);
-
   /**
    * @brief Convert the condition to a string.
    * @param[in] pFactWriterPtr Specific function to use to convert a fact to a string.
@@ -100,7 +91,7 @@ struct CONTEXTUALPLANNER_API Condition
    * @return False if one callback returned false, true otherwise.
    */
   virtual bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                          const SetOfFact& pSetOfFact) const = 0;
+                          const SetOfFacts& pSetOfFact) const = 0;
 
   /**
    * @brief Check if this condition is true for a specific world state.
@@ -140,7 +131,7 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pSetOfFact Facts use to extract value of the facts.
    * @return The condition converted to a string value.
    */
-  virtual std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const = 0;
+  virtual std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const = 0;
 
   /**
    * @brief Create a copy of this condition with arguments filling (or not if pConditionParametersToArgumentPtr is nullptr).
@@ -215,7 +206,7 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                                                 const std::map<Parameter, std::set<Entity>>& pConditionParametersToPossibleArguments,
                                                 bool pIsWrappingExpressionNegated) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const SetOfFact& pSetOfFact) const override;
+                  const SetOfFacts& pSetOfFact) const override;
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -227,7 +218,7 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                      bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const override;
+  std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const override;
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
                                    bool pInvert,
@@ -279,7 +270,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
       bool pIsWrappingExpressionNegated) const override;
 
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
-                  const SetOfFact&) const override { return true; } // TODO
+                  const SetOfFacts&) const override { return true; } // TODO
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -291,7 +282,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                      bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::optional<Entity> getFluent(const SetOfFact&) const override { return {}; }
+  std::optional<Entity> getFluent(const SetOfFacts&) const override { return {}; }
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
                                    bool pInvert,
@@ -343,7 +334,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
       bool pIsWrappingExpressionNegated) const override;
 
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const SetOfFact& pSetOfFact) const override { return true; } // TODO
+                  const SetOfFacts& pSetOfFact) const override { return true; } // TODO
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -355,7 +346,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
                      bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::optional<Entity> getFluent(const SetOfFact&) const override { return {}; }
+  std::optional<Entity> getFluent(const SetOfFacts&) const override { return {}; }
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
                                    bool pInvert,
@@ -403,7 +394,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
       const std::map<Parameter, std::set<Entity>>&,
       bool pIsWrappingExpressionNegated) const override;
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
-                  const SetOfFact&) const override { return pFactCallback(factOptional); }
+                  const SetOfFacts&) const override { return pFactCallback(factOptional); }
   bool isTrue(const WorldState& pWorldState,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
@@ -415,7 +406,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                      bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
-  std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const override;
+  std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const override;
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
                                    bool pInvert,
@@ -461,7 +452,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
       const std::map<Parameter, std::set<Entity>>&,
       bool) const override { return true; }
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
-                  const SetOfFact&) const override { return true; }
+                  const SetOfFacts&) const override { return true; }
   bool isTrue(const WorldState&,
               const std::set<Fact>&,
               const std::set<Fact>&,
@@ -473,7 +464,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
                      bool) const override  { return true; }
   bool operator==(const Condition& pOther) const override;
 
-  std::optional<Entity> getFluent(const SetOfFact& pSetOfFact) const override;
+  std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const override;
 
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
                                    bool pInvert,

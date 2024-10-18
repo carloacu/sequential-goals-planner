@@ -97,7 +97,7 @@ struct CONTEXTUALPLANNER_API Action
   std::string printSuccessionCache(const ActionId& pIdOfThisAction) const;
 
   // TODO: remove that function?
-  void throwIfNotValid(const SetOfFact& pSetOfFact);
+  void throwIfNotValid(const SetOfFacts& pSetOfFact);
 
   /// Print the precondition in string.
   std::string precondition_str() const { return precondition ? precondition->toStr() : ""; }
@@ -122,7 +122,7 @@ struct CONTEXTUALPLANNER_API Action
 private:
   void _throwIfNotValidForACondition(const std::unique_ptr<Condition>& pPrecondition);
   void _throwIfNotValidForAnWordStateModif(const std::unique_ptr<WorldStateModification>& pWs,
-                                           const SetOfFact& pSetOfFact);
+                                           const SetOfFacts& pSetOfFact);
   void _throwIfNotValidForAFact(const Fact& pFact);
 };
 

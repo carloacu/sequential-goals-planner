@@ -23,6 +23,7 @@ FactOptional::FactOptional(bool pIsFactNegated,
   : isFactNegated(pIsFactNegated),
     fact(pName, pArgumentStrs, pFluentStr, pIsFluentNegated, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing)
 {
+  _simplify();
 }
 
 
@@ -44,6 +45,7 @@ FactOptional::FactOptional(const std::string& pStr,
   : isFactNegated(false),
     fact(pStr, false, pOntology, pEntities, pParameters, &isFactNegated, pBeginPos, pResPos)
 {
+  _simplify();
 }
 
 bool FactOptional::operator<(const FactOptional& pOther) const
@@ -75,11 +77,30 @@ std::string FactOptional::toStr(const std::function<std::string (const Fact&)>* 
   return polarityStr + fact.toStr(pPrintAnyFluent);
 }
 
+std::string FactOptional::toPddl(bool pInEffectContext,
+                                 bool pPrintAnyFluent) const
+{
+  auto res = fact.toPddl(pInEffectContext, pPrintAnyFluent);
+  if (isFactNegated)
+    return "(not " + res + ")";
+  return res;
+}
+
 bool FactOptional::doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const FactOptional& pOptFact) const
 {
   if (isFactNegated != pOptFact.isFactNegated)
     return true;
   return fact.doesFactEffectOfSuccessorGiveAnInterestForSuccessor(pOptFact.fact);
+}
+
+
+void FactOptional::_simplify()
+{
+  if (isFactNegated && fact.isValueNegated())
+  {
+    isFactNegated = false;
+    fact.setValueNegated(false);
+  }
 }
 
 

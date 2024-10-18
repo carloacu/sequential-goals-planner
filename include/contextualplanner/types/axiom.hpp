@@ -16,8 +16,8 @@ struct Event;
 struct CONTEXTUALPLANNER_API Axiom
 {
   /// Construct a derived predicate.
-  Axiom(std::unique_ptr<Condition> pImplies,
-        const Fact& pContext,
+  Axiom(std::unique_ptr<Condition> pContext,
+        const Fact& pImplies,
         const std::vector<Parameter>& pVars = {});
 
   /// Construct a copy.

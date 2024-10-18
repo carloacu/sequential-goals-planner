@@ -3,6 +3,7 @@
 #include <memory>
 #include <assert.h>
 #include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 
 void planningDummyExample()
@@ -21,7 +22,7 @@ void planningDummyExample()
 
   // Initialize the domain with an action
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::WorldStateModification::fromStr(userIsGreeted, ontology, {}, {})));
+  actions.emplace(sayHi, cp::Action({}, cp::strToWsModification(userIsGreeted, ontology, {}, {})));
   cp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy

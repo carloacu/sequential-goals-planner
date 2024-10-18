@@ -187,7 +187,7 @@ struct CONTEXTUALPLANNER_API WorldState
   /// Facts of the world.
   const std::map<Fact, bool>& facts() const { return _factsMapping.facts(); }
   /// Fact names to facts in the world.
-  const SetOfFact& factsMapping() const { return _factsMapping; }
+  const SetOfFacts& factsMapping() const { return _factsMapping; }
 
 
   /**
@@ -250,12 +250,12 @@ struct CONTEXTUALPLANNER_API WorldState
 
   void refreshCacheIfNeeded(const Domain& pDomain);
 
-  const SetOfFact& removableFacts() const;
+  const SetOfFacts& removableFacts() const;
 
 
 private:
   /// Facts of the world state.
-  SetOfFact _factsMapping;
+  SetOfFacts _factsMapping;
   std::unique_ptr<WorldStateCache> _cache;
 
   /// Stored what changed.

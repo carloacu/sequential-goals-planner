@@ -1,5 +1,6 @@
 #include <contextualplanner/types/derivedpredicate.hpp>
 #include <contextualplanner/types/setofentities.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace cp
 {
@@ -17,7 +18,7 @@ DerivedPredicate::DerivedPredicate(const Predicate& pPredicate,
   if (pPredicate.fluent)
     parameters.emplace_back(Parameter::fromType(pPredicate.fluent));
 
-  condition = cp::Condition::fromStr(pConditionStr, pOntology, {}, parameters);
+  condition = strToCondition(pConditionStr, pOntology, {}, parameters);
 }
 
 

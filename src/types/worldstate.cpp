@@ -6,6 +6,7 @@
 #include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/types/worldstatemodification.hpp>
 #include <contextualplanner/util/util.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 #include "worldstatecache.hpp"
 
 namespace cp
@@ -34,7 +35,7 @@ WorldState::WorldState(const SetOfConstFacts* pTimelessFactsPtr)
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
-    _factsMapping(pTimelessFactsPtr != nullptr ? pTimelessFactsPtr->setOfFacts() : SetOfFact()),
+    _factsMapping(pTimelessFactsPtr != nullptr ? pTimelessFactsPtr->setOfFacts() : SetOfFacts()),
     _cache(std::make_unique<WorldStateCache>(*this))
 {
 }
@@ -497,7 +498,7 @@ void WorldState::refreshCacheIfNeeded(const Domain& pDomain)
 }
 
 
-const SetOfFact& WorldState::removableFacts() const
+const SetOfFacts& WorldState::removableFacts() const
 {
   return _cache->removableFacts();
 }
@@ -557,7 +558,7 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
                     return false;
                   }, optFactPtr->fact, parametersToValues);
                   for (auto& currFactToRemove : factsToRemove)
-                    _modify(pWhatChanged, WorldStateModification::fromStr("!" + currFactToRemove->toStr(), pOntology, pEntities, {}), // Optimize to construct WorldStateModification without passing by a string
+                    _modify(pWhatChanged, strToWsModification("!" + currFactToRemove->toStr(), pOntology, pEntities, {}), // Optimize to construct WorldStateModification without passing by a string
                             pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
                 }
               }

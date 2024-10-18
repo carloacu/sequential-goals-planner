@@ -21,7 +21,8 @@ struct CONTEXTUALPLANNER_API SetOfPredicates
 
   static SetOfPredicates fromPddl(const std::string& pStr,
                                   std::size_t& pPos,
-                                  const SetOfTypes& pSetOfTypes);
+                                  const SetOfTypes& pSetOfTypes,
+                                  const std::shared_ptr<Type>& pDefaultFluent = {});
 
   void addAll(const SetOfPredicates& pOther);
   void addPredicate(const Predicate& pPredicate);

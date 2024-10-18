@@ -5,6 +5,7 @@
 #include <contextualplanner/types/axiom.hpp>
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofevents.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
 
@@ -110,13 +111,13 @@ cp::Goal _goal(const std::string& pStr,
 std::unique_ptr<cp::Condition> _condition_fromStr(const std::string& pConditionStr,
                                                   const cp::Ontology& pOntology,
                                                   const std::vector<cp::Parameter>& pParameters = {}) {
-  return cp::Condition::fromStr(pConditionStr, pOntology, {}, pParameters);
+  return cp::strToCondition(pConditionStr, pOntology, {}, pParameters);
 }
 
 std::unique_ptr<cp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr,
                                                                             const cp::Ontology& pOntology,
                                                                             const std::vector<cp::Parameter>& pParameters = {}) {
-  return cp::WorldStateModification::fromStr(pStr, pOntology, {}, pParameters);
+  return cp::strToWsModification(pStr, pOntology, {}, pParameters);
 }
 
 void _setGoalsForAPriority(cp::Problem& pProblem,
