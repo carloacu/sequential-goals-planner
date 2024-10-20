@@ -27,6 +27,7 @@ struct CONTEXTUALPLANNER_API Action
          std::unique_ptr<Condition> pPreferInContext = {})
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<Condition>()),
+      overAllCondition(),
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<Condition>()),
       effect(pEffect),
       highImportanceOfNotRepeatingIt(false),
@@ -41,6 +42,7 @@ struct CONTEXTUALPLANNER_API Action
          std::unique_ptr<Condition>&& pPreferInContext)
     : parameters(),
       precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<Condition>()),
+      overAllCondition(),
       preferInContext(pPreferInContext ? std::move(pPreferInContext) : std::unique_ptr<Condition>()),
       effect(std::move(pEffect)),
       highImportanceOfNotRepeatingIt(false),
@@ -53,6 +55,7 @@ struct CONTEXTUALPLANNER_API Action
   Action(const Action& pAction)
     : parameters(pAction.parameters),
       precondition(pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<Condition>()),
+      overAllCondition(pAction.overAllCondition ? pAction.overAllCondition->clone() : std::unique_ptr<Condition>()),
       preferInContext(pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<Condition>()),
       effect(pAction.effect),
       highImportanceOfNotRepeatingIt(pAction.highImportanceOfNotRepeatingIt),
@@ -66,6 +69,7 @@ struct CONTEXTUALPLANNER_API Action
   {
     parameters = pAction.parameters;
     precondition = pAction.precondition ? pAction.precondition->clone() : std::unique_ptr<Condition>();
+    overAllCondition = pAction.overAllCondition ? pAction.overAllCondition->clone() : std::unique_ptr<Condition>();
     preferInContext = pAction.preferInContext ? pAction.preferInContext->clone() : std::unique_ptr<Condition>();
     effect = pAction.effect;
     highImportanceOfNotRepeatingIt = pAction.highImportanceOfNotRepeatingIt;
@@ -109,6 +113,7 @@ struct CONTEXTUALPLANNER_API Action
   std::vector<Parameter> parameters;
   /// Condition that should be satisfied in the world to be able to do this action.
   std::unique_ptr<Condition> precondition;
+  std::unique_ptr<Condition> overAllCondition;
   /// More this condition matches the world higher the priority of this action will be.
   std::unique_ptr<Condition> preferInContext;
   /// Modification to apply to the problem when this action will finish.

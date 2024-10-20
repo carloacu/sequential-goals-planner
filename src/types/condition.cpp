@@ -1,6 +1,5 @@
 #include <contextualplanner/types/condition.hpp>
 #include <optional>
-#include <sstream>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setofderivedpredicates.hpp>
 #include <contextualplanner/types/worldstate.hpp>
@@ -259,11 +258,13 @@ std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>*
                                  bool pPrintAnyFluent) const
 {
   bool printAnyFluent = pPrintAnyFluent && nodeType != ConditionNodeType::EQUALITY &&
-      nodeType != ConditionNodeType::SUPERIOR && nodeType != ConditionNodeType::INFERIOR;
+      nodeType != ConditionNodeType::SUPERIOR &&  nodeType != ConditionNodeType::SUPERIOR_OR_EQUAL &&
+      nodeType != ConditionNodeType::INFERIOR &&  nodeType != ConditionNodeType::INFERIOR_OR_EQUAL;
 
   std::string leftOperandStr;
   if (leftOperand)
     leftOperandStr = leftOperand->toStr(pFactWriterPtr, printAnyFluent);
+
   std::string rightOperandStr;
   if (rightOperand)
     rightOperandStr = rightOperand->toStr(pFactWriterPtr, printAnyFluent);
@@ -282,11 +283,16 @@ std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>*
     return leftOperandStr + " - " + rightOperandStr;
   case ConditionNodeType::SUPERIOR:
     return leftOperandStr + ">" + rightOperandStr;
+  case ConditionNodeType::SUPERIOR_OR_EQUAL:
+    return leftOperandStr + ">=" + rightOperandStr;
   case ConditionNodeType::INFERIOR:
     return leftOperandStr + "<" + rightOperandStr;
+  case ConditionNodeType::INFERIOR_OR_EQUAL:
+    return leftOperandStr + "<=" + rightOperandStr;
   }
   return "";
 }
+
 
 
 ConditionNode::ConditionNode(ConditionNodeType pNodeType,
@@ -386,7 +392,8 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
           }
         }
       }
-      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
+      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::SUPERIOR_OR_EQUAL ||
+               nodeType == ConditionNodeType::INFERIOR || nodeType == ConditionNodeType::INFERIOR_OR_EQUAL)
       {
          return pDoesConditionFactMatchFactFromEffect(leftFact.factOptional);
       }
@@ -419,7 +426,8 @@ bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& 
         factToCheck.setFluent(rightOperand->getFluent(pSetOfFact));
         return pFactCallback(FactOptional(factToCheck));
       }
-      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
+      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::SUPERIOR_OR_EQUAL ||
+               nodeType == ConditionNodeType::INFERIOR || nodeType == ConditionNodeType::INFERIOR_OR_EQUAL)
       {
          return pFactCallback(leftFact.factOptional);
       }
@@ -520,7 +528,8 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
           return res;
         return !res;
       }
-      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::INFERIOR)
+      else if (nodeType == ConditionNodeType::SUPERIOR || nodeType == ConditionNodeType::SUPERIOR_OR_EQUAL ||
+               nodeType == ConditionNodeType::INFERIOR || nodeType == ConditionNodeType::INFERIOR_OR_EQUAL)
       {
         auto* rightNbPtr = rightOperand->fcNbPtr();
         if (rightNbPtr != nullptr)
@@ -532,7 +541,8 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
             if (currWsFact.fluent() &&
                 leftFact.areEqualWithoutFluentConsideration(currWsFact))
             {
-              bool res = compIntNb(currWsFact.fluent()->value, rightNbPtr->nb, nodeType == ConditionNodeType::SUPERIOR);
+              bool res = compIntNb(currWsFact.fluent()->value, rightNbPtr->nb,
+                                   canBeSuperior(nodeType), canBeEqual(nodeType));
               if (!pIsWrappingExpressionNegated)
                 return res;
               return !res;
@@ -641,6 +651,14 @@ std::unique_ptr<Condition> ConditionNode::clone(const std::map<Parameter, Entity
 
 
 
+ConditionExists::ConditionExists(const Parameter& pParameter,
+                                 std::unique_ptr<Condition> pCondition)
+  : Condition(),
+    parameter(pParameter),
+    condition(std::move(pCondition))
+{
+}
+
 std::string ConditionExists::toStr(const std::function<std::string (const Fact&)>* pFactWriterPtr,
                                    bool) const
 {
@@ -648,14 +666,6 @@ std::string ConditionExists::toStr(const std::function<std::string (const Fact&)
   if (condition)
     conditionStr = condition->toStr(pFactWriterPtr);
   return "exists(" + parameter.toStr() + ", " + conditionStr + ")";
-}
-
-ConditionExists::ConditionExists(const Parameter& pParameter,
-                                 std::unique_ptr<Condition> pCondition)
-  : Condition(),
-    parameter(pParameter),
-    condition(std::move(pCondition))
-{
 }
 
 bool ConditionExists::hasFact(const Fact& pFact) const
@@ -782,7 +792,7 @@ std::string ConditionNot::toStr(const std::function<std::string (const Fact&)>* 
 {
   std::string conditionStr;
   if (condition)
-    conditionStr = condition->toStr(pFactWriterPtr);
+    conditionStr = condition->toStr(pFactWriterPtr, pPrintAnyFluent);
   if (condition->fcExistsPtr() != nullptr)
     return "!" + conditionStr;
   return "!(" + conditionStr + ")";
@@ -994,12 +1004,10 @@ std::unique_ptr<Condition> ConditionFact::clone(const std::map<Parameter, Entity
 std::string ConditionNumber::toStr(const std::function<std::string (const Fact&)>*,
                                    bool) const
 {
-  std::stringstream ss;
-  ss << nb;
-  return ss.str();
+  return numberToString(nb);
 }
 
-ConditionNumber::ConditionNumber(int pNb)
+ConditionNumber::ConditionNumber(const Number& pNb)
   : Condition(),
     nb(pNb)
 {

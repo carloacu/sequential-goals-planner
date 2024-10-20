@@ -40,7 +40,8 @@ struct ExpressionParsed
                                   std::size_t& pPos);
 
   static ExpressionParsed fromPddl(const std::string& pStr,
-                                   std::size_t& pPos);
+                                   std::size_t& pPos,
+                                   bool pCanHaveFollowingExpression);
 
   static void skipSpaces(const std::string& pStr,
                          std::size_t& pPos);

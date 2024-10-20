@@ -95,7 +95,7 @@ Fact::Fact(const std::string& pStr,
   try
   {
     auto expressionParsed = pStrPddlFormated ?
-        ExpressionParsed::fromPddl(pStr, pos) :
+        ExpressionParsed::fromPddl(pStr, pos, false) :
         ExpressionParsed::fromStr(pStr, pos);
     if (!pStrPddlFormated && !expressionParsed.name.empty() && expressionParsed.name[0] == '!')
     {

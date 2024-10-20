@@ -48,6 +48,7 @@ struct CONTEXTUALPLANNER_API Successions
 };
 
 
+
 /// Modification of a world state represented in a tree structure to apply to a world state.
 struct CONTEXTUALPLANNER_API WorldStateModification
 {

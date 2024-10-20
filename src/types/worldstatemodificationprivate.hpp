@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 #include <contextualplanner/types/worldstatemodification.hpp>
-
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -16,10 +16,16 @@ enum class WorldStateModificationNodeType
   FOR_ALL,
   INCREASE,
   DECREASE,
+  MULTIPLY,
   PLUS,
   MINUS
 };
 
+enum class WsModificationPart
+{
+  AT_START,
+  AT_END
+};
 
 struct WorldStateModificationNode : public WorldStateModification
 {
@@ -56,6 +62,7 @@ struct WorldStateModificationNode : public WorldStateModification
         nodeType == WorldStateModificationNodeType::FOR_ALL ||
         nodeType == WorldStateModificationNodeType::INCREASE ||
         nodeType == WorldStateModificationNodeType::DECREASE ||
+        nodeType == WorldStateModificationNodeType::MULTIPLY ||
         nodeType == WorldStateModificationNodeType::PLUS ||
         nodeType == WorldStateModificationNodeType::MINUS)
       return false;
@@ -248,11 +255,13 @@ private:
 
 struct WorldStateModificationNumber : public WorldStateModification
 {
-  WorldStateModificationNumber(int pNb)
+  WorldStateModificationNumber(const Number& pNb)
     : WorldStateModification(),
-      nb(pNb)
+      _nb(pNb)
   {
   }
+
+  static std::unique_ptr<WorldStateModificationNumber> create(const std::string& pStr);
 
   std::string toStr(bool) const override;
 
@@ -297,16 +306,25 @@ struct WorldStateModificationNumber : public WorldStateModification
 
   std::unique_ptr<WorldStateModification> clone(const std::map<Parameter, Entity>*) const override
   {
-    return std::make_unique<WorldStateModificationNumber>(nb);
+    return std::make_unique<WorldStateModificationNumber>(_nb);
   }
 
   std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>&) const override
   {
-    return std::make_unique<WorldStateModificationNumber>(nb);
+    return std::make_unique<WorldStateModificationNumber>(_nb);
   }
 
-  int nb;
+  const Number& getNb() const { return _nb; }
+
+private:
+  Number _nb;
 };
+
+const WorldStateModificationNode* toWmNode(const WorldStateModification& pOther);
+
+const WorldStateModificationFact* toWmFact(const WorldStateModification& pOther);
+
+const WorldStateModificationNumber* toWmNumber(const WorldStateModification& pOther);
 
 
 } // !cp

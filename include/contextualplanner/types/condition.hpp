@@ -8,7 +8,7 @@
 #include <vector>
 #include "../util/api.hpp"
 #include "factoptional.hpp"
-
+#include <contextualplanner/util/util.hpp>
 
 namespace cp
 {
@@ -24,6 +24,12 @@ struct Parameter;
 struct ExpressionParsed;
 
 
+enum class ConditionPart
+{
+  AT_START,
+  OVER_ALL
+};
+
 /// Condition with a tree structure to check in a world.
 struct CONTEXTUALPLANNER_API Condition
 {
@@ -34,7 +40,6 @@ struct CONTEXTUALPLANNER_API Condition
    */
   virtual std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr = nullptr,
                             bool pPrintAnyFluent = true) const = 0;
-
 
   /// Check if this condition contains a fact or the negation of the fact.
   virtual bool hasFact(const Fact& pFact) const = 0;
@@ -171,13 +176,26 @@ enum class ConditionNodeType
 {
   EQUALITY,
   SUPERIOR,
+  SUPERIOR_OR_EQUAL,
   INFERIOR,
+  INFERIOR_OR_EQUAL,
   AND,
   OR,
   PLUS,
   MINUS
 };
 
+
+static bool canBeSuperior(ConditionNodeType pConditionNodeType) {
+  return pConditionNodeType == ConditionNodeType::SUPERIOR ||
+      pConditionNodeType == ConditionNodeType::SUPERIOR_OR_EQUAL;
+}
+
+static bool canBeEqual(ConditionNodeType pConditionNodeType) {
+  return pConditionNodeType == ConditionNodeType::EQUALITY ||
+      pConditionNodeType == ConditionNodeType::SUPERIOR_OR_EQUAL ||
+      pConditionNodeType == ConditionNodeType::INFERIOR_OR_EQUAL;
+}
 
 /// Condition tree node that holds children.
 struct CONTEXTUALPLANNER_API ConditionNode : public Condition
@@ -244,11 +262,11 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
 /// Condition tree to manage exists operator.
 struct CONTEXTUALPLANNER_API ConditionExists : public Condition
 {
-  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
-                    bool pPrintAnyFluent) const override;
-
   ConditionExists(const Parameter& pParameter,
                   std::unique_ptr<Condition> pCondition);
+
+  std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
+                    bool pPrintAnyFluent) const override;
 
   bool hasFact(const Fact& pFact) const override;
   bool containsFactOpt(const FactOptional& pFactOptional,
@@ -309,10 +327,10 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
 /// Condition tree node that holds the negation of a condition.
 struct CONTEXTUALPLANNER_API ConditionNot : public Condition
 {
+  ConditionNot(std::unique_ptr<Condition> pCondition);
+
   std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
                     bool pPrintAnyFluent) const override;
-
-  ConditionNot(std::unique_ptr<Condition> pCondition);
 
   bool hasFact(const Fact& pFact) const override;
   bool containsFactOpt(const FactOptional& pFactOptional,
@@ -371,10 +389,10 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
 /// Condition tree node that holds only an optional fact.
 struct CONTEXTUALPLANNER_API ConditionFact : public Condition
 {
+  ConditionFact(const FactOptional& pFactOptional);
+
   std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
                     bool pPrintAnyFluent) const override { return factOptional.toStr(pFactWriterPtr, pPrintAnyFluent); }
-
-  ConditionFact(const FactOptional& pFactOptional);
 
   bool hasFact(const Fact& pFact) const override;
   bool containsFactOpt(const FactOptional& pFactOptional,
@@ -431,10 +449,10 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
 /// Condition tree node that holds only a number.
 struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
 {
+  ConditionNumber(const Number& pNb);
+
   std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
                     bool pPrintAnyFluent) const override;
-
-  ConditionNumber(int pNb);
 
   bool hasFact(const Fact&) const override  { return false; }
   bool containsFactOpt(const FactOptional&,
@@ -481,7 +499,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
   const ConditionNumber* fcNbPtr() const override { return this; }
   ConditionNumber* fcNbPtr() override { return this; }
 
-  int nb;
+  Number nb;
 };
 
 

@@ -203,7 +203,8 @@ ExpressionParsed ExpressionParsed::fromStr(const std::string& pStr,
 
 
 ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
-                                            std::size_t& pPos)
+                                            std::size_t& pPos,
+                                            bool pCanHaveFollowingExpression)
 {
   ExpressionParsed res;
   auto strSize = pStr.size();
@@ -214,6 +215,7 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
   if (pStr[pPos] == '(')
   {
     ++pPos;
+    skipSpaces(pStr, pPos);
     std::size_t beginOfTokenPos = pPos;
 
     bool inName = true;
@@ -229,11 +231,16 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
         if (inName)
         {
           res.name = pStr.substr(beginOfTokenPos, pPos - beginOfTokenPos);
+          if (res.name.empty())
+          {
+            res = fromPddl(pStr, pPos, pCanHaveFollowingExpression);
+            return res;
+          }
           inName = false;
           continue;
         }
         auto prePos = pPos;
-        res.arguments.emplace_back(fromPddl(pStr, pPos));
+        res.arguments.emplace_back(fromPddl(pStr, pPos, pCanHaveFollowingExpression));
         if (pPos > prePos)
           continue;
       }
@@ -247,22 +254,25 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
   }
 
   // extract following expression
-  while (pPos < strSize)
+  if (pCanHaveFollowingExpression)
   {
-    if (pStr[pPos] == ' ')
+    while (pPos < strSize)
     {
-      ++pPos;
-      continue;
-    }
+      if (pStr[pPos] == ' ')
+      {
+        ++pPos;
+        continue;
+      }
 
-    if (_isASeparatorForTheBeginOfAFollowingExpression(pStr[pPos]))
-    {
-      res.separatorToFollowingExp = pStr[pPos];
-      ++pPos;
-      res.followingExpression = std::make_unique<ExpressionParsed>(fromPddl(pStr, pPos));
-    }
+      if (_isASeparatorForTheBeginOfAFollowingExpression(pStr[pPos]))
+      {
+        res.separatorToFollowingExp = pStr[pPos];
+        ++pPos;
+        res.followingExpression = std::make_unique<ExpressionParsed>(fromPddl(pStr, pPos, pCanHaveFollowingExpression));
+      }
 
-    break;
+      break;
+    }
   }
 
   skipSpaces(pStr, pPos);

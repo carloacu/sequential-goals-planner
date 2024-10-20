@@ -9,6 +9,7 @@ bool Action::operator==(const Action& pOther) const
 {
   return parameters == pOther.parameters &&
       areUPtrEqual(precondition, pOther.precondition) &&
+      areUPtrEqual(overAllCondition, pOther.overAllCondition) &&
       areUPtrEqual(preferInContext, pOther.preferInContext) &&
       effect == pOther.effect &&
       highImportanceOfNotRepeatingIt == pOther.highImportanceOfNotRepeatingIt;
@@ -20,6 +21,8 @@ Action Action::clone(const SetOfDerivedPredicates& pDerivedPredicates) const
   Action res(precondition ? precondition->clone(nullptr, false, &pDerivedPredicates) : std::unique_ptr<Condition>(),
              effect,
              preferInContext ? preferInContext->clone(nullptr, false, &pDerivedPredicates) : std::unique_ptr<Condition>());
+  if (overAllCondition)
+    res.overAllCondition = overAllCondition->clone(nullptr, false, &pDerivedPredicates);
   res.parameters = parameters;
   res.highImportanceOfNotRepeatingIt = highImportanceOfNotRepeatingIt;
   return res;

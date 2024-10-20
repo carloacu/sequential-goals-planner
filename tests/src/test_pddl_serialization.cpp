@@ -8,6 +8,7 @@
 #include <contextualplanner/types/setofpredicates.hpp>
 #include <contextualplanner/types/worldstatemodification.hpp>
 #include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <contextualplanner/util/serializer/serializeinpddl.hpp>
 
 namespace
 {
@@ -82,6 +83,7 @@ void _test_loadPddlDomain()
         site material - object
         bricks cables windows - material
         car
+        ball
     )
     (:constants mainsite - site
       maincar - car)
@@ -96,10 +98,13 @@ void _test_loadPddlDomain()
         (site-built ?s - site)
         (on-site ?m - material ?s - site)
         (material-used ?m - material)
+        (held ?b - ball)
     )
 
     (:functions
         (battery-amount ?r - car)
+        (distance-to-floor ?b - ball)
+        (velocity ?b - ball)
     )
 
     (:timeless (foundations-set mainsite))
@@ -117,6 +122,18 @@ void _test_loadPddlDomain()
             (cables-installed ?s)
         )
         :implies (site-built ?s)
+    )
+
+    (:event HIT-GROUND
+        :parameters (?b - ball)
+        :precondition (and
+            (not (held ?b))
+            (<= (distance-to-floor ?b) 0)
+            (> (velocity ?b) 0)
+        )
+        :effect (
+            (assign (velocity ?b) (* -0.8 (velocity ?b)))
+        )
     )
 
     (:action BUILD-WALL
@@ -159,6 +176,151 @@ void _test_loadPddlDomain()
 
 )
 )");
+
+  std::string expectedSerializedResult = R"((define
+    (domain construction)
+
+    (:types
+        site material - object
+        bricks cables windows - material
+        car
+        ball
+    )
+
+    (:constants
+        maincar - car
+        mainsite - site
+    )
+
+    (:predicates
+        (cables-installed ?s - site)
+        (foundations-set ?s - site)
+        (held ?b - ball)
+        (material-used ?m - material)
+        (on-site ?m - material ?s - site)
+        (site-built ?s - site)
+        (walls-built ?s - site)
+        (windows-fitted ?s - site)
+    )
+
+    (:functions
+        (battery-amount ?r - car) - number
+        (distance-to-floor ?b - ball) - number
+        (velocity ?b - ball) - number
+    )
+
+    (:event HIT-GROUND
+
+        :parameters
+            (?b - ball)
+
+        :precondition
+            (and
+                (not (held ?b))
+                (<= (distance-to-floor ?b) 0)
+                (> (velocity ?b) 0)
+            )
+
+        :effect
+            (assign (velocity ?b) (* (velocity ?b) -0.800000))
+
+    )
+
+    (:event from_axiom
+
+        :parameters
+            (?s - site)
+
+        :precondition
+            (and
+                (walls-built ?s)
+                (windows-fitted ?s)
+                (cables-installed ?s)
+            )
+
+        :effect
+            (site-built ?s)
+
+    )
+
+    (:event from_axiom_2
+
+        :parameters
+            (?s - site)
+
+        :precondition
+            (or
+                (not (walls-built ?s))
+                (not (windows-fitted ?s))
+                (not (cables-installed ?s))
+            )
+
+        :effect
+            (not (site-built ?s))
+
+    )
+
+    (:durative-action BUILD-WALL
+        :parameters
+            (?s - site ?b - bricks)
+
+        :duration (= ?duration 1)
+
+        :condition
+            (and
+                (at start (on-site ?b ?s))
+                (at start (foundations-set ?s))
+                (at start (not (walls-built ?s)))
+                (at start (not (material-used ?b)))
+            )
+
+        :effect
+            (and
+                (at end (walls-built ?s))
+                (at end (material-used ?b))
+            )
+
+    )
+
+    (:durative-action BUILD-WALL-DURATIVE
+        :parameters
+            (?s - site ?b - bricks)
+
+        :duration (= ?duration 1)
+
+        :condition
+            (and
+                (at start (on-site ?b ?s))
+                (at start (foundations-set ?s))
+                (at start (not (material-used ?b)))
+                (over all (not (walls-built ?s)))
+            )
+
+        :effect
+            (and
+                (at start (walls-built ?s))
+                (at end (material-used ?b))
+                (at end (decrease (battery-amount maincar) 4))
+            )
+
+    )
+
+))";
+
+  auto pddout1 = cp::domainToPddl(domain);
+  if (pddout1 != expectedSerializedResult)
+  {
+    std::cout << pddout1 << std::endl;
+    assert_true(false);
+  }
+
+  auto domain2 = cp::pddlToDomain(pddout1);
+  auto pddout2 = cp::domainToPddl(domain2);
+  if (pddout2 != pddout1)
+  {
+    std::cout << pddout2 << std::endl;
+    assert_true(false);
+  }
 
 }
 
