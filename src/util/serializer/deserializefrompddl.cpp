@@ -762,12 +762,13 @@ Action _durativeActionPddlToAction(const std::string& pStr,
 
 }
 
-Domain pddlToDomain(const std::string& pStr)
+Domain pddlToDomain(const std::string& pStr,
+                    const std::map<std::string, Domain>& pPreviousDomains)
 {
   std::string domainName = "";
   cp::Ontology ontology;
   std::map<ActionId, Action> actions;
-  SetOfEvents setOfEvents;
+  std::map<SetOfEventsId, SetOfEvents> idToSetOfEvents;
   SetOfConstFacts timelessFacts;
 
   const std::string defineToken = "(define";
@@ -797,7 +798,18 @@ Domain pddlToDomain(const std::string& pStr)
         }
         else if (token == ":extends")
         {
-          ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
+          while (pos < strSize && pStr[pos] != ')')
+          {
+            auto domainToExtend = ExpressionParsed::parseToken(pStr, pos);
+            auto itDomain = pPreviousDomains.find(domainToExtend);
+            if (itDomain == pPreviousDomains.end())
+              throw std::runtime_error("Domain \"" + domainToExtend + "\" is unknown!");
+            const Domain& domainToExtand = itDomain->second;
+            ontology = domainToExtand.getOntology();
+            actions = domainToExtand.getActions();
+            idToSetOfEvents = domainToExtand.getSetOfEvents();
+            timelessFacts = domainToExtand.getTimelessFacts();
+          }
         }
         else if (token == ":requirements")
         {
@@ -808,14 +820,14 @@ Domain pddlToDomain(const std::string& pStr)
           std::size_t beginPos = pos;
           ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
           std::string typesStr = pStr.substr(beginPos, pos - beginPos);
-          ontology.types = cp::SetOfTypes::fromStr(typesStr);
+          ontology.types.addTypesFromPddl(typesStr);
         }
         else if (token == ":constants")
         {
           std::size_t beginPos = pos;
           ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
           std::string constantsStr = pStr.substr(beginPos, pos - beginPos);
-          ontology.constants = cp::SetOfEntities::fromStr(constantsStr, ontology.types);
+          ontology.constants.addAllFromPddl(constantsStr, ontology.types);
         }
         else if (token == ":predicates")
         {
@@ -834,13 +846,13 @@ Domain pddlToDomain(const std::string& pStr)
         {
           auto axiom = _pddlToAxiom(pStr, pos, ontology);
           for (auto& currEvent : axiom.toEvents(ontology, {}))
-            setOfEvents.add(currEvent, "from_axiom");
+            idToSetOfEvents[Domain::setOfEventsIdFromConstructor].add(currEvent, "from_axiom");
         }
         else if (token == ":event")
         {
           auto eventName = ExpressionParsed::parseToken(pStr, pos);
           auto event = _pddlToEvent(pStr, pos, ontology);
-          setOfEvents.add(event, eventName);
+          idToSetOfEvents[Domain::setOfEventsIdFromConstructor].add(event, eventName);
         }
         else if (token == ":action")
         {
@@ -866,7 +878,10 @@ Domain pddlToDomain(const std::string& pStr)
   } else {
     throw std::runtime_error("No '(define' found in domain file");
   }
-  return Domain(actions, ontology, setOfEvents, timelessFacts, domainName);
+  auto res = Domain(actions, ontology, {}, timelessFacts, domainName);
+  for (auto& currSetOfEv : idToSetOfEvents)
+    res.addSetOfEvents(currSetOfEv.second, currSetOfEv.first);
+  return res;
 }
 
 std::unique_ptr<Condition> pddlToCondition(const std::string& pStr,

@@ -1,6 +1,7 @@
 #ifndef INCLUDE_CONTEXTUALPLANNER_UTIL_SERIALIZER_DESERIALIZEFROMPDDL_HPP
 #define INCLUDE_CONTEXTUALPLANNER_UTIL_SERIALIZER_DESERIALIZEFROMPDDL_HPP
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -15,7 +16,8 @@ struct SetOfEntities;
 struct WorldStateModification;
 
 
-Domain pddlToDomain(const std::string& pStr);
+Domain pddlToDomain(const std::string& pStr,
+                    const std::map<std::string, Domain>& pPreviousDomains);
 
 
 std::unique_ptr<Condition> pddlToCondition(const std::string& pStr,

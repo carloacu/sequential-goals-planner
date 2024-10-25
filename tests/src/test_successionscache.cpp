@@ -29,9 +29,9 @@ void _test_actionSuccessions()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("e1 e2 - entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("e1 e2 - entity\n"
                                            "resource");
-  ontology.constants = cp::SetOfEntities::fromStr("a - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("a - entity\n"
                                                   "moves - resource", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b(?e - entity)\n"
@@ -114,9 +114,9 @@ void _test_notActionSuccessions()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location");
-  ontology.constants = cp::SetOfEntities::fromStr("e1 e2 - entity", ontology.types);
+  ontology.constants = cp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b(?e - entity)\n"
                                                      "fact_c(?e - entity) - location\n"

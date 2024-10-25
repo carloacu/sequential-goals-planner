@@ -23,10 +23,10 @@ void assert_eq(const TYPE& pExpected,
 void test_factToConditions()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "my_type my_type2 - entity\n"
                                            "sub_my_type2 - my_type2");
-  ontology.constants = cp::SetOfEntities::fromStr("toto toto2 - my_type\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("toto toto2 - my_type\n"
                                                   "titi titi_const - my_type2", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?e - entity)\n"
                                                      "pred_name2(?e - entity)\n"
@@ -36,7 +36,7 @@ void test_factToConditions()
                                                      "pred_name6(?e - entity)\n",
                                                      ontology.types);
 
-  auto entities = cp::SetOfEntities::fromStr("toto3 - my_type\n"
+  auto entities = cp::SetOfEntities::fromPddl("toto3 - my_type\n"
                                              "titi2 - my_type2\n"
                                              "titi3 - sub_my_type2", ontology.types);
 

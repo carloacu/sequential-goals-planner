@@ -107,6 +107,8 @@ struct CONTEXTUALPLANNER_API Domain
 
   const Ontology& getOntology() const { return _ontology; }
 
+  const std::map<ActionId, Action>& getActions() const { return _actions; }
+
   const SetOfConstFacts& getTimelessFacts() const { return _timelessFacts; }
 
   std::string printSuccessionCache() const;

@@ -38,8 +38,8 @@ void assert_false(const TYPE& pValue)
 void _test_pddlSerializationParts()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("type1 type2 - entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - type1\n"
+  ontology.types = cp::SetOfTypes::fromPddl("type1 type2 - entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - type1\n"
                                                   "titi - type2", ontology.types);
 
   cp::Predicate pred("(pred_a ?e - entity)", true, ontology.types);
@@ -74,31 +74,60 @@ void _test_pddlSerializationParts()
 
 void _test_loadPddlDomain()
 {
+  std::map<std::string, cp::Domain> loadedDomains;
+  {
+    auto firstDomain = cp::pddlToDomain(R"(
+  (define
+      (domain building)
+      (:types
+          site material - object
+          bricks cables windows - material
+      )
+      (:constants mainsite - site)
+
+      (:predicates
+          (walls-built ?s - site)
+          (foundations-set ?s - site)
+          (on-site ?m - material ?s - site)
+          (material-used ?m - material)
+      )
+
+      (:action BUILD-WALL
+          :parameters (?s - site ?b - bricks)
+          :precondition (and
+              (on-site ?b ?s)
+              (foundations-set ?s)
+              (not (walls-built ?s))
+              (not (material-used ?b))
+          )
+          :effect (and
+              (walls-built ?s)
+              (material-used ?b)
+          )
+          ; :expansion ;deprecated
+      )
+  )", loadedDomains);
+    loadedDomains.emplace(firstDomain.getName(), std::move(firstDomain));
+  }
+
   auto domain = cp::pddlToDomain(R"(
 (define
     (domain construction)
     (:extends building)
     (:requirements :strips :typing)
     (:types
-        site material - object
-        bricks cables windows - material
         car
         ball
     )
-    (:constants mainsite - site
-      maincar - car)
+    (:constants maincar - car)
 
     ;(:domain-variables ) ;deprecated
 
     (:predicates
-        (walls-built ?s - site)
-        (windows-fitted ?s - site)
-        (foundations-set ?s - site)
         (cables-installed ?s - site)
-        (site-built ?s - site)
-        (on-site ?m - material ?s - site)
-        (material-used ?m - material)
         (held ?b - ball)
+        (site-built ?s - site)
+        (windows-fitted ?s - site)
     )
 
     (:functions
@@ -136,21 +165,6 @@ void _test_loadPddlDomain()
         )
     )
 
-    (:action BUILD-WALL
-        :parameters (?s - site ?b - bricks)
-        :precondition (and
-            (on-site ?b ?s)
-            (foundations-set ?s)
-            (not (walls-built ?s))
-            (not (material-used ?b))
-        )
-        :effect (and
-            (walls-built ?s)
-            (material-used ?b)
-        )
-        ; :expansion ;deprecated
-    )
-
     (:durative-action BUILD-WALL-DURATIVE
         :parameters
           (?s - site ?b - bricks)
@@ -175,7 +189,8 @@ void _test_loadPddlDomain()
     )
 
 )
-)");
+)", loadedDomains);
+  loadedDomains.emplace(domain.getName(), domain);
 
   std::string expectedSerializedResult = R"((define
     (domain construction)
@@ -314,7 +329,7 @@ void _test_loadPddlDomain()
     assert_true(false);
   }
 
-  auto domain2 = cp::pddlToDomain(pddout1);
+  auto domain2 = cp::pddlToDomain(pddout1, {});
   auto pddout2 = cp::domainToPddl(domain2);
   if (pddout2 != pddout1)
   {

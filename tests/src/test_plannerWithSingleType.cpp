@@ -383,8 +383,8 @@ void _test_goalToStr()
 void _test_factToStr()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("human");
-  ontology.constants = cp::SetOfEntities::fromStr("h1 - human", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("human");
+  ontology.constants = cp::SetOfEntities::fromPddl("h1 - human", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?h - human)", ontology.types);
   assert_eq<std::string>("isEngaged(h1)", _fact("isEngaged(h1)", ontology).toStr());
 }
@@ -395,10 +395,10 @@ void _test_factToStr()
 void _test_conditionParameters()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location\n"
+  ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "entity\n"
                                            "robot - physical_object");
-  ontology.constants = cp::SetOfEntities::fromStr("me self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me self - robot\n"
                                                   "pen - physical_object\n"
                                                   "entrance kitchen - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
@@ -452,10 +452,10 @@ void _test_conditionParameters()
 void _test_wsModificationToStr()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location\n"
+  ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "entity\n"
                                            "robot - physical_object");
-  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets - entity\n"
                                                   "target - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
@@ -493,10 +493,10 @@ void _test_wsModificationToStr()
 void _test_invertCondition()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location\n"
+  ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "entity\n"
                                            "robot - physical_object");
-  ontology.constants = cp::SetOfEntities::fromStr("me self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me self - robot\n"
                                                   "chair - entity\n"
                                                   "pen - physical_object\n"
                                                   "kitchen entrance - location", ontology.types);
@@ -515,8 +515,8 @@ void _test_invertCondition()
 void _test_checkCondition()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("b c d - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("b c d - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("a - entity", ontology.types);
 
   cp::WorldState worldState;
@@ -1295,8 +1295,8 @@ void _triggerActionThatRemoveAFact()
 void _actionWithConstantValue()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location");
-  ontology.constants = cp::SetOfEntities::fromStr("kitchen - location", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("location");
+  ontology.constants = cp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("place - location", ontology.types);
 
   std::map<std::string, cp::Action> actions;
@@ -1312,8 +1312,8 @@ void _actionWithConstantValue()
 void _actionWithParameterizedValue()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location");
-  ontology.constants = cp::SetOfEntities::fromStr("kitchen - location", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("location");
+  ontology.constants = cp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("place - location", ontology.types);
 
   std::map<std::string, cp::Action> actions;
@@ -1331,8 +1331,8 @@ void _actionWithParameterizedValue()
 void _actionWithParameterizedParameter()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("human");
-  ontology.constants = cp::SetOfEntities::fromStr("h1 - human", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("human");
+  ontology.constants = cp::SetOfEntities::fromPddl("h1 - human", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("isHappy(?h - human)", ontology.types);
 
   std::map<std::string, cp::Action> actions;
@@ -1350,8 +1350,8 @@ void _actionWithParameterizedParameter()
 void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("human");
-  ontology.constants = cp::SetOfEntities::fromStr("h1 h2 - human", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("human");
+  ontology.constants = cp::SetOfEntities::fromPddl("h1 h2 - human", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?h - human)\n"
                                                      "isHappy(?h - human)", ontology.types);
 
@@ -1371,8 +1371,8 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 void _actionWithParametersInsideThePath()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location");
-  ontology.constants = cp::SetOfEntities::fromStr("entrance kitchen - location", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("location");
+  ontology.constants = cp::SetOfEntities::fromPddl("entrance kitchen - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("place - location\n"
                                                      "welcomePeople", ontology.types);
 
@@ -2193,8 +2193,8 @@ void _factValueModification()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("a b - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("a b - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b, ontology.types);
 
@@ -2254,9 +2254,9 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
 void _setWsModification()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me object - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me object - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type", ontology.types);
 
@@ -2275,9 +2275,9 @@ void _setWsModification()
 void _forAllWsModification()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me object1 object2 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me object1 object2 - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
@@ -2301,9 +2301,9 @@ void _forAllWsModification()
 void _actionNavigationAndGrabObjectWithParameters()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me sweets - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me sweets - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
@@ -2334,9 +2334,9 @@ void _actionNavigationAndGrabObjectWithParameters()
 void _actionNavigationAndGrabObjectWithParameters2()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me sweets - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me sweets - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
@@ -2370,9 +2370,9 @@ void _moveObject()
   const std::string actionNavigate2 = "actionNavigate2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me sweets - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me sweets - entity\n"
                                                   "corridor kitchen bedroom - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
@@ -2408,10 +2408,10 @@ void _moveObject()
 void _moveAndUngrabObject()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets - entity\n"
                                                   "kitchen bedroom - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
@@ -2464,10 +2464,10 @@ void _failToMoveAnUnknownObject()
   const std::string actionRanomWalk = "actionRanomWalk";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets - entity\n"
                                                   "kitchen bedroom - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
@@ -2538,10 +2538,10 @@ void _completeMovingObjectScenario()
   const std::string actionWhereIsObject = "actionWhereIsObject";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets bottle - entity\n"
                                                   "kitchen bedroom entrance - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
@@ -2607,10 +2607,10 @@ void _eventWithANegatedFactWithParameter()
   const std::string actionUngrabBothHands = "actionUngrabBothHands";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets bottle glass - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("grab(?e - robot, ?e - entity)\n"
                                                      "hasTwoHandles(?e - entity)\n"
@@ -2712,8 +2712,8 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 void _useTwoTimesAnEvent()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("obj1 obj2 - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("obj1 obj2 - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "(?e - entity)\n" +
                                                      _fact_c + "(?e - entity)", ontology.types);
@@ -2744,8 +2744,8 @@ void _linkWithAnyValueInCondition()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b, ontology.types);
 
@@ -2773,8 +2773,8 @@ void _removeAFactWithAnyValue()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + " - entity", ontology.types);
 
@@ -2797,8 +2797,8 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("e1 e2 - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
@@ -2876,8 +2876,8 @@ void _actionWithFactWithANegatedFact()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("a b - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("a b - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
@@ -2911,8 +2911,8 @@ void _negatedFactValueInWorldState()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("a b c - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("a b c - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b, ontology.types);
 
@@ -2986,9 +2986,9 @@ void _checkFilterFactInCondition()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location");
-  ontology.constants = cp::SetOfEntities::fromStr("obj1 obj2 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
                                                   "loc1 loc2 - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
                                                      _fact_b + "(?e - entity, ?l - location)\n" +
@@ -3026,9 +3026,9 @@ void _checkFilterFactInConditionAndThenPropagate()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location");
-  ontology.constants = cp::SetOfEntities::fromStr("obj1 obj2 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
                                                   "loc1 loc2 - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?e - entity, ?l - location)\n" +
@@ -3121,8 +3121,8 @@ void _hardProblemThatNeedsToBeSmart()
   const std::string action6 = "action6";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
@@ -3184,8 +3184,8 @@ void _goalsToDoInParallel()
   const std::string action7 = "action7";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
@@ -3284,8 +3284,8 @@ void _checkSimpleExists()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location");
-  ontology.constants = cp::SetOfEntities::fromStr("kitchen - location", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("location");
+  ontology.constants = cp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?l - location)\n" +
                                                      _fact_b, ontology.types);
 
@@ -3310,9 +3310,9 @@ void _checkExistsWithActionParameterInvolved()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location");
-  ontology.constants = cp::SetOfEntities::fromStr("pen - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("pen - entity\n"
                                                   "kitchen - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?l - location, ?e - entity)\n" +
                                                      _fact_b, ontology.types);
@@ -3340,10 +3340,10 @@ void _checkExistsWithManyFactsInvolved()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
                                                   "bottle mouse pen - entity\n"
                                                   "bedroom kitchen livingroom - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
@@ -3377,10 +3377,10 @@ void _doAnActionToSatisfyAnExists()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
                                                   "bottle mouse pen - entity\n"
                                                   "bedroom kitchen livingroom - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
@@ -3418,10 +3418,10 @@ void _checkForAllEffectAtStart()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
                                                   "bottle mouse pen - entity\n"
                                                   "bedroom entrance kitchen livingroom - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
@@ -3463,10 +3463,10 @@ void _existsWithValue()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
                                                   "pen - entity\n"
                                                   "livingroom - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot) - location\n" +
@@ -3501,9 +3501,9 @@ void _notExists()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location\n"
+  ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
                                                   "kitchen - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
                                                      _fact_b, ontology.types);
@@ -3531,10 +3531,10 @@ void _actionToSatisfyANotExists()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location\n"
+  ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "robot\n"
                                            "resource");
-  ontology.constants = cp::SetOfEntities::fromStr("self - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
                                                   "kitchen - location\n"
                                                   "spec_rec - resource", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
@@ -3606,8 +3606,8 @@ void _orInCondition()
 void _axioms()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("object");
-  ontology.constants = cp::SetOfEntities::fromStr("book titi - object", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("object");
+  ontology.constants = cp::SetOfEntities::fromPddl("book titi - object", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?o - object)\n" +
                                                      _fact_b + "(?o - object)\n" +
                                                      _fact_c + "(?o - object)\n" +
@@ -3660,8 +3660,8 @@ void _assignAnotherValueToSatisfyNotGoal()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
 
   std::map<std::string, cp::Action> actions;
@@ -3683,8 +3683,8 @@ void _assignUndefined()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
 
   std::map<std::string, cp::Action> actions;
@@ -3708,9 +3708,9 @@ void _assignAFact()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
                                                   "p1 p2 p3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity", ontology.types);
@@ -3739,9 +3739,9 @@ void _assignAFactToAction()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
                                                   "p1 p2 p3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
@@ -3773,9 +3773,9 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
@@ -3817,9 +3817,9 @@ void _assignAFactThenCheckExistWithAnotherFact()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
@@ -3857,9 +3857,9 @@ void _existWithEqualityInEvent()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param)\n" +
@@ -3910,9 +3910,9 @@ void _existWithEqualityInEvent_withEqualityInverted()
   const std::string action1 = "action1";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param)\n" +
@@ -3965,9 +3965,9 @@ void _fixEventWithFluentInParameter()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
@@ -4023,9 +4023,9 @@ void _derivedPredicates()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
@@ -4071,9 +4071,9 @@ void _assignAFactTwoTimesInTheSamePlan()
   const std::string action2 = "action2";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 kitchen - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 kitchen - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
@@ -4117,9 +4117,9 @@ void _checkTwoTimesTheEqualityOfAFact()
   const std::string action3 = "action3";
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromStr("aVal anotherVal valGoal v1 v2 v3 bedroom kitchen - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 bedroom kitchen - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
@@ -4170,9 +4170,9 @@ void _checkTwoTimesTheEqualityOfAFact()
 void _eventToRemoveAFactWithoutFluent()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("loc_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromStr("me - robot\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
                                                   "house1 house2 city anotherCity - loc_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
                                                      "robotAt(?r - robot, ?l - loc_type)\n"

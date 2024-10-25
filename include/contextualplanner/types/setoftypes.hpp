@@ -14,10 +14,11 @@ struct CONTEXTUALPLANNER_API SetOfTypes
 {
   SetOfTypes();
 
-  static SetOfTypes fromStr(const std::string& pStr);
+  static SetOfTypes fromPddl(const std::string& pStr);
 
   void addType(const std::string& pTypeToAdd,
                const std::string& pParentType = "");
+  void addTypesFromPddl(const std::string& pStr);
 
   std::shared_ptr<Type> nameToType(const std::string& pName) const;
   static std::shared_ptr<Type> numberType();

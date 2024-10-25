@@ -68,7 +68,7 @@ void _test_setOfTypes_fromStr()
                          "citroen ferrari peugeot - voiture\n"
                          "c3 - citroen\n"
                          "location";
-  auto setOfTypes = cp::SetOfTypes::fromStr(typesStr + " ");
+  auto setOfTypes = cp::SetOfTypes::fromPddl(typesStr + " ");
   assert_eq<std::string>(typesStr, setOfTypes.toStr());
   assert_eq<std::string>("voiture", setOfTypes.nameToType("citroen")->parent->name);
 }
@@ -76,12 +76,12 @@ void _test_setOfTypes_fromStr()
 
 void _test_predicateToStr()
 {
-  auto setOfTypes = cp::SetOfTypes::fromStr("my_type my_type2 return_type");
+  auto setOfTypes = cp::SetOfTypes::fromPddl("my_type my_type2 return_type");
   assert_eq<std::string>("pred_name(?v - my_type)", cp::Predicate("pred_name(?v - my_type)", false, setOfTypes).toStr());
   assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2)", cp::Predicate("pred_name(?v - my_type, ?o - my_type2)", false, setOfTypes).toStr());
   assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2) - return_type", cp::Predicate("pred_name(?v - my_type, ?o - my_type2) - return_type", false, setOfTypes).toStr());
 
-  auto otherSetOfTypes = cp::SetOfTypes::fromStr("a b");
+  auto otherSetOfTypes = cp::SetOfTypes::fromPddl("a b");
   try {
     cp::Predicate("pred_name(?v - my_type)", false, otherSetOfTypes);
     assert_true(false);
@@ -99,7 +99,7 @@ void _test_predicateToStr()
 
 void _test_setOfPredicates_fromStr()
 {
-  auto setOfTypes = cp::SetOfTypes::fromStr("my_type my_type2 return_type");
+  auto setOfTypes = cp::SetOfTypes::fromPddl("my_type my_type2 return_type");
   std::string predicatesStr = "pred_name(?v - my_type)\n"
                               "pred_name2(?v - my_type, ?o - my_type2)";
   auto setOfPredicates = cp::SetOfPredicates::fromStr(predicatesStr, setOfTypes);
@@ -109,10 +109,10 @@ void _test_setOfPredicates_fromStr()
 
 void _test_setOfEntities_fromStr()
 {
-  auto setOfTypes = cp::SetOfTypes::fromStr("my_type my_type2 return_type");
+  auto setOfTypes = cp::SetOfTypes::fromPddl("my_type my_type2 return_type");
   std::string entitiesStr = "toto - my_type\n"
                             "titi tutu - my_type2";
-  auto setOfEntities = cp::SetOfEntities::fromStr(entitiesStr, setOfTypes);
+  auto setOfEntities = cp::SetOfEntities::fromPddl(entitiesStr, setOfTypes);
   assert_eq<std::string>(entitiesStr, setOfEntities.toStr());
   assert_eq<std::string>("my_type2", setOfEntities.valueToEntity("titi")->type->name);
 }
@@ -120,9 +120,9 @@ void _test_setOfEntities_fromStr()
 void _test_fact_initialization()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("my_type my_type2 return_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("my_type my_type2 return_type\n"
                                            "sub_my_type - my_type");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - my_type\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - my_type\n"
                                                   "sub_toto - sub_my_type\n"
                                                   "titi tutu - my_type2\n"
                                                   "res - return_type", ontology.types);
@@ -199,9 +199,9 @@ void _test_action_initialization()
 {
   cp::SetOfFacts setOfFacts;
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("my_type my_type2 return_type\n"
+  ontology.types = cp::SetOfTypes::fromPddl("my_type my_type2 return_type\n"
                                            "sub_my_type - my_type");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - my_type\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - my_type\n"
                                                   "sub_toto - sub_my_type\n"
                                                   "titi tutu - my_type2\n"
                                                   "res - return_type", ontology.types);
@@ -273,9 +273,9 @@ void _test_action_initialization()
 void _test_checkConditionWithOntology()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "my_type my_type2 - entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - my_type\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - my_type\n"
                                                   "titi - my_type2", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?e - entity)", ontology.types);
 

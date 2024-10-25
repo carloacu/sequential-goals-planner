@@ -16,10 +16,13 @@ struct CONTEXTUALPLANNER_API SetOfEntities
 {
   SetOfEntities();
 
-  static SetOfEntities fromStr(const std::string& pStr,
+  static SetOfEntities fromPddl(const std::string& pStr,
                                const SetOfTypes& pSetOfTypes);
 
   void add(const Entity& pEntity);
+
+  void addAllFromPddl(const std::string& pStr,
+                      const SetOfTypes& pSetOfTypes);
 
   const Entity* valueToEntity(const std::string& pValue) const;
 

@@ -21,9 +21,38 @@ SetOfTypes::SetOfTypes()
 }
 
 
-SetOfTypes SetOfTypes::fromStr(const std::string& pStr)
+SetOfTypes SetOfTypes::fromPddl(const std::string& pStr)
 {
   SetOfTypes res;
+  res.addTypesFromPddl(pStr);
+  return res;
+}
+
+void SetOfTypes::addType(const std::string& pTypeToAdd,
+                         const std::string& pParentType)
+{
+  if (pParentType == "")
+  {
+    _types.push_back(std::make_shared<Type>(pTypeToAdd));
+    _nameToType[pTypeToAdd] = _types.back();
+    return;
+  }
+
+  auto it = _nameToType.find(pParentType);
+  if (it == _nameToType.end())
+  {
+    addType(pParentType);
+    it = _nameToType.find(pParentType);
+  }
+
+  auto type = std::make_shared<Type>(pTypeToAdd, it->second);
+  it->second->subTypes.push_back(type);
+  _nameToType[pTypeToAdd] = it->second->subTypes.back();
+}
+
+
+void SetOfTypes::addTypesFromPddl(const std::string& pStr)
+{
   std::vector<std::string> lineSplitted;
   cp::split(lineSplitted, pStr, "\n");
 
@@ -48,32 +77,8 @@ SetOfTypes SetOfTypes::fromStr(const std::string& pStr)
     cp::split(types, typesStrs, " ");
     for (auto& currType : types)
       if (!currType.empty())
-        res.addType(currType, parentType);
+        addType(currType, parentType);
   }
-  return res;
-}
-
-
-void SetOfTypes::addType(const std::string& pTypeToAdd,
-                         const std::string& pParentType)
-{
-  if (pParentType == "")
-  {
-    _types.push_back(std::make_shared<Type>(pTypeToAdd));
-    _nameToType[pTypeToAdd] = _types.back();
-    return;
-  }
-
-  auto it = _nameToType.find(pParentType);
-  if (it == _nameToType.end())
-  {
-    addType(pParentType);
-    it = _nameToType.find(pParentType);
-  }
-
-  auto type = std::make_shared<Type>(pTypeToAdd, it->second);
-  it->second->subTypes.push_back(type);
-  _nameToType[pTypeToAdd] = it->second->subTypes.back();
 }
 
 std::shared_ptr<Type> SetOfTypes::nameToType(const std::string& pName) const

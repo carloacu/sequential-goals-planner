@@ -93,8 +93,8 @@ void _simplest_plan_possible()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("type1 type2 - entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - type1\n"
+  ontology.types = cp::SetOfTypes::fromPddl("type1 type2 - entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - type1\n"
                                                   "titi - type2", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_a(?e - entity)\n"
                                                      "pred_b\n", ontology.types);
@@ -125,10 +125,10 @@ void _wrong_condition_type()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "type1 - entity\n"
                                            "type2 - entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - type1\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - type1\n"
                                                   "titi - type2", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_a(?e - entity)\n"
                                                      "pred_b\n", ontology.types);
@@ -158,8 +158,8 @@ void _number_type()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_a(?e - entity) - number\n"
                                                      "pred_b", ontology.types);
 
@@ -188,8 +188,8 @@ void _planWithActionThenEventWithFluentParameter()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity");
-  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_a - entity\n"
                                                      "pred_b(?e - entity)", ontology.types);
 
@@ -219,9 +219,9 @@ void _planWithActionThenEventWithAssign()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "other_type");
-  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("toto titi - entity\n"
                                                   "v - other_type", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_a - other_type\n"
                                                      "pred_b(?e - entity) - other_type\n"
@@ -258,10 +258,10 @@ void _fluentEqualityInPrecoditionOfAnAction()
   std::map<std::string, cp::Action> actions;
 
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("entity\n"
+  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
                                            "other_type\n"
                                            "lol");
-  ontology.constants = cp::SetOfEntities::fromStr("toto titi - entity\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("toto titi - entity\n"
                                                   "v - other_type\n"
                                                   "lol_val - lol", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_a - other_type\n"
@@ -299,8 +299,8 @@ void _fluentEqualityInPrecoditionOfAnAction()
 void _testIncrementOfVariables()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("");
-  ontology.constants = cp::SetOfEntities::fromStr("", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("");
+  ontology.constants = cp::SetOfEntities::fromPddl("", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("numberOfQuestion - number\n"
                                                      "maxNumberOfQuestions - number\n"
                                                      "ask_all_the_questions\n"
@@ -370,8 +370,8 @@ void _testIncrementOfVariables()
 void _actionWithParametersInPreconditionsAndEffects()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("");
-  ontology.constants = cp::SetOfEntities::fromStr("", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("");
+  ontology.constants = cp::SetOfEntities::fromPddl("", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?hid - number)\n"
                                                      "isHappy(?hid - number)", ontology.types);
   const cp::SetOfEntities entities;
@@ -399,8 +399,8 @@ void _actionWithParametersInPreconditionsAndEffects()
 void _testQuiz()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("");
-  ontology.constants = cp::SetOfEntities::fromStr("", ontology.types);
+  ontology.types = cp::SetOfTypes::fromPddl("");
+  ontology.constants = cp::SetOfEntities::fromPddl("", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("numberOfQuestion - number\n"
                                                      "maxNumberOfQuestions - number\n"
                                                      "ask_all_the_questions\n"
@@ -455,10 +455,10 @@ void _testQuiz()
 void _doNextActionThatBringsToTheSmallerCost()
 {
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location\n"
+  ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "object\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromStr("me - robot", ontology.types);
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("objectGrabable(?o - object)\n"
                                                      "locationOfRobot(?r - robot) - location\n"
                                                      "locationOfObject(?o - object) - location\n"
@@ -495,7 +495,7 @@ void _doNextActionThatBringsToTheSmallerCost()
 
   cp::Problem problem;
   auto& entities = problem.entities;
-  entities = cp::SetOfEntities::fromStr("obj1 obj2 - object\n"
+  entities = cp::SetOfEntities::fromPddl("obj1 obj2 - object\n"
                                         "livingRoom kitchen bedroom - location", ontology.types);
   problem.worldState.addFact(cp::Fact("objectGrabable(obj1)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
@@ -553,9 +553,9 @@ void _parameterToFillFromConditionOfFirstAction()
 {
   const std::string action1 = "action1";
   cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromStr("location\n"
+  ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "chargingZone");
-  ontology.constants = cp::SetOfEntities::fromStr("cz - chargingZone\n"
+  ontology.constants = cp::SetOfEntities::fromPddl("cz - chargingZone\n"
                                                   "czLocation - location", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot - location\n"
                                                      "declaredLocationOfChargingZone(?cz - chargingZone) - location\n"

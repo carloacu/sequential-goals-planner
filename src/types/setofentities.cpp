@@ -12,10 +12,24 @@ SetOfEntities::SetOfEntities()
 }
 
 
-SetOfEntities SetOfEntities::fromStr(const std::string& pStr,
-                                     const SetOfTypes& pSetOfTypes)
+SetOfEntities SetOfEntities::fromPddl(const std::string& pStr,
+                                      const SetOfTypes& pSetOfTypes)
 {
   SetOfEntities res;
+  res.addAllFromPddl(pStr, pSetOfTypes);
+  return res;
+}
+
+void SetOfEntities::add(const Entity& pEntity)
+{
+  _valueToEntity.erase(pEntity.value);
+  _valueToEntity.emplace(pEntity.value, pEntity);
+}
+
+
+void SetOfEntities::addAllFromPddl(const std::string& pStr,
+                                   const SetOfTypes& pSetOfTypes)
+{
   std::vector<std::string> lineSplitted;
   cp::split(lineSplitted, pStr, "\n");
   for (auto& currLine : lineSplitted)
@@ -44,17 +58,10 @@ SetOfEntities SetOfEntities::fromStr(const std::string& pStr,
     cp::split(entitiesStrs, entitiesStr, " ");
     for (auto& currEntity : entitiesStrs)
       if (!currEntity.empty())
-        res.add(Entity(currEntity, type));
+        add(Entity(currEntity, type));
   }
-  return res;
 }
 
-
-void SetOfEntities::add(const Entity& pEntity)
-{
-  _valueToEntity.erase(pEntity.value);
-  _valueToEntity.emplace(pEntity.value, pEntity);
-}
 
 const Entity* SetOfEntities::valueToEntity(const std::string& pValue) const
 {
