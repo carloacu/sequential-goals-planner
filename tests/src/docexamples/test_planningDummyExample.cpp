@@ -27,7 +27,7 @@ void planningDummyExample()
 
   // Initialize the problem with the goal to satisfy
   cp::Problem problem;
-  problem.goalStack.setGoals({cp::Goal(userIsGreeted, ontology, {})}, problem.worldState, now);
+  problem.goalStack.setGoals({cp::Goal::fromStr(userIsGreeted, ontology, {})}, problem.worldState, now);
 
   // Look for an action to do
   auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);

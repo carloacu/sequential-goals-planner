@@ -60,13 +60,23 @@ SetOfFacts SetOfFacts::fromPddl(const std::string& pStr,
                                 const SetOfEntities& pEntities,
                                 bool pCanFactsBeRemoved)
 {
+  SetOfFacts res;
+  res.addFactsFromPddl(pStr, pPos, pOntology, pEntities, pCanFactsBeRemoved);
+  return res;
+}
+
+
+void SetOfFacts::addFactsFromPddl(const std::string& pStr,
+                                  std::size_t& pPos,
+                                  const Ontology& pOntology,
+                                  const SetOfEntities& pEntities,
+                                  bool pCanFactsBeRemoved)
+{
   auto strSize = pStr.size();
   ExpressionParsed::skipSpaces(pStr, pPos);
 
-  SetOfFacts res;
   while (pPos < strSize && pStr[pPos] != ')')
-    res.add(Fact(pStr, true, pOntology, pEntities, {}, nullptr, pPos, &pPos), pCanFactsBeRemoved);
-  return res;
+    add(Fact(pStr, true, pOntology, pEntities, {}, nullptr, pPos, &pPos), pCanFactsBeRemoved);
 }
 
 

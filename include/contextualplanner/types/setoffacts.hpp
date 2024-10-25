@@ -30,6 +30,12 @@ struct CONTEXTUALPLANNER_API SetOfFacts
                              const SetOfEntities& pEntities,
                              bool pCanFactsBeRemoved = true);
 
+  void addFactsFromPddl(const std::string& pStr,
+                        std::size_t& pPos,
+                        const Ontology& pOntology,
+                        const SetOfEntities& pEntities,
+                        bool pCanFactsBeRemoved = true);
+
   void add(const Fact& pFact,
            bool pCanBeRemoved = true);
 

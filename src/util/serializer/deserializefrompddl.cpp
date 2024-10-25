@@ -1,6 +1,8 @@
 #include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <memory>
 #include <contextualplanner/types/axiom.hpp>
 #include <contextualplanner/types/domain.hpp>
+#include <contextualplanner/types/problem.hpp>
 #include "../../types/expressionParsed.hpp"
 #include "../../types/worldstatemodificationprivate.hpp"
 
@@ -192,6 +194,43 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
   }
 
   return res;
+}
+
+
+std::unique_ptr<Goal> _expressionParsedToGoal(ExpressionParsed& pExpressionParsed,
+                                              const Ontology& pOntology,
+                                              const SetOfEntities& pEntities,
+                                              int pMaxTimeToKeepInactive,
+                                              const std::string& pGoalGroupId)
+{
+  bool isPersistentIfSkipped = false;
+  bool oneStepTowards = false;
+  std::unique_ptr<FactOptional> conditionFactPtr;
+
+  if (pExpressionParsed.name == "persist" && pExpressionParsed.arguments.size() == 1)
+  {
+    isPersistentIfSkipped = true;
+    pExpressionParsed = pExpressionParsed.arguments.front().clone();
+  }
+  if (pExpressionParsed.name == "oneStepTowards" && pExpressionParsed.arguments.size() == 1)
+  {
+    oneStepTowards = true;
+    pExpressionParsed = pExpressionParsed.arguments.front().clone();
+  }
+  if (pExpressionParsed.name == "imply" && pExpressionParsed.arguments.size() == 2)
+  {
+    auto it = pExpressionParsed.arguments.begin();
+    conditionFactPtr = std::make_unique<FactOptional>(it->toFact(pOntology, pEntities, {}, false));
+    ++it;
+    pExpressionParsed = it->clone();
+  }
+
+  auto objective = _expressionParsedToCondition(pExpressionParsed, pOntology, pEntities, {}, false);
+  if (!objective)
+    throw std::runtime_error("Failed to load the goal objective");
+  return std::make_unique<Goal>(std::move(objective), isPersistentIfSkipped, oneStepTowards,
+                                std::move(conditionFactPtr), pMaxTimeToKeepInactive,
+                                pGoalGroupId);
 }
 
 
@@ -884,6 +923,119 @@ Domain pddlToDomain(const std::string& pStr,
   return res;
 }
 
+
+DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
+                                   const std::map<std::string, Domain>& pLoadedDomains)
+{
+  DomainAndProblemPtrs res;
+  std::string problemName;
+
+  const std::string defineToken = "(define";
+  std::size_t found = pStr.find(defineToken);
+  if (found != std::string::npos)
+  {
+    auto strSize = pStr.size();
+    std::size_t pos = found + defineToken.size();
+
+    while (pos < strSize)
+    {
+      if (pStr[pos] == ';')
+      {
+        ExpressionParsed::moveUntilEndOfLine(pStr, pos);
+        ++pos;
+        continue;
+      }
+
+      if (pStr[pos] == '(')
+      {
+        ++pos;
+        auto token = ExpressionParsed::parseToken(pStr, pos);
+
+        if (token == "problem")
+        {
+          problemName = ExpressionParsed::parseToken(pStr, pos);
+        }
+        else if (token == ":domain")
+        {
+          while (pos < strSize && pStr[pos] != ')')
+          {
+            auto domainToExtend = ExpressionParsed::parseToken(pStr, pos);
+            auto itDomain = pLoadedDomains.find(domainToExtend);
+            if (itDomain == pLoadedDomains.end())
+              throw std::runtime_error("Domain \"" + domainToExtend + "\" is unknown!");
+            res.domainPtr = std::make_unique<Domain>(itDomain->second);
+            res.problemPtr = std::make_unique<Problem>(&res.domainPtr->getTimelessFacts().setOfFacts());
+          }
+        }
+        else if (token == ":objects")
+        {
+          if (!res.domainPtr)
+            throw std::runtime_error("problem objects are defined before the domain.");
+          const auto& ontology = res.domainPtr->getOntology();
+          std::size_t beginPos = pos;
+          ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
+          std::string entitiesStr = pStr.substr(beginPos, pos - beginPos);
+          res.problemPtr->entities.addAllFromPddl(entitiesStr, ontology.types);
+        }
+        else if (token == ":init")
+        {
+          if (!res.domainPtr)
+            throw std::runtime_error("problem init are defined before the domain.");
+          const auto& ontology = res.domainPtr->getOntology();
+
+          SetOfFacts setOfFacts = res.problemPtr->worldState.factsMapping();
+          setOfFacts.addFactsFromPddl(pStr, pos, ontology, res.problemPtr->entities);
+          res.problemPtr->worldState = WorldState(&setOfFacts);
+        }
+        else if (token == ":goal")
+        {
+          if (!res.domainPtr)
+            throw std::runtime_error("problem objects are defined before the domain.");
+          if (!res.problemPtr)
+            throw std::runtime_error("problem not initialized before to set the goals.");
+          const auto& ontology = res.domainPtr->getOntology();
+          std::vector<Goal> goals;
+          const auto& worldState = res.problemPtr->worldState;
+          const auto& entities = res.problemPtr->entities;
+
+          auto expressionParsed = ExpressionParsed::fromPddl(pStr, pos, false);
+          if (expressionParsed.name == "and")
+          {
+            for (auto& currGoalExpParsed : expressionParsed.arguments)
+            {
+              auto goalPtr = _expressionParsedToGoal(currGoalExpParsed, ontology, entities, -1, "");
+              if (!goalPtr)
+                throw std::runtime_error("Failed to parse a pddl goal");
+              goals.emplace_back(std::move(*goalPtr));
+            }
+          }
+          else
+          {
+            auto goalPtr = _expressionParsedToGoal(expressionParsed, ontology, entities, -1, "");
+            if (!goalPtr)
+              throw std::runtime_error("Failed to parse a pddl goal");
+            goals.emplace_back(std::move(*goalPtr));
+          }
+
+          res.problemPtr->goalStack.addGoals(goals, worldState, {});
+        }
+        else
+        {
+          throw std::runtime_error("Unknown domain PDDL token: \"" + token + "\"");
+        }
+      }
+
+      ++pos;
+    }
+
+  } else {
+    throw std::runtime_error("No '(define' found in domain file");
+  }
+
+  return res;
+}
+
+
 std::unique_ptr<Condition> pddlToCondition(const std::string& pStr,
                                            std::size_t& pPos,
                                            const Ontology& pOntology,
@@ -907,6 +1059,34 @@ std::unique_ptr<Condition> strToCondition(const std::string& pStr,
   return _expressionParsedToCondition(expressionParsed, pOntology, pEntities, pParameters, false);
 }
 
+
+std::unique_ptr<Goal> pddlToGoal(const std::string& pStr,
+                                 std::size_t& pPos,
+                                 const Ontology& pOntology,
+                                 const SetOfEntities& pEntities,
+                                 int pMaxTimeToKeepInactive,
+                                 const std::string& pGoalGroupId)
+{
+  if (pStr.empty())
+    return {};
+  auto expressionParsed = ExpressionParsed::fromPddl(pStr, pPos, false);
+  return _expressionParsedToGoal(expressionParsed, pOntology, pEntities,
+                                 pMaxTimeToKeepInactive, pGoalGroupId);
+}
+
+std::unique_ptr<Goal> strToGoal(const std::string& pStr,
+                                const Ontology& pOntology,
+                                const SetOfEntities& pEntities,
+                                int pMaxTimeToKeepInactive,
+                                const std::string& pGoalGroupId)
+{
+  if (pStr.empty())
+    return {};
+  std::size_t pos = 0;
+  auto expressionParsed = ExpressionParsed::fromStr(pStr, pos);
+  return _expressionParsedToGoal(expressionParsed, pOntology, pEntities,
+                                 pMaxTimeToKeepInactive, pGoalGroupId);
+}
 
 std::unique_ptr<WorldStateModification> pddlToWsModification(const std::string& pStr,
                                                              std::size_t& pPos,

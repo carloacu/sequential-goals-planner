@@ -121,7 +121,7 @@ Fact::Fact(const std::string& pStr,
     if (pResPos != nullptr)
     {
       if (pos <= pBeginPos)
-        throw std::runtime_error("Failed to parse a predicate in str " + pStr.substr(pBeginPos, pStr.size() - pBeginPos));
+        throw std::runtime_error("Failed to parse a fact in str " + pStr.substr(pBeginPos, pStr.size() - pBeginPos));
       *pResPos = pos;
     }
   }

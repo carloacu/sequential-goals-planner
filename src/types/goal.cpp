@@ -1,6 +1,6 @@
 #include <contextualplanner/types/goal.hpp>
 #include <assert.h>
-#include <contextualplanner/util/util.hpp>
+//#include <contextualplanner/util/util.hpp>
 #include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace cp
@@ -20,56 +20,24 @@ const std::string _implyPrefix = Goal::implyFunctionName + "(";
 const std::size_t _implyPrefixSize = _implyPrefix.size();
 }
 
-Goal::Goal(const std::string& pStr,
-           const Ontology& pOntology,
-           const SetOfEntities& pEntities,
+
+Goal::Goal(std::unique_ptr<Condition> pObjective,
+           bool pIsPersistentIfSkipped,
+           bool pOneStepTowards,
+           std::unique_ptr<FactOptional> pConditionFactPtr,
            int pMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
-  : _objective(),
+  : _objective(std::move(pObjective)),
     _maxTimeToKeepInactive(pMaxTimeToKeepInactive),
     _inactiveSince(),
-    _isPersistentIfSkipped(false),
-    _oneStepTowards(false),
-    _conditionFactPtr(),
+    _isPersistentIfSkipped(pIsPersistentIfSkipped),
+    _oneStepTowards(pOneStepTowards),
+    _conditionFactPtr(pConditionFactPtr ? std::move(pConditionFactPtr) : std::unique_ptr<FactOptional>()),
     _goalGroupId(pGoalGroupId)
 {
-  auto goalStr = pStr;
-  trim(goalStr);
-
-  if (goalStr.size() > _persistPrefixSize &&
-      goalStr.compare(0, _persistPrefixSize, _persistPrefix) == 0 &&
-      goalStr[goalStr.size() - 1] == ')')
-  {
-    _isPersistentIfSkipped = true;
-    goalStr = goalStr.substr(_persistPrefixSize, goalStr.size() - _persistPrefixSize - 1);
-  }
-
-  if (goalStr.size() > _oneStepTowardsPrefixSize &&
-      goalStr.compare(0, _oneStepTowardsPrefixSize, _oneStepTowardsPrefix) == 0 &&
-      goalStr[goalStr.size() - 1] == ')')
-  {
-    _oneStepTowards = true;
-    goalStr = goalStr.substr(_oneStepTowardsPrefixSize, goalStr.size() - _oneStepTowardsPrefixSize - 1);
-  }
-
-  if (goalStr.size() > _implyPrefixSize &&
-      goalStr.compare(0, _implyPrefixSize, _implyPrefix) == 0 &&
-      goalStr[goalStr.size() - 1] == ')')
-  {
-    goalStr = goalStr.substr(_implyPrefixSize, goalStr.size() - _implyPrefixSize - 1);
-
-    bool isFactNegated = false;
-    std::size_t endPos = 0;
-    auto conditionFact = Fact(goalStr, false, pOntology, pEntities, {}, &isFactNegated, 0, &endPos);
-    _conditionFactPtr = std::make_unique<FactOptional>(conditionFact, isFactNegated);
-
-    ++endPos;
-    goalStr = goalStr.substr(endPos, goalStr.size() - endPos);
-  }
-
-  _objective = strToCondition(goalStr, pOntology, pEntities, {});
   assert(_objective);
 }
+
 
 Goal::Goal(const Goal& pOther,
            const std::map<Parameter, Entity>* pParametersPtr,
@@ -83,6 +51,20 @@ Goal::Goal(const Goal& pOther,
     _goalGroupId(pGoalGroupIdPtr != nullptr ? *pGoalGroupIdPtr : pOther._goalGroupId)
 {
 }
+
+
+Goal Goal::fromStr(const std::string& pStr,
+                   const Ontology& pOntology,
+                   const SetOfEntities& pEntities,
+                   int pMaxTimeToKeepInactive,
+                   const std::string& pGoalGroupId)
+{
+  auto resPtr = strToGoal(pStr, pOntology, pEntities, pMaxTimeToKeepInactive, pGoalGroupId);
+  if (!resPtr)
+    throw std::runtime_error("Failed to load the goal: " + pStr);
+  return *resPtr;
+}
+
 
 void Goal::operator=(const Goal& pOther)
 {

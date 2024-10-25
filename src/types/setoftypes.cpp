@@ -11,6 +11,14 @@ namespace
 {
 const std::string _numberTypeName = "number";
 const std::shared_ptr<Type> _numberType = std::make_shared<Type>(_numberTypeName);
+
+void _removeAfterSemicolon(std::string& str) {
+    size_t pos = str.find(';');
+    if (pos != std::string::npos) {
+        str.erase(pos);  // Erase from the semicolon to the end
+    }
+}
+
 }
 
 SetOfTypes::SetOfTypes()
@@ -58,6 +66,7 @@ void SetOfTypes::addTypesFromPddl(const std::string& pStr)
 
   for (auto& currLine : lineSplitted)
   {
+    _removeAfterSemicolon(currLine);
     std::vector<std::string> typeWithParentType;
     cp::split(typeWithParentType, currLine, "-");
 

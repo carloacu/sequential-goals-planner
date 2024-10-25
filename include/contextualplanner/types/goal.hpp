@@ -15,15 +15,10 @@ namespace cp
 // A characteristic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
 struct CONTEXTUALPLANNER_API Goal
 {
-  /**
-   * @brief Construct a goal.
-   * @param pStr Serialized string corresponding to the fact contained in this goal.
-   * @param pMaxTimeToKeepInactive Max time in seconds to keep this goal not in the top of the goals stack.
-   * @param pGoalGroupId Identifier of a group of goals.
-   */
-  Goal(const std::string& pStr,
-       const Ontology& pOntology,
-       const SetOfEntities& pEntities,
+  Goal(std::unique_ptr<Condition> pObjective,
+       bool pIsPersistentIfSkipped = false,
+       bool pOneStepTowards = false,
+       std::unique_ptr<FactOptional> pConditionFactPtr = {},
        int pMaxTimeToKeepInactive = -1,
        const std::string& pGoalGroupId = "");
 
@@ -31,6 +26,12 @@ struct CONTEXTUALPLANNER_API Goal
   Goal(const Goal& pOther,
        const std::map<Parameter, Entity>* pParametersPtr = nullptr,
        const std::string* pGoalGroupIdPtr = nullptr);
+
+  static Goal fromStr(const std::string& pStr,
+                      const Ontology& pOntology,
+                      const SetOfEntities& pEntities,
+                      int pMaxTimeToKeepInactive = -1,
+                      const std::string& pGoalGroupId = "");
 
   /// Set content from another goal.
   void operator=(const Goal& pOther);

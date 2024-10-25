@@ -22,7 +22,6 @@ struct GoalStack;
 struct Event;
 struct ActionInvocationWithGoal;
 struct SetOfEvents;
-struct SetOfConstFacts;
 struct WorldStateModification;
 struct WorldStateCache;
 
@@ -34,7 +33,7 @@ struct WorldStateCache;
 struct CONTEXTUALPLANNER_API WorldState
 {
   /// Construct a world state.
-  WorldState(const SetOfConstFacts* pTimelessFactsPtr = nullptr);
+  WorldState(const SetOfFacts* pFactsPtr = nullptr);
   /// Construct a world state from another world state.
   WorldState(const WorldState& pOther);
 

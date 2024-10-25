@@ -2,7 +2,7 @@
 #include <list>
 #include <contextualplanner/types/goalstack.hpp>
 #include <contextualplanner/types/actioninvocationwithgoal.hpp>
-#include <contextualplanner/types/setofconstfacts.hpp>
+#include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/types/worldstatemodification.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -30,12 +30,12 @@ bool _isNegatedFactCompatibleWithFacts(
 }
 
 
-WorldState::WorldState(const SetOfConstFacts* pTimelessFactsPtr)
+WorldState::WorldState(const SetOfFacts* pFactsPtr)
   : onFactsChanged(),
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
-    _factsMapping(pTimelessFactsPtr != nullptr ? pTimelessFactsPtr->setOfFacts() : SetOfFacts()),
+    _factsMapping(pFactsPtr != nullptr ? *pFactsPtr : SetOfFacts()),
     _cache(std::make_unique<WorldStateCache>(*this))
 {
 }

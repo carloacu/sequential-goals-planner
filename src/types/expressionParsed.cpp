@@ -221,6 +221,14 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
     bool inName = true;
     while (pPos < strSize)
     {
+      if (pStr[pPos] == ';')
+      {
+        ExpressionParsed::moveUntilEndOfLine(pStr, pPos);
+        ++pPos;
+        skipSpaces(pStr, pPos);
+        beginOfTokenPos = pPos;
+      }
+
       if (pStr[pPos] == ')')
       {
         ++pPos;
@@ -285,7 +293,9 @@ void ExpressionParsed::skipSpaces(const std::string& pStr,
   auto strSize = pStr.size();
   while (pPos < strSize)
   {
-    if (pStr[pPos] != ' ' && pStr[pPos] != '\n' && pStr[pPos] != '\t')
+    if (pStr[pPos] == ';')
+       ExpressionParsed::moveUntilEndOfLine(pStr, pPos);
+    else if (pStr[pPos] != ' ' && pStr[pPos] != '\n' && pStr[pPos] != '\t')
       break;
     ++pPos;
   }

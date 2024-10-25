@@ -23,10 +23,10 @@ namespace cp
  */
 struct CONTEXTUALPLANNER_API Problem
 {
-  Problem(const SetOfConstFacts* pTimelessFactsPtr = nullptr)
+  Problem(const SetOfFacts* pFactsPtr = nullptr)
     : entities(),
       goalStack(),
-      worldState(pTimelessFactsPtr),
+      worldState(pFactsPtr),
       historical()
   {
   }

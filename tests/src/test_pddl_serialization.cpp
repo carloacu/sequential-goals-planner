@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <iostream>
 #include <contextualplanner/types/domain.hpp>
+#include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofentities.hpp>
@@ -69,6 +70,7 @@ void _test_pddlSerializationParts()
       assert_true(false);
     assert_eq<std::string>("decrease(battery-amount(toto), 4)", ws->toStr());
   }
+
 }
 
 
@@ -79,29 +81,34 @@ void _test_loadPddlDomain()
     auto firstDomain = cp::pddlToDomain(R"(
   (define
       (domain building)
-      (:types
-          site material - object
+      (:types ; a comment
+          ; line with only a comment
+          site material - object  ; a comment
+
+          ; line with only a comment
           bricks cables windows - material
       )
       (:constants mainsite - site)
 
       (:predicates
           (walls-built ?s - site)
-          (foundations-set ?s - site)
+          (foundations-set ?s - site)  ; a comment
           (on-site ?m - material ?s - site)
+
+          ; line with only a comment
           (material-used ?m - material)
       )
 
       (:action BUILD-WALL
-          :parameters (?s - site ?b - bricks)
+          :parameters (?s - site ?b - bricks)   ; a comment
           :precondition (and
               (on-site ?b ?s)
-              (foundations-set ?s)
+              (foundations-set ?s)  ; a comment
               (not (walls-built ?s))
               (not (material-used ?b))
           )
           :effect (and
-              (walls-built ?s)
+              (walls-built ?s)   ; a comment
               (material-used ?b)
           )
           ; :expansion ;deprecated
@@ -130,10 +137,10 @@ void _test_loadPddlDomain()
         (windows-fitted ?s - site)
     )
 
-    (:functions
+    (:functions;a comment
         (battery-amount ?r - car)
         (distance-to-floor ?b - ball)
-        (velocity ?b - ball)
+        (velocity ?b - ball)  ; a comment
     )
 
     (:timeless (foundations-set mainsite))
@@ -322,16 +329,41 @@ void _test_loadPddlDomain()
 
 ))";
 
-  auto pddout1 = cp::domainToPddl(domain);
-  if (pddout1 != expectedSerializedResult)
+  auto domainPddl1 = cp::domainToPddl(domain);
+  if (domainPddl1 != expectedSerializedResult)
   {
-    std::cout << pddout1 << std::endl;
+    std::cout << domainPddl1 << std::endl;
     assert_true(false);
   }
 
-  auto domain2 = cp::pddlToDomain(pddout1, {});
+
+  cp::DomainAndProblemPtrs domainAndProblemPtrs = pddlToProblem(R"((define
+    (problem buildingahouse)
+    (:domain construction)
+    ;(:situation <situation_name>) ;deprecated
+    (:objects
+        s1 - site
+        b - bricks
+        w - windows
+        c - cables
+    )
+    (:init
+        (on-site b s1)
+        (on-site c s1)
+        (on-site w s1)
+    )
+    (:goal (and  ; a comment
+            (walls-built s1)
+            (cables-installed s1)
+            (windows-fitted s1)
+        )
+    )
+))", loadedDomains);
+
+
+  auto domain2 = cp::pddlToDomain(domainPddl1, {});
   auto pddout2 = cp::domainToPddl(domain2);
-  if (pddout2 != pddout1)
+  if (pddout2 != domainPddl1)
   {
     std::cout << pddout2 << std::endl;
     assert_true(false);

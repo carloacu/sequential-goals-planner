@@ -105,7 +105,7 @@ cp::Goal _goal(const std::string& pStr,
                const cp::Ontology& pOntology,
                int pMaxTimeToKeepInactive = -1,
                const std::string& pGoalGroupId = "") {
-  return cp::Goal(pStr, pOntology, {}, pMaxTimeToKeepInactive, pGoalGroupId);
+  return cp::Goal::fromStr(pStr, pOntology, {}, pMaxTimeToKeepInactive, pGoalGroupId);
 }
 
 std::unique_ptr<cp::Condition> _condition_fromStr(const std::string& pConditionStr,
@@ -128,7 +128,7 @@ void _setGoalsForAPriority(cp::Problem& pProblem,
 {
   std::vector<cp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
-    goals.emplace_back(currFactStr, pOntology, cp::SetOfEntities());
+    goals.emplace_back(cp::Goal::fromStr(currFactStr, pOntology, cp::SetOfEntities()));
   pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow, pPriority);
 }
 
@@ -152,7 +152,7 @@ void _setGoals(cp::Problem& pProblem,
   {
     auto& goalsForAPrio = goals[currGoals.first];
     for (auto& currGoal : currGoals.second)
-      goalsForAPrio.emplace_back(currGoal, pOntology, cp::SetOfEntities());
+      goalsForAPrio.emplace_back(cp::Goal::fromStr(currGoal, pOntology, cp::SetOfEntities()));
   }
   pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow);
 }
@@ -176,7 +176,7 @@ void _addGoals(cp::Problem& pProblem,
   {
     auto& goalsForAPrio = goals[currGoals.first];
     for (auto& currGoal : currGoals.second)
-      goalsForAPrio.emplace_back(currGoal, pOntology, cp::SetOfEntities());
+      goalsForAPrio.emplace_back(cp::Goal::fromStr(currGoal, pOntology, cp::SetOfEntities()));
   }
   pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow);
 }
@@ -189,7 +189,7 @@ void _addGoalsForAPriority(cp::Problem& pProblem,
 {
   std::vector<cp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
-    goals.emplace_back(currFactStr, pOntology, cp::SetOfEntities());
+    goals.emplace_back(cp::Goal::fromStr(currFactStr, pOntology, cp::SetOfEntities()));
   pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow, pPriority);
 }
 

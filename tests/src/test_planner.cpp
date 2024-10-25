@@ -110,7 +110,7 @@ void _simplest_plan_possible()
   cp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b", ontology, entities)});
   problem.worldState.addFact(cp::Fact("pred_a(toto)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
@@ -144,7 +144,7 @@ void _wrong_condition_type()
   cp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b", ontology, entities)});
   problem.worldState.addFact(cp::Fact("pred_a(titi)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
@@ -172,12 +172,12 @@ void _number_type()
   cp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b", ontology, entities)});
   assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
   problem.worldState.addFact(cp::Fact("pred_a(toto)=10", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
-  _setGoalsForAPriority(problem, {cp::Goal("pred_b", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b", ontology, entities)});
   assert_eq<std::string>(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -208,7 +208,7 @@ void _planWithActionThenEventWithFluentParameter()
 
   cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {cp::Goal("pred_b(toto)", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b(toto)", ontology, entities)});
  assert_eq<std::string>(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -246,7 +246,7 @@ void _planWithActionThenEventWithAssign()
   cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {cp::Goal("pred_d=v", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_d=v", ontology, entities)});
   problem.worldState.addFact(cp::Fact("pred_b(toto)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   assert_eq<std::string>(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -287,7 +287,7 @@ void _fluentEqualityInPrecoditionOfAnAction()
   cp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
-  _setGoalsForAPriority(problem, {cp::Goal("pred_d(lol_val)", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_d(lol_val)", ontology, entities)});
   problem.worldState.addFact(cp::Fact("pred_b(toto)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   problem.worldState.addFact(cp::Fact("pred_c(lol_val)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
@@ -335,7 +335,7 @@ void _testIncrementOfVariables()
   assert(cp::strToCondition("equals(maxNumberOfQuestions, numberOfQuestion + 4 - 1)", ontology, entities, {})->isTrue(problem.worldState));
   for (std::size_t i = 0; i < 3; ++i)
   {
-    _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
+    _setGoalsForAPriority(problem, {cp::Goal::fromStr("finished_to_ask_questions", ontology, entities)});
     auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
     if (i == 0 || i == 2)
       assert_eq<std::string>(action_askQuestion1, actionToDo);
@@ -351,7 +351,7 @@ void _testIncrementOfVariables()
   }
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
-  _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("finished_to_ask_questions", ontology, entities)});
   auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
   assert_eq<std::string>(action_finisehdToAskQuestions, actionToDo);
   problem.historical.notifyActionDone(actionToDo);
@@ -391,7 +391,7 @@ void _actionWithParametersInPreconditionsAndEffects()
   problem.worldState.addFact(cp::Fact("isEngaged(1)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
-  _setGoalsForAPriority(problem, {cp::Goal("isHappy(1)", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("isHappy(1)", ontology, entities)});
   assert_eq(action1 + "(?human -> 1)", cp::planToStr(cp::planForEveryGoals(problem, domain, _now)));
 }
 
@@ -429,7 +429,7 @@ void _testQuiz()
 
   cp::Problem problem;
 
-  _setGoalsForAPriority(problem, {cp::Goal("finished_to_ask_questions", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("finished_to_ask_questions", ontology, entities)});
   auto& setOfEventsMap = domain.getSetOfEvents();
   problem.worldState.modify(initFacts, problem.goalStack, setOfEventsMap, {}, {}, _now);
   for (std::size_t i = 0; i < 3; ++i)
@@ -511,13 +511,13 @@ void _doNextActionThatBringsToTheSmallerCost()
                              ontology, entities, _now);
   auto secondProblem = problem;
   // Here it will will be quicker for the second goal if we ungrab the obj2 right away
-  _setGoalsForAPriority(problem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
-                                  cp::Goal("locationOfObject(obj2)=livingRoom & !grab(me)=obj2", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
+                                  cp::Goal::fromStr("locationOfObject(obj2)=livingRoom & !grab(me)=obj2", ontology, entities)});
   assert_eq(action_ungrab + "(?object -> obj2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 
   // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
-  _setGoalsForAPriority(secondProblem, {cp::Goal("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
-                                        cp::Goal("locationOfObject(obj2)=kitchen & !grab(me)=obj2", ontology, entities)});
+  _setGoalsForAPriority(secondProblem, {cp::Goal::fromStr("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
+                                        cp::Goal::fromStr("locationOfObject(obj2)=kitchen & !grab(me)=obj2", ontology, entities)});
   assert_eq(action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDo(secondProblem, domain, _now).actionInvocation.toStr());
 }
 
@@ -538,11 +538,11 @@ void _satisfyGoalWithSuperiorOperator()
   cp::Domain domain(std::move(actions), ontology, {}, timelessFacts);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem(&timelessFacts);
+  cp::Problem problem(&timelessFacts.setOfFacts());
   auto& entities = problem.entities;
   problem.worldState.addFact(cp::Fact("fact_a=10", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  _setGoalsForAPriority(problem, {cp::Goal("fact_a>50", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("fact_a>50", ontology, entities)});
 
   assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -578,7 +578,7 @@ void _parameterToFillFromConditionOfFirstAction()
                              ontology, entities, _now);
   problem.worldState.addFact(cp::Fact("batteryLevel=40", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  _setGoalsForAPriority(problem, {cp::Goal("batteryLevel=100", ontology, entities)});
+  _setGoalsForAPriority(problem, {cp::Goal::fromStr("batteryLevel=100", ontology, entities)});
 
   assert_eq(action1 + "(?cz -> cz)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
