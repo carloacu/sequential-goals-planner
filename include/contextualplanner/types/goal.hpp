@@ -64,6 +64,9 @@ struct CONTEXTUALPLANNER_API Goal
   /// Convert this goal to a string.
   std::string toStr() const;
 
+  /// Convert this goal to a PDDL string.
+  std::string toPddl(std::size_t pIdentation) const;
+
   /// Know if the goal will be kept in the goals stack, when we succeded or failed to satisfy it.
   bool isPersistent() const { return _isPersistentIfSkipped; }
 

@@ -1,7 +1,7 @@
 #include <contextualplanner/types/goal.hpp>
 #include <assert.h>
-//#include <contextualplanner/util/util.hpp>
 #include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <contextualplanner/util/serializer/serializeinpddl.hpp>
 
 namespace cp
 {
@@ -125,6 +125,18 @@ std::string Goal::toStr() const
     res = oneStepTowardsFunctionName + "(" + res + ")";
   if (_isPersistentIfSkipped)
     res = persistFunctionName + "(" + res + ")";
+  return res;
+}
+
+std::string Goal::toPddl(std::size_t pIdentation) const
+{
+  auto res = conditionToPddl(*_objective, pIdentation);
+  if (_conditionFactPtr)
+    res = "(" + implyFunctionName + " " + _conditionFactPtr->toPddl(false, false) + " " + res + ")";
+  if (_oneStepTowards)
+    res += " ; one step towards";
+  if (_isPersistentIfSkipped)
+    res += " ; is persistent if skipped";
   return res;
 }
 

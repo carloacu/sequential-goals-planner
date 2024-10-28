@@ -66,6 +66,24 @@ SetOfFacts SetOfFacts::fromPddl(const std::string& pStr,
 }
 
 
+std::string SetOfFacts::toPddl(std::size_t pIdentation, bool pPrintTimeLessFactsToo) const
+{
+  std::string res;
+  bool firstIteration = true;
+  for (auto& currFact : _facts)
+  {
+    if (!pPrintTimeLessFactsToo && !currFact.second)
+      continue;
+    if (firstIteration)
+      firstIteration = false;
+    else
+      res += "\n";
+    res += std::string(pIdentation, ' ') + currFact.first.toPddl(false, true);
+  }
+  return res;
+}
+
+
 void SetOfFacts::addFactsFromPddl(const std::string& pStr,
                                   std::size_t& pPos,
                                   const Ontology& pOntology,

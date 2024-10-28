@@ -30,6 +30,8 @@ struct CONTEXTUALPLANNER_API SetOfFacts
                              const SetOfEntities& pEntities,
                              bool pCanFactsBeRemoved = true);
 
+  std::string toPddl(std::size_t pIdentation, bool pPrintTimeLessFactsToo) const;
+
   void addFactsFromPddl(const std::string& pStr,
                         std::size_t& pPos,
                         const Ontology& pOntology,
@@ -113,6 +115,7 @@ struct CONTEXTUALPLANNER_API SetOfFacts
   bool empty() const { return _facts.empty(); }
 
 private:
+  /// Fact to bool True if the fact is timeless
   std::map<Fact, bool> _facts;
   std::optional<std::map<std::string, std::list<Fact>>> _exactCallToListsOpt;
   std::optional<std::map<std::string, std::list<Fact>>> _exactCallWithoutFluentToListsOpt;

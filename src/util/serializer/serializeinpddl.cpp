@@ -1,5 +1,6 @@
 #include <contextualplanner/util/serializer/serializeinpddl.hpp>
 #include <contextualplanner/types/domain.hpp>
+#include <contextualplanner/types/problem.hpp>
 #include "../../types/worldstatemodificationprivate.hpp"
 
 
@@ -39,114 +40,6 @@ struct ConditionWithPartInfo
 };
 
 
-std::string _conditionToPddl(const Condition& pCondition,
-                             std::size_t pIdentation)
-{
-  const ConditionNode* condNodePtr = pCondition.fcNodePtr();
-  if (condNodePtr != nullptr)
-  {
-    const auto& condNode = *condNodePtr;
-
-    if (condNode.nodeType == ConditionNodeType::AND || condNode.nodeType == ConditionNodeType::OR)
-    {
-      std::string contentStr = "(";
-      if (condNode.nodeType == ConditionNodeType::AND)
-        contentStr += "and";
-      else
-        contentStr += "or";
-      auto indentation = pIdentation + _identationOffset;
-      std::string leftOperandStr;
-      if (condNode.leftOperand)
-        leftOperandStr = _conditionToPddl(*condNode.leftOperand, indentation);
-      contentStr += "\n" + std::string(indentation, ' ') + leftOperandStr;
-      auto* nodePtr = condNodePtr;
-
-      while (true)
-      {
-        contentStr += "\n" + std::string(indentation, ' ');
-        auto* newNodePtr = nodePtr->rightOperand->fcNodePtr();
-        if (newNodePtr == nullptr || newNodePtr->nodeType != condNode.nodeType)
-        {
-          contentStr += _conditionToPddl(*nodePtr->rightOperand, indentation);
-          break;
-        }
-
-        contentStr += _conditionToPddl(*newNodePtr->leftOperand, indentation);
-        nodePtr = newNodePtr;
-      }
-      return contentStr + "\n" + std::string(pIdentation, ' ') + ")";
-    }
-
-    std::string leftOperandStr;
-    if (condNode.leftOperand)
-      leftOperandStr = _conditionToPddl(*condNode.leftOperand, pIdentation);
-    std::string rightOperandStr;
-    if (condNode.rightOperand)
-      rightOperandStr = _conditionToPddl(*condNode.rightOperand, pIdentation);
-
-    std::string res = "(";
-    switch (condNode.nodeType)
-    {
-    case ConditionNodeType::EQUALITY:
-      res += "=";
-      break;
-    case ConditionNodeType::PLUS:
-      res += "+";
-      break;
-    case ConditionNodeType::MINUS:
-      res += "-";
-      break;
-    case ConditionNodeType::SUPERIOR:
-      res += ">";
-      break;
-    case ConditionNodeType::SUPERIOR_OR_EQUAL:
-      res += ">=";
-      break;
-    case ConditionNodeType::INFERIOR:
-      res += "<";
-      break;
-    case ConditionNodeType::INFERIOR_OR_EQUAL:
-      res += "<=";
-      break;
-    case ConditionNodeType::AND:
-    case ConditionNodeType::OR:
-      break;
-    }
-    return res + " " + leftOperandStr + " " + rightOperandStr + ")";
-  }
-
-  const ConditionExists* condExistsPtr = pCondition.fcExistsPtr();
-  if (condExistsPtr != nullptr)
-  {
-    const auto& condExists = *condExistsPtr;
-    std::string conditionStr;
-    if (condExists.condition)
-      conditionStr = _conditionToPddl(*condExists.condition, pIdentation);
-    return "(exists " + condExists.parameter.toStr() + " " + conditionStr + ")";
-  }
-
-
-  const ConditionNot* condNotPtr = pCondition.fcNotPtr();
-  if (condNotPtr != nullptr)
-  {
-    const auto& condNot = *condNotPtr;
-    if (condNot.condition)
-      return "(not " + _conditionToPddl(*condNot.condition, pIdentation) + ")";
-    return "";
-  }
-
-  const ConditionFact* condFactPtr = pCondition.fcFactPtr();
-  if (condFactPtr != nullptr)
-    return condFactPtr->factOptional.toPddl(false, false);
-
-  const ConditionNumber* condNbPtr = pCondition.fcNbPtr();
-  if (condNbPtr != nullptr)
-    return numberToString(condNbPtr->nb);
-
-  throw std::runtime_error("Unknown conditon type");
-}
-
-
 std::string _conditionsToPddl(
     const std::list<ConditionWithPartInfo>& pConditionWithPartInfos,
     std::size_t pIdentation)
@@ -166,7 +59,7 @@ std::string _conditionsToPddl(
         auto subIndentation = _identationOffset;
         std::string leftOperandStr;
         if (condNode.leftOperand)
-          leftOperandStr = _conditionToPddl(*condNode.leftOperand, subIndentation);
+          leftOperandStr = conditionToPddl(*condNode.leftOperand, subIndentation);
         subResults.emplace_back(leftOperandStr);
         auto* nodePtr = condNodePtr;
 
@@ -175,18 +68,18 @@ std::string _conditionsToPddl(
           auto* newNodePtr = nodePtr->rightOperand->fcNodePtr();
           if (newNodePtr == nullptr || newNodePtr->nodeType != condNode.nodeType)
           {
-            subResults.emplace_back(_conditionToPddl(*nodePtr->rightOperand, subIndentation));
+            subResults.emplace_back(conditionToPddl(*nodePtr->rightOperand, subIndentation));
             break;
           }
 
-          subResults.emplace_back(_conditionToPddl(*newNodePtr->leftOperand, subIndentation));
+          subResults.emplace_back(conditionToPddl(*newNodePtr->leftOperand, subIndentation));
           nodePtr = newNodePtr;
         }
       }
     }
 
     if (subResults.empty())
-      subResults.emplace_back(_conditionToPddl(currElt.condition, 0));
+      subResults.emplace_back(conditionToPddl(currElt.condition, 0));
 
     for (const auto& currSubResult : subResults)
     {
@@ -396,6 +289,14 @@ std::string domainToPddl(const Domain& pDomain)
     res += "\n" + std::string(identation, ' ') + ")\n\n";
   }
 
+  const auto& timelessFacts = pDomain.getTimelessFacts().setOfFacts();
+  if (!timelessFacts.empty())
+  {
+    res += std::string(identation, ' ') + "(:timeless\n";
+    res += timelessFacts.toPddl(_identationOffset + identation, true);
+    res += "\n" + std::string(identation, ' ') + ")\n\n";
+  }
+
   auto setOfEvents = pDomain.getSetOfEvents();
   if (!setOfEvents.empty())
   {
@@ -426,7 +327,7 @@ std::string domainToPddl(const Domain& pDomain)
             eventContent += "\n";
           eventContent += std::string(subIdentation, ' ') + ":precondition\n";
           eventContent += std::string(subSubIdentation, ' ') +
-              _conditionToPddl(*currEvent.precondition, subSubIdentation) + "\n";
+              conditionToPddl(*currEvent.precondition, subSubIdentation) + "\n";
         }
 
         if (currEvent.factsToModify)
@@ -495,6 +396,194 @@ std::string domainToPddl(const Domain& pDomain)
   }
 
   return res + ")";
+}
+
+
+std::string problemToPddl(const Problem& pProblem,
+                          const Domain& pDomain)
+{
+  std::string res = "(define\n";
+  std::size_t identation = _identationOffset;
+
+  res += std::string(identation, ' ') + "(problem " + pProblem.name + ")\n";
+  res += std::string(identation, ' ') + "(:domain " + pDomain.getName() + ")\n\n";
+
+  if (!pProblem.entities.empty())
+  {
+    res += std::string(identation, ' ') + "(:objects\n";
+    res += pProblem.entities.toStr(_identationOffset + identation);
+    res += "\n" + std::string(identation, ' ') + ")\n\n";
+  }
+
+  const SetOfFacts& facts = pProblem.worldState.factsMapping();
+  if (!facts.empty())
+  {
+    res += std::string(identation, ' ') + "(:init\n";
+    res += facts.toPddl(_identationOffset + identation, false);
+    res += "\n" + std::string(identation, ' ') + ")\n\n";
+  }
+
+
+  std::list<std::string> pddlGoals;
+  std::size_t subIdentation = identation + _identationOffset;
+  std::size_t subSubIdentation = subIdentation + _identationOffset;
+
+  const auto& goals = pProblem.goalStack.goals();
+  if (!goals.empty())
+  {
+    res += std::string(identation, ' ') + "(:goal\n";
+    res += std::string(subIdentation, ' ') + "(and\n";
+    for (auto itGoalsGroup = goals.end(); itGoalsGroup != goals.begin(); )
+    {
+      --itGoalsGroup;
+      for (const Goal& currGoal : itGoalsGroup->second)
+      {
+        auto pddlGoal = currGoal.toPddl(subSubIdentation);
+        res += std::string(subSubIdentation, ' ') + pddlGoal + "\n";
+        pddlGoals.emplace_back(pddlGoal);
+      }
+    }
+
+    res += std::string(subIdentation, ' ') + ")\n";
+    res += std::string(identation, ' ') + ")\n\n";
+  }
+
+  if (pddlGoals.size() > 1)
+  {
+    std::size_t subSubSubIdentation = subSubIdentation + _identationOffset;
+    res += std::string(identation, ' ') + "(:constraints\n";
+    res += std::string(subIdentation, ' ') + "(and ; These contraints are to specify the goals order\n";
+
+    std::size_t preferenceIndex = 0;
+    std::string previousGoal;
+    for (const auto& currPddlGoal : pddlGoals)
+    {
+      if (previousGoal != "")
+      {
+        res += std::string(subSubIdentation, ' ') + "(preference p" + std::to_string(preferenceIndex) + "\n";
+        ++preferenceIndex;
+        res += std::string(subSubSubIdentation, ' ') + "(sometime-after " +
+            previousGoal + " " + currPddlGoal + ")\n";
+        res += std::string(subSubIdentation, ' ') + ")\n";
+      }
+      previousGoal = currPddlGoal;
+    }
+
+    res += std::string(subIdentation, ' ') + ")\n";
+    res += std::string(identation, ' ') + ")\n\n";
+  }
+
+  return res + ")";
+}
+
+
+
+
+std::string conditionToPddl(const Condition& pCondition,
+                            std::size_t pIdentation)
+{
+  const ConditionNode* condNodePtr = pCondition.fcNodePtr();
+  if (condNodePtr != nullptr)
+  {
+    const auto& condNode = *condNodePtr;
+
+    if (condNode.nodeType == ConditionNodeType::AND || condNode.nodeType == ConditionNodeType::OR)
+    {
+      std::string contentStr = "(";
+      if (condNode.nodeType == ConditionNodeType::AND)
+        contentStr += "and";
+      else
+        contentStr += "or";
+      auto indentation = pIdentation + _identationOffset;
+      std::string leftOperandStr;
+      if (condNode.leftOperand)
+        leftOperandStr = conditionToPddl(*condNode.leftOperand, indentation);
+      contentStr += "\n" + std::string(indentation, ' ') + leftOperandStr;
+      auto* nodePtr = condNodePtr;
+
+      while (true)
+      {
+        contentStr += "\n" + std::string(indentation, ' ');
+        auto* newNodePtr = nodePtr->rightOperand->fcNodePtr();
+        if (newNodePtr == nullptr || newNodePtr->nodeType != condNode.nodeType)
+        {
+          contentStr += conditionToPddl(*nodePtr->rightOperand, indentation);
+          break;
+        }
+
+        contentStr += conditionToPddl(*newNodePtr->leftOperand, indentation);
+        nodePtr = newNodePtr;
+      }
+      return contentStr + "\n" + std::string(pIdentation, ' ') + ")";
+    }
+
+    std::string leftOperandStr;
+    if (condNode.leftOperand)
+      leftOperandStr = conditionToPddl(*condNode.leftOperand, pIdentation);
+    std::string rightOperandStr;
+    if (condNode.rightOperand)
+      rightOperandStr = conditionToPddl(*condNode.rightOperand, pIdentation);
+
+    std::string res = "(";
+    switch (condNode.nodeType)
+    {
+    case ConditionNodeType::EQUALITY:
+      res += "=";
+      break;
+    case ConditionNodeType::PLUS:
+      res += "+";
+      break;
+    case ConditionNodeType::MINUS:
+      res += "-";
+      break;
+    case ConditionNodeType::SUPERIOR:
+      res += ">";
+      break;
+    case ConditionNodeType::SUPERIOR_OR_EQUAL:
+      res += ">=";
+      break;
+    case ConditionNodeType::INFERIOR:
+      res += "<";
+      break;
+    case ConditionNodeType::INFERIOR_OR_EQUAL:
+      res += "<=";
+      break;
+    case ConditionNodeType::AND:
+    case ConditionNodeType::OR:
+      break;
+    }
+    return res + " " + leftOperandStr + " " + rightOperandStr + ")";
+  }
+
+  const ConditionExists* condExistsPtr = pCondition.fcExistsPtr();
+  if (condExistsPtr != nullptr)
+  {
+    const auto& condExists = *condExistsPtr;
+    std::string conditionStr;
+    if (condExists.condition)
+      conditionStr = conditionToPddl(*condExists.condition, pIdentation);
+    return "(exists " + condExists.parameter.toStr() + " " + conditionStr + ")";
+  }
+
+
+  const ConditionNot* condNotPtr = pCondition.fcNotPtr();
+  if (condNotPtr != nullptr)
+  {
+    const auto& condNot = *condNotPtr;
+    if (condNot.condition)
+      return "(not " + conditionToPddl(*condNot.condition, pIdentation) + ")";
+    return "";
+  }
+
+  const ConditionFact* condFactPtr = pCondition.fcFactPtr();
+  if (condFactPtr != nullptr)
+    return condFactPtr->factOptional.toPddl(false, false);
+
+  const ConditionNumber* condNbPtr = pCondition.fcNbPtr();
+  if (condNbPtr != nullptr)
+    return numberToString(condNbPtr->nb);
+
+  throw std::runtime_error("Unknown conditon type");
 }
 
 }

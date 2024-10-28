@@ -24,12 +24,16 @@ namespace cp
 struct CONTEXTUALPLANNER_API Problem
 {
   Problem(const SetOfFacts* pFactsPtr = nullptr)
-    : entities(),
+    : name(),
+      entities(),
       goalStack(),
       worldState(pFactsPtr),
       historical()
   {
   }
+
+  /// BName of the problem;
+  std::string name;
 
   SetOfEntities entities;
 

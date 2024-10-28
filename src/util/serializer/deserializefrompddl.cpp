@@ -1019,6 +1019,10 @@ DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
 
           res.problemPtr->goalStack.addGoals(goals, worldState, {});
         }
+        else if (token == ":constraints")
+        {
+          break;
+        }
         else
         {
           throw std::runtime_error("Unknown domain PDDL token: \"" + token + "\"");
@@ -1032,6 +1036,9 @@ DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
     throw std::runtime_error("No '(define' found in domain file");
   }
 
+  if (!res.problemPtr)
+    throw std::runtime_error("problem not initialized");
+  res.problemPtr->name = problemName;
   return res;
 }
 

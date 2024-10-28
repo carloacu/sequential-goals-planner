@@ -199,7 +199,7 @@ void _test_loadPddlDomain()
 )", loadedDomains);
   loadedDomains.emplace(domain.getName(), domain);
 
-  std::string expectedSerializedResult = R"((define
+  const std::string expectedDomain = R"((define
     (domain construction)
 
     (:types
@@ -229,6 +229,10 @@ void _test_loadPddlDomain()
         (battery-amount ?r - car) - number
         (distance-to-floor ?b - ball) - number
         (velocity ?b - ball) - number
+    )
+
+    (:timeless
+        (foundations-set mainsite)
     )
 
     (:event HIT-GROUND
@@ -329,10 +333,10 @@ void _test_loadPddlDomain()
 
 ))";
 
-  auto domainPddl1 = cp::domainToPddl(domain);
-  if (domainPddl1 != expectedSerializedResult)
+  auto outDomainPddl1 = cp::domainToPddl(domain);
+  if (outDomainPddl1 != expectedDomain)
   {
-    std::cout << domainPddl1 << std::endl;
+    std::cout << outDomainPddl1 << std::endl;
     assert_true(false);
   }
 
@@ -361,14 +365,73 @@ void _test_loadPddlDomain()
 ))", loadedDomains);
 
 
-  auto domain2 = cp::pddlToDomain(domainPddl1, {});
-  auto pddout2 = cp::domainToPddl(domain2);
-  if (pddout2 != domainPddl1)
+  std::string expectedProblem = R"((define
+    (problem buildingahouse)
+    (:domain construction)
+
+    (:objects
+        b - bricks
+        c - cables
+        s1 - site
+        w - windows
+    )
+
+    (:init
+        (on-site b s1)
+        (on-site c s1)
+        (on-site w s1)
+    )
+
+    (:goal
+        (and
+            (walls-built s1)
+            (cables-installed s1)
+            (windows-fitted s1)
+        )
+    )
+
+    (:constraints
+        (and ; These contraints are to specify the goals order
+            (preference p0
+                (sometime-after (walls-built s1) (cables-installed s1))
+            )
+            (preference p1
+                (sometime-after (cables-installed s1) (windows-fitted s1))
+            )
+        )
+    )
+
+))";
+
+  auto outProblemPddl1 = cp::problemToPddl(*domainAndProblemPtrs.problemPtr,
+                                           *domainAndProblemPtrs.domainPtr);
+  if (outProblemPddl1 != expectedProblem)
   {
-    std::cout << pddout2 << std::endl;
+    std::cout << outProblemPddl1 << std::endl;
     assert_true(false);
   }
 
+  // deserialize what is serialized
+  auto domain2 = cp::pddlToDomain(outDomainPddl1, {});
+  std::map<std::string, cp::Domain> loadedDomains2;
+  loadedDomains2.emplace(domain2.getName(), domain2);
+  auto outDomainAndProblemPtrs2 = cp::pddlToProblem(outProblemPddl1, loadedDomains2);
+
+  // re serialize
+  auto outDomainPddl2 = cp::domainToPddl(domain2);
+  if (outDomainPddl2 != expectedDomain)
+  {
+    std::cout << outDomainPddl2 << std::endl;
+    assert_true(false);
+  }
+
+  auto outProblemPddl2 = cp::problemToPddl(*outDomainAndProblemPtrs2.problemPtr,
+                                           *outDomainAndProblemPtrs2.domainPtr);
+  if (outProblemPddl2 != expectedProblem)
+  {
+    std::cout << outProblemPddl2 << std::endl;
+    assert_true(false);
+  }
 }
 
 }
