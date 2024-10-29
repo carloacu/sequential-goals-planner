@@ -2,12 +2,13 @@
 #include <vector>
 #include <contextualplanner/util/util.hpp>
 #include <contextualplanner/types/setoftypes.hpp>
-
+#include <contextualplanner/types/type.hpp>
 namespace cp
 {
 
 SetOfEntities::SetOfEntities()
-    : _valueToEntity()
+    : _valueToEntity(),
+      _typeNameToEntities()
 {
 }
 
@@ -24,8 +25,10 @@ void SetOfEntities::add(const Entity& pEntity)
 {
   _valueToEntity.erase(pEntity.value);
   _valueToEntity.emplace(pEntity.value, pEntity);
-}
 
+  if (pEntity.type)
+    _typeNameToEntities[pEntity.type->name].insert(pEntity);
+}
 
 void SetOfEntities::addAllFromPddl(const std::string& pStr,
                                    const SetOfTypes& pSetOfTypes)
@@ -62,6 +65,14 @@ void SetOfEntities::addAllFromPddl(const std::string& pStr,
   }
 }
 
+
+const std::set<Entity>* SetOfEntities::typeNameToEntities(const std::string& pTypename) const
+{
+  auto it = _typeNameToEntities.find(pTypename);
+  if (it != _typeNameToEntities.end())
+    return &it->second;
+  return nullptr;
+}
 
 const Entity* SetOfEntities::valueToEntity(const std::string& pValue) const
 {

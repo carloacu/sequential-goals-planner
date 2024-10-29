@@ -4,6 +4,7 @@
 #include "../util/api.hpp"
 #include <list>
 #include <map>
+#include <set>
 #include <string>
 #include "entity.hpp"
 
@@ -24,6 +25,8 @@ struct CONTEXTUALPLANNER_API SetOfEntities
   void addAllFromPddl(const std::string& pStr,
                       const SetOfTypes& pSetOfTypes);
 
+  const std::set<Entity>* typeNameToEntities(const std::string& pTypename) const;
+
   const Entity* valueToEntity(const std::string& pValue) const;
 
   std::string toStr(std::size_t pIdentation = 0) const;
@@ -32,6 +35,7 @@ struct CONTEXTUALPLANNER_API SetOfEntities
 
 private:
   std::map<std::string, Entity> _valueToEntity;
+  std::map<std::string, std::set<Entity>> _typeNameToEntities;
 };
 
 } // namespace cp

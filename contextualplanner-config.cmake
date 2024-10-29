@@ -12,7 +12,7 @@ set(
 
 set(
   CONTEXTUALPLANNER_LIBRARIES
-  "contextualplanner"
+  "contextualplannerlib"
 )
 
 

@@ -19,8 +19,8 @@ Event::Event(std::unique_ptr<Condition> pPrecondition,
 
 
 void Event::updateSuccessionCache(const Domain& pDomain,
-                                      const SetOfEventsId& pSetOfEventsIdOfThisEvent,
-                                      const EventId& pEventIdOfThisEvent)
+                                  const SetOfEventsId& pSetOfEventsIdOfThisEvent,
+                                  const EventId& pEventIdOfThisEvent)
 {
   WorldStateModificationContainerId containerId;
   containerId.setOfEventsIdToExclude.emplace(pSetOfEventsIdOfThisEvent);

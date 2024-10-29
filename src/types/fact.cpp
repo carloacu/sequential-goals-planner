@@ -287,7 +287,6 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
 }
 
 
-
 bool Fact::areEqualExceptAnyValues(const Fact& pOther,
                                    const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr,
                                    const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2,
@@ -685,7 +684,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
           (!pValueToLookFor.type || !itParam->first.type || pValueToLookFor.type->isA(*itParam->first.type)))
       {
         if (!itParam->second.empty())
-          return itParam->second.count(pValueToLookFor) > 0;
+          return itParam->second.size() == 1 && itParam->second.count(pValueToLookFor) > 0;
         if (pNewParametersPtr != nullptr)
           newPotentialParameters[pFactValue.toParameter()].insert(pValueToLookFor);
         else if (pTriedToModifyParametersPtr != nullptr)
@@ -700,7 +699,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       if (itParam != pParametersToModifyInPlacePtr->end())
       {
         if (!itParam->second.empty())
-          return itParam->second.count(pValueToLookFor) > 0;
+          return itParam->second.size() == 1 && itParam->second.count(pValueToLookFor) > 0;
         newParametersInPlace[pFactValue.toParameter()].insert(pValueToLookFor);
         return true;
       }

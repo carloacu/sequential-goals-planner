@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 include(contextualplanner-config.cmake)
 
 # Making a lib
-set(CHATBOTPLANNER_HPPS
+set(CONTEXTUAL_PLANNER_HPPS
     include/contextualplanner/types/action.hpp
     include/contextualplanner/types/actioninvocation.hpp
     include/contextualplanner/types/actioninvocationwithgoal.hpp
@@ -51,7 +51,7 @@ set(CHATBOTPLANNER_HPPS
 )
 
 
-set(CHATBOTPLANNER_SRCS
+set(CONTEXTUAL_PLANNER_SRCS
     src/algo/converttoparallelplan.hpp
     src/algo/converttoparallelplan.cpp
     src/algo/notifyactiondone.hpp
@@ -109,19 +109,20 @@ set(CHATBOTPLANNER_SRCS
 include_directories(include)
 
 
-add_library(contextualplanner SHARED
-  ${CHATBOTPLANNER_HPPS}
-  ${CHATBOTPLANNER_SRCS}
+add_library(contextualplannerlib SHARED
+  ${CONTEXTUAL_PLANNER_HPPS}
+  ${CONTEXTUAL_PLANNER_SRCS}
   include/contextualplanner/types/setofderivedpredicates.hpp
   src/types/setofderivedpredicates.cpp
   src/types/axiom.cpp
   include/contextualplanner/types/setofconstfacts.hpp
 )
-target_compile_features(contextualplanner PRIVATE cxx_std_14)
+target_compile_features(contextualplannerlib PRIVATE cxx_std_14)
 
-install(TARGETS contextualplanner DESTINATION lib)
+install(TARGETS contextualplannerlib DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)
 
 
+add_subdirectory(bin)
 add_subdirectory(tests)
 

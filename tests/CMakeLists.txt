@@ -5,7 +5,7 @@ project(contextualplanner_tests)
 include_directories(".")
 
 if(NOT CONTEXTUALPLANNER_FOUND)
-  find_package(contextualplanner)
+  find_package(contextualplannerlib)
 endif()
 
 
@@ -35,6 +35,8 @@ add_executable(
   src/test_util.cpp
   src/test_pddl_serialization.cpp
   src/test_pddl_serialization.hpp
+  src/test_problems_in_data.cpp
+  src/test_problems_in_data.hpp
 )
 
 

@@ -112,7 +112,9 @@ CONTEXTUALPLANNER_API
 std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep = ", ");
 
-
+CONTEXTUALPLANNER_API
+std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
+                       const Domain& pDomain);
 /**
  * @brief Convert a list of goals to a string.
  * @param[in] pGoals List of goals to print.

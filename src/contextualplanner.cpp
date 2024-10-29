@@ -1,5 +1,6 @@
 #include <contextualplanner/contextualplanner.hpp>
 #include <algorithm>
+#include <iomanip>
 #include <optional>
 #include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -215,6 +216,25 @@ bool PotentialNextAction::removeAPossibility()
 }
 
 
+std::set<Entity> _paramTypenameToEntities(const std::string& pParamtypename,
+                                          const Domain& pDomain,
+                                          const Problem& pProblem)
+{
+  std::set<Entity> res;
+  auto* constantsPtr = pDomain.getOntology().constants.typeNameToEntities(pParamtypename);
+  if (constantsPtr != nullptr)
+    res = *constantsPtr;
+
+  auto* entitiesPtr = pProblem.entities.typeNameToEntities(pParamtypename);
+  if (entitiesPtr != nullptr)
+  {
+    if (res.empty())
+      res = *entitiesPtr;
+    else
+      res.insert(entitiesPtr->begin(), entitiesPtr->end());
+  }
+  return res;
+}
 
 
 bool _lookForAPossibleEffect(bool& pSatisfyObjective,
@@ -289,8 +309,15 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
               return !newParamValues.empty();
             }, pProblem.worldState, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersToValues);
 
+
             if (newParamValues.empty())
-              actionIsAPossibleFollowUp = false;
+            {
+              if (pParameter.type)
+                newParamValues = _paramTypenameToEntities(pParameter.type->name, pDomain, pProblem);
+
+              if (newParamValues.empty())
+                actionIsAPossibleFollowUp = false;
+            }
           }
         };
 
@@ -483,7 +510,6 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     std::map<Parameter, std::set<Entity>> newParameters;
     bool res = pFactOptionalToSatisfy.fact.isInOtherFact(pFactOptional.fact, false, &newParameters, &pParameters,
                                                          pParametersToModifyInPlacePtr, nullptr, objIsAComparison);
-
     if (res && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
       res = false;
 
@@ -495,6 +521,21 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                         canBeSuperior(objNodeType), canBeEqual(objNodeType));
     }
     applyNewParams(pParameters, newParameters);
+    if (res)
+    {
+      for (auto& currParamToValues : pParameters)
+      {
+        if (currParamToValues.second.empty())
+        {
+          if (!currParamToValues.first.type)
+            continue;
+          currParamToValues.second = _paramTypenameToEntities(currParamToValues.first.type->name, pDomain, pProblem);
+          if (currParamToValues.second.size() > 1)
+            currParamToValues.second.clear();
+        }
+      }
+    }
+
     return res;
   };
 
@@ -1001,9 +1042,6 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
 std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep)
 {
-  auto size = pPlan.size();
-  if (size == 1)
-    return pPlan.front().actionInvocation.toStr();
   std::string res;
   bool firstIteration = true;
   for (const auto& currAction : pPlan)
@@ -1017,6 +1055,40 @@ std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
   return res;
 }
 
+
+std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
+                       const Domain& pDomain)
+{
+  std::size_t step = 0;
+  std::stringstream ss;
+  for (const auto& currActionInvocationWithGoal : pPlan)
+  {
+    const auto& currActionInvocation = currActionInvocationWithGoal.actionInvocation;
+    ss << std::setw(2) << std::setfill('0') << step << ": ";
+    ++step;
+
+    auto* actionPtr = pDomain.getActionPtr(currActionInvocation.actionId);
+    if (actionPtr == nullptr)
+      throw std::runtime_error("Action " + currActionInvocation.actionId + " from a plan is not found in the domain");
+    auto& action = *actionPtr;
+
+    ss << "(" << currActionInvocation.actionId;
+    if (!action.parameters.empty())
+    {
+      for (const auto& currParam : action.parameters)
+      {
+        auto itParamToValues = currActionInvocation.parameters.find(currParam);
+        if (itParamToValues == currActionInvocation.parameters.end())
+          throw std::runtime_error("Parameter in action not found in action invocation");
+        if (itParamToValues->second.empty())
+          throw std::runtime_error("Parameter without value");
+        ss << " " + itParamToValues->second.begin()->value;
+      }
+    }
+    ss << ") [" << action.duration() << "]\n";
+  }
+  return ss.str();
+}
 
 std::string goalsToStr(const std::list<cp::Goal>& pGoals,
                        const std::string& pSep)

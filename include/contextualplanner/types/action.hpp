@@ -124,6 +124,9 @@ struct CONTEXTUALPLANNER_API Action
   bool canThisActionBeUsedByThePlanner;
   std::set<ActionId> actionsSuccessionsWithoutInterestCache;
 
+  // TODO: manage durations
+  std::size_t duration() const { return 1; }
+
 private:
   void _throwIfNotValidForACondition(const std::unique_ptr<Condition>& pPrecondition);
   void _throwIfNotValidForAnWordStateModif(const std::unique_ptr<WorldStateModification>& pWs,
