@@ -34,6 +34,40 @@ const char* _whenWsFunctionName = "when";
 const char* _notWsFunctionName = "not";
 
 
+std::vector<Parameter> _pddlArgumentsToParameters(
+    const std::list<ExpressionParsed>& pArguments,
+    const std::string& pParameterName,
+    const SetOfTypes& pSetOfTypes)
+{
+  std::vector<Parameter> res;
+  std::string parameterName = pParameterName;
+  bool nextIsAParameterName = true;
+  for (const auto& currArg : pArguments)
+  {
+    const auto& token = currArg.name;
+    if (token == "-")
+    {
+      nextIsAParameterName = false;
+    }
+    else if (nextIsAParameterName)
+    {
+      if (parameterName != "")
+        res.emplace_back(parameterName, pSetOfTypes.nameToType("number"));
+      parameterName = token;
+    }
+    else
+    {
+      res.emplace_back(parameterName, pSetOfTypes.nameToType(token));
+      parameterName = "";
+      nextIsAParameterName = true;
+    }
+  }
+
+  if (parameterName != "")
+    res.emplace_back(parameterName, pSetOfTypes.nameToType("number"));
+  return res;
+}
+
 
 std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& pExpressionParsed,
                                                         const Ontology& pOntology,
@@ -92,19 +126,33 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
                                             std::move(leftOperand), std::move(rightOperand));
     }
   }
-  else if (pExpressionParsed.name == _existsConditonFunctionName &&
-           pExpressionParsed.arguments.size() == 2)
+  else if (pExpressionParsed.name == _existsConditonFunctionName)
   {
+    if (pExpressionParsed.arguments.size() != 2)
+      throw std::runtime_error("Exists function badly formatted, it should have only 2 parameters");
+
     auto itArg = pExpressionParsed.arguments.begin();
     auto& firstArg = *itArg;
+    std::vector<Parameter> existsParameters;
     std::shared_ptr<Type> paramType;
     if (firstArg.followingExpression)
+    {
       paramType = pOntology.types.nameToType(firstArg.followingExpression->name);
-    Parameter existsParameter(firstArg.name, paramType);
+      existsParameters.emplace_back(firstArg.name, paramType);
+    }
+    else if (firstArg.arguments.size() >= 2)
+    {
+      existsParameters = _pddlArgumentsToParameters(firstArg.arguments, firstArg.name, pOntology.types);
+    }
+
+    if (existsParameters.size() != 1)
+      throw std::runtime_error("Only one parameter is handled for exists function (needs to be improved)");
+    const auto& existsParameter = existsParameters.back();
     auto newParameters = pParameters;
     newParameters.push_back(existsParameter);
+    ++itArg;
     res = std::make_unique<ConditionExists>(existsParameter,
-                                            _expressionParsedToCondition(*(++itArg), pOntology, pEntities, newParameters, false));
+                                            _expressionParsedToCondition(*itArg, pOntology, pEntities, newParameters, false));
   }
   else if (pExpressionParsed.name == _notConditonFunctionName &&
            pExpressionParsed.arguments.size() == 1)

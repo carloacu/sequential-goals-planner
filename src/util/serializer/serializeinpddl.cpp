@@ -91,7 +91,7 @@ std::string _conditionsToPddl(
   }
 
   if (results.size() == 1)
-    return std::string(pIdentation, ' ') + results.front();
+    return results.front();
 
   if (results.size() > 1)
   {
@@ -234,7 +234,7 @@ std::string _effectsToPddl(
   }
 
   if (results.size() == 1)
-    return std::string(pIdentation, ' ') + results.front();
+    return results.front();
 
   if (results.size() > 1)
   {
@@ -336,7 +336,7 @@ std::string domainToPddl(const Domain& pDomain)
             eventContent += "\n";
           eventContent += std::string(subIdentation, ' ') + ":effect\n";
           eventContent += std::string(subSubIdentation, ' ') +
-              _effectToPddl(*currEvent.factsToModify, subSubIdentation) + "\n";
+              _effectToPddl(*currEvent.factsToModify, subSubIdentation);
         }
 
         res += eventContent;
@@ -366,6 +366,7 @@ std::string domainToPddl(const Domain& pDomain)
       actionContent += std::string(subIdentation, ' ') + ":duration (= ?duration 1)\n";
     }
 
+    if (currAction.precondition || currAction.overAllCondition)
     {
       actionContent += "\n";
       actionContent += std::string(subIdentation, ' ') + ":condition\n";
@@ -387,7 +388,7 @@ std::string domainToPddl(const Domain& pDomain)
       if (currAction.effect.worldStateModification)
         worldStateModificationWithPartInfos.emplace_back(*currAction.effect.worldStateModification, WsModificationPart::AT_END);
       actionContent += std::string(subSubIdentation, ' ') +
-          _effectsToPddl(worldStateModificationWithPartInfos, subSubIdentation) + "\n";
+          _effectsToPddl(worldStateModificationWithPartInfos, subSubIdentation);
     }
 
 
@@ -562,7 +563,7 @@ std::string conditionToPddl(const Condition& pCondition,
     std::string conditionStr;
     if (condExists.condition)
       conditionStr = conditionToPddl(*condExists.condition, pIdentation);
-    return "(exists " + condExists.parameter.toStr() + " " + conditionStr + ")";
+    return "(exists (" + condExists.parameter.toStr() + ") " + conditionStr + ")";
   }
 
 

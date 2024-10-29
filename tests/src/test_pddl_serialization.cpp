@@ -101,18 +101,18 @@ void _test_loadPddlDomain()
 
       (:action BUILD-WALL
           :parameters (?s - site ?b - bricks)   ; a comment
-          :precondition (and
-              (on-site ?b ?s)
+          :precondition
               (foundations-set ?s)  ; a comment
-              (not (walls-built ?s))
-              (not (material-used ?b))
-          )
-          :effect (and
-              (walls-built ?s)   ; a comment
-              (material-used ?b)
-          )
+          :effect (walls-built ?s)   ; a comment
           ; :expansion ;deprecated
       )
+
+      (:action BUILD-WALL-WITHOUT-CONDITION
+          :parameters (?s - site ?b - bricks)   ; a comment
+          :effect (walls-built ?s)   ; a comment
+          ; :expansion ;deprecated
+      )
+
   )", loadedDomains);
     loadedDomains.emplace(firstDomain.getName(), std::move(firstDomain));
   }
@@ -141,6 +141,7 @@ void _test_loadPddlDomain()
         (battery-amount ?r - car)
         (distance-to-floor ?b - ball)
         (velocity ?b - ball)  ; a comment
+        (size ?b - ball)
     )
 
     (:timeless (foundations-set mainsite))
@@ -156,6 +157,13 @@ void _test_loadPddlDomain()
             (walls-built ?s)
             (windows-fitted ?s)
             (cables-installed ?s)
+            (exists (?b - ball)
+                (and
+                    (= (velocity ?b) 7)
+                    (= (size ?b) 10)
+                )
+            )
+
         )
         :implies (site-built ?s)
     )
@@ -228,6 +236,7 @@ void _test_loadPddlDomain()
     (:functions
         (battery-amount ?r - car) - number
         (distance-to-floor ?b - ball) - number
+        (size ?b - ball) - number
         (velocity ?b - ball) - number
     )
 
@@ -249,7 +258,6 @@ void _test_loadPddlDomain()
 
         :effect
             (assign (velocity ?b) (* (velocity ?b) -0.800000))
-
     )
 
     (:event from_axiom
@@ -262,11 +270,14 @@ void _test_loadPddlDomain()
                 (walls-built ?s)
                 (windows-fitted ?s)
                 (cables-installed ?s)
+                (exists (?b - ball) (and
+                    (= (velocity ?b) 7)
+                    (= (size ?b) 10)
+                ))
             )
 
         :effect
             (site-built ?s)
-
     )
 
     (:event from_axiom_2
@@ -279,11 +290,14 @@ void _test_loadPddlDomain()
                 (not (walls-built ?s))
                 (not (windows-fitted ?s))
                 (not (cables-installed ?s))
+                (not (exists (?b - ball) (and
+                    (= (velocity ?b) 7)
+                    (= (size ?b) 10)
+                )))
             )
 
         :effect
             (not (site-built ?s))
-
     )
 
     (:durative-action BUILD-WALL
@@ -293,19 +307,10 @@ void _test_loadPddlDomain()
         :duration (= ?duration 1)
 
         :condition
-            (and
-                (at start (on-site ?b ?s))
-                (at start (foundations-set ?s))
-                (at start (not (walls-built ?s)))
-                (at start (not (material-used ?b)))
-            )
+            (at start (foundations-set ?s))
 
         :effect
-            (and
-                (at end (walls-built ?s))
-                (at end (material-used ?b))
-            )
-
+            (at end (walls-built ?s))
     )
 
     (:durative-action BUILD-WALL-DURATIVE
@@ -328,7 +333,16 @@ void _test_loadPddlDomain()
                 (at end (material-used ?b))
                 (at end (decrease (battery-amount maincar) 4))
             )
+    )
 
+    (:durative-action BUILD-WALL-WITHOUT-CONDITION
+        :parameters
+            (?s - site ?b - bricks)
+
+        :duration (= ?duration 1)
+
+        :effect
+            (at end (walls-built ?s))
     )
 
 ))";

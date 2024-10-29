@@ -554,7 +554,6 @@ std::string Fact::toPddl(bool pInEffectContext,
         throw std::runtime_error("Fluent should not be negated in effect: " + toStr(pPrintAnyFluent));
       res += "(not " + res + ")";
     }
-    res += ")";
   }
   return res;
 }
