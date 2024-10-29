@@ -16,6 +16,13 @@ static const std::map<Parameter, std::set<Entity>> _emptyParametersWithValues;
 static const std::vector<Parameter> _emptyParameters;
 
 
+std::set<std::string> _requirementsManaged = {
+  ":strips", ":typing", ":disjunctive-preconditions", ":equality",
+  ":existential-preconditions", ":domain-axioms", ":numeric-fluents",
+  ":durative-actions", ":negative-preconditions", ":derived-predicates"
+};
+
+
 struct ActionWithConditionAndFactFacts
 {
   ActionWithConditionAndFactFacts(const ActionId& pActionId, Action& pAction)
@@ -121,7 +128,8 @@ Domain::Domain()
     _preconditionToActions(),
     _notPreconditionToActions(),
     _actionsWithoutFactToAddInPrecondition(),
-    _setOfEvents()
+    _setOfEvents(),
+    _requirements()
 {
 }
 
@@ -139,7 +147,8 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
     _preconditionToActions(),
     _notPreconditionToActions(),
     _actionsWithoutFactToAddInPrecondition(),
-    _setOfEvents()
+    _setOfEvents(),
+    _requirements()
 {
   for (const auto& currAction : pActions)
     _addAction(currAction.first, currAction.second);
@@ -315,6 +324,14 @@ std::string Domain::printSuccessionCache() const
   }
 
   return res;
+}
+
+
+void Domain::addRequirement(const std::string& pRequirement)
+{
+  if (_requirementsManaged.count(pRequirement) == 0)
+    throw std::runtime_error("Requirement \"" + pRequirement + "\" is not managed!");
+  _requirements.insert(pRequirement);
 }
 
 

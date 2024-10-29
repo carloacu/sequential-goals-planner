@@ -479,9 +479,8 @@ void _test_wsModificationToStr()
   assert_eq<std::string>("!a", _worldStateModification_fromStr("!a", ontology)->toStr());
   assert_eq<std::string>("!a", _worldStateModification_fromStr("not(a)", ontology)->toStr());
   assert_eq<std::string>("!n1=*", _worldStateModification_fromStr("assign(n1, undefined)", ontology)->toStr());
-  assert_eq<std::string>("forall(?e - entity, grab(?e), is_near(?e, me))", _worldStateModification_fromStr("forall(?e - entity, grab(?e), is_near(?e, me))", ontology)->toStr());
-  assert_eq<std::string>("forall(?e - entity, grab(?e), is_near(?e, me))", _worldStateModification_fromStr("forall(?e - entity, when(grab(?e), is_near(?e, me)))", ontology)->toStr());
-  assert_eq<std::string>("forall(?e - entity, grab(?e), !is_near(?e, me))", _worldStateModification_fromStr("forall(?e - entity, when(grab(?e), not(is_near(?e, me))))", ontology)->toStr());
+  assert_eq<std::string>("forall(?e - entity, when(grab(?e), is_near(?e, me)))", _worldStateModification_fromStr("forall(?e - entity, when(grab(?e), is_near(?e, me)))", ontology)->toStr());
+  assert_eq<std::string>("forall(?e - entity, when(grab(?e), !is_near(?e, me)))", _worldStateModification_fromStr("forall(?e - entity, when(grab(?e), not(is_near(?e, me))))", ontology)->toStr());
   assert_eq<std::string>("assign(location(me), locationEntity(sweets))", _worldStateModification_fromStr("assign(location(me), locationEntity(sweets))", ontology)->toStr());
   assert_eq<std::string>("assign(location(me), locationEntity(sweets))", _worldStateModification_fromStr("set(location(me), locationEntity(sweets))", ontology)->toStr()); // set is depecated
   assert_eq<std::string>("assign(location(me), checkPointLocation)", _worldStateModification_fromStr("assign(location(me), checkPointLocation())", ontology)->toStr()); // c() means that c is a predicate

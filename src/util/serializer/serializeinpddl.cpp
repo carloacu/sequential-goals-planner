@@ -154,7 +154,8 @@ std::string _effectToPddl(
     case WorldStateModificationNodeType::FOR_ALL:
       if (!wsmNode.parameterOpt)
         throw std::runtime_error("for all statement without a parameter detected");
-      return "(forall " + wsmNode.parameterOpt->toStr() + " " + leftOperandStr + " " + rightOperandStr + ")";
+      return "(forall (" + wsmNode.parameterOpt->toStr() + ") (when " +
+          leftOperandStr + " " + rightOperandStr + "))";
     case WorldStateModificationNodeType::INCREASE:
       return "(increase " + leftOperandStr + " " + rightOperandStr + ")";
     case WorldStateModificationNodeType::DECREASE:
@@ -257,7 +258,17 @@ std::string domainToPddl(const Domain& pDomain)
   std::size_t identation = _identationOffset;
 
 
-  res += std::string(identation, ' ') + "(domain " + pDomain.getName() + ")\n\n";
+  res += std::string(identation, ' ') + "(domain " + pDomain.getName() + ")\n";
+
+  const auto& requirements = pDomain.requirements();
+  if (!requirements.empty())
+  {
+    res += std::string(identation, ' ') + "(:requirements";
+    for (const auto& currRequirement : requirements)
+      res += " " + currRequirement;
+    res += ")\n";
+  }
+  res += "\n";
 
   const auto& ontology = pDomain.getOntology();
 

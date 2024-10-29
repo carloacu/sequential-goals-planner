@@ -113,6 +113,10 @@ struct CONTEXTUALPLANNER_API Domain
 
   std::string printSuccessionCache() const;
 
+  void addRequirement(const std::string& pRequirement);
+
+  const std::set<std::string>& requirements() const { return _requirements; }
+
 private:
   /// Universal unique identifier regenerated each time this object is modified.
   std::string _uuid;
@@ -129,6 +133,7 @@ private:
   FactToConditions _actionsWithoutFactToAddInPrecondition;
   /// Map set of events identifiers to the set of events.
   std::map<SetOfEventsId, SetOfEvents> _setOfEvents;
+  std::set<std::string> _requirements;
 
   void _addAction(const ActionId& pActionId,
                   const Action& pAction);

@@ -50,10 +50,12 @@ void _test_pddlSerializationParts()
     std::size_t pos = 0;
     ontology.predicates = cp::SetOfPredicates::fromPddl("(pred_a ?e - entity)\n"
                                                         "pred_b\n"
+                                                        "(pred_c ?e - entity)\n"
                                                         "(battery-amount ?t - type1) - number", pos, ontology.types);
     assert_eq<std::string>("battery-amount(?t - type1) - number\n"
                            "pred_a(?e - entity)\n"
-                           "pred_b()", ontology.predicates.toStr());
+                           "pred_b()\n"
+                           "pred_c(?e - entity)", ontology.predicates.toStr());
   }
 
   {
@@ -69,6 +71,14 @@ void _test_pddlSerializationParts()
     if (!ws)
       assert_true(false);
     assert_eq<std::string>("decrease(battery-amount(toto), 4)", ws->toStr());
+  }
+
+  {
+    std::size_t pos = 0;
+    std::unique_ptr<cp::WorldStateModification> ws = cp::pddlToWsModification("(forall (?e - entity) (when (pred_a ?e) (pred_c ?e))", pos, ontology, {}, {});
+    if (!ws)
+      assert_true(false);
+    assert_eq<std::string>("forall(?e - entity, when(pred_a(?e), pred_c(?e)))", ws->toStr());
   }
 
 }
@@ -198,6 +208,7 @@ void _test_loadPddlDomain()
         :effect
           (and
             (at start (walls-built ?s))
+            (at end (forall (?sa - site) (when (site-built ?sa) (walls-built ?sa))))
             (at end (material-used ?b))
             (at end (decrease (battery-amount maincar) 4))
           )
@@ -209,6 +220,7 @@ void _test_loadPddlDomain()
 
   const std::string expectedDomain = R"((define
     (domain construction)
+    (:requirements :strips :typing)
 
     (:types
         site material - object
@@ -330,6 +342,7 @@ void _test_loadPddlDomain()
         :effect
             (and
                 (at start (walls-built ?s))
+                (at end (forall (?sa - site) (when (site-built ?sa) (walls-built ?sa))))
                 (at end (material-used ?b))
                 (at end (decrease (battery-amount maincar) 4))
             )

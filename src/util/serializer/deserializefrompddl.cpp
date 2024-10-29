@@ -69,6 +69,27 @@ std::vector<Parameter> _pddlArgumentsToParameters(
 }
 
 
+std::vector<Parameter> _expressionParsedToParameters(
+    const ExpressionParsed& pExpressionParsed,
+    std::vector<Parameter>& pAllParameters,
+    const SetOfTypes& pSetOfTypes)
+{
+  std::vector<Parameter> res;
+  if (pExpressionParsed.followingExpression)
+  {
+    auto paramType = pSetOfTypes.nameToType(pExpressionParsed.followingExpression->name);
+    res.emplace_back(pExpressionParsed.name, paramType);
+  }
+  else if (pExpressionParsed.arguments.size() >= 2)
+  {
+    res = _pddlArgumentsToParameters(pExpressionParsed.arguments, pExpressionParsed.name, pSetOfTypes);
+  }
+
+  for (const auto& currElt : res)
+    pAllParameters.push_back(currElt);
+  return res;
+}
+
 std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& pExpressionParsed,
                                                         const Ontology& pOntology,
                                                         const SetOfEntities& pEntities,
@@ -133,23 +154,12 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
 
     auto itArg = pExpressionParsed.arguments.begin();
     auto& firstArg = *itArg;
-    std::vector<Parameter> existsParameters;
-    std::shared_ptr<Type> paramType;
-    if (firstArg.followingExpression)
-    {
-      paramType = pOntology.types.nameToType(firstArg.followingExpression->name);
-      existsParameters.emplace_back(firstArg.name, paramType);
-    }
-    else if (firstArg.arguments.size() >= 2)
-    {
-      existsParameters = _pddlArgumentsToParameters(firstArg.arguments, firstArg.name, pOntology.types);
-    }
-
+    auto newParameters = pParameters;
+    auto existsParameters = _expressionParsedToParameters(firstArg, newParameters, pOntology.types);
     if (existsParameters.size() != 1)
       throw std::runtime_error("Only one parameter is handled for exists function (needs to be improved)");
-    const auto& existsParameter = existsParameters.back();
-    auto newParameters = pParameters;
-    newParameters.push_back(existsParameter);
+    auto& existsParameter = existsParameters.front();
+
     ++itArg;
     res = std::make_unique<ConditionExists>(existsParameter,
                                             _expressionParsedToCondition(*itArg, pOntology, pEntities, newParameters, false));
@@ -344,12 +354,12 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
   {
     auto itArg = pExpressionParsed.arguments.begin();
     auto& firstArg = *itArg;
-    std::shared_ptr<Type> paramType;
-    if (firstArg.followingExpression)
-      paramType = pOntology.types.nameToType(firstArg.followingExpression->name);
-    Parameter forAllParameter(firstArg.name, paramType);
+
     auto newParameters = pParameters;
-    newParameters.push_back(forAllParameter);
+    auto forAllParameters = _expressionParsedToParameters(firstArg, newParameters, pOntology.types);
+    if (forAllParameters.size() != 1)
+      throw std::runtime_error("Only one parameter is handled for forall function (needs to be improved)");
+    auto& forAllParameter = forAllParameters.front();
 
     ++itArg;
     auto& secondArg = *itArg;
@@ -857,6 +867,7 @@ Domain pddlToDomain(const std::string& pStr,
   std::map<ActionId, Action> actions;
   std::map<SetOfEventsId, SetOfEvents> idToSetOfEvents;
   SetOfConstFacts timelessFacts;
+  std::set<std::string> requirements;
 
   const std::string defineToken = "(define";
   std::size_t found = pStr.find(defineToken);
@@ -900,7 +911,8 @@ Domain pddlToDomain(const std::string& pStr,
         }
         else if (token == ":requirements")
         {
-          ExpressionParsed::moveUntilClosingParenthesis(pStr, pos);
+          while (pos < strSize && pStr[pos] != ')')
+            requirements.insert(ExpressionParsed::parseToken(pStr, pos));
         }
         else if (token == ":types")
         {
@@ -966,6 +978,8 @@ Domain pddlToDomain(const std::string& pStr,
     throw std::runtime_error("No '(define' found in domain file");
   }
   auto res = Domain(actions, ontology, {}, timelessFacts, domainName);
+  for (auto& currRequirement : requirements)
+    res.addRequirement(currRequirement);
   for (auto& currSetOfEv : idToSetOfEvents)
     res.addSetOfEvents(currSetOfEv.second, currSetOfEv.first);
   return res;
