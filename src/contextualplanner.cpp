@@ -279,14 +279,9 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
                                 pWorldStateModificationPtr1, pWorldStateModificationPtr2,
                                 pGoal, pProblem, pFactOptionalToSatisfy, pDomain, pFactsAlreadychecked, pFromDeductionId))
     {
-      bool tryToMatchWothFactOfTheWorld = false;
-      while (true)
-      {
-        bool actionIsAPossibleFollowUp = true;
-
         auto fillParameter = [&](const Parameter& pParameter,
                                  std::set<Entity>& pParameterValues,
-                                 std::map<Parameter, std::set<Entity>>& pNewParentParameters)
+                                 std::map<Parameter, std::set<Entity>>& pNewParentParameters) -> bool
         {
           if (pParameterValues.empty() &&
               pFactOptional.fact.hasParameterOrFluent(pParameter))
@@ -314,60 +309,32 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
             {
               if (pParameter.type)
                 newParamValues = _paramTypenameToEntities(pParameter.type->name, pDomain, pProblem);
-
-              if (newParamValues.empty())
-                actionIsAPossibleFollowUp = false;
+              return !newParamValues.empty();
             }
           }
+          return true;
         };
 
         // fill parent parameters
         std::map<Parameter, std::set<Entity>> newParentParameters;
         for (auto& currParentParam : pParentParameters)
-          fillParameter(currParentParam.first, currParentParam.second, newParentParameters);
+          if (!fillParameter(currParentParam.first, currParentParam.second, newParentParameters))
+            return PossibleEffect::NOT_SATISFIED;
 
         if (pTmpParentParametersPtr != nullptr)
         {
           std::map<Parameter, std::set<Entity>> newTmpParentParameters;
           for (auto& currParentParam : *pTmpParentParametersPtr)
-            fillParameter(currParentParam.first, currParentParam.second, newTmpParentParameters);
+            if (!fillParameter(currParentParam.first, currParentParam.second, newTmpParentParameters))
+              return PossibleEffect::NOT_SATISFIED;
           applyNewParams(*pTmpParentParametersPtr, newTmpParentParameters);
         }
         applyNewParams(pParentParameters, newParentParameters);
 
-
         // Check that the new fact pattern is not already satisfied
-        if (actionIsAPossibleFollowUp)
-        {
-          if (!pProblem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &pParentParameters, pTmpParentParametersPtr, nullptr))
-            return PossibleEffect::SATISFIED;
-          return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
-        }
-
-        // If we did not succedded to fill the parameters from effect we try to resolve according to the constant facts in the world
-        if (tryToMatchWothFactOfTheWorld)
-          break;
-        tryToMatchWothFactOfTheWorld = true;
-        const auto& swFactAccessorsToFacts = pProblem.worldState.factsMapping();
-        pCondition->forAll([&](const FactOptional& pConditionFactOptional, bool) {
-          if (!pConditionFactOptional.isFactNegated)
-          {
-            auto condFactMatchInWs = swFactAccessorsToFacts.find(pConditionFactOptional.fact);
-            for (const auto& currWorldFact : condFactMatchInWs)
-            {
-              if (pConditionFactOptional.fact.isPatternOf(parametersToValues, currWorldFact))
-              {
-                for (auto& currParamToValues : parametersToValues)
-                {
-                  auto parentParamValue = pConditionFactOptional.fact.tryToExtractArgumentFromExample(currParamToValues.first, currWorldFact);
-                  if (parentParamValue)
-                    currParamToValues.second.insert(*parentParamValue);
-                }
-              }
-            }
-          }
-        });
-      }
+        if (!pProblem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &pParentParameters, pTmpParentParametersPtr, nullptr))
+          return PossibleEffect::SATISFIED;
+        return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
     }
   }
   return PossibleEffect::NOT_SATISFIED;

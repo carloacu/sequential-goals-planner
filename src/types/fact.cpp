@@ -453,49 +453,6 @@ std::optional<Entity> Fact::tryToExtractArgumentFromExampleWithoutFluentConsider
 }
 
 
-
-bool Fact::isPatternOf(
-    const std::map<Parameter, std::set<Entity>>& pPossibleArguments,
-    const Fact& pFactExample) const
-{
-  if (_name != pFactExample._name ||
-      _isFluentNegated != pFactExample._isFluentNegated ||
-      _arguments.size() != pFactExample._arguments.size())
-    return false;
-
-  auto isOk = [&](const Entity& pPatternVal,
-                  const Entity& pExempleVal) {
-    auto itVal = pPossibleArguments.find(pPatternVal.toParameter());
-    if (itVal != pPossibleArguments.end())
-    {
-      if (!itVal->second.empty() &&
-          itVal->second.count(pExempleVal) == 0)
-        return false;
-    }
-    return true;
-  };
-
-  if (_fluent && !pFactExample._fluent)
-    return false;
-  if (!_fluent && pFactExample._fluent)
-    return false;
-  if (_fluent && pFactExample._fluent && !isOk(*_fluent, *pFactExample._fluent))
-    return false;
-
-  auto itParam = _arguments.begin();
-  auto itOtherParam = pFactExample._arguments.begin();
-  while (itParam != _arguments.end())
-  {
-    if (!isOk(*itParam, *itOtherParam))
-      return false;
-    ++itParam;
-    ++itOtherParam;
-  }
-  return true;
-}
-
-
-
 void Fact::replaceArguments(const std::map<Parameter, Entity>& pCurrentArgumentsToNewArgument)
 {
   if (_fluent)

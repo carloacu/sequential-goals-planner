@@ -146,15 +146,6 @@ struct CONTEXTUALPLANNER_API Fact
 
 
   /**
-   * @brief isPatternOf Does this fact is a generic form of the fact example according to the possible arguments.
-   * @param pPossibleArguments[in] Possible arguments limitation.
-   * @param pFactExample[in] The fact in example.
-   * @return True if this fact is a generic form of the fact example according to the possible arguments.
-   */
-  bool isPatternOf(const std::map<Parameter, std::set<Entity>>& pPossibleArguments,
-                   const Fact& pFactExample) const;
-
-  /**
    * @brief Replace some arguments by other ones.
    * @param pCurrentArgumentsToNewArgument[in] Map of current arguments to new argument to set.
    */
