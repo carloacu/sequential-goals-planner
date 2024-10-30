@@ -3,13 +3,26 @@
 
 ## Description
 
-This is C++14 library to do plannification PDDL for sorted by priority=ies list of goals.<br/>
+This is C++ library to do planification PDDL for goals sorted by priorities.<br/>
+Each pieces of goals inside the `and` function will be satisfied one after another.<br/>
+Exemple:
+```lisp
+  (:goal
+    (and
+      (at-object box1 locationC)
+      (at robot1 locationA)
+    )
+  )
+```
 
-A Kotlin version for Android is also available here https://github.com/carloacu/contextualplanner-android
+The planner will first focus on the goal `(at-object box1 locationC)` and then on the goal `(at robot1 locationA)`.<br/>
+Even if the plan for satisfying the first goal is chosen in consideration of helping to minimize the following goals.
+
 
 The plannification part is highly inspirated from the PDDL language.<br/>
 https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language
 
+A Kotlin version for Android is also available here https://github.com/carloacu/contextualplanner-android
 
 
 ## To build
