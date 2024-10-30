@@ -3,7 +3,7 @@
 
   (:objects
     robot1 - robot
-    locationA locationB - location
+    locationA locationB locationC - location
     box1 - object
   )
 
@@ -13,6 +13,9 @@
   )
 
   (:goal
-    (at-object box1 locationA)
+    (and
+      (at-object box1 locationC)
+      (at robot1 locationA)
+    )
   )
 )

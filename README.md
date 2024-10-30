@@ -1,25 +1,34 @@
 # Contextual Planner
 
 
-## To build
-
-:warning: Replace `${CONTEXTUAL_PLANNER_ROOT_OF_REPOSITORY}` by the root of contextual planner repository.
-
-```bash
-cd ${CONTEXTUAL_PLANNER_ROOT_OF_REPOSITORY}
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ../ && make -j4
-```
-
-
 ## Description
 
-This is C++14 library to do plannification adapted for social context.<br/>
+This is C++14 library to do plannification PDDL for sorted by priority=ies list of goals.<br/>
+
 A Kotlin version for Android is also available here https://github.com/carloacu/contextualplanner-android
 
 The plannification part is highly inspirated from the PDDL language.<br/>
 https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language
+
+
+
+## To build
+
+Go to the root directory of this repository and do
+
+```bash
+cmake -B build ./ && make -C build -j4
+```
+
+## To test
+
+There is a PDDL example in `data/simple`.
+
+After the compilation you can test the planner by doing
+
+```bash
+./build/bin/contextualplanner -d data/simple/domain.pddl -p data/simple/problem.pddl
+```
 
 
 ### Definition of words
@@ -85,11 +94,11 @@ Here are the types providec by this library:
 Here is an example with only one action to do:
 
 ```cpp
-#include "test_planningDummyExample.hpp"
 #include <map>
 #include <memory>
 #include <assert.h>
 #include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 
 void planningDummyExample()
@@ -103,25 +112,29 @@ void planningDummyExample()
   // Current clock to set to different functions
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
+  cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(userIsGreeted, ontology.types);
+
   // Initialize the domain with an action
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::FactModification::fromStr(userIsGreeted)));
-  cp::Domain domain(actions);
+  actions.emplace(sayHi, cp::Action({}, cp::strToWsModification(userIsGreeted, ontology, {}, {})));
+  cp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy
   cp::Problem problem;
-  problem.setGoals({userIsGreeted}, now);
+  problem.goalStack.setGoals({cp::Goal::fromStr(userIsGreeted, ontology, {})}, problem.worldState, now);
 
   // Look for an action to do
-  auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, now);
-  assert(oneStepOfPlannerResult1.operator bool());
-  assert(sayHi == oneStepOfPlannerResult1->actionInstance.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  assert(!planResult1.empty());
+  const auto& firstActionInPlan = planResult1.front();
+  assert(sayHi == firstActionInPlan.actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
+  cp::notifyActionDone(problem, domain, firstActionInPlan, now);
 
   // Look for the next action to do
-  auto oneStepOfPlannerResult2 = cp::lookForAnActionToDo(problem, domain, now);
-  assert(!oneStepOfPlannerResult2.operator bool()); // No action found
+  auto planResult2 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  assert(planResult2.empty()); // No action found
 }
 ```
 
@@ -130,11 +143,11 @@ Here is an example with two actions to do and with the usage of preconditions:
 
 
 ```cpp
-#include "test_planningExampleWithAPreconditionSolve.hpp"
 #include <map>
 #include <memory>
 #include <assert.h>
 #include <contextualplanner/contextualplanner.hpp>
+#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 
 void planningExampleWithAPreconditionSolve()
@@ -150,33 +163,39 @@ void planningExampleWithAPreconditionSolve()
   // Current clock to set to different functions
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
+  cp::Ontology ontology;
+  ontology.predicates = cp::SetOfPredicates::fromStr(userIsGreeted + "\n" +
+                                                     proposedOurHelpToUser, ontology.types);
+
   // Initialize the domain with a set of actions
   std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::FactModification::fromStr(userIsGreeted)));
-  actions.emplace(askHowICanHelp, cp::Action(cp::FactCondition::fromStr(userIsGreeted),
-                                             cp::FactModification::fromStr(proposedOurHelpToUser)));
-  cp::Domain domain(actions);
+  actions.emplace(sayHi, cp::Action({}, cp::strToWsModification(userIsGreeted, ontology, {}, {})));
+  actions.emplace(askHowICanHelp, cp::Action(cp::strToCondition(userIsGreeted, ontology, {}, {}),
+                                             cp::strToWsModification(proposedOurHelpToUser, ontology, {}, {})));
+  cp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy
   cp::Problem problem;
-  problem.setGoals({proposedOurHelpToUser}, now);
+  problem.goalStack.setGoals({cp::Goal::fromStr(proposedOurHelpToUser, ontology, {})}, problem.worldState, now);
 
   // Look for an action to do
-  auto oneStepOfPlannerResult1 = cp::lookForAnActionToDo(problem, domain, now);
-  assert(oneStepOfPlannerResult1.operator bool());
-  assert(sayHi == oneStepOfPlannerResult1->actionInstance.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
+  auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  assert(!planResult1.empty());
+  const auto& firstActionInPlan1 = planResult1.front();
+  assert(sayHi == firstActionInPlan1.actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult1, now);
+  cp::notifyActionDone(problem, domain, firstActionInPlan1, now);
 
   // Look for the next action to do
-  auto oneStepOfPlannerResult2 = cp::lookForAnActionToDo(problem, domain, now);
-  assert(oneStepOfPlannerResult2.operator bool());
-  assert(askHowICanHelp == oneStepOfPlannerResult2->actionInstance.actionId); // The action found is "ask_how_I_can_help"
+  auto planResult2 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  assert(!planResult2.empty());
+  const auto& firstActionInPlan2 = planResult2.front();
+  assert(askHowICanHelp == firstActionInPlan2.actionInvocation.actionId); // The action found is "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, *oneStepOfPlannerResult2, now);
+  cp::notifyActionDone(problem, domain, firstActionInPlan2, now);
 
   // Look for the next action to do
-  auto oneStepOfPlannerResult3 = cp::lookForAnActionToDo(problem, domain, now);
-  assert(!oneStepOfPlannerResult3.operator bool()); // No action found
+  auto planResult3 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  assert(planResult3.empty()); // No action found
 }
 ```

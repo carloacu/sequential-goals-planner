@@ -6,7 +6,6 @@
 #include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 
 
-
 void planningExampleWithAPreconditionSolve()
 {
   // Facts

@@ -29,6 +29,32 @@ std::string _getFileContent(const std::string& filePath)
     return res;
 }
 
+std::string _getFileContentWithoutComments(const std::string& filePath)
+{
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Error: Could not open file " + filePath);
+    }
+
+    std::string res;
+    std::string line;
+    while (std::getline(file, line))
+    {
+      // Trim the line to remove any leading/trailing whitespace
+      line.erase(0, line.find_first_not_of(" \t")); // trim left
+      line.erase(line.find_last_not_of(" \t") + 1); // trim right
+
+      // Ignore empty lines or lines starting with ';'
+      if (line.empty() || line[0] == ';')
+        continue;
+
+      res += line + "\n";
+    }
+
+    file.close();
+    return res;
+}
+
 
 void _test_dataDirectory(const std::string& pDataPath,
                          const std::string& pProblemDirectory)
@@ -44,16 +70,12 @@ void _test_dataDirectory(const std::string& pDataPath,
   cp::DomainAndProblemPtrs domainAndProblemPtrs = cp::pddlToProblem(problemContent, loadedDomains);
   auto& problem = *domainAndProblemPtrs.problemPtr;
 
-  std::string expected =
-      R"(00: (move robot1 locationA locationB) [1]
-01: (pick-up robot1 box1 locationB) [1]
-02: (move robot1 locationB locationA) [1]
-03: (drop robot1 box1 locationA) [1]
-)";
+  std::string expected = _getFileContentWithoutComments(directory + "/problem_plan_result.pddl");
   std::string actualPlan = cp::planToPddl(cp::planForEveryGoals(problem, domain, {}), domain);
   if (actualPlan != expected)
   {
-    std::cout << "\n" << actualPlan << std::endl;
+    std::cout << "Get:\n" << actualPlan << std::endl;
+    std::cout << "Expected:\n" << expected << std::endl;
     assert(false);
   }
 }
