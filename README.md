@@ -5,7 +5,7 @@
 
 This is C++ library to do planification PDDL for goals sorted by priorities.<br/>
 Each pieces of goals inside the `and` function will be satisfied one after another.<br/>
-Exemple:
+Example:
 ```lisp
   (:goal
     (and
