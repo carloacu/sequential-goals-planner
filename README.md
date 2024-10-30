@@ -30,6 +30,16 @@ After the compilation you can test the planner by doing
 ./build/bin/contextualplanner -d data/simple/domain.pddl -p data/simple/problem.pddl
 ```
 
+The output should be:
+
+```bash
+00: (move robot1 locationA locationB) [1]
+01: (pick-up robot1 box1 locationB) [1]
+02: (move robot1 locationB locationC) [1]
+03: (drop robot1 box1 locationC) [1]
+04: (move robot1 locationC locationA) [1]
+```
+
 
 ### Definition of words
 
