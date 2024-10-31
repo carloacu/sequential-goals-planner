@@ -74,7 +74,7 @@ set(CONTEXTUAL_PLANNER_SRCS
     src/types/goalstack.cpp
     src/types/historical.cpp
     src/types/lookforanactionoutputinfos.cpp
-    src/types/facttoconditions.cpp
+    src/types/factstovalue.cpp
     src/types/parameter.cpp
     src/types/predicate.cpp
     src/types/problemmodification.cpp
@@ -116,6 +116,8 @@ add_library(contextualplannerlib SHARED
   src/types/setofderivedpredicates.cpp
   src/types/axiom.cpp
   include/contextualplanner/types/setofconstfacts.hpp
+  include/contextualplanner/types/condtionstovalue.hpp
+  src/types/condtionstovalue.cpp
 )
 target_compile_features(contextualplannerlib PRIVATE cxx_std_14)
 

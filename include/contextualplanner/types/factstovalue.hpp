@@ -14,8 +14,6 @@
 namespace cp
 {
 struct Fact;
-struct FactAccessor;
-
 
 struct CONTEXTUALPLANNER_API FactsToValue
 {

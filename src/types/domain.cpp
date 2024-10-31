@@ -125,8 +125,7 @@ Domain::Domain()
     _ontology(),
     _timelessFacts(),
     _actions(),
-    _preconditionToActions(),
-    _notPreconditionToActions(),
+    _conditionsToActions(),
     _actionsWithoutFactToAddInPrecondition(),
     _setOfEvents(),
     _requirements()
@@ -144,8 +143,7 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
     _ontology(pOntology),
     _timelessFacts(pTimelessFacts),
     _actions(),
-    _preconditionToActions(),
-    _notPreconditionToActions(),
+    _conditionsToActions(),
     _actionsWithoutFactToAddInPrecondition(),
     _setOfEvents(),
     _requirements()
@@ -198,23 +196,7 @@ void Domain::_addAction(const ActionId& pActionId,
 
   bool hasAddedAFact = false;
   if (action.precondition)
-  {
-    action.precondition->forAll(
-          [&](const FactOptional& pFactOptional,
-          bool pIgnoreFluent)
-    {
-      if (pFactOptional.isFactNegated)
-      {
-        _notPreconditionToActions.add(pFactOptional.fact, pActionId, pIgnoreFluent);
-      }
-      else
-      {
-        _preconditionToActions.add(pFactOptional.fact, pActionId, pIgnoreFluent);
-        hasAddedAFact = true;
-      }
-    }
-    );
-  }
+    hasAddedAFact = _conditionsToActions.add(*action.precondition, pActionId);
 
   if (!hasAddedAFact)
     _actionsWithoutFactToAddInPrecondition.addValueWithoutFact(pActionId);
@@ -229,14 +211,9 @@ void Domain::removeAction(const ActionId& pActionId)
   _uuid = generateUuid(); // Regenerate uuid to force the problem to refresh his cache when it will use this object
 
   if (actionThatWillBeRemoved.precondition)
-  {
-    _notPreconditionToActions.erase(pActionId);
-    _preconditionToActions.erase(pActionId);
-  }
+    _conditionsToActions.erase(pActionId);
   else
-  {
     _actionsWithoutFactToAddInPrecondition.erase(pActionId);
-  }
 
   _actions.erase(it);
   _updateSuccessions();
