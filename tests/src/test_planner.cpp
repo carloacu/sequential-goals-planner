@@ -429,7 +429,10 @@ void _doNextActionThatBringsToTheSmallerCost()
   ontology.types = cp::SetOfTypes::fromPddl("location\n"
                                            "object\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromPddl("me - robot", ontology.types);
+  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
+                                                   "obj1 obj2 - object\n"
+                                                   "livingRoom kitchen bedroom - location", ontology.types);
+
   ontology.predicates = cp::SetOfPredicates::fromStr("objectGrabable(?o - object)\n"
                                                      "locationOfRobot(?r - robot) - location\n"
                                                      "locationOfObject(?o - object) - location\n"
@@ -456,18 +459,19 @@ void _doNextActionThatBringsToTheSmallerCost()
   actions.emplace(action_ungrab, ungrabAction);
 
   cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?object - object", ontology.types), cp::Parameter::fromStr("?location - location", ontology.types)};
-  cp::Event event(cp::strToCondition("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, eventParameters),
-                          cp::strToWsModification("locationOfObject(?object)=?location", ontology, {}, eventParameters));
-  event.parameters = std::move(eventParameters);
-  setOfEvents.add(event);
+  {
+    std::vector<cp::Parameter> eventParameters{cp::Parameter::fromStr("?object - object", ontology.types), cp::Parameter::fromStr("?location - location", ontology.types)};
+    cp::Event event(cp::strToCondition("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, eventParameters),
+                    cp::strToWsModification("locationOfObject(?object)=?location", ontology, {}, eventParameters));
+    event.parameters = std::move(eventParameters);
+    setOfEvents.add(event);
+  }
+
   cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
 
   cp::Problem problem;
   auto& entities = problem.entities;
-  entities = cp::SetOfEntities::fromPddl("obj1 obj2 - object\n"
-                                        "livingRoom kitchen bedroom - location", ontology.types);
   problem.worldState.addFact(cp::Fact("objectGrabable(obj1)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   problem.worldState.addFact(cp::Fact("objectGrabable(obj2)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
@@ -481,15 +485,41 @@ void _doNextActionThatBringsToTheSmallerCost()
   problem.worldState.addFact(cp::Fact("locationOfObject(obj1)=kitchen", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
   auto secondProblem = problem;
+  auto thirdProblem = problem;
+  auto fourthProblem = problem;
   // Here it will will be quicker for the second goal if we ungrab the obj2 right away
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
                                   cp::Goal::fromStr("locationOfObject(obj2)=livingRoom & !grab(me)=obj2", ontology, entities)});
-  EXPECT_EQ(action_ungrab + "(?object -> obj2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  const auto& plan = cp::planForEveryGoals(problem, domain, _now);
+  const std::string planStartingWithUngrab = "ungrab(?object -> obj2)\n"
+                                             "navigate(?targetPlace -> kitchen)\n"
+                                             "grab(?object -> obj1)\n"
+                                             "navigate(?targetPlace -> bedroom)\n"
+                                             "ungrab(?object -> obj1)";
+  EXPECT_EQ(planStartingWithUngrab, cp::planToStr(plan, "\n"));
 
   // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
   _setGoalsForAPriority(secondProblem, {cp::Goal::fromStr("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
                                         cp::Goal::fromStr("locationOfObject(obj2)=kitchen & !grab(me)=obj2", ontology, entities)});
-  EXPECT_EQ(action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDo(secondProblem, domain, _now).actionInvocation.toStr());
+  const auto& secondPlan = cp::planForEveryGoals(secondProblem, domain, _now);
+  const std::string planStartingWithNavigate = "navigate(?targetPlace -> kitchen)\n"
+                                               "ungrab(?object -> obj2)\n"
+                                               "grab(?object -> obj1)\n"
+                                               "navigate(?targetPlace -> bedroom)\n"
+                                               "ungrab(?object -> obj1)";
+  EXPECT_EQ(planStartingWithNavigate, cp::planToStr(secondPlan, "\n"));
+
+  // Exactly the same checks but !grab(me) part of goal before
+  // ---------------------------------------------------------
+  // Here it will will be quicker for the second goal if we ungrab the obj2 right away
+  _setGoalsForAPriority(thirdProblem, {cp::Goal::fromStr("!grab(me)=obj1 & locationOfObject(obj1)=bedroom", ontology, entities),
+                                       cp::Goal::fromStr("!grab(me)=obj2 & locationOfObject(obj2)=livingRoom", ontology, entities)});
+  EXPECT_EQ(planStartingWithUngrab, cp::planToStr(cp::planForEveryGoals(thirdProblem, domain, _now), "\n"));
+
+  // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
+  _setGoalsForAPriority(fourthProblem, {cp::Goal::fromStr("!grab(me)=obj1 & locationOfObject(obj1)=bedroom", ontology, entities),
+                                        cp::Goal::fromStr("!grab(me)=obj2 & locationOfObject(obj2)=kitchen", ontology, entities)});
+  EXPECT_EQ(planStartingWithNavigate, cp::planToStr(cp::planForEveryGoals(fourthProblem, domain, _now), "\n"));
 }
 
 

@@ -2413,8 +2413,8 @@ void _moveObject()
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("location(sweets)=bedroom", ontology)});
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets), " +
-                         actionNavigate2 + "(?object -> sweets, ?targetLocation -> bedroom)",
-                         _solveStr(problem, actions, ontology));
+            actionNavigate2 + "(?object -> sweets, ?targetLocation -> bedroom)",
+            _solveStr(problem, actions, ontology));
 }
 
 
