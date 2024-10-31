@@ -25,7 +25,7 @@ https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language
 A Kotlin version for Android is also available here https://github.com/carloacu/contextualplanner-android
 
 
-## To build
+## Build
 
 Go to the root directory of this repository and do
 
@@ -41,7 +41,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONTEXTUAL_PLANNER_TESTS=ON ./ &
 ```
 
 
-## To test
+## Quickstart
 
 There is a PDDL example in `data/simple`.
 
@@ -61,6 +61,32 @@ The output should be:
 04: (move robot1 locationC locationA) [1]
 ```
 
+## Features
+
+Supported [PDDL 3.1](https://helios.hud.ac.uk/scommv/IPC-14/repository/kovacs-pddl-3.1-2011.pdf)
+requirements:
+
+- [x] `:strips`
+- [x] `:typing`
+- [x] `:negative-preconditions`
+- [ ] `:disjunctive-preconditions`
+- [x] `:equality`
+- [ ] `:existential-preconditions`
+- [ ] `:universal-preconditions`
+- [ ] `:quantified-preconditions`
+- [ ] `:conditional-effects`
+- [ ] `:fluents`
+- [x] `:numeric-fluents`
+- [ ] `:non-deterministic` (see [6th IPC: Uncertainty Part](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.163.7140&rep=rep1&type=pdf))
+- [ ] `:adl`
+- [x] `:durative-actions`
+- [ ] `:duration-inequalities`
+- [x] `:derived-predicates`
+- [ ] `:timed-initial-literals`
+- [ ] `:preferences`
+- [ ] `:constraints`
+- [ ] `:action-costs`
+- [x] `:domain-axioms`
 
 ### Definition of words
 
