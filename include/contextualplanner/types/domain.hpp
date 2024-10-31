@@ -6,7 +6,7 @@
 #include "../util/api.hpp"
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/types/action.hpp>
-#include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/factstovalue.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/types/setofevents.hpp>
 #include <contextualplanner/types/setofconstfacts.hpp>
@@ -62,11 +62,11 @@ struct CONTEXTUALPLANNER_API Domain
   /// All action identifiers to action.
   const std::map<ActionId, Action>& actions() const { return _actions; }
   /// All facts in precondition to action identifiers.
-  const FactToConditions& preconditionToActions() const { return _preconditionToActions; }
+  const FactsToValue& preconditionToActions() const { return _preconditionToActions; }
   /// All negationed facts in precondition to action identifiers.
-  const FactToConditions& notPreconditionToActions() const { return _notPreconditionToActions; }
+  const FactsToValue& notPreconditionToActions() const { return _notPreconditionToActions; }
   /// All action identifiers of the actions without precondtion.
-  const FactToConditions& actionsWithoutFactToAddInPrecondition() const { return _actionsWithoutFactToAddInPrecondition; }
+  const FactsToValue& actionsWithoutFactToAddInPrecondition() const { return _actionsWithoutFactToAddInPrecondition; }
 
 
 
@@ -126,11 +126,11 @@ private:
   /// Map of action identifiers to action.
   std::map<ActionId, Action> _actions;
   /// Map of facts in precondition to action identifiers.
-  FactToConditions _preconditionToActions;
+  FactsToValue _preconditionToActions;
   /// Map of negationed facts in precondition to action identifiers.
-  FactToConditions _notPreconditionToActions;
+  FactsToValue _notPreconditionToActions;
   /// Set of action identifiers of the actions without precondtion.
-  FactToConditions _actionsWithoutFactToAddInPrecondition;
+  FactsToValue _actionsWithoutFactToAddInPrecondition;
   /// Map set of events identifiers to the set of events.
   std::map<SetOfEventsId, SetOfEvents> _setOfEvents;
   std::set<std::string> _requirements;

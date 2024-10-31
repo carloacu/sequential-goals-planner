@@ -4,7 +4,7 @@
 #include <map>
 #include "../util/api.hpp"
 #include <contextualplanner/types/event.hpp>
-#include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/factstovalue.hpp>
 #include <contextualplanner/util/alias.hpp>
 
 namespace cp
@@ -40,9 +40,9 @@ struct CONTEXTUALPLANNER_API SetOfEvents
   struct EventLinks
   {
     /// Map of fact conditions to event idntifiers.
-    FactToConditions conditionToEvents{};
+    FactsToValue conditionToEvents{};
     /// Map of negated fact conditions to event idntifiers.
-    FactToConditions notConditionToEvents{};
+    FactsToValue notConditionToEvents{};
 
     bool empty() const { return conditionToEvents.empty() && notConditionToEvents.empty(); }
   };

@@ -20,7 +20,7 @@ set(CONTEXTUAL_PLANNER_HPPS
     include/contextualplanner/types/goalstack.hpp
     include/contextualplanner/types/historical.hpp
     include/contextualplanner/types/lookforanactionoutputinfos.hpp
-    include/contextualplanner/types/facttoconditions.hpp
+    include/contextualplanner/types/factstovalue.hpp
     include/contextualplanner/types/ontology.hpp
     include/contextualplanner/types/parameter.hpp
     include/contextualplanner/types/predicate.hpp

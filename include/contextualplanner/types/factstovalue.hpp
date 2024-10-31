@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_MAPOFFACT_HPP
-#define INCLUDE_CONTEXTUALPLANNER_MAPOFFACT_HPP
+#ifndef INCLUDE_CONTEXTUALPLANNER_FACTSTOVALUE_HPP
+#define INCLUDE_CONTEXTUALPLANNER_FACTSTOVALUE_HPP
 
 #include "../util/api.hpp"
 #include <list>
@@ -17,9 +17,9 @@ struct Fact;
 struct FactAccessor;
 
 
-struct CONTEXTUALPLANNER_API FactToConditions
+struct CONTEXTUALPLANNER_API FactsToValue
 {
-  FactToConditions();
+  FactsToValue();
 
   void add(const Fact& pFact,
            const std::string& pValue,
@@ -148,4 +148,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_MAPOFFACT_HPP
+#endif // INCLUDE_CONTEXTUALPLANNER_FACTSTOVALUE_HPP

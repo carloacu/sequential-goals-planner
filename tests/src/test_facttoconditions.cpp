@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/factstovalue.hpp>
 #include <contextualplanner/types/ontology.hpp>
 #include <contextualplanner/util/alias.hpp>
 
@@ -28,7 +28,7 @@ TEST(Tool, test_factToConditions)
                                               "titi2 - my_type2\n"
                                               "titi3 - sub_my_type2", ontology.types);
 
-  FactToConditions factToActions;
+  FactsToValue factToActions;
 
   auto fact1 = cp::Fact::fromStr("pred_name(toto)", ontology, entities, {});
   factToActions.add(fact1, "action1");

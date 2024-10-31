@@ -5,7 +5,7 @@
 #include <memory>
 #include <set>
 #include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/factstovalue.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/util/alias.hpp>
 
@@ -61,7 +61,7 @@ private:
    * @param[in] pDomain Domain containing all the possible actions and events.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
-  void _feedAccessibleFactsFromSetOfActions(const FactToConditions::ConstMapOfFactIterator& pActions,
+  void _feedAccessibleFactsFromSetOfActions(const FactsToValue::ConstMapOfFactIterator& pActions,
                                             const Domain& pDomain,
                                             FactsAlreadyChecked& pFactsAlreadychecked);
 
@@ -72,7 +72,7 @@ private:
    * @param[in] pDomain Domain containing all the possible actions and events.
    * @param[in, out] pFactsAlreadychecked Cache of fact already checked to not loop forever.
    */
-  void _feedAccessibleFactsFromSetOfEvents(const FactToConditions::ConstMapOfFactIterator& pEvents,
+  void _feedAccessibleFactsFromSetOfEvents(const FactsToValue::ConstMapOfFactIterator& pEvents,
                                            const std::map<EventId, Event>& pAllEvents,
                                            const Domain& pDomain,
                                            FactsAlreadyChecked& pFactsAlreadychecked);

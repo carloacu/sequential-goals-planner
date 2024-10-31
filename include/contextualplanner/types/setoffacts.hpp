@@ -14,7 +14,6 @@
 namespace cp
 {
 struct Fact;
-struct FactAccessor;
 struct Entity;
 struct Ontology;
 struct SetOfEntities;

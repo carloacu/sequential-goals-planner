@@ -681,7 +681,7 @@ void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult
                                              std::optional<PotentialNextActionComparisonCache>& pPotentialNextActionComparisonCacheOpt,
                                              std::set<ActionId>& pAlreadyDoneActions,
                                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                                             const FactToConditions::ConstMapOfFactIterator& pActions,
+                                             const FactsToValue::ConstMapOfFactIterator& pActions,
                                              const Goal& pGoal,
                                              const Problem& pProblem,
                                              const FactOptional& pFactOptionalToSatisfy,

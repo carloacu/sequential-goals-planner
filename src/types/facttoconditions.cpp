@@ -1,4 +1,4 @@
-#include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/factstovalue.hpp>
 #include <stdexcept>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/util/alias.hpp>
@@ -46,7 +46,7 @@ void _addFluentToExactCall(std::string& pRes,
 
 
 
-FactToConditions::FactToConditions()
+FactsToValue::FactsToValue()
  : _values(),
    _valueToFacts(),
    _exactCallToListsOpt(),
@@ -57,7 +57,7 @@ FactToConditions::FactToConditions()
 }
 
 
-void FactToConditions::add(const Fact& pFact,
+void FactsToValue::add(const Fact& pFact,
                            const std::string& pValue,
                            bool pIgnoreFluent)
 {
@@ -107,7 +107,7 @@ void FactToConditions::add(const Fact& pFact,
 }
 
 
-void FactToConditions::addValueWithoutFact(const std::string& pValue)
+void FactsToValue::addValueWithoutFact(const std::string& pValue)
 {
   auto insertionResult = _values.insert(pValue);
   // pValue well added and did not already exists
@@ -118,7 +118,7 @@ void FactToConditions::addValueWithoutFact(const std::string& pValue)
 }
 
 
-void FactToConditions::_erase(const Fact& pFact,
+void FactsToValue::_erase(const Fact& pFact,
                               const std::string& pValue)
 {
   auto it = _values.find(pValue);
@@ -189,7 +189,7 @@ void FactToConditions::_erase(const Fact& pFact,
 }
 
 
-void FactToConditions::erase(const std::string& pValue)
+void FactsToValue::erase(const std::string& pValue)
 {
   auto it = _valueToFacts.find(pValue);
   if (it != _valueToFacts.end())
@@ -210,7 +210,7 @@ void FactToConditions::erase(const std::string& pValue)
 }
 
 
-void FactToConditions::clear()
+void FactsToValue::clear()
 {
   _values.clear();
   _valueToFacts.clear();
@@ -222,13 +222,13 @@ void FactToConditions::clear()
 }
 
 
-bool FactToConditions::empty() const
+bool FactsToValue::empty() const
 {
   return _values.empty();
 }
 
 
-typename FactToConditions::ConstMapOfFactIterator FactToConditions::find(const Fact& pFact,
+typename FactsToValue::ConstMapOfFactIterator FactsToValue::find(const Fact& pFact,
                                                                          bool pIgnoreFluent) const
 {
   const std::list<std::string>* exactMatchPtr = nullptr;
@@ -249,7 +249,7 @@ typename FactToConditions::ConstMapOfFactIterator FactToConditions::find(const F
 
   const std::list<std::string>* resPtr = nullptr;
   auto _matchArg = [&](const std::map<std::string, std::list<std::string>>& pArgValueToValues,
-                       const std::string& pArgValue) -> std::optional<typename FactToConditions::ConstMapOfFactIterator> {
+                       const std::string& pArgValue) -> std::optional<typename FactsToValue::ConstMapOfFactIterator> {
     auto itForThisValue = pArgValueToValues.find(pArgValue);
     if (itForThisValue != pArgValueToValues.end())
     {
@@ -323,14 +323,14 @@ typename FactToConditions::ConstMapOfFactIterator FactToConditions::find(const F
   return ConstMapOfFactIterator(exactMatchPtr);
 }
 
-typename FactToConditions::ConstMapOfFactIterator FactToConditions::valuesWithoutFact() const
+typename FactsToValue::ConstMapOfFactIterator FactsToValue::valuesWithoutFact() const
 {
   return ConstMapOfFactIterator(&_valuesWithoutFact);
 }
 
 
 
-void FactToConditions::_removeAValueForList(std::list<std::string>& pList,
+void FactsToValue::_removeAValueForList(std::list<std::string>& pList,
                                             const std::string& pValue) const
 {
   for (auto it = pList.begin(); it != pList.end(); ++it)
@@ -344,7 +344,7 @@ void FactToConditions::_removeAValueForList(std::list<std::string>& pList,
 }
 
 
-const std::list<std::string>* FactToConditions::_findAnExactCall(
+const std::list<std::string>* FactsToValue::_findAnExactCall(
     const std::optional<std::map<std::string, std::list<std::string>>>& pExactCalls,
     const std::string& pExactCall) const
 {

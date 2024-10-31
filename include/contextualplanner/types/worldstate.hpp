@@ -7,7 +7,7 @@
 #include <memory>
 #include <set>
 #include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/facttoconditions.hpp>
+#include <contextualplanner/types/factstovalue.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/util/alias.hpp>
 #include <contextualplanner/util/observableunsafe.hpp>
@@ -342,7 +342,7 @@ private:
                         WhatChanged& pWhatChanged,
                         bool& pGoalChanged,
                         GoalStack& pGoalStack,
-                        const FactToConditions::ConstMapOfFactIterator& pEventIds,
+                        const FactsToValue::ConstMapOfFactIterator& pEventIds,
                         const std::map<EventId, Event>& pEvents,
                         const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                         const Ontology& pOntology,

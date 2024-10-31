@@ -87,7 +87,7 @@ void WorldStateCache::refreshIfNeeded(const Domain& pDomain,
 }
 
 
-void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const FactToConditions::ConstMapOfFactIterator& pActions,
+void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const FactsToValue::ConstMapOfFactIterator& pActions,
                                                            const Domain& pDomain,
                                                            FactsAlreadyChecked& pFactsAlreadychecked)
 {
@@ -112,7 +112,7 @@ void WorldStateCache::_feedAccessibleFactsFromSetOfActions(const FactToCondition
 }
 
 
-void WorldStateCache::_feedAccessibleFactsFromSetOfEvents(const FactToConditions::ConstMapOfFactIterator& pEvents,
+void WorldStateCache::_feedAccessibleFactsFromSetOfEvents(const FactsToValue::ConstMapOfFactIterator& pEvents,
                                                           const std::map<EventId, Event>& pAllEvents,
                                                           const Domain& pDomain,
                                                           FactsAlreadyChecked& pFactsAlreadychecked)
