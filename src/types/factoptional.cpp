@@ -82,7 +82,11 @@ std::string FactOptional::toPddl(bool pInEffectContext,
 {
   auto res = fact.toPddl(pInEffectContext, pPrintAnyFluent);
   if (isFactNegated)
+  {
+    if (fact.fluent() && fact.fluent()->isAnyValue())
+      return (pInEffectContext ? "(assign " : "(= ") + res + " undefined)";
     return "(not " + res + ")";
+  }
   return res;
 }
 

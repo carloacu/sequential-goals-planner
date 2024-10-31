@@ -122,13 +122,16 @@ void _test_loadPddlDomain()
         (held ?b - ball)
         (site-built ?s - site)
         (windows-fitted ?s - site)
+        (started)
     )
 
     (:functions;a comment
         (battery-amount ?r - car)
+        (car-value ?r - car) - number
         (distance-to-floor ?b - ball)
         (velocity ?b - ball)  ; a comment
         (size ?b - ball)
+        (position) - site
     )
 
     (:timeless (foundations-set mainsite))
@@ -167,6 +170,12 @@ void _test_loadPddlDomain()
         )
     )
 
+    (:durative-action START
+        :duration (= ?duration 1)
+        :effect
+          (at end (started))
+    )
+
     (:durative-action BUILD-WALL-DURATIVE
         :parameters
           (?s - site ?b - bricks)
@@ -177,6 +186,8 @@ void _test_loadPddlDomain()
         :condition
           (and
             (at start (on-site ?b ?s))
+            (at start (= (battery-amount maincar) undefined))
+            (at start (not (= (position) ?s)))
             (at start (foundations-set ?s))
             (over all (not (walls-built ?s)))
             (at start (not (material-used ?b)))
@@ -186,8 +197,9 @@ void _test_loadPddlDomain()
           (and
             (at start (walls-built ?s))
             (at end (forall (?sa - site) (when (site-built ?sa) (walls-built ?sa))))
-            (at end (material-used ?b))
-            (at end (decrease (battery-amount maincar) 4))
+            (at end (material-used ?b)) ;; __POTENTIALLY
+            (at end (assign (battery-amount maincar) 4))
+            (at end (decrease (car-value maincar) 5))
           )
     )
 
@@ -218,13 +230,16 @@ void _test_loadPddlDomain()
         (material-used ?m - material)
         (on-site ?m - material ?s - site)
         (site-built ?s - site)
+        (started)
         (walls-built ?s - site)
         (windows-fitted ?s - site)
     )
 
     (:functions
         (battery-amount ?r - car) - number
+        (car-value ?r - car) - number
         (distance-to-floor ?b - ball) - number
+        (position) - site
         (size ?b - ball) - number
         (velocity ?b - ball) - number
     )
@@ -311,6 +326,8 @@ void _test_loadPddlDomain()
         :condition
             (and
                 (at start (on-site ?b ?s))
+                (at start (= (battery-amount maincar) undefined))
+                (at start (not (= (position) ?s)))
                 (at start (foundations-set ?s))
                 (at start (not (material-used ?b)))
                 (over all (not (walls-built ?s)))
@@ -320,8 +337,9 @@ void _test_loadPddlDomain()
             (and
                 (at start (walls-built ?s))
                 (at end (forall (?sa - site) (when (site-built ?sa) (walls-built ?sa))))
-                (at end (material-used ?b))
-                (at end (decrease (battery-amount maincar) 4))
+                (at end (assign (battery-amount maincar) 4))
+                (at end (decrease (car-value maincar) 5))
+                (at end (material-used ?b)) ;; __POTENTIALLY
             )
     )
 
@@ -333,6 +351,13 @@ void _test_loadPddlDomain()
 
         :effect
             (at end (walls-built ?s))
+    )
+
+    (:durative-action START
+        :duration (= ?duration 1)
+
+        :effect
+            (at end (started))
     )
 
 ))";

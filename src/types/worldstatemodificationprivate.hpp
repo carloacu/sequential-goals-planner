@@ -24,7 +24,8 @@ enum class WorldStateModificationNodeType
 enum class WsModificationPart
 {
   AT_START,
-  AT_END
+  AT_END,
+  POTENTIALLY_AT_END
 };
 
 struct WorldStateModificationNode : public WorldStateModification

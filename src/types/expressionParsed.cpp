@@ -208,14 +208,14 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
 {
   ExpressionParsed res;
   auto strSize = pStr.size();
-  skipSpaces(pStr, pPos);
+  res.skipSpacesWithTagExtraction(pStr, pPos);
   if (pPos >= strSize)
     return res;
 
   if (pStr[pPos] == '(')
   {
     ++pPos;
-    skipSpaces(pStr, pPos);
+    res.skipSpacesWithTagExtraction(pStr, pPos);
     std::size_t beginOfTokenPos = pPos;
 
     bool inName = true;
@@ -223,18 +223,11 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
     {
       if (pStr[pPos] == ';')
       {
-        ExpressionParsed::moveUntilEndOfLine(pStr, pPos);
-        ++pPos;
-        skipSpaces(pStr, pPos);
+        res.skipSpacesWithTagExtraction(pStr, pPos);
         beginOfTokenPos = pPos;
       }
 
-      if (pStr[pPos] == ')')
-      {
-        ++pPos;
-        break;
-      }
-      else if (!inName || isEndOfTokenSeparator(pStr[pPos]))
+      if (!inName || isEndOfTokenSeparator(pStr[pPos]))
       {
         if (inName)
         {
@@ -247,6 +240,13 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
           inName = false;
           continue;
         }
+
+        if (pStr[pPos] == ')')
+        {
+          ++pPos;
+          break;
+        }
+
         auto prePos = pPos;
         res.arguments.emplace_back(fromPddl(pStr, pPos, pCanHaveFollowingExpression));
         if (pPos > prePos)
@@ -283,7 +283,7 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
     }
   }
 
-  skipSpaces(pStr, pPos);
+  res.skipSpacesWithTagExtraction(pStr, pPos);
   return res;
 }
 
@@ -301,6 +301,21 @@ void ExpressionParsed::skipSpaces(const std::string& pStr,
   }
 }
 
+void ExpressionParsed::skipSpacesWithTagExtraction(const std::string& pStr,
+                                                   std::size_t& pPos)
+{
+  auto strSize = pStr.size();
+  while (pPos < strSize)
+  {
+    if (pStr[pPos] == ';')
+       moveUntilEndOfLineWithTagExtraction(pStr, pPos);
+    else if (pStr[pPos] != ' ' && pStr[pPos] != '\n' && pStr[pPos] != '\t')
+      break;
+    ++pPos;
+  }
+}
+
+
 void ExpressionParsed::moveUntilEndOfLine(const std::string& pStr,
                                           std::size_t& pPos)
 {
@@ -312,6 +327,45 @@ void ExpressionParsed::moveUntilEndOfLine(const std::string& pStr,
     ++pPos;
   }
 }
+
+
+void ExpressionParsed::moveUntilEndOfLineWithTagExtraction(const std::string& pStr,
+                                                           std::size_t& pPos)
+{
+  auto strSize = pStr.size();
+  std::optional<std::size_t> beginPos;
+  std::optional<std::size_t> endPos;
+  while (pPos < strSize)
+  {
+    if (pStr[pPos] == '_' && pPos + 1 < strSize && pStr[pPos + 1] == '_')
+    {
+      beginPos.emplace(pPos);
+      endPos.reset();
+    }
+    else if (pStr[pPos] == ' ')
+    {
+      if (beginPos)
+      {
+        tags.insert(pStr.substr(*beginPos, pPos - *beginPos));
+        beginPos.reset();
+      }
+    }
+    else if (pStr[pPos] == '\n')
+    {
+      if (beginPos)
+      {
+        tags.insert(pStr.substr(*beginPos, pPos - *beginPos));
+        beginPos.reset();
+      }
+      break;
+    }
+    ++pPos;
+  }
+
+  if (beginPos)
+    tags.insert(pStr.substr(*beginPos, strSize - *beginPos));
+}
+
 
 void ExpressionParsed::moveUntilClosingParenthesis(const std::string& pStr,
                                                    std::size_t& pPos)

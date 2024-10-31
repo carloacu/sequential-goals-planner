@@ -664,7 +664,12 @@ ExpressionParsed _extractWsModificationPart(const ExpressionParsed& pInput,
 
     if (pInput.arguments.front().name == "end")
     {
-      if (pWsModificationPart == WsModificationPart::AT_END)
+      if (pInput.tags.count("__POTENTIALLY") > 0)
+      {
+        if (pWsModificationPart == WsModificationPart::POTENTIALLY_AT_END)
+          return (++pInput.arguments.begin())->clone();
+      }
+      else if (pWsModificationPart == WsModificationPart::AT_END)
           return (++pInput.arguments.begin())->clone();
       return ExpressionParsed();
     }
@@ -792,8 +797,9 @@ Action _durativeActionPddlToAction(const std::string& pStr,
   std::vector<Parameter> parameters;
   std::unique_ptr<Condition> precondition;
   std::unique_ptr<Condition> overAllCondition;
-  std::unique_ptr<WorldStateModification> effectAtEnd;
   std::unique_ptr<WorldStateModification> effectAtStart;
+  std::unique_ptr<WorldStateModification> effectAtEnd;
+  std::unique_ptr<WorldStateModification> effectAtEndPotentially;
 
   auto strSize = pStr.size();
   while (pPos < strSize && pStr[pPos] != ')')
@@ -836,9 +842,13 @@ Action _durativeActionPddlToAction(const std::string& pStr,
       if (!atStartExpressionParsed.empty())
         effectAtStart = _expressionParsedToWsModification(atStartExpressionParsed, pOntology, {}, parameters, false);
 
-      auto overAllExpressionParsed = _extractWsModificationPart(expressionParsed, WsModificationPart::AT_END);
-      if (!overAllExpressionParsed.empty())
-        effectAtEnd = _expressionParsedToWsModification(overAllExpressionParsed, pOntology, {}, parameters, false);
+      auto atEndExpressionParsed = _extractWsModificationPart(expressionParsed, WsModificationPart::AT_END);
+      if (!atEndExpressionParsed.empty())
+        effectAtEnd = _expressionParsedToWsModification(atEndExpressionParsed, pOntology, {}, parameters, false);
+
+      auto potentiallyAtEndExpressionParsed = _extractWsModificationPart(expressionParsed, WsModificationPart::POTENTIALLY_AT_END);
+      if (!potentiallyAtEndExpressionParsed.empty())
+        effectAtEndPotentially = _expressionParsedToWsModification(potentiallyAtEndExpressionParsed, pOntology, {}, parameters, false);
     }
     else
     {
@@ -846,13 +856,15 @@ Action _durativeActionPddlToAction(const std::string& pStr,
     }
   }
 
-  if (!effectAtEnd)
-    throw std::runtime_error("An action has no effect");
+  if (!effectAtStart && !effectAtEnd && !effectAtEndPotentially)
+    throw std::runtime_error("A durative action has no effect");
   auto res = Action(std::move(precondition), std::move(effectAtEnd));
   if (overAllCondition)
     res.overAllCondition = std::move(overAllCondition);
   if (effectAtStart)
     res.effect.worldStateModificationAtStart = std::move(effectAtStart);
+  if (effectAtEndPotentially)
+    res.effect.potentialWorldStateModification = std::move(effectAtEndPotentially);
   res.parameters = std::move(parameters);
   return res;
 }

@@ -3,6 +3,7 @@
 
 #include <list>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -21,6 +22,7 @@ struct ExpressionParsed
   std::string value;
   bool isValueNegated = false;
   bool isAFunction = false;
+  std::set<std::string> tags;
 
   char separatorToFollowingExp = ' ';
   std::unique_ptr<ExpressionParsed> followingExpression;
@@ -46,8 +48,14 @@ struct ExpressionParsed
   static void skipSpaces(const std::string& pStr,
                          std::size_t& pPos);
 
+  void skipSpacesWithTagExtraction(const std::string& pStr,
+                                   std::size_t& pPos);
+
   static void moveUntilEndOfLine(const std::string& pStr,
                                  std::size_t& pPos);
+
+  void moveUntilEndOfLineWithTagExtraction(const std::string& pStr,
+                                           std::size_t& pPos);
 
   static void moveUntilClosingParenthesis(const std::string& pStr,
                                           std::size_t& pPos);

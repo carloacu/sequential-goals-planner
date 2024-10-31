@@ -229,8 +229,10 @@ std::string _effectsToPddl(
     {
       if (currElt.wsModificationPart == WsModificationPart::AT_START)
         results.emplace_back("(at start " + currSubResult + ")");
-      else
+      else if (currElt.wsModificationPart == WsModificationPart::AT_END)
         results.emplace_back("(at end " + currSubResult + ")");
+      else
+        results.emplace_back("(at end " + currSubResult + ") ;; __POTENTIALLY");
     }
   }
 
@@ -398,6 +400,8 @@ std::string domainToPddl(const Domain& pDomain)
         worldStateModificationWithPartInfos.emplace_back(*currAction.effect.worldStateModificationAtStart, WsModificationPart::AT_START);
       if (currAction.effect.worldStateModification)
         worldStateModificationWithPartInfos.emplace_back(*currAction.effect.worldStateModification, WsModificationPart::AT_END);
+      if (currAction.effect.potentialWorldStateModification)
+        worldStateModificationWithPartInfos.emplace_back(*currAction.effect.potentialWorldStateModification, WsModificationPart::POTENTIALLY_AT_END);
       actionContent += std::string(subSubIdentation, ' ') +
           _effectsToPddl(worldStateModificationWithPartInfos, subSubIdentation);
     }
