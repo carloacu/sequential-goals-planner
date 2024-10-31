@@ -113,21 +113,25 @@ struct WorldStateModificationNode : public WorldStateModification
 
   std::unique_ptr<WorldStateModification> clone(const std::map<Parameter, Entity>* pParametersToArgumentPtr) const override
   {
-    return std::make_unique<WorldStateModificationNode>(
+    auto res = std::make_unique<WorldStateModificationNode>(
           nodeType,
           leftOperand ? leftOperand->clone(pParametersToArgumentPtr) : std::unique_ptr<WorldStateModification>(),
           rightOperand ? rightOperand->clone(pParametersToArgumentPtr) : std::unique_ptr<WorldStateModification>(),
           parameterOpt);
+    res->_successions = _successions;
+    return res;
   }
 
 
   std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>& pParametersToPossibleArgumentPtr) const override
   {
-    return std::make_unique<WorldStateModificationNode>(
+    auto res = std::make_unique<WorldStateModificationNode>(
           nodeType,
           leftOperand ? leftOperand->cloneParamSet(pParametersToPossibleArgumentPtr) : std::unique_ptr<WorldStateModification>(),
           rightOperand ? rightOperand->cloneParamSet(pParametersToPossibleArgumentPtr) : std::unique_ptr<WorldStateModification>(),
           parameterOpt);
+    res->_successions = _successions;
+    return res;
   }
 
   WorldStateModificationNodeType nodeType;
@@ -235,14 +239,16 @@ struct WorldStateModificationFact : public WorldStateModification
     auto res = std::make_unique<WorldStateModificationFact>(factOptional);
     if (pParametersToArgumentPtr != nullptr)
       res->factOptional.fact.replaceArguments(*pParametersToArgumentPtr);
-    return res;
+    res->_successions = _successions;
+    return res;    return res;
   }
 
   std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>& pParametersToPossibleArgumentPtr) const override
   {
     auto res = std::make_unique<WorldStateModificationFact>(factOptional);
     res->factOptional.fact.replaceArguments(pParametersToPossibleArgumentPtr);
-    return res;
+    res->_successions = _successions;
+    return res;    return res;
   }
 
   FactOptional factOptional;
