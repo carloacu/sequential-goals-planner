@@ -33,6 +33,14 @@ Go to the root directory of this repository and do
 cmake -B build ./ && make -C build -j4
 ```
 
+If you want to build in debug with the tests you can do
+
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONTEXTUAL_PLANNER_TESTS=ON ./ && make -C build -j4
+```
+
+
 ## To test
 
 There is a PDDL example in `data/simple`.
