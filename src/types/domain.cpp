@@ -18,8 +18,8 @@ static const std::vector<Parameter> _emptyParameters;
 
 std::set<std::string> _requirementsManaged = {
   ":strips", ":typing", ":negative-preconditions", ":equality",
-  ":numeric-fluents", ":durative-actions", ":derived-predicates",
-  ":domain-axioms"
+  ":fluents", ":numeric-fluents", ":object-fluents",
+  ":durative-actions", ":derived-predicates", ":domain-axioms"
 };
 
 

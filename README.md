@@ -75,8 +75,9 @@ requirements:
 - [ ] `:universal-preconditions`
 - [ ] `:quantified-preconditions`
 - [ ] `:conditional-effects`
-- [ ] `:fluents`
+- [x] `:fluents`
 - [x] `:numeric-fluents`
+- [x] `:object-fluents`
 - [ ] `:adl`
 - [x] `:durative-actions`
 - [ ] `:duration-inequalities`
