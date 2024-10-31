@@ -1,5 +1,4 @@
-#include "test_facttoconditions.hpp"
-#include <assert.h>
+#include <gtest/gtest.h>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/facttoconditions.hpp>
 #include <contextualplanner/types/ontology.hpp>
@@ -7,27 +6,16 @@
 
 using namespace cp;
 
-namespace
-{
-template <typename TYPE>
-void assert_eq(const TYPE& pExpected,
-               const TYPE& pValue)
-{
-  if (pExpected != pValue)
-    assert(false);
-}
-
-}
 
 
-void test_factToConditions()
+TEST(Tool, test_factToConditions)
 {
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromPddl("entity\n"
-                                           "my_type my_type2 - entity\n"
-                                           "sub_my_type2 - my_type2");
+                                            "my_type my_type2 - entity\n"
+                                            "sub_my_type2 - my_type2");
   ontology.constants = cp::SetOfEntities::fromPddl("toto toto2 - my_type\n"
-                                                  "titi titi_const - my_type2", ontology.types);
+                                                   "titi titi_const - my_type2", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("pred_name(?e - entity)\n"
                                                      "pred_name2(?e - entity)\n"
                                                      "pred_name3(?p1 - my_type, ?p2 - my_type2)\n"
@@ -37,8 +25,8 @@ void test_factToConditions()
                                                      ontology.types);
 
   auto entities = cp::SetOfEntities::fromPddl("toto3 - my_type\n"
-                                             "titi2 - my_type2\n"
-                                             "titi3 - sub_my_type2", ontology.types);
+                                              "titi2 - my_type2\n"
+                                              "titi3 - sub_my_type2", ontology.types);
 
   FactToConditions factToActions;
 
@@ -46,13 +34,13 @@ void test_factToConditions()
   factToActions.add(fact1, "action1");
 
   {
-    assert_eq<std::string>("[action1]", factToActions.find(fact1).toStr());
+    EXPECT_EQ("[action1]", factToActions.find(fact1).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name(?p)", ontology, entities, parameters);
-    assert_eq<std::string>("[action1]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action1]", factToActions.find(factWithParam).toStr());
   }
 
   auto fact2 = cp::Fact::fromStr("pred_name(toto2)", ontology, entities, {});
@@ -63,25 +51,25 @@ void test_factToConditions()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name6(toto)", ontology, entities, {});
-    assert_eq<std::string>("[action2]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action2]", factToActions.find(factWithParam).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name(?p)", ontology, entities, parameters);
-    assert_eq<std::string>("[action1, action2]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action1, action2]", factToActions.find(factWithParam).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name2(?p)", ontology, entities, parameters);
-    assert_eq<std::string>("[]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[]", factToActions.find(factWithParam).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p2 - my_type2", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name3(toto, ?p2)", ontology, entities, parameters);
-    assert_eq<std::string>("[]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[]", factToActions.find(factWithParam).toStr());
   }
 
   auto fact3 = cp::Fact::fromStr("pred_name3(toto, titi)", ontology, entities, {});
@@ -90,7 +78,7 @@ void test_factToConditions()
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p2 - my_type2", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name3(toto, ?p2)", ontology, entities, parameters);
-    assert_eq<std::string>("[action3]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action3]", factToActions.find(factWithParam).toStr());
   }
 
   std::vector<cp::Parameter> fact4Parameters(1, cp::Parameter::fromStr("?p - my_type2", ontology.types));
@@ -100,12 +88,12 @@ void test_factToConditions()
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p2 - my_type2", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name3(toto, ?p2)", ontology, entities, parameters);
-    assert_eq<std::string>("[action3, action4]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action3, action4]", factToActions.find(factWithParam).toStr());
   }
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name3(toto, titi)", ontology, entities, {});
-    assert_eq<std::string>("[action3, action4]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action3, action4]", factToActions.find(factWithParam).toStr());
   }
 
   std::vector<cp::Parameter> fact4bParameters(1, cp::Parameter::fromStr("?p - my_type2", ontology.types));
@@ -115,24 +103,24 @@ void test_factToConditions()
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p1 - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name3(?p1, titi)", ontology, entities, parameters);
-    assert_eq<std::string>("[action3, action4, action4b]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action3, action4, action4b]", factToActions.find(factWithParam).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p1 - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name3(?p1, titi2)", ontology, entities, parameters);
-    assert_eq<std::string>("[action4, action4b]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action4, action4b]", factToActions.find(factWithParam).toStr());
   }
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name3(toto3, titi2)", ontology, entities, {});
-    assert_eq<std::string>("[]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[]", factToActions.find(factWithParam).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p1 - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name3(?p1, titi3)", ontology, entities, parameters);
-    assert_eq<std::string>("[action4, action4b]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action4, action4b]", factToActions.find(factWithParam).toStr());
   }
 
   auto fact5 = cp::Fact::fromStr("pred_name3(toto, titi_const)", ontology, entities, {});
@@ -143,7 +131,7 @@ void test_factToConditions()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name3(toto, titi)", ontology, entities, {});
-    assert_eq<std::string>("[action3, action4, action4b]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action3, action4, action4b]", factToActions.find(factWithParam).toStr());
   }
 
   // tests with pred_name4
@@ -161,7 +149,7 @@ void test_factToConditions()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name4(toto, titi)", ontology, entities, {});
-    assert_eq<std::string>("[action8]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action8]", factToActions.find(factWithParam).toStr());
   }
 
 
@@ -180,8 +168,8 @@ void test_factToConditions()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    assert_eq<std::string>("[action11]", factToActions.find(factWithParam).toStr());
-    assert_eq<std::string>("[action11, action12]", factToActions.find(factWithParam, true).toStr());
+    EXPECT_EQ("[action11]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action11, action12]", factToActions.find(factWithParam, true).toStr());
   }
 
   auto fact13 = cp::Fact::fromStr("pred_name5(toto2)!=titi", ontology, entities, {});
@@ -189,14 +177,14 @@ void test_factToConditions()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi_const", ontology, entities, {});
-    assert_eq<std::string>("[action12, action13]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action12, action13]", factToActions.find(factWithParam).toStr());
   }
 
   /*
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)!=titi_const", ontology, entities, {});
-    assert_eq<std::string>("[action11]", factToActions.find(factWithParam).toStr());
-    assert_eq<std::string>("[action11, action12]", factToActions.find(factWithParam, true).toStr());
+    EXPECT_EQ("[action11]", factToActions.find(factWithParam).toStr());
+    EXPECT_EQ("[action11, action12]", factToActions.find(factWithParam, true).toStr());
   }
   */
 }

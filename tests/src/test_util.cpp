@@ -1,6 +1,4 @@
-#include "test_util.hpp"
-#include <iostream>
-#include <assert.h>
+#include <gtest/gtest.h>
 #include <contextualplanner/types/entity.hpp>
 #include <contextualplanner/types/parameter.hpp>
 #include <contextualplanner/util/util.hpp>
@@ -9,13 +7,6 @@ using namespace cp;
 
 namespace
 {
-template <typename TYPE>
-void assert_eq(const TYPE& pExpected,
-               const TYPE& pValue)
-{
-  if (pExpected != pValue)
-    assert(false);
-}
 
 cp::Parameter _parameter(const std::string& pStr) {
   return cp::Parameter(pStr, {});
@@ -56,16 +47,16 @@ std::string _unfoldMapWithSet(const std::map<Parameter, std::set<cp::Entity>>& p
 
 void test_unfoldMapWithSet()
 {
-  assert_eq<std::string>("", _unfoldMapWithSet({}));
-  assert_eq<std::string>("(a -> b)", _unfoldMapWithSet({{_parameter("a"), {_entity("b")}}}));
-  assert_eq<std::string>("(a -> b)(a -> c)", _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}}));
+  EXPECT_EQ("", _unfoldMapWithSet({}));
+  EXPECT_EQ("(a -> b)", _unfoldMapWithSet({{_parameter("a"), {_entity("b")}}}));
+  EXPECT_EQ("(a -> b)(a -> c)", _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}}));
 
-  assert_eq<std::string>("(a -> b, d -> e)",
-                         _unfoldMapWithSet({{_parameter("a"), {_entity("b")}}, {_parameter("d"), {_entity("e")}}}));
-  assert_eq<std::string>("(a -> b, d -> e)(a -> c, d -> e)",
-                         _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}, {_parameter("d"), {_entity("e")}}}));
-  assert_eq<std::string>("(a -> b, d -> e)(a -> b, d -> f)(a -> c, d -> e)(a -> c, d -> f)",
-                         _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}, {_parameter("d"), {_entity("e"), _entity("f")}}}));
+  EXPECT_EQ("(a -> b, d -> e)",
+            _unfoldMapWithSet({{_parameter("a"), {_entity("b")}}, {_parameter("d"), {_entity("e")}}}));
+  EXPECT_EQ("(a -> b, d -> e)(a -> c, d -> e)",
+            _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}, {_parameter("d"), {_entity("e")}}}));
+  EXPECT_EQ("(a -> b, d -> e)(a -> b, d -> f)(a -> c, d -> e)(a -> c, d -> f)",
+            _unfoldMapWithSet({{_parameter("a"), {_entity("b"), _entity("c")}}, {_parameter("d"), {_entity("e"), _entity("f")}}}));
 }
 
 void test_autoIncrementOfVersion()
@@ -82,18 +73,18 @@ void test_autoIncrementOfVersion()
     return newId;
   };
 
-  assert_eq<std::string>("", cp::incrementLastNumberUntilAConditionIsSatisfied("", isIdOkForInsertion));
-  assert_eq<std::string>("dede", incrementAddIdAndReturnValue("dede"));
-  assert_eq<std::string>("dede_2", incrementAddIdAndReturnValue("dede"));
-  assert_eq<std::string>("dede_3", incrementAddIdAndReturnValue("dede"));
-  assert_eq<std::string>("dede_4", incrementAddIdAndReturnValue("dede_2"));
-  assert_eq<std::string>("dede_5", incrementAddIdAndReturnValue("dede_4"));
-  assert_eq<std::string>("dede_6", incrementAddIdAndReturnValue("dede_6"));
-  assert_eq<std::string>("didi", incrementAddIdAndReturnValue("didi"));
+  EXPECT_EQ("", cp::incrementLastNumberUntilAConditionIsSatisfied("", isIdOkForInsertion));
+  EXPECT_EQ("dede", incrementAddIdAndReturnValue("dede"));
+  EXPECT_EQ("dede_2", incrementAddIdAndReturnValue("dede"));
+  EXPECT_EQ("dede_3", incrementAddIdAndReturnValue("dede"));
+  EXPECT_EQ("dede_4", incrementAddIdAndReturnValue("dede_2"));
+  EXPECT_EQ("dede_5", incrementAddIdAndReturnValue("dede_4"));
+  EXPECT_EQ("dede_6", incrementAddIdAndReturnValue("dede_6"));
+  EXPECT_EQ("didi", incrementAddIdAndReturnValue("didi"));
 }
 
 
-void test_util()
+TEST(Tool, test_util)
 {
   test_unfoldMapWithSet();
   test_autoIncrementOfVersion();

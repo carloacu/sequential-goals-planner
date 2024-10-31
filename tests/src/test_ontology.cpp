@@ -1,6 +1,4 @@
-#include "test_arithmeticevaluator.hpp"
-#include <assert.h>
-#include <iostream>
+#include <gtest/gtest.h>
 #include <contextualplanner/types/action.hpp>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/goalstack.hpp>
@@ -11,28 +9,6 @@
 
 namespace
 {
-template <typename TYPE>
-void assert_eq(const TYPE& pExpected,
-               const TYPE& pValue)
-{
-  if (pExpected != pValue)
-    assert(false);
-}
-
-template <typename TYPE>
-void assert_true(const TYPE& pValue)
-{
-  if (!pValue)
-    assert(false);
-}
-
-template <typename TYPE>
-void assert_false(const TYPE& pValue)
-{
-  if (pValue)
-    assert(false);
-}
-
 std::map<cp::Parameter, std::set<cp::Entity>> _toParameterMap(const std::vector<cp::Parameter>& pParameters)
 {
   std::map<cp::Parameter, std::set<cp::Entity>> res;
@@ -44,7 +20,7 @@ std::map<cp::Parameter, std::set<cp::Entity>> _toParameterMap(const std::vector<
 void _test_setOfTypes()
 {
   cp::SetOfTypes setOfTypes;
-  assert_eq<std::string>("", setOfTypes.toStr());
+  EXPECT_EQ("", setOfTypes.toStr());
   setOfTypes.addType("object");
   setOfTypes.addType("voiture", "object");
   setOfTypes.addType("maison", "object");
@@ -54,7 +30,7 @@ void _test_setOfTypes()
   setOfTypes.addType("c3", "citroen");
   setOfTypes.addType("location");
 
-  assert_eq<std::string>("voiture maison - object\n"
+  EXPECT_EQ("voiture maison - object\n"
                          "citroen ferrari peugeot - voiture\n"
                          "c3 - citroen\n"
                          "location",
@@ -69,30 +45,30 @@ void _test_setOfTypes_fromStr()
                          "c3 - citroen\n"
                          "location";
   auto setOfTypes = cp::SetOfTypes::fromPddl(typesStr + " ");
-  assert_eq<std::string>(typesStr, setOfTypes.toStr());
-  assert_eq<std::string>("voiture", setOfTypes.nameToType("citroen")->parent->name);
+  EXPECT_EQ(typesStr, setOfTypes.toStr());
+  EXPECT_EQ("voiture", setOfTypes.nameToType("citroen")->parent->name);
 }
 
 
 void _test_predicateToStr()
 {
   auto setOfTypes = cp::SetOfTypes::fromPddl("my_type my_type2 return_type");
-  assert_eq<std::string>("pred_name(?v - my_type)", cp::Predicate("pred_name(?v - my_type)", false, setOfTypes).toStr());
-  assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2)", cp::Predicate("pred_name(?v - my_type, ?o - my_type2)", false, setOfTypes).toStr());
-  assert_eq<std::string>("pred_name(?v - my_type, ?o - my_type2) - return_type", cp::Predicate("pred_name(?v - my_type, ?o - my_type2) - return_type", false, setOfTypes).toStr());
+  EXPECT_EQ("pred_name(?v - my_type)", cp::Predicate("pred_name(?v - my_type)", false, setOfTypes).toStr());
+  EXPECT_EQ("pred_name(?v - my_type, ?o - my_type2)", cp::Predicate("pred_name(?v - my_type, ?o - my_type2)", false, setOfTypes).toStr());
+  EXPECT_EQ("pred_name(?v - my_type, ?o - my_type2) - return_type", cp::Predicate("pred_name(?v - my_type, ?o - my_type2) - return_type", false, setOfTypes).toStr());
 
   auto otherSetOfTypes = cp::SetOfTypes::fromPddl("a b");
   try {
     cp::Predicate("pred_name(?v - my_type)", false, otherSetOfTypes);
-    assert_true(false);
+    EXPECT_TRUE(false);
   } catch (const std::exception& e) {
-    assert_eq<std::string>("\"my_type\" is not a valid type name", e.what());
+    EXPECT_EQ("\"my_type\" is not a valid type name", std::string(e.what()));
   }
   try {
     cp::Predicate("pred_name(?v - a, ?o - b) - return_type", false, otherSetOfTypes);
-    assert_true(false);
+    EXPECT_TRUE(false);
   } catch (const std::exception& e) {
-    assert_eq<std::string>("\"return_type\" is not a valid type name", e.what());
+    EXPECT_EQ("\"return_type\" is not a valid type name", std::string(e.what()));
   }
 }
 
@@ -103,7 +79,7 @@ void _test_setOfPredicates_fromStr()
   std::string predicatesStr = "pred_name(?v - my_type)\n"
                               "pred_name2(?v - my_type, ?o - my_type2)";
   auto setOfPredicates = cp::SetOfPredicates::fromStr(predicatesStr, setOfTypes);
-  assert_eq<std::string>(predicatesStr, setOfPredicates.toStr());
+  EXPECT_EQ(predicatesStr, setOfPredicates.toStr());
 }
 
 
@@ -113,8 +89,8 @@ void _test_setOfEntities_fromStr()
   std::string entitiesStr = "toto - my_type\n"
                             "titi tutu - my_type2";
   auto setOfEntities = cp::SetOfEntities::fromPddl(entitiesStr, setOfTypes);
-  assert_eq<std::string>(entitiesStr, setOfEntities.toStr());
-  assert_eq<std::string>("my_type2", setOfEntities.valueToEntity("titi")->type->name);
+  EXPECT_EQ(entitiesStr, setOfEntities.toStr());
+  EXPECT_EQ("my_type2", setOfEntities.valueToEntity("titi")->type->name);
 }
 
 void _test_fact_initialization()
@@ -135,42 +111,42 @@ void _test_fact_initialization()
   try
   {
     cp::Fact("pred_that_does_not_exist(titi)", false, ontology, {}, {});
-    assert_true(false);
+    EXPECT_TRUE(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"pred_that_does_not_exist\" is not a predicate name. The exception was thrown while parsing fact: \"pred_that_does_not_exist(titi)\"", e.what());
+    EXPECT_EQ("\"pred_that_does_not_exist\" is not a predicate name. The exception was thrown while parsing fact: \"pred_that_does_not_exist(titi)\"", std::string(e.what()));
   }
   try
   {
     cp::Fact("pred_name(unknown_value)", false, ontology, {}, {});
-    assert_true(false);
+    EXPECT_TRUE(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"unknown_value\" is not an entity value. The exception was thrown while parsing fact: \"pred_name(unknown_value)\"", e.what());
+    EXPECT_EQ("\"unknown_value\" is not an entity value. The exception was thrown while parsing fact: \"pred_name(unknown_value)\"", std::string(e.what()));
   }
   try
   {
     cp::Fact("pred_name", false, ontology, {}, {});
-    assert_true(false);
+    EXPECT_TRUE(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("The fact \"pred_name\" does not have the same number of parameters than the associated predicate \"pred_name(?v - my_type)\". The exception was thrown while parsing fact: \"pred_name\"", e.what());
+    EXPECT_EQ("The fact \"pred_name\" does not have the same number of parameters than the associated predicate \"pred_name(?v - my_type)\". The exception was thrown while parsing fact: \"pred_name\"", std::string(e.what()));
   }
   try
   {
     cp::Fact("pred_name(titi)", false, ontology, {}, {});
-    assert_true(false);
+    EXPECT_TRUE(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"titi - my_type2\" is not a \"my_type\" for predicate: \"pred_name(?v - my_type)\". The exception was thrown while parsing fact: \"pred_name(titi)\"", e.what());
+    EXPECT_EQ("\"titi - my_type2\" is not a \"my_type\" for predicate: \"pred_name(?v - my_type)\". The exception was thrown while parsing fact: \"pred_name(titi)\"", std::string(e.what()));
   }
   try
   {
     cp::Fact("pred_name(toto)=val", false, ontology, {}, {});
-    assert_true(false);
+    EXPECT_TRUE(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name(toto)=val\"", e.what());
+    EXPECT_EQ("\"val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name(toto)=val\"", std::string(e.what()));
   }
 
   cp::Fact("pred_name2(toto, titi)=res", false, ontology, {}, {});
@@ -187,10 +163,10 @@ void _test_fact_initialization()
   try
   {
     cp::Fact("pred_name2(toto, titi)=unknown_val", false, ontology, {}, {});
-    assert_true(false);
+    EXPECT_TRUE(false);
   }
   catch(const std::exception& e) {
-    assert_eq<std::string>("\"unknown_val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name2(toto, titi)=unknown_val\"", e.what());
+    EXPECT_EQ("\"unknown_val\" is not an entity value. The exception was thrown while parsing fact: \"pred_name2(toto, titi)=unknown_val\"", std::string(e.what()));
   }
 }
 
@@ -236,11 +212,11 @@ void _test_action_initialization()
     cp::Action action4(cp::strToCondition("pred_name(?p)", ontology, entities, {}),
                        cp::strToWsModification("pred_name2(toto, titi)=res", ontology, entities, {}));
     action4.throwIfNotValid(setOfFacts);
-    assert_true(false);
+    EXPECT_TRUE(false);
   }
   catch (const std::exception& e)
   {
-    assert_eq<std::string>("The parameter \"?p\" is unknown", e.what());
+    EXPECT_EQ("The parameter \"?p\" is unknown", std::string(e.what()));
   }
 
   {
@@ -251,11 +227,11 @@ void _test_action_initialization()
                          cp::strToWsModification("pred_name2(toto, titi)=?r", ontology, entities, parameters));
       action5.parameters = std::move(parameters);
       action5.throwIfNotValid(setOfFacts);
-      assert_true(false);
+      EXPECT_TRUE(false);
     }
     catch (const std::exception& e)
     {
-      assert_eq<std::string>("The parameter \"?r\" is unknown", e.what());
+      EXPECT_EQ("The parameter \"?r\" is unknown", std::string(e.what()));
     }
   }
 
@@ -283,18 +259,18 @@ void _test_checkConditionWithOntology()
   cp::GoalStack goalStack;
   std::map<cp::SetOfEventsId, cp::SetOfEvents> setOfEvents;
   worldState.addFact(cp::Fact::fromStr("pred_name(toto)", ontology, {}, {}), goalStack, setOfEvents, ontology, {}, {});
-  assert_false(cp::strToCondition("pred_name(titi)", ontology, {}, {})->isTrue(worldState));
+  EXPECT_FALSE(cp::strToCondition("pred_name(titi)", ontology, {}, {})->isTrue(worldState));
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type", ontology.types));
     auto parametersMap = _toParameterMap(parameters);
-    assert_true(cp::strToCondition("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
+    EXPECT_TRUE(cp::strToCondition("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p - my_type2", ontology.types));
     auto parametersMap = _toParameterMap(parameters);
-    assert_false(cp::strToCondition("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
+    EXPECT_FALSE(cp::strToCondition("pred_name(?p)", ontology, {}, parameters)->isTrue(worldState, {}, {}, &parametersMap));
   }
 }
 
@@ -303,8 +279,7 @@ void _test_checkConditionWithOntology()
 
 
 
-
-void test_ontology()
+TEST(Tool, test_ontology)
 {
   _test_setOfTypes();
   _test_setOfTypes_fromStr();
@@ -314,6 +289,4 @@ void test_ontology()
   _test_fact_initialization();
   _test_action_initialization();
   _test_checkConditionWithOntology();
-
-  std::cout << "ontology is ok !!!!" << std::endl;
 }

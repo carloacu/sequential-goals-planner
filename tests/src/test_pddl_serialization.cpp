@@ -1,6 +1,4 @@
-#include "test_pddl_serialization.hpp"
-#include <assert.h>
-#include <iostream>
+#include <gtest/gtest.h>
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/types/ontology.hpp>
@@ -13,27 +11,6 @@
 
 namespace
 {
-template <typename TYPE>
-void assert_eq(const TYPE& pExpected,
-               const TYPE& pValue)
-{
-  if (pExpected != pValue)
-    assert(false);
-}
-
-template <typename TYPE>
-void assert_true(const TYPE& pValue)
-{
-  if (!pValue)
-    assert(false);
-}
-
-template <typename TYPE>
-void assert_false(const TYPE& pValue)
-{
-  if (pValue)
-    assert(false);
-}
 
 
 void _test_pddlSerializationParts()
@@ -41,10 +18,10 @@ void _test_pddlSerializationParts()
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromPddl("type1 type2 - entity");
   ontology.constants = cp::SetOfEntities::fromPddl("toto - type1\n"
-                                                  "titi - type2", ontology.types);
+                                                   "titi - type2", ontology.types);
 
   cp::Predicate pred("(pred_a ?e - entity)", true, ontology.types);
-  assert_eq<std::string>("pred_a(?e - entity)", pred.toStr());
+  EXPECT_EQ("pred_a(?e - entity)", pred.toStr());
 
   {
     std::size_t pos = 0;
@@ -52,33 +29,33 @@ void _test_pddlSerializationParts()
                                                         "pred_b\n"
                                                         "(pred_c ?e - entity)\n"
                                                         "(battery-amount ?t - type1) - number", pos, ontology.types);
-    assert_eq<std::string>("battery-amount(?t - type1) - number\n"
-                           "pred_a(?e - entity)\n"
-                           "pred_b()\n"
-                           "pred_c(?e - entity)", ontology.predicates.toStr());
+    EXPECT_EQ("battery-amount(?t - type1) - number\n"
+              "pred_a(?e - entity)\n"
+              "pred_b()\n"
+              "pred_c(?e - entity)", ontology.predicates.toStr());
   }
 
   {
     std::size_t pos = 0;
     cp::Fact fact = cp::Fact::fromPddl("(pred_a toto)", ontology, {}, {}, pos, &pos);
-    assert_eq<std::string>("(pred_a toto)", fact.toPddl(true));
-    assert_eq<std::string>("pred_a(toto)", fact.toStr());
+    EXPECT_EQ("(pred_a toto)", fact.toPddl(true));
+    EXPECT_EQ("pred_a(toto)", fact.toStr());
   }
 
   {
     std::size_t pos = 0;
     std::unique_ptr<cp::WorldStateModification> ws = cp::pddlToWsModification("(decrease (battery-amount toto) 4)", pos, ontology, {}, {});
     if (!ws)
-      assert_true(false);
-    assert_eq<std::string>("decrease(battery-amount(toto), 4)", ws->toStr());
+      ASSERT_TRUE(false);
+    EXPECT_EQ("decrease(battery-amount(toto), 4)", ws->toStr());
   }
 
   {
     std::size_t pos = 0;
     std::unique_ptr<cp::WorldStateModification> ws = cp::pddlToWsModification("(forall (?e - entity) (when (pred_a ?e) (pred_c ?e))", pos, ontology, {}, {});
     if (!ws)
-      assert_true(false);
-    assert_eq<std::string>("forall(?e - entity, when(pred_a(?e), pred_c(?e)))", ws->toStr());
+      ASSERT_TRUE(false);
+    EXPECT_EQ("forall(?e - entity, when(pred_a(?e), pred_c(?e)))", ws->toStr());
   }
 
 }
@@ -364,7 +341,7 @@ void _test_loadPddlDomain()
   if (outDomainPddl1 != expectedDomain)
   {
     std::cout << outDomainPddl1 << std::endl;
-    assert_true(false);
+    ASSERT_TRUE(false);
   }
 
 
@@ -435,7 +412,7 @@ void _test_loadPddlDomain()
   if (outProblemPddl1 != expectedProblem)
   {
     std::cout << outProblemPddl1 << std::endl;
-    assert_true(false);
+    ASSERT_TRUE(false);
   }
 
   // deserialize what is serialized
@@ -449,7 +426,7 @@ void _test_loadPddlDomain()
   if (outDomainPddl2 != expectedDomain)
   {
     std::cout << outDomainPddl2 << std::endl;
-    assert_true(false);
+    ASSERT_TRUE(false);
   }
 
   auto outProblemPddl2 = cp::problemToPddl(*outDomainAndProblemPtrs2.problemPtr,
@@ -457,7 +434,7 @@ void _test_loadPddlDomain()
   if (outProblemPddl2 != expectedProblem)
   {
     std::cout << outProblemPddl2 << std::endl;
-    assert_true(false);
+    ASSERT_TRUE(false);
   }
 }
 
@@ -465,11 +442,8 @@ void _test_loadPddlDomain()
 
 
 
-
-void test_pddlSerialization()
+TEST(Tool, test_pddlSerialization)
 {
   _test_pddlSerializationParts();
   _test_loadPddlDomain();
-
-  std::cout << "PDDL serialization is ok !!!!" << std::endl;
 }

@@ -1,5 +1,4 @@
-#include "test_setoffacts.hpp"
-#include <assert.h>
+#include <gtest/gtest.h>
 #include <contextualplanner/types/fact.hpp>
 #include <contextualplanner/types/setoffacts.hpp>
 #include <contextualplanner/types/ontology.hpp>
@@ -7,33 +6,8 @@
 
 using namespace cp;
 
-namespace
-{
-template <typename TYPE>
-void assert_eq(const TYPE& pExpected,
-               const TYPE& pValue)
-{
-  if (pExpected != pValue)
-    assert(false);
-}
 
-template <typename TYPE>
-void assert_true(const TYPE& pValue)
-{
-  if (!pValue)
-    assert(false);
-}
-
-template <typename TYPE>
-void assert_false(const TYPE& pValue)
-{
-  if (pValue)
-    assert(false);
-}
-}
-
-
-void test_setOfFacts()
+TEST(Tool, test_setOfFacts)
 {
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromPddl("entity\n"
@@ -58,13 +32,13 @@ void test_setOfFacts()
   factToFacts.add(fact1);
 
   {
-    assert_eq<std::string>("[pred_name(toto)]", factToFacts.find(fact1).toStr());
+    EXPECT_EQ("[pred_name(toto)]", factToFacts.find(fact1).toStr());
   }
 
-  assert_true(factToFacts.erase(fact1));
+  EXPECT_TRUE(factToFacts.erase(fact1));
 
   {
-    assert_eq<std::string>("[]", factToFacts.find(fact1).toStr());
+    EXPECT_EQ("[]", factToFacts.find(fact1).toStr());
   }
 
 
@@ -72,9 +46,9 @@ void test_setOfFacts()
 
   auto fact2 = cp::Fact::fromStr("pred_name5(toto2)=titi", ontology, entities, {});
   factToFacts.add(fact2, false);
-  assert_false(factToFacts.erase(fact2));
+  EXPECT_FALSE(factToFacts.erase(fact2));
   {
-    assert_eq<std::string>("[]", factToFacts.find(fact1).toStr());
+    EXPECT_EQ("[]", factToFacts.find(fact1).toStr());
   }
 
   auto fact3 = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
@@ -85,15 +59,15 @@ void test_setOfFacts()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    assert_eq<std::string>("[pred_name5(toto)=titi]", factToFacts.find(factWithParam).toStr());
-    assert_eq<std::string>("[pred_name5(toto)=titi, pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
+    EXPECT_EQ("[pred_name5(toto)=titi]", factToFacts.find(factWithParam).toStr());
+    EXPECT_EQ("[pred_name5(toto)=titi, pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
 
   {
     std::vector<cp::Parameter> parameters(1, cp::Parameter::fromStr("?p1 - my_type", ontology.types));
     auto factWithParam = cp::Fact::fromStr("pred_name5(?p1)=titi_const", ontology, entities, parameters);
-    assert_eq<std::string>("[pred_name5(toto)=titi_const]", factToFacts.find(factWithParam).toStr());
-    assert_eq<std::string>("[pred_name5(toto2)=titi, pred_name5(toto)=titi, pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
+    EXPECT_EQ("[pred_name5(toto)=titi_const]", factToFacts.find(factWithParam).toStr());
+    EXPECT_EQ("[pred_name5(toto2)=titi, pred_name5(toto)=titi, pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
 
   auto factCopied = fact3;
@@ -101,8 +75,8 @@ void test_setOfFacts()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    assert_eq<std::string>("[]", factToFacts.find(factWithParam).toStr());
-    assert_eq<std::string>("[pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
+    EXPECT_EQ("[]", factToFacts.find(factWithParam).toStr());
+    EXPECT_EQ("[pred_name5(toto)=titi_const]", factToFacts.find(factWithParam, true).toStr());
   }
 
   auto fact4WithAnyValue = cp::Fact::fromStr("pred_name5(toto)=*", ontology, entities, {});
@@ -110,7 +84,7 @@ void test_setOfFacts()
 
   {
     auto factWithParam = cp::Fact::fromStr("pred_name5(toto)=titi", ontology, entities, {});
-    assert_eq<std::string>("[]", factToFacts.find(factWithParam).toStr());
-    assert_eq<std::string>("[]", factToFacts.find(factWithParam, true).toStr());
+    EXPECT_EQ("[]", factToFacts.find(factWithParam).toStr());
+    EXPECT_EQ("[]", factToFacts.find(factWithParam, true).toStr());
   }
 }

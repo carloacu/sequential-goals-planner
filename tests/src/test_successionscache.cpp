@@ -1,4 +1,4 @@
-#include "test_successionscache.hpp"
+#include <gtest/gtest.h>
 #include <contextualplanner/types/action.hpp>
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/ontology.hpp>
@@ -10,13 +10,6 @@ using namespace cp;
 
 namespace
 {
-template <typename TYPE>
-void assert_eq(const TYPE& pExpected,
-               const TYPE& pValue)
-{
-  if (pExpected != pValue)
-    assert(false);
-}
 
 void _test_actionSuccessions()
 {
@@ -30,9 +23,9 @@ void _test_actionSuccessions()
 
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromPddl("e1 e2 - entity\n"
-                                           "resource");
+                                            "resource");
   ontology.constants = cp::SetOfEntities::fromPddl("a - entity\n"
-                                                  "moves - resource", ontology.types);
+                                                   "moves - resource", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b(?e - entity)\n"
                                                      "fact_c\n"
@@ -82,27 +75,27 @@ void _test_actionSuccessions()
 
   Domain domain(actions, ontology);
 
-  assert_eq<std::string>("action: action1\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "fact: !fact_a\n"
-                         "action: action4\n"
-                         "\n"
-                         "fact: fact_b(?e)\n"
-                         "action: action2\n"
-                         "action: action5\n"
-                         "\n"
-                         "\n"
-                         "action: action3\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "not action: action5\n"
-                         "\n"
-                         "\n"
-                         "action: action5\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "not action: action3\n", domain.printSuccessionCache());
+  EXPECT_EQ("action: action1\n"
+            "----------------------------------\n"
+            "\n"
+            "fact: !fact_a\n"
+            "action: action4\n"
+            "\n"
+            "fact: fact_b(?e)\n"
+            "action: action2\n"
+            "action: action5\n"
+            "\n"
+            "\n"
+            "action: action3\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action5\n"
+            "\n"
+            "\n"
+            "action: action5\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action3\n", domain.printSuccessionCache());
 }
 
 
@@ -115,7 +108,7 @@ void _test_notActionSuccessions()
 
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromPddl("entity\n"
-                                           "location");
+                                            "location");
   ontology.constants = cp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
   ontology.predicates = cp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b(?e - entity)\n"
@@ -132,7 +125,7 @@ void _test_notActionSuccessions()
   {
     std::vector<cp::Parameter> parameters2{
       cp::Parameter::fromStr("?e - entity", ontology.types),
-      cp::Parameter::fromStr("?l - location", ontology.types)};
+          cp::Parameter::fromStr("?l - location", ontology.types)};
     cp::Action actionObj2(cp::strToCondition("fact_a", ontology, {}, parameters2),
                           cp::strToWsModification("fact_a & fact_b(?e) & fact_c(e1)=?l", ontology, {}, parameters2));
     actionObj2.parameters = std::move(parameters2);
@@ -140,10 +133,10 @@ void _test_notActionSuccessions()
   }
 
   Domain domain(actions, ontology);
-  assert_eq<std::string>("action: action1\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "not action: action2\n", domain.printSuccessionCache());
+  EXPECT_EQ("action: action1\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action2\n", domain.printSuccessionCache());
 }
 
 void _test_impossibleSuccessions()
@@ -183,17 +176,18 @@ void _test_impossibleSuccessions()
   }
 
   Domain domain(actions, ontology, {}, timelessFacts);
-  assert_eq<std::string>("action: action1\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "not action: action2\n", domain.printSuccessionCache());
+  EXPECT_EQ("action: action1\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action2\n", domain.printSuccessionCache());
 }
 
 
 
 }
 
-void test_successionsCache()
+
+TEST(Tool, test_successionsCache)
 {
   _test_actionSuccessions();
   _test_notActionSuccessions();

@@ -1,6 +1,6 @@
-#include "test_problems_in_data.hpp"
+#include "plannerusingexternaldata.hpp"
+#include <gtest/gtest.h>
 #include <fstream>
-#include <iostream>
 #include <contextualplanner/types/domain.hpp>
 #include <contextualplanner/types/problem.hpp>
 #include <contextualplanner/util/serializer/deserializefrompddl.hpp>
@@ -72,18 +72,14 @@ void _test_dataDirectory(const std::string& pDataPath,
 
   std::string expected = _getFileContentWithoutComments(directory + "/problem_plan_result.pddl");
   std::string actualPlan = cp::planToPddl(cp::planForEveryGoals(problem, domain, {}), domain);
-  if (actualPlan != expected)
-  {
-    std::cout << "Get:\n" << actualPlan << std::endl;
-    std::cout << "Expected:\n" << expected << std::endl;
-    assert(false);
-  }
+  EXPECT_EQ(expected, actualPlan);
 }
 
 
 }
 
-void test_problemsInData(const std::string& pDataPath)
+
+TEST_F(PlannerUsingExternalData, test_problemsInData)
 {
-  _test_dataDirectory(pDataPath, "simple");
+  _test_dataDirectory(PlannerUsingExternalData::dataPath, "simple");
 }

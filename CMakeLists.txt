@@ -124,5 +124,8 @@ install(DIRECTORY include/ DESTINATION include)
 
 
 add_subdirectory(bin)
-add_subdirectory(tests)
 
+
+if (BUILD_CONTEXTUAL_PLANNER_TESTS)
+   add_subdirectory(tests)
+endif()

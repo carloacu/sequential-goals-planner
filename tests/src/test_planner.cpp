@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <contextualplanner/contextualplanner.hpp>
 #include <contextualplanner/types/predicate.hpp>
 #include <contextualplanner/types/setofconstfacts.hpp>
@@ -5,20 +6,8 @@
 #include <contextualplanner/util/serializer/deserializefrompddl.hpp>
 #include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
 #include <contextualplanner/util/print.hpp>
-#include <contextualplanner/util/util.hpp>
-#include <iostream>
-#include <assert.h>
-#include "test_arithmeticevaluator.hpp"
-#include "test_facttoconditions.hpp"
-#include "test_ontology.hpp"
-#include "test_pddl_serialization.hpp"
-#include "test_problems_in_data.hpp"
-#include "test_setoffacts.hpp"
-#include "test_successionscache.hpp"
-#include "test_util.hpp"
 #include "docexamples/test_planningDummyExample.hpp"
 #include "docexamples/test_planningExampleWithAPreconditionSolve.hpp"
-#include "test_plannerWithSingleType.hpp"
 
 
 namespace
@@ -29,27 +18,6 @@ const std::string _fact_a = "fact_a";
 const std::string _fact_b = "fact_b";
 const std::string _fact_c = "fact_c";
 
-template <typename TYPE>
-void assert_eq(const TYPE& pExpected,
-               const TYPE& pValue)
-{
-  if (pExpected != pValue)
-    assert(false);
-}
-
-template <typename TYPE>
-void assert_true(const TYPE& pValue)
-{
-  if (!pValue)
-    assert(false);
-}
-
-template <typename TYPE>
-void assert_false(const TYPE& pValue)
-{
-  if (pValue)
-    assert(false);
-}
 
 void _setGoalsForAPriority(cp::Problem& pProblem,
                            const std::vector<cp::Goal>& pGoals,
@@ -115,7 +83,7 @@ void _simplest_plan_possible()
   problem.worldState.addFact(cp::Fact("pred_a(toto)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
-  assert_eq<std::string>("action1(?pa -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("action1(?pa -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -149,7 +117,7 @@ void _wrong_condition_type()
   problem.worldState.addFact(cp::Fact("pred_a(titi)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
-  assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -174,12 +142,12 @@ void _number_type()
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b", ontology, entities)});
-  assert_eq<std::string>("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
   problem.worldState.addFact(cp::Fact("pred_a(toto)=10", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
 
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b", ontology, entities)});
-  assert_eq<std::string>(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -210,7 +178,7 @@ void _planWithActionThenEventWithFluentParameter()
   cp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
   cp::Problem problem;
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_b(toto)", ontology, entities)});
- assert_eq<std::string>(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+ EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -250,7 +218,7 @@ void _planWithActionThenEventWithAssign()
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("pred_d=v", ontology, entities)});
   problem.worldState.addFact(cp::Fact("pred_b(toto)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  assert_eq<std::string>(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -293,7 +261,7 @@ void _fluentEqualityInPrecoditionOfAnAction()
                              ontology, entities, _now);
   problem.worldState.addFact(cp::Fact("pred_c(lol_val)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              ontology, entities, _now);
-  assert_eq<std::string>(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -339,9 +307,9 @@ void _testIncrementOfVariables()
     _setGoalsForAPriority(problem, {cp::Goal::fromStr("finished_to_ask_questions", ontology, entities)});
     auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
     if (i == 0 || i == 2)
-      assert_eq<std::string>(action_askQuestion1, actionToDo);
+      EXPECT_EQ(action_askQuestion1, actionToDo);
     else
-      assert_eq<std::string>(action_askQuestion2, actionToDo);
+      EXPECT_EQ(action_askQuestion2, actionToDo);
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
@@ -354,13 +322,13 @@ void _testIncrementOfVariables()
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("finished_to_ask_questions", ontology, entities)});
   auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
-  assert_eq<std::string>(action_finisehdToAskQuestions, actionToDo);
+  EXPECT_EQ(action_finisehdToAskQuestions, actionToDo);
   problem.historical.notifyActionDone(actionToDo);
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
   problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
                             _emptySetOfEvents, ontology, entities, _now);
-  assert_eq<std::string>(action_sayQuestionBilan, _lookForAnActionToDo(problem, domain).actionInvocation.toStr());
+  EXPECT_EQ(action_sayQuestionBilan, _lookForAnActionToDo(problem, domain).actionInvocation.toStr());
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(actionSayQuestionBilan.precondition->isTrue(problem.worldState));
   problem.worldState.modify(actionSayQuestionBilan.effect.worldStateModification, problem.goalStack,
@@ -394,8 +362,8 @@ void _actionWithParametersInPreconditionsAndEffects()
 
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("isHappy(1)", ontology, entities)});
   const auto& plan = cp::planForEveryGoals(problem, domain, _now);
-  assert_eq(action1 + "(?human -> 1)", cp::planToStr(plan));
-  assert_eq("00: (" + action1 + " 1) [1]\n", cp::planToPddl(plan, domain));
+  EXPECT_EQ(action1 + "(?human -> 1)", cp::planToStr(plan));
+  EXPECT_EQ("00: (" + action1 + " 1) [1]\n", cp::planToPddl(plan, domain));
 }
 
 
@@ -439,9 +407,9 @@ void _testQuiz()
   {
     auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
     if (i == 0 || i == 2)
-      assert_eq<std::string>(action_askQuestion1, actionToDo);
+      EXPECT_EQ(action_askQuestion1, actionToDo);
     else
-      assert_eq<std::string>(action_askQuestion2, actionToDo);
+      EXPECT_EQ(action_askQuestion2, actionToDo);
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
@@ -450,7 +418,7 @@ void _testQuiz()
   }
 
   auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
-  assert_eq(action_sayQuestionBilan, actionToDo);
+  EXPECT_EQ(action_sayQuestionBilan, actionToDo);
 }
 
 
@@ -516,12 +484,12 @@ void _doNextActionThatBringsToTheSmallerCost()
   // Here it will will be quicker for the second goal if we ungrab the obj2 right away
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
                                   cp::Goal::fromStr("locationOfObject(obj2)=livingRoom & !grab(me)=obj2", ontology, entities)});
-  assert_eq(action_ungrab + "(?object -> obj2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action_ungrab + "(?object -> obj2)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 
   // Here it will will be quicker for the second goal if we move the obj2 to the kitchen
   _setGoalsForAPriority(secondProblem, {cp::Goal::fromStr("locationOfObject(obj1)=bedroom & !grab(me)=obj1", ontology, entities),
                                         cp::Goal::fromStr("locationOfObject(obj2)=kitchen & !grab(me)=obj2", ontology, entities)});
- // assert_eq(action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDo(secondProblem, domain, _now).actionInvocation.toStr());
+ // EXPECT_EQ(action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDo(secondProblem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -547,8 +515,8 @@ void _satisfyGoalWithSuperiorOperator()
                              ontology, entities, _now);
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("fact_a>50", ontology, entities)});
 
-  assert_eq(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
-  assert_eq<std::string>("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -583,7 +551,7 @@ void _parameterToFillFromConditionOfFirstAction()
                              ontology, entities, _now);
   _setGoalsForAPriority(problem, {cp::Goal::fromStr("batteryLevel=100", ontology, entities)});
 
-  assert_eq(action1 + "(?cz -> cz)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action1 + "(?cz -> cz)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -591,23 +559,8 @@ void _parameterToFillFromConditionOfFirstAction()
 
 
 
-
-int main(int argc, char *argv[])
+TEST(Planner, test_planner)
 {
-  if (argc != 2) {
-      std::cerr << "Usage: " << argv[0] << " <data_directory>" << std::endl;
-      return 1;
-  }
-  const std::string dataPath = argv[1];
-
-  cp::CONTEXTUALPLANNER_DEBUG_FOR_TESTS = true;
-  test_arithmeticEvaluator();
-  test_pddlSerialization();
-  test_factToConditions();
-  test_setOfFacts();
-  test_ontology();
-  test_successionsCache();
-  test_util();
   planningDummyExample();
   planningExampleWithAPreconditionSolve();
 
@@ -623,9 +576,4 @@ int main(int argc, char *argv[])
   _doNextActionThatBringsToTheSmallerCost();
   _satisfyGoalWithSuperiorOperator();
   _parameterToFillFromConditionOfFirstAction();
-
-  test_planWithSingleType();
-  test_problemsInData(dataPath);
-  std::cout << "chatbot planner is ok !!!!" << std::endl;
-  return 0;
 }
