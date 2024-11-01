@@ -100,6 +100,7 @@ void Action::_throwIfNotValidForACondition(const std::unique_ptr<Condition>& pPr
   if (pPrecondition)
     pPrecondition->forAll([&](const FactOptional& pFactOptional, bool) {
       _throwIfNotValidForAFact(pFactOptional.fact);
+      return ContinueOrBreak::CONTINUE;
     });
 }
 
@@ -110,6 +111,7 @@ void Action::_throwIfNotValidForAnWordStateModif(const std::unique_ptr<WorldStat
   if (pWs)
     pWs->forAll([&](const FactOptional& pFactOptional) {
       _throwIfNotValidForAFact(pFactOptional.fact);
+      return ContinueOrBreak::CONTINUE;
     }, pSetOfFact);
 }
 

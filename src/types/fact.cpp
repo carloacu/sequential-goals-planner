@@ -234,7 +234,6 @@ bool Fact::operator==(const Fact& pOther) const
 }
 
 
-
 std::ostream& operator<<(std::ostream& os, const Fact& pFact) {
     // Output the desired class members to the stream
     os << pFact.toStr();
@@ -823,6 +822,39 @@ void Fact::generateSignatureForAllSubTypes(std::list<std::string>& pRes) const
     }
   }
 }
+
+
+void Fact::generateSignatureForSubAndUpperTypes(std::list<std::string>& pRes) const
+{
+  pRes.emplace_back(factSignature());
+
+  for (std::size_t i = 0; i < _arguments.size(); ++i)
+  {
+    const auto& currArg = _arguments[i];
+    if (currArg.type)
+    {
+      if (currArg.isAParameterToFill())
+      {
+        for (const auto& currSubType : currArg.type->subTypes)
+        {
+          auto fact = *this;
+          fact.setArgumentType(i, currSubType);
+          fact.generateSignatureForAllSubTypes(pRes);
+        }
+      }
+
+      auto parentType = currArg.type->parent;
+      while (parentType)
+      {
+        auto fact = *this;
+        fact.setArgumentType(i, parentType);
+        pRes.emplace_back(fact.factSignature());
+        parentType = parentType->parent;
+      }
+    }
+  }
+}
+
 
 
 

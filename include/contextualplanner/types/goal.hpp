@@ -7,10 +7,12 @@
 #include "condition.hpp"
 #include "factoptional.hpp"
 #include "../util/api.hpp"
-
+#include <contextualplanner/util/alias.hpp>
 
 namespace cp
 {
+struct Domain;
+
 
 // A characteristic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
 struct CONTEXTUALPLANNER_API Goal
@@ -53,7 +55,7 @@ struct CONTEXTUALPLANNER_API Goal
    * @param pNow Current time.
    * @return True if the fact is inactive for too long, false otherwise.
    */
-  bool isInactiveForTooLong(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  bool isInactiveForTooLong(const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow) const;
 
   /// Notify that the gaol is active. (so in top of the goals stack)
   void notifyActivity();
@@ -91,6 +93,16 @@ struct CONTEXTUALPLANNER_API Goal
    */
   int getMaxTimeToKeepInactive() const { return _maxTimeToKeepInactive; }
 
+  void refreshIfNeeded(const Domain& pDomain);
+
+  std::string printActionsThatCanSatisfyThisGoal() const;
+
+  bool canActionSatisfyThisGoal(const ActionId& pActionId) const;
+
+  bool canEventSatisfyThisGoal(const ActionId& pFullEventId) const;
+
+  bool canDeductionSatisfyThisGoal(const ActionId& pDeductionId) const;
+
   /// Persist function name.
   static const std::string persistFunctionName;
   /// Imply function name.
@@ -117,6 +129,9 @@ private:
   std::unique_ptr<FactOptional> _conditionFactPtr;
   /// Group identifier of this goal. It can be empty if the goal does not belong to a group.
   std::string _goalGroupId;
+  std::string _uuidOfLastDomainUsedForCache;
+  std::set<ActionId> _cacheOfActionsThatCanSatisfyThisGoal;
+  std::set<std::string> _cacheOfEventsIdThatCanSatisfyThisGoal;
 };
 
 } // !cp

@@ -244,11 +244,33 @@ void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToV
 }
 
 
+bool Condition::isOptFactMandatory(const FactOptional& pFactOptional,
+                                   bool pIgnoreFluent) const
+{
+  bool res;
+  forAll([&](const FactOptional& pFactOptionalFromCond, bool pIgnoreFluentFromCond) {
+    if (pFactOptional.isFactNegated == pFactOptionalFromCond.isFactNegated)
+    {
+      if (pIgnoreFluent || pIgnoreFluentFromCond)
+        return ContinueOrBreak::CONTINUE;
+      if (pFactOptional.fact == pFactOptionalFromCond.fact)
+      {
+        res = true;
+        return ContinueOrBreak::BREAK;
+      }
+    }
+    return ContinueOrBreak::CONTINUE;
+  }, false, false, true);
+  return res;
+}
+
+
 std::set<FactOptional> Condition::getAllOptFacts() const
 {
   std::set<FactOptional> res;
   forAll([&](const FactOptional& pFactOptional, bool) {
       res.insert(pFactOptional);
+      return ContinueOrBreak::CONTINUE;
   });
   return res;
 }
@@ -323,15 +345,20 @@ bool ConditionNode::containsFactOpt(const FactOptional& pFactOptional,
 }
 
 
-void ConditionNode::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-                           bool pIsWrappingExpressionNegated,
-                           bool pIgnoreFluent) const
+ContinueOrBreak ConditionNode::forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                                      bool pIsWrappingExpressionNegated,
+                                      bool pIgnoreFluent,
+                                      bool pOnlyMandatoryFacts) const
 {
+  if (pOnlyMandatoryFacts && nodeType == ConditionNodeType::OR)
+    return ContinueOrBreak::CONTINUE;
   bool ignoreFluent = pIgnoreFluent || (nodeType != ConditionNodeType::AND && nodeType != ConditionNodeType::OR);
+  auto res = ContinueOrBreak::CONTINUE;
   if (leftOperand)
-    leftOperand->forAll(pFactCallback, pIsWrappingExpressionNegated, ignoreFluent);
-  if (rightOperand)
-    rightOperand->forAll(pFactCallback, pIsWrappingExpressionNegated, ignoreFluent);
+    res = leftOperand->forAll(pFactCallback, pIsWrappingExpressionNegated, ignoreFluent, pOnlyMandatoryFacts);
+  if (rightOperand && res == ContinueOrBreak::CONTINUE)
+    res = rightOperand->forAll(pFactCallback, pIsWrappingExpressionNegated, ignoreFluent, pOnlyMandatoryFacts);
+  return res;
 }
 
 
@@ -683,13 +710,15 @@ bool ConditionExists::containsFactOpt(const FactOptional& pFactOptional,
   return condition && condition->containsFactOpt(pFactOptional, pFactParameters, pOtherFactParametersPtr, pConditionParameters, pIsWrappingExpressionNegated);
 }
 
-void ConditionExists::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-                             bool pIsWrappingExpressionNegated,
-                             bool pIgnoreFluent) const
+ContinueOrBreak ConditionExists::forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                                        bool pIsWrappingExpressionNegated,
+                                        bool pIgnoreFluent,
+                                        bool pOnlyMandatoryFacts) const
 {
 
   if (condition)
-    condition->forAll(pFactCallback, pIsWrappingExpressionNegated, pIgnoreFluent);
+    return condition->forAll(pFactCallback, pIsWrappingExpressionNegated, pIgnoreFluent, pOnlyMandatoryFacts);
+  return ContinueOrBreak::CONTINUE;
 }
 
 
@@ -820,13 +849,15 @@ bool ConditionNot::containsFactOpt(const FactOptional& pFactOptional,
 }
 
 
-void ConditionNot::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-                          bool pIsWrappingExpressionNegated,
-                          bool pIgnoreFluent) const
+ContinueOrBreak ConditionNot::forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                                     bool pIsWrappingExpressionNegated,
+                                     bool pIgnoreFluent,
+                                     bool pOnlyMandatoryFacts) const
 {
 
   if (condition)
-    condition->forAll(pFactCallback, !pIsWrappingExpressionNegated, pIgnoreFluent);
+    return condition->forAll(pFactCallback, !pIsWrappingExpressionNegated, pIgnoreFluent, pOnlyMandatoryFacts);
+  return ContinueOrBreak::CONTINUE;
 }
 
 
@@ -913,20 +944,17 @@ bool ConditionFact::containsFactOpt(const FactOptional& pFactOptional,
   return false;
 }
 
-void ConditionFact::forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-                           bool pIsWrappingExpressionNegated,
-                           bool pIgnoreFluent) const
+ContinueOrBreak ConditionFact::forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                                      bool pIsWrappingExpressionNegated,
+                                      bool pIgnoreFluent,
+                                      bool) const
 {
   if (!pIsWrappingExpressionNegated)
-  {
-    pFactCallback(factOptional, pIgnoreFluent);
-  }
-  else
-  {
-    auto factOptionalCopied = factOptional;
-    factOptionalCopied.isFactNegated = !factOptionalCopied.isFactNegated;
-    pFactCallback(factOptionalCopied, pIgnoreFluent);
-  }
+    return pFactCallback(factOptional, pIgnoreFluent);
+
+  auto factOptionalCopied = factOptional;
+  factOptionalCopied.isFactNegated = !factOptionalCopied.isFactNegated;
+  return pFactCallback(factOptionalCopied, pIgnoreFluent);
 }
 
 

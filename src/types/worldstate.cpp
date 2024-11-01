@@ -215,7 +215,7 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
       _cache->notifyAboutANewFact(currFact);
     }
   }
-  pGoalStack._refresh(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
 }
 
 template void WorldState::_addFacts<std::set<Fact>>(WhatChanged&, const std::set<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
@@ -230,7 +230,7 @@ void WorldState::_removeFacts(WhatChanged& pWhatChanged,
 {
   for (const auto& currFact : pFacts)
     _removeAFact(pWhatChanged, currFact);
-  pGoalStack._refresh(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
 }
 
 
@@ -297,7 +297,7 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
     _factsMapping.add(currFact);
   _cache->clear();
   WhatChanged whatChanged;
-  pGoalStack._refresh(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents,
                      pOntology, pEntities, pNow);

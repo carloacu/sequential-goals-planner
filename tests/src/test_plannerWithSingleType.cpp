@@ -2297,7 +2297,7 @@ void _forAllWsModification()
 
   const std::string action1 = "action1";
   std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("forAll(?obj - entity, grab(me, ?obj), set(location(?obj), location(me)))", ontology));
+  cp::Action navAction({}, _worldStateModification_fromStr("forall(?obj - entity, grab(me, ?obj), set(location(?obj), location(me)))", ontology));
   actions.emplace(action1, navAction);
 
   cp::Problem problem;

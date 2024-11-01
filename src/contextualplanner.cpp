@@ -122,7 +122,7 @@ void _getPreferInContextStatistics(std::size_t& nbOfPreconditionsSatisfied,
                                    const std::map<Fact, bool>& pFacts)
 {
   auto onFact = [&](const FactOptional& pFactOptional,
-                    bool)
+                    bool) -> ContinueOrBreak
   {
     if (pFactOptional.isFactNegated)
     {
@@ -138,6 +138,7 @@ void _getPreferInContextStatistics(std::size_t& nbOfPreconditionsSatisfied,
       else
         ++nbOfPreconditionsNotSatisfied;
     }
+    return ContinueOrBreak::CONTINUE;
   };
 
   if (pAction.preferInContext)
@@ -432,6 +433,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromEvents(
           auto& event = itEvent->second;
           if (event.factsToModify)
           {
+            auto fullEventId = currSetOfEventsSucc.first + "|" + currEventIdSucc;
             auto* newTreePtr = pTreeOfAlreadyDonePath.getNextInflectionTreeIfNotAnExistingLeaf(currEventIdSucc);
             if (newTreePtr != nullptr)
               res = _merge(_lookForAPossibleDeduction(*newTreePtr, event.parameters, event.precondition,
@@ -439,7 +441,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromEvents(
                                                       {}, pFactOptional,
                                                       pParentParameters, pTmpParentParametersPtr,
                                                       pGoal, pProblem, pFactOptionalToSatisfy,
-                                                      pDomain, pFactsAlreadychecked, currEventIdSucc), res);
+                                                      pDomain, pFactsAlreadychecked, fullEventId), res);
             if (res == PossibleEffect::SATISFIED && !pTryToGetAllPossibleParentParameterValues)
               return res;
           }
@@ -506,17 +508,20 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     return res;
   };
 
-  if (pWorldStateModificationPtr1 &&
-      pWorldStateModificationPtr1->canSatisfyObjective(checkObjectiveCallback, pParameters, pProblem.worldState, pFromDeductionId))
+  if (pGoal.canDeductionSatisfyThisGoal(pFromDeductionId))
   {
-    pSatisfyObjective = true;
-    return true;
-  }
-  if (pWorldStateModificationPtr2 &&
-      pWorldStateModificationPtr2->canSatisfyObjective(checkObjectiveCallback, pParameters, pProblem.worldState, pFromDeductionId))
-  {
-    pSatisfyObjective = true;
-    return true;
+    if (pWorldStateModificationPtr1 &&
+        pWorldStateModificationPtr1->canSatisfyObjective(checkObjectiveCallback, pParameters, pProblem.worldState, pFromDeductionId))
+    {
+      pSatisfyObjective = true;
+      return true;
+    }
+    if (pWorldStateModificationPtr2 &&
+        pWorldStateModificationPtr2->canSatisfyObjective(checkObjectiveCallback, pParameters, pProblem.worldState, pFromDeductionId))
+    {
+      pSatisfyObjective = true;
+      return true;
+    }
   }
 
   // Iterate on possible successions
@@ -692,7 +697,7 @@ void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult
 {
   PotentialNextAction newPotNextAction;
   auto& domainActions = pDomain.actions();
-  for (const auto& currAction : pActions)
+  for (const ActionId& currAction : pActions)
   {
     if (pAlreadyDoneActions.count(currAction) > 0)
       continue;
@@ -875,6 +880,7 @@ std::list<ActionInvocationWithGoal> _planForMoreImportantGoalPossible(Problem& p
                                                                      const ActionPtrWithGoal* pPreviousActionPtr)
 {
   std::list<ActionInvocationWithGoal> res;
+  pProblem.goalStack.refreshIfNeeded(pDomain);
   pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(
         [&](const Goal& pGoal, int pPriority){
             std::map<std::string, std::size_t> actionAlreadyInPlan;

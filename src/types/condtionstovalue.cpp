@@ -23,6 +23,7 @@ bool ConditionsToValue::add(const Condition& pCondition,
       _factsToValue.add(pFactOptional.fact, pValue, pIgnoreFluent);
       hasAddedAFact = true;
     }
+    return ContinueOrBreak::CONTINUE;
   }
   );
   return hasAddedAFact;

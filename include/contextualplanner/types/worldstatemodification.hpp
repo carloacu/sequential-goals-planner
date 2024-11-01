@@ -7,6 +7,7 @@
 #include "factoptional.hpp"
 #include "../util/api.hpp"
 #include <contextualplanner/util/alias.hpp>
+#include <contextualplanner/util/continueorbreak.hpp>
 
 namespace cp
 {
@@ -92,7 +93,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   virtual void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
                       const SetOfFacts& pSetOfFact) const = 0;
 
-  virtual void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const = 0;
+  virtual ContinueOrBreak forAllThatCanBeModified(const std::function<ContinueOrBreak (const FactOptional&)>& pFactCallback) const = 0;
 
   /**
    * @brief Iterate over all the optional facts that can be accessible.

@@ -8,6 +8,7 @@
 #include <vector>
 #include "../util/api.hpp"
 #include "factoptional.hpp"
+#include <contextualplanner/util/continueorbreak.hpp>
 #include <contextualplanner/util/util.hpp>
 
 namespace cp
@@ -64,10 +65,13 @@ struct CONTEXTUALPLANNER_API Condition
    * @param[in] pFactCallback Callback called for each optional fact of the condition.
    * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
    */
-  virtual void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-                      bool pIsWrappingExpressionNegated = false,
-                      bool pIgnoreFluent = false) const = 0;
+  virtual ContinueOrBreak forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                                 bool pIsWrappingExpressionNegated = false,
+                                 bool pIgnoreFluent = false,
+                                 bool pOnlyMandatoryFacts = false) const = 0;
 
+  bool isOptFactMandatory(const FactOptional& pFactOptional,
+                          bool pIgnoreFluent = false) const;
 
   /**
    * @brief Find a condition fact candidate a fact that is in the effect of the preceding action.
@@ -213,9 +217,10 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-              bool pIsWrappingExpressionNegated,
-              bool pIgnoreFluent) const override;
+  ContinueOrBreak forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                         bool pIsWrappingExpressionNegated,
+                         bool pIgnoreFluent,
+                         bool pOnlyMandatoryFacts) const override;
   bool findConditionCandidateFromFactFromEffect(const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
                                                 const WorldState& pWorldState,
                                                 const Fact& pFactFromEffect,
@@ -274,9 +279,10 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-              bool pIsWrappingExpressionNegated,
-              bool pIgnoreFluent) const override;
+  ContinueOrBreak forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                         bool pIsWrappingExpressionNegated,
+                         bool pIgnoreFluent,
+                         bool pOnlyMandatoryFacts) const override;
 
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
@@ -338,9 +344,10 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-              bool pIsWrappingExpressionNegated,
-              bool pIgnoreFluent) const override;
+  ContinueOrBreak forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                         bool pIsWrappingExpressionNegated,
+                         bool pIgnoreFluent,
+                         bool pOnlyMandatoryFacts) const override;
 
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
@@ -400,9 +407,10 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
                        const std::map<Parameter, std::set<Entity>>* pOtherFactParametersPtr,
                        const std::vector<Parameter>& pConditionParameters,
                        bool pIsWrappingExpressionNegated) const override;
-  void forAll(const std::function<void (const FactOptional&, bool)>& pFactCallback,
-              bool pIsWrappingExpressionNegated,
-              bool pIgnoreFluent) const override;
+  ContinueOrBreak forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>& pFactCallback,
+                         bool pIsWrappingExpressionNegated,
+                         bool pIgnoreFluent,
+                         bool pOnlyMandatoryFacts) const override;
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState&,
@@ -460,7 +468,7 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
                        const std::map<Parameter, std::set<Entity>>*,
                        const std::vector<Parameter>&,
                        bool) const override { return false; }
-  void forAll(const std::function<void (const FactOptional&, bool)>&, bool, bool) const override {}
+  ContinueOrBreak forAll(const std::function<ContinueOrBreak (const FactOptional&, bool)>&, bool, bool, bool) const override { return ContinueOrBreak::CONTINUE; }
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>&,
       const WorldState&,

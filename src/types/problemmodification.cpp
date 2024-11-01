@@ -22,12 +22,14 @@ std::set<FactOptional> ProblemModification::getAllOptFactsThatCanBeModified() co
   {
     worldStateModification->forAllThatCanBeModified([&](const FactOptional& pFactOptional) {
         res.insert(pFactOptional);
+        return ContinueOrBreak::CONTINUE;
     });
   }
   if (potentialWorldStateModification)
   {
     potentialWorldStateModification->forAllThatCanBeModified([&](const FactOptional& pFactOptional) {
         res.insert(pFactOptional);
+        return ContinueOrBreak::CONTINUE;
     });
   }
   return res;

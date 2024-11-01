@@ -266,7 +266,7 @@ void SetOfFacts::clear()
 
 
 typename SetOfFacts::SetOfFactIterator SetOfFacts::find(const Fact& pFact,
-                                                      bool pIgnoreFluent) const
+                                                        bool pIgnoreFluent) const
 {
   const std::list<Fact>* exactMatchPtr = nullptr;
 

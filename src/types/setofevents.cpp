@@ -33,6 +33,7 @@ EventId SetOfEvents::add(const Event& pEvent,
         _reachableEventLinks.notConditionToEvents.add(pFactOptional.fact, newId, pIgnoreFluent);
       else
         _reachableEventLinks.conditionToEvents.add(pFactOptional.fact, newId, pIgnoreFluent);
+      return ContinueOrBreak::CONTINUE;
     }
     );
   }

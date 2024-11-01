@@ -17,6 +17,7 @@ add_executable(
 
   src/plannerusingexternaldata.hpp
 
+  src/test_goalscache.cpp
   src/test_planner.cpp
   src/test_facttoconditions.cpp
   src/test_plannerWithSingleType.cpp
@@ -33,6 +34,7 @@ add_executable(
   src/test_pddl_serialization.cpp
   src/test_problems_in_data.cpp
   src/main.cpp
+  src/test_goalscache.cpp
 )
 
 

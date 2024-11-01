@@ -58,8 +58,8 @@ FactsToValue::FactsToValue()
 
 
 void FactsToValue::add(const Fact& pFact,
-                           const std::string& pValue,
-                           bool pIgnoreFluent)
+                       const std::string& pValue,
+                       bool pIgnoreFluent)
 {
   auto insertionResult = _values.insert(pValue);
   _valueToFacts[pValue].emplace_back(pFact);
@@ -81,7 +81,7 @@ void FactsToValue::add(const Fact& pFact,
   }
 
   std::list<std::string> factSignatures;
-  pFact.generateSignatureForAllSubTypes(factSignatures);
+  pFact.generateSignatureForSubAndUpperTypes(factSignatures);
   for (auto& currSignature : factSignatures)
   {
     auto& factArguments = pFact.arguments();
@@ -119,7 +119,7 @@ void FactsToValue::addValueWithoutFact(const std::string& pValue)
 
 
 void FactsToValue::_erase(const Fact& pFact,
-                              const std::string& pValue)
+                          const std::string& pValue)
 {
   auto it = _values.find(pValue);
   if (it != _values.end())
@@ -146,7 +146,7 @@ void FactsToValue::_erase(const Fact& pFact,
     }
 
     std::list<std::string> factSignatures;
-    pFact.generateSignatureForAllSubTypes(factSignatures);
+    pFact.generateSignatureForSubAndUpperTypes(factSignatures);
     for (auto& currSignature : factSignatures)
     {
       auto& factArguments = pFact.arguments();
@@ -229,7 +229,7 @@ bool FactsToValue::empty() const
 
 
 typename FactsToValue::ConstMapOfFactIterator FactsToValue::find(const Fact& pFact,
-                                                                         bool pIgnoreFluent) const
+                                                                 bool pIgnoreFluent) const
 {
   const std::list<std::string>* exactMatchPtr = nullptr;
 

@@ -83,7 +83,7 @@ struct WorldStateModificationNode : public WorldStateModification
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const SetOfFacts& pSetOfFact) const override;
 
-  void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const override;
+  ContinueOrBreak forAllThatCanBeModified(const std::function<ContinueOrBreak (const FactOptional&)>& pFactCallback) const override;
 
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                                      const SetOfFacts& pSetOfFact) const;
@@ -179,7 +179,7 @@ struct WorldStateModificationFact : public WorldStateModification
   void forAll(const std::function<void (const FactOptional&)>& pFactCallback,
               const SetOfFacts&) const override { pFactCallback(factOptional); }
 
-  void forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const override { pFactCallback(factOptional); }
+  ContinueOrBreak forAllThatCanBeModified(const std::function<ContinueOrBreak (const FactOptional&)>& pFactCallback) const override { return pFactCallback(factOptional); }
 
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
                                      const SetOfFacts&) const override { pFactCallback(factOptional); }
@@ -280,7 +280,7 @@ struct WorldStateModificationNumber : public WorldStateModification
                        const Entity&) override {}
   void forAll(const std::function<void (const FactOptional&)>&,
               const SetOfFacts&) const override {}
-  void forAllThatCanBeModified(const std::function<void (const FactOptional&)>&) const override {}
+  ContinueOrBreak forAllThatCanBeModified(const std::function<ContinueOrBreak (const FactOptional&)>&) const override { return ContinueOrBreak::CONTINUE; }
   void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>&,
                                      const SetOfFacts&) const override {}
   bool forAllUntilTrue(const std::function<bool (const FactOptional&)>&,

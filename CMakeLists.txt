@@ -118,6 +118,7 @@ add_library(contextualplannerlib SHARED
   include/contextualplanner/types/setofconstfacts.hpp
   include/contextualplanner/types/condtionstovalue.hpp
   src/types/condtionstovalue.cpp
+  include/contextualplanner/util/continueorbreak.hpp
 )
 target_compile_features(contextualplannerlib PRIVATE cxx_std_14)
 

@@ -196,6 +196,10 @@ struct CONTEXTUALPLANNER_API GoalStack
    */
   std::map<int, std::vector<Goal>> getNotSatisfiedGoals(const WorldState& pWorldState) const;
 
+  void refreshIfNeeded(const Domain& pDomain);
+
+  std::string printGoalsCache() const;
+
 
 private:
   /// Map of priority to goals.
@@ -203,9 +207,9 @@ private:
   /// Current active goal.
   const Goal* _currentGoalPtr = nullptr;
 
-  void _refresh(const WorldState& pWorldState,
-                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
-
+  void _removeNoStackableGoalsAndNotifyGoalsChanged(
+      const WorldState& pWorldState,
+      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Remove the first goals that are already satisfied.

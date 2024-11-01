@@ -239,7 +239,7 @@ void _test_action_initialization()
   cp::strToCondition("exists(?obj - my_type2, =(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
   cp::strToCondition("=(pred_name3(tutu), undefined)", ontology, entities, {});
   cp::strToCondition("=(pred_name3(tutu), res)", ontology, entities, {});
-  cp::strToWsModification("forAll(?obj - my_type2, pred_name2(toto, ?obj)=res, set(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
+  cp::strToWsModification("forall(?obj - my_type2, pred_name2(toto, ?obj)=res, set(pred_name3(?obj), pred_name3(tutu)))", ontology, entities, {});
   cp::strToWsModification("assign(pred_name3(tutu), res)", ontology, entities, {});
   std::vector<cp::Parameter> returnParameter(1, cp::Parameter::fromStr("?r - return_type", ontology.types));
   cp::strToWsModification("assign(pred_name3(tutu), ?r)", ontology, entities, returnParameter);

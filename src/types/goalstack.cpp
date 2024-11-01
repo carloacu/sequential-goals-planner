@@ -404,14 +404,43 @@ std::map<int, std::vector<Goal>> GoalStack::getNotSatisfiedGoals(const WorldStat
   return res;
 }
 
+void GoalStack::refreshIfNeeded(const Domain& pDomain)
+{
+  for (auto& currGoalsGroup : _goals)
+    for (Goal& currGoal : currGoalsGroup.second)
+      currGoal.refreshIfNeeded(pDomain);
+}
 
-void GoalStack::_refresh(const WorldState& pWorldState,
-                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+std::string GoalStack::printGoalsCache() const
+{
+  std::string res;
+
+  for (const auto& currGoalsGroup : _goals)
+  {
+    for (const Goal& currGoal : currGoalsGroup.second)
+    {
+      auto subRes = currGoal.printActionsThatCanSatisfyThisGoal();
+      if (subRes != "")
+      {
+        if (res != "")
+          res += "\n\n\n";
+        res += "goal: " + currGoal.toStr();
+        res += "\n---------------------------\n";
+        res += subRes;
+      }
+    }
+  }
+  return res;
+}
+
+
+void GoalStack::_removeNoStackableGoalsAndNotifyGoalsChanged(
+    const WorldState& pWorldState,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   if (_removeNoStackableGoals(pWorldState, pNow))
     onGoalsChanged(_goals);
 }
-
 
 
 bool GoalStack::_removeNoStackableGoals(const WorldState& pWorldState,

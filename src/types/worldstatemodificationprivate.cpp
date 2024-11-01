@@ -173,14 +173,15 @@ void WorldStateModificationNode::forAll(const std::function<void (const FactOpti
 }
 
 
-void WorldStateModificationNode::forAllThatCanBeModified(const std::function<void (const FactOptional&)>& pFactCallback) const
+ContinueOrBreak WorldStateModificationNode::forAllThatCanBeModified(const std::function<ContinueOrBreak (const FactOptional&)>& pFactCallback) const
 {
+  ContinueOrBreak res = ContinueOrBreak::CONTINUE;
   if (nodeType == WorldStateModificationNodeType::AND)
   {
     if (leftOperand)
-      leftOperand->forAllThatCanBeModified(pFactCallback);
-    if (rightOperand)
-      rightOperand->forAllThatCanBeModified(pFactCallback);
+      res = leftOperand->forAllThatCanBeModified(pFactCallback);
+    if (rightOperand && res == ContinueOrBreak::CONTINUE)
+      res = rightOperand->forAllThatCanBeModified(pFactCallback);
   }
   else if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand)
   {
@@ -190,9 +191,7 @@ void WorldStateModificationNode::forAllThatCanBeModified(const std::function<voi
   }
   else if (nodeType == WorldStateModificationNodeType::FOR_ALL && rightOperand)
   {
-    auto* rightFactPtr = toWmFact(*rightOperand);
-    if (rightFactPtr != nullptr)
-      return pFactCallback(rightFactPtr->factOptional);
+    return rightOperand->forAllThatCanBeModified(pFactCallback);
   }
   else if ((nodeType == WorldStateModificationNodeType::INCREASE ||
             nodeType == WorldStateModificationNodeType::DECREASE ||
@@ -202,6 +201,7 @@ void WorldStateModificationNode::forAllThatCanBeModified(const std::function<voi
     if (leftFactPtr != nullptr)
       return pFactCallback(leftFactPtr->factOptional);
   }
+  return res;
 }
 
 
