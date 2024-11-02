@@ -33,7 +33,8 @@ struct CONTEXTUALPLANNER_API Action
       highImportanceOfNotRepeatingIt(false),
       canThisActionBeUsedByThePlanner(true),
       actionsSuccessionsWithoutInterestCache(),
-      actionsPredecessorsCache()
+      actionsPredecessorsCache(),
+      eventsPredecessorsCache()
   {
   }
 
@@ -49,7 +50,8 @@ struct CONTEXTUALPLANNER_API Action
       highImportanceOfNotRepeatingIt(false),
       canThisActionBeUsedByThePlanner(true),
       actionsSuccessionsWithoutInterestCache(),
-      actionsPredecessorsCache()
+      actionsPredecessorsCache(),
+      eventsPredecessorsCache()
   {
   }
 
@@ -63,7 +65,8 @@ struct CONTEXTUALPLANNER_API Action
       highImportanceOfNotRepeatingIt(pAction.highImportanceOfNotRepeatingIt),
       canThisActionBeUsedByThePlanner(pAction.canThisActionBeUsedByThePlanner),
       actionsSuccessionsWithoutInterestCache(pAction.actionsSuccessionsWithoutInterestCache),
-      actionsPredecessorsCache(pAction.actionsPredecessorsCache)
+      actionsPredecessorsCache(pAction.actionsPredecessorsCache),
+      eventsPredecessorsCache(pAction.eventsPredecessorsCache)
   {
   }
 
@@ -79,6 +82,7 @@ struct CONTEXTUALPLANNER_API Action
     canThisActionBeUsedByThePlanner = pAction.canThisActionBeUsedByThePlanner;
     actionsSuccessionsWithoutInterestCache = pAction.actionsSuccessionsWithoutInterestCache;
     actionsPredecessorsCache = pAction.actionsPredecessorsCache;
+    eventsPredecessorsCache = pAction.eventsPredecessorsCache;
   }
 
   /// Check equality with another action.
@@ -128,6 +132,7 @@ struct CONTEXTUALPLANNER_API Action
   bool canThisActionBeUsedByThePlanner;
   std::set<ActionId> actionsSuccessionsWithoutInterestCache;
   std::set<ActionId> actionsPredecessorsCache;
+  std::set<FullEventId> eventsPredecessorsCache;
 
   // TODO: manage durations
   std::size_t duration() const { return 1; }

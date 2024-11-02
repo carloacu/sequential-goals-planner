@@ -39,7 +39,8 @@ Goal::Goal(std::unique_ptr<Condition> pObjective,
     _uuidOfLastDomainUsedForCache(),
     _cacheOfActionsThatCanSatisfyThisGoal(),
     _cacheOfEventsIdThatCanSatisfyThisGoal(),
-    _cacheOfActionsPredecessors()
+    _cacheOfActionsPredecessors(),
+    _cacheOfEventsPredecessors()
 {
   assert(_objective);
 }
@@ -58,7 +59,8 @@ Goal::Goal(const Goal& pOther,
     _uuidOfLastDomainUsedForCache(pOther._uuidOfLastDomainUsedForCache),
     _cacheOfActionsThatCanSatisfyThisGoal(pOther._cacheOfActionsThatCanSatisfyThisGoal),
     _cacheOfEventsIdThatCanSatisfyThisGoal(pOther._cacheOfEventsIdThatCanSatisfyThisGoal),
-    _cacheOfActionsPredecessors(pOther._cacheOfActionsPredecessors)
+    _cacheOfActionsPredecessors(pOther._cacheOfActionsPredecessors),
+    _cacheOfEventsPredecessors(pOther._cacheOfEventsPredecessors)
 {
 }
 
@@ -92,6 +94,7 @@ void Goal::operator=(const Goal& pOther)
   _cacheOfActionsThatCanSatisfyThisGoal = pOther._cacheOfActionsThatCanSatisfyThisGoal;
   _cacheOfEventsIdThatCanSatisfyThisGoal = pOther._cacheOfEventsIdThatCanSatisfyThisGoal;
   _cacheOfActionsPredecessors = pOther._cacheOfActionsPredecessors;
+  _cacheOfEventsPredecessors = pOther._cacheOfEventsPredecessors;
 }
 
 bool Goal::operator==(const Goal& pOther) const
@@ -104,7 +107,8 @@ bool Goal::operator==(const Goal& pOther) const
       _uuidOfLastDomainUsedForCache == pOther._uuidOfLastDomainUsedForCache &&
       _cacheOfActionsThatCanSatisfyThisGoal == pOther._cacheOfActionsThatCanSatisfyThisGoal &&
       _cacheOfEventsIdThatCanSatisfyThisGoal == pOther._cacheOfEventsIdThatCanSatisfyThisGoal &&
-      _cacheOfActionsPredecessors == pOther._cacheOfActionsPredecessors;
+      _cacheOfActionsPredecessors == pOther._cacheOfActionsPredecessors &&
+      _cacheOfEventsPredecessors == pOther._cacheOfEventsPredecessors;
 }
 
 std::unique_ptr<Goal> Goal::clone() const
@@ -167,6 +171,7 @@ void Goal::refreshIfNeeded(const Domain& pDomain)
   ConditionsToValue conditionsToValue;
   conditionsToValue.add(*_objective, "goal");
   _cacheOfActionsPredecessors.clear();
+  _cacheOfEventsPredecessors.clear();
 
   auto optFactIteration = [&](const FactOptional& pFactOptional,
                               const std::unique_ptr<Condition>& pPreCondition,
@@ -220,6 +225,8 @@ void Goal::refreshIfNeeded(const Domain& pDomain)
       _cacheOfActionsPredecessors.insert(currIdToAction.first);
       _cacheOfActionsPredecessors.insert(currAction.actionsPredecessorsCache.begin(),
                                          currAction.actionsPredecessorsCache.end());
+      _cacheOfEventsPredecessors.insert(currAction.eventsPredecessorsCache.begin(),
+                                        currAction.eventsPredecessorsCache.end());
     }
   }
 
@@ -239,8 +246,11 @@ void Goal::refreshIfNeeded(const Domain& pDomain)
         if (search == ContinueOrBreak::BREAK)
         {
           _cacheOfEventsIdThatCanSatisfyThisGoal.insert(fullEventId);
+          _cacheOfEventsPredecessors.insert(fullEventId);
           _cacheOfActionsPredecessors.insert(currEvent.actionsPredecessorsCache.begin(),
                                              currEvent.actionsPredecessorsCache.end());
+          _cacheOfEventsPredecessors.insert(currEvent.eventsPredecessorsCache.begin(),
+                                            currEvent.eventsPredecessorsCache.end());
         }
       }
     }

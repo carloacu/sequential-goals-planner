@@ -448,6 +448,20 @@ std::set<ActionId> GoalStack::getActionsPredecessors() const
   return res;
 }
 
+std::set<ActionId> GoalStack::getEventsPredecessors() const
+{
+  std::set<ActionId> res;
+  for (const auto& currGoalsGroup : _goals)
+  {
+    for (const Goal& currGoal : currGoalsGroup.second)
+    {
+      auto subRes = currGoal.getEventsPredecessors();
+      res.insert(subRes.begin(), subRes.end());
+    }
+  }
+  return res;
+}
+
 
 void GoalStack::_removeNoStackableGoalsAndNotifyGoalsChanged(
     const WorldState& pWorldState,

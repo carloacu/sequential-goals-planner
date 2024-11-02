@@ -493,9 +493,9 @@ void Domain::_updateSuccessions()
   {
     ActionWithConditionAndFactFacts& tmpData = currAction.second;
     tmpData.action.actionsPredecessorsCache.clear();
-    std::set<FullEventId> eventsWhiteListToSatisfyTheConditionCache;
+    tmpData.action.eventsPredecessorsCache.clear();
     _updateActionsPredecessors(tmpData.action.actionsPredecessorsCache,
-                               eventsWhiteListToSatisfyTheConditionCache,
+                               tmpData.action.eventsPredecessorsCache,
                                tmpData.invertSuccessionsFromActions,
                                tmpData.invertSuccessionsFromEvents,
                                actionTmpData, eventTmpData);
@@ -505,9 +505,9 @@ void Domain::_updateSuccessions()
   {
     EventWithTmpData& tmpData = currEvent.second;
     tmpData.event.actionsPredecessorsCache.clear();
-    std::set<FullEventId> eventsWhiteListToSatisfyTheConditionCache;
+    tmpData.event.eventsPredecessorsCache.clear();
     _updateActionsPredecessors(tmpData.event.actionsPredecessorsCache,
-                               eventsWhiteListToSatisfyTheConditionCache,
+                               tmpData.event.eventsPredecessorsCache,
                                tmpData.invertSuccessionsFromActions,
                                tmpData.invertSuccessionsFromEvents,
                                actionTmpData, eventTmpData);

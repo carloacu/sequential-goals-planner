@@ -12,7 +12,8 @@ Event::Event(std::unique_ptr<Condition> pPrecondition,
     precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<Condition>()),
     factsToModify(pFactsToModify ? std::move(pFactsToModify) : std::unique_ptr<WorldStateModification>()),
     goalsToAdd(pGoalsToAdd),
-    actionsPredecessorsCache()
+    actionsPredecessorsCache(),
+    eventsPredecessorsCache()
 {
   assert(precondition);
   assert(factsToModify || !goalsToAdd.empty());

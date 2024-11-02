@@ -109,6 +109,7 @@ TEST(Tool, test_goalsCache)
               "---------------------------\n"
               "actions: action2", problem.goalStack.printGoalsCache());
     EXPECT_EQ("action2, action3", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
+    EXPECT_EQ("", _actionIdsToStr(problem.goalStack.getEventsPredecessors()));
   }
 
   {
@@ -118,6 +119,7 @@ TEST(Tool, test_goalsCache)
               "---------------------------\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
     EXPECT_EQ("action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
+    EXPECT_EQ("soe_from_constructor|event, soe_from_constructor|event_2", _actionIdsToStr(problem.goalStack.getEventsPredecessors()));
   }
 
   {
@@ -125,6 +127,7 @@ TEST(Tool, test_goalsCache)
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("", problem.goalStack.printGoalsCache());
     EXPECT_EQ("", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
+    EXPECT_EQ("", _actionIdsToStr(problem.goalStack.getEventsPredecessors()));
   }
 
   {
@@ -134,6 +137,7 @@ TEST(Tool, test_goalsCache)
               "---------------------------\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
     EXPECT_EQ("action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
+    EXPECT_EQ("soe_from_constructor|event, soe_from_constructor|event_2", _actionIdsToStr(problem.goalStack.getEventsPredecessors()));
   }
 
   {
@@ -144,6 +148,7 @@ TEST(Tool, test_goalsCache)
               "actions: action1\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
     EXPECT_EQ("action1, action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
+    EXPECT_EQ("soe_from_constructor|event, soe_from_constructor|event_2", _actionIdsToStr(problem.goalStack.getEventsPredecessors()));
   }
 
   {
@@ -153,6 +158,7 @@ TEST(Tool, test_goalsCache)
               "---------------------------\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
     EXPECT_EQ("action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
+    EXPECT_EQ("soe_from_constructor|event, soe_from_constructor|event_2", _actionIdsToStr(problem.goalStack.getEventsPredecessors()));
   }
 
   {
@@ -163,6 +169,7 @@ TEST(Tool, test_goalsCache)
               "actions: action1\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
     EXPECT_EQ( "action1, action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
+    EXPECT_EQ("soe_from_constructor|event, soe_from_constructor|event_2", _actionIdsToStr(problem.goalStack.getEventsPredecessors()));
   }
 }
 

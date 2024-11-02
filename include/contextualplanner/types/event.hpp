@@ -28,7 +28,8 @@ struct CONTEXTUALPLANNER_API Event
       precondition(pEvent.precondition ? pEvent.precondition->clone() : std::unique_ptr<Condition>()),
       factsToModify(pEvent.factsToModify ? pEvent.factsToModify->clone(nullptr) : std::unique_ptr<WorldStateModification>()),
       goalsToAdd(pEvent.goalsToAdd),
-      actionsPredecessorsCache(pEvent.actionsPredecessorsCache)
+      actionsPredecessorsCache(pEvent.actionsPredecessorsCache),
+      eventsPredecessorsCache(pEvent.eventsPredecessorsCache)
   {
     assert(precondition);
     assert(factsToModify || !goalsToAdd.empty());
@@ -52,6 +53,7 @@ struct CONTEXTUALPLANNER_API Event
   const std::map<int, std::vector<cp::Goal>> goalsToAdd;
 
   std::set<ActionId> actionsPredecessorsCache;
+  std::set<FullEventId> eventsPredecessorsCache;
 };
 
 
