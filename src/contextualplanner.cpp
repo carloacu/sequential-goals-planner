@@ -448,7 +448,6 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromEvents(
 
 
 bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
-                          bool pTryToGetAllPossibleParentParameterValues,
                           const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
                           const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
                           const Goal& pGoal,
@@ -507,77 +506,38 @@ bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
     if (!match)
       return false;
 
-    auto cpParentParameters = pParameters;
-    std::map<Parameter, std::set<Entity>> cpTmpParameters;
-    if (pParametersToModifyInPlacePtr != nullptr)
-      cpTmpParameters = *pParametersToModifyInPlacePtr;
-
-    auto res = PossibleEffect::SATISFIED;
-    std::map<Parameter, std::set<Entity>> newParameters;
-    for (auto& currParam : cpParentParameters)
+    if (!pParameters.empty() || pParametersToModifyInPlacePtr != nullptr)
     {
-      if (!fillParameter(pFactOptional, &cpTmpParameters, currParam.first, currParam.second, newParameters))
-      {
-        res = PossibleEffect::NOT_SATISFIED;
-        break;
-      }
-    }
+      auto cpParentParameters = pParameters;
+      std::map<Parameter, std::set<Entity>> cpTmpParameters;
+      if (pParametersToModifyInPlacePtr != nullptr)
+        cpTmpParameters = *pParametersToModifyInPlacePtr;
 
-    if (res == PossibleEffect::SATISFIED)
-    {
-      std::map<Parameter, std::set<Entity>> newTmpParameters;
-      for (auto& currParentParam : cpTmpParameters)
+      std::map<Parameter, std::set<Entity>> newParameters;
+      for (auto& currParam : cpParentParameters)
+        if (!fillParameter(pFactOptional, &cpTmpParameters, currParam.first, currParam.second, newParameters))
+          return false;
+      applyNewParams(cpParentParameters, newParameters);
+
+      if (pProblem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &cpParentParameters, pParametersToModifyInPlacePtr, nullptr))
+        return false;
+
+      pParameters = std::move(cpParentParameters);
+
+      if (pParametersToModifyInPlacePtr != nullptr)
       {
-        if (!fillParameter(pFactOptional, &cpTmpParameters, currParentParam.first, currParentParam.second, newTmpParameters))
-        {
-          res = PossibleEffect::NOT_SATISFIED;
-          break;
-        }
-      }
-      if (res == PossibleEffect::SATISFIED)
+        std::map<Parameter, std::set<Entity>> newTmpParameters;
+        for (auto& currParam : cpTmpParameters)
+          if (!fillParameter(pFactOptional, &cpTmpParameters, currParam.first, currParam.second, newTmpParameters))
+            return false;
         applyNewParams(cpTmpParameters, newTmpParameters);
-      if (res == PossibleEffect::SATISFIED)
-      {
-        applyNewParams(cpParentParameters, newParameters);
 
-        if (!pProblem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &cpParentParameters, pParametersToModifyInPlacePtr, nullptr))
-          res = PossibleEffect::SATISFIED;
-        else
-          res = PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
+        *pParametersToModifyInPlacePtr = std::move(cpTmpParameters);
+        return pCheckValidity(*pParametersToModifyInPlacePtr);
       }
     }
 
-    if (res == PossibleEffect::SATISFIED)
-    {
-      if (!pTryToGetAllPossibleParentParameterValues)
-      {
-        pParameters = std::move(cpParentParameters);
-        if (pParametersToModifyInPlacePtr != nullptr)
-          *pParametersToModifyInPlacePtr = std::move(cpTmpParameters);
-      }
-      else
-      {
-        std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
-        std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
-
-        for (auto& currParam : cpParentParameters)
-          newPossibleParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
-        if (pParametersToModifyInPlacePtr != nullptr)
-          for (auto& currParam : cpTmpParameters)
-            newPossibleTmpParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
-
-        if (!newPossibleParentParameters.empty())
-        {
-          pParameters = std::move(newPossibleParentParameters);
-          if (pParametersToModifyInPlacePtr != nullptr)
-            *pParametersToModifyInPlacePtr = std::move(newPossibleTmpParentParameters);
-        }
-      }
-    }
-
-    if (res == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-      res = PossibleEffect::NOT_SATISFIED;
-    return res == PossibleEffect::SATISFIED;
+    return true;
   };
 
   if (pWorldStateModificationPtr1 &&
@@ -603,8 +563,7 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              const std::string& pFromDeductionId)
 {
   if (pGoal.canDeductionSatisfyThisGoal(pFromDeductionId) &&
-      _doesStatisfyTheGoal(pParameters, pTryToGetAllPossibleParentParameterValues,
-                           pWorldStateModificationPtr1, pWorldStateModificationPtr2,
+      _doesStatisfyTheGoal(pParameters, pWorldStateModificationPtr1, pWorldStateModificationPtr2,
                            pGoal, pProblem, pDomain, pFromDeductionId))
   {
     pSatisfyObjective = true;
