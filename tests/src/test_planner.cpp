@@ -536,7 +536,7 @@ void _satisfyGoalWithSuperiorOperator()
   std::map<std::string, cp::Action> actions;
   actions.emplace(action1, cp::Action(cp::strToCondition("fact_b", ontology, {}, {}),
                                       cp::strToWsModification("fact_a=100", ontology, {}, {})));
-  cp::Domain domain(std::move(actions), ontology, {}, timelessFacts);
+  cp::Domain domain(std::move(actions), ontology, {}, {}, timelessFacts);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
   cp::Problem problem(&timelessFacts.setOfFacts());

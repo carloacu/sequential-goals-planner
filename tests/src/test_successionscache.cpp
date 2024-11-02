@@ -175,7 +175,7 @@ void _test_impossibleSuccessions()
     actions.emplace(action3, actionObj3);
   }
 
-  Domain domain(actions, ontology, {}, timelessFacts);
+  Domain domain(actions, ontology, {}, {}, timelessFacts);
   EXPECT_EQ("action: action1\n"
             "----------------------------------\n"
             "\n"

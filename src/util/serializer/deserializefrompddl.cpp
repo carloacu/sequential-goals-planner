@@ -989,11 +989,9 @@ Domain pddlToDomain(const std::string& pStr,
   } else {
     throw std::runtime_error("No '(define' found in domain file");
   }
-  auto res = Domain(actions, ontology, {}, timelessFacts, domainName);
+  auto res = Domain(actions, ontology, {}, idToSetOfEvents, timelessFacts, domainName);
   for (auto& currRequirement : requirements)
     res.addRequirement(currRequirement);
-  for (auto& currSetOfEv : idToSetOfEvents)
-    res.addSetOfEvents(currSetOfEv.second, currSetOfEv.first);
   return res;
 }
 

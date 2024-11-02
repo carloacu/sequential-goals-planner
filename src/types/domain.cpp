@@ -136,6 +136,7 @@ Domain::Domain()
 Domain::Domain(const std::map<ActionId, Action>& pActions,
                const Ontology& pOntology,
                const SetOfEvents& pSetOfEvents,
+               const std::map<SetOfEventsId, SetOfEvents>& pIdToSetOfEvents,
                const SetOfConstFacts& pTimelessFacts,
                const std::string& pName)
   : _uuid(generateUuid()),
@@ -145,7 +146,7 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
     _actions(),
     _conditionsToActions(),
     _actionsWithoutFactToAddInPrecondition(),
-    _setOfEvents(),
+    _setOfEvents(pIdToSetOfEvents),
     _requirements()
 {
   for (const auto& currAction : pActions)
@@ -156,6 +157,7 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
 
   _updateSuccessions();
 }
+
 
 void Domain::addAction(const ActionId& pActionId,
                        const Action& pAction)
