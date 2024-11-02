@@ -557,6 +557,30 @@ void WorldStateModificationNode::removePossibleSuccession(const ActionId& pActio
   }
 }
 
+void WorldStateModificationNode::getSuccesions(Successions& pSuccessions) const
+{
+  if (nodeType == WorldStateModificationNodeType::AND)
+  {
+    if (leftOperand)
+      leftOperand->getSuccesions(pSuccessions);
+    if (rightOperand)
+      rightOperand->getSuccesions(pSuccessions);
+  }
+  else if (nodeType == WorldStateModificationNodeType::ASSIGN ||
+           nodeType == WorldStateModificationNodeType::INCREASE ||
+           nodeType == WorldStateModificationNodeType::DECREASE ||
+           nodeType == WorldStateModificationNodeType::MULTIPLY)
+  {
+    pSuccessions.add(_successions);
+  }
+  else if (nodeType == WorldStateModificationNodeType::FOR_ALL)
+  {
+    if (rightOperand)
+      rightOperand->getSuccesions(pSuccessions);
+  }
+}
+
+
 void WorldStateModificationNode::printSuccesions(std::string& pRes) const
 {
   if (nodeType == WorldStateModificationNodeType::AND)

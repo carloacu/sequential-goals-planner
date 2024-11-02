@@ -101,6 +101,7 @@ struct WorldStateModificationNode : public WorldStateModification
                         const WorldStateModificationContainerId& pContainerId,
                         const std::set<FactOptional>& pOptionalFactsToIgnore) override;
   void removePossibleSuccession(const ActionId& pActionIdToRemove) override;
+  void getSuccesions(Successions& pSuccessions) const override;
   void printSuccesions(std::string& pRes) const override;
 
   bool operator==(const WorldStateModification& pOther) const override;
@@ -221,6 +222,11 @@ struct WorldStateModificationFact : public WorldStateModification
     _successions.actions.erase(pActionIdToRemove);
   }
 
+  void getSuccesions(Successions& pSuccessions) const override
+  {
+    pSuccessions.add(_successions);
+  }
+
   void printSuccesions(std::string& pRes) const override
   {
     _successions.print(pRes, factOptional);
@@ -297,7 +303,8 @@ struct WorldStateModificationNumber : public WorldStateModification
                         const WorldStateModificationContainerId&,
                         const std::set<FactOptional>&) override {}
   void removePossibleSuccession(const ActionId&) override {}
-  void printSuccesions(std::string& pRes) const override {}
+  void getSuccesions(Successions&) const override {}
+  void printSuccesions(std::string&) const override {}
 
   bool operator==(const WorldStateModification& pOther) const override;
 

@@ -103,6 +103,8 @@ struct CONTEXTUALPLANNER_API Goal
 
   bool canDeductionSatisfyThisGoal(const ActionId& pDeductionId) const;
 
+  const std::set<ActionId>& getActionsPredecessors() const { return _cacheOfActionsPredecessors; }
+
   /// Persist function name.
   static const std::string persistFunctionName;
   /// Imply function name.
@@ -132,6 +134,7 @@ private:
   std::string _uuidOfLastDomainUsedForCache;
   std::set<ActionId> _cacheOfActionsThatCanSatisfyThisGoal;
   std::set<std::string> _cacheOfEventsIdThatCanSatisfyThisGoal;
+  std::set<ActionId> _cacheOfActionsPredecessors;
 };
 
 } // !cp

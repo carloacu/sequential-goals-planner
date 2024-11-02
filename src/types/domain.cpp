@@ -29,7 +29,9 @@ struct ActionWithConditionAndFactFacts
     : actionId(pActionId),
       action(pAction),
       factsFromCondition(),
-      factsFromEffect()
+      factsFromEffect(),
+      invertSuccessionsFromActions(),
+      invertSuccessionsFromEvents()
   {
   }
 
@@ -86,7 +88,71 @@ struct ActionWithConditionAndFactFacts
   Action& action;
   std::set<FactOptional> factsFromCondition;
   std::set<FactOptional> factsFromEffect;
+  std::set<ActionId> invertSuccessionsFromActions;
+  std::set<FullEventId> invertSuccessionsFromEvents;
 };
+
+
+struct EventWithTmpData
+{
+  EventWithTmpData(const SetOfEventsId& pSetOfEventsId, const EventId& pEventId, Event& pEvent)
+    : setOfEventsId(pSetOfEventsId),
+      eventId(pEventId),
+      event(pEvent),
+      invertSuccessionsFromActions(),
+      invertSuccessionsFromEvents()
+  {
+  }
+
+  SetOfEventsId setOfEventsId;
+  EventId eventId;
+  Event& event;
+  std::set<ActionId> invertSuccessionsFromActions;
+  std::set<FullEventId> invertSuccessionsFromEvents;
+};
+
+
+void _updateActionsPredecessors(
+    std::set<ActionId>& pActions,
+    std::set<FullEventId>& pEvents,
+    const std::set<ActionId>& pInvertSuccessionsFromActions,
+    const std::set<FullEventId>& pInvertSuccessionsFromEvents,
+    const std::map<ActionId, ActionWithConditionAndFactFacts>& pAllActionsTmpData,
+    const std::map<FullEventId, EventWithTmpData>& pAllEventsTmpData)
+{
+  for (auto& currActionId : pInvertSuccessionsFromActions)
+  {
+    if (pActions.count(currActionId) > 0)
+      continue;
+    pActions.insert(currActionId);
+
+    auto it = pAllActionsTmpData.find(currActionId);
+    if (it == pAllActionsTmpData.end())
+      throw std::runtime_error("Action predecessor not foud: " + currActionId);
+    _updateActionsPredecessors(pActions, pEvents,
+                               it->second.invertSuccessionsFromActions,
+                               it->second.invertSuccessionsFromEvents,
+                               pAllActionsTmpData, pAllEventsTmpData);
+  }
+
+  for (auto& currFullEventId : pInvertSuccessionsFromEvents)
+  {
+    if (pEvents.count(currFullEventId) > 0)
+      continue;
+    pEvents.insert(currFullEventId);
+
+    auto it = pAllEventsTmpData.find(currFullEventId);
+    if (it == pAllEventsTmpData.end())
+      throw std::runtime_error("Event predecessor not foud: " + currFullEventId);
+    _updateActionsPredecessors(pActions, pEvents,
+                               it->second.invertSuccessionsFromActions,
+                               it->second.invertSuccessionsFromEvents,
+                               pAllActionsTmpData, pAllEventsTmpData);
+  }
+}
+
+
+
 
 /**
  * @brief Check if a world state modification can do some modification if we assume the world already satisfies a condition.
@@ -317,6 +383,9 @@ void Domain::addRequirement(const std::string& pRequirement)
 void Domain::_updateSuccessions()
 {
   std::map<ActionId, ActionWithConditionAndFactFacts> actionTmpData;
+  std::map<FullEventId, EventWithTmpData> eventTmpData;
+
+  // Add successions cache of the actions
   for (auto& currAction : _actions)
   {
     Action& action = currAction.second;
@@ -329,13 +398,19 @@ void Domain::_updateSuccessions()
     actionTmpData.emplace(currAction.first, std::move(tmpData));
   }
 
+  // Add successions cache of the events
   for (auto& currSetOfEvents : _setOfEvents)
   {
     const auto& currSetOfEventsId = currSetOfEvents.first;
     for (auto& currEvent : currSetOfEvents.second.events())
+    {
       currEvent.second.updateSuccessionCache(*this, currSetOfEventsId, currEvent.first);
+      auto fullEventId = generateFullEventId(currSetOfEventsId, currEvent.first);
+      eventTmpData.emplace(fullEventId, EventWithTmpData(currSetOfEventsId, currEvent.first, currEvent.second));
+    }
   }
 
+  // Add successions without interest cache (and update successions cache of the actions)
   for (auto& currAction : actionTmpData)
   {
     ActionWithConditionAndFactFacts& tmpData = currAction.second;
@@ -353,6 +428,92 @@ void Domain::_updateSuccessions()
       }
     }
   }
+
+
+  for (auto& currAction : actionTmpData)
+  {
+    ActionWithConditionAndFactFacts& tmpData = currAction.second;
+    Successions successions;
+    if (tmpData.action.effect.worldStateModification)
+      tmpData.action.effect.worldStateModification->getSuccesions(successions);
+    if (tmpData.action.effect.potentialWorldStateModification)
+      tmpData.action.effect.potentialWorldStateModification->getSuccesions(successions);
+
+    for (const auto& currFollowingActionId : successions.actions)
+    {
+      auto itFollowingAction = actionTmpData.find(currFollowingActionId);
+      if (itFollowingAction == actionTmpData.end())
+        throw std::runtime_error("Following action id not found: " + currFollowingActionId + ".");
+      itFollowingAction->second.invertSuccessionsFromActions.insert(currAction.first);
+    }
+
+    for (const auto& currIdToEvents : successions.events)
+    {
+      for (const auto& currFollowingEventId : currIdToEvents.second)
+      {
+        auto fullEventId = generateFullEventId(currIdToEvents.first, currFollowingEventId);
+        auto itFollowingEvent = eventTmpData.find(fullEventId);
+        if (itFollowingEvent == eventTmpData.end())
+          throw std::runtime_error("Following event id not found: " + fullEventId + ".");
+        itFollowingEvent->second.invertSuccessionsFromActions.insert(currAction.first);
+      }
+    }
+  }
+
+  for (auto& currEvent : eventTmpData)
+  {
+    EventWithTmpData& tmpData = currEvent.second;
+    Successions successions;
+    if (tmpData.event.factsToModify)
+      tmpData.event.factsToModify->getSuccesions(successions);
+
+    for (const auto& currFollowingActionId : successions.actions)
+    {
+      auto itFollowingAction = actionTmpData.find(currFollowingActionId);
+      if (itFollowingAction == actionTmpData.end())
+        throw std::runtime_error("Following action id not found: " + currFollowingActionId + ".");
+      itFollowingAction->second.invertSuccessionsFromEvents.insert(currEvent.first);
+    }
+
+    for (const auto& currIdToEvents : successions.events)
+    {
+      for (const auto& currFollowingEventId : currIdToEvents.second)
+      {
+        auto fullEventId = generateFullEventId(currIdToEvents.first, currFollowingEventId);
+        auto itFollowingEvent = eventTmpData.find(fullEventId);
+        if (itFollowingEvent == eventTmpData.end())
+          throw std::runtime_error("Following event id not found: " + fullEventId + ".");
+        itFollowingEvent->second.invertSuccessionsFromEvents.insert(currEvent.first);
+      }
+    }
+  }
+
+
+  for (auto& currAction : actionTmpData)
+  {
+    ActionWithConditionAndFactFacts& tmpData = currAction.second;
+    tmpData.action.actionsPredecessorsCache.clear();
+    std::set<FullEventId> eventsWhiteListToSatisfyTheConditionCache;
+    _updateActionsPredecessors(tmpData.action.actionsPredecessorsCache,
+                               eventsWhiteListToSatisfyTheConditionCache,
+                               tmpData.invertSuccessionsFromActions,
+                               tmpData.invertSuccessionsFromEvents,
+                               actionTmpData, eventTmpData);
+  }
+
+  for (auto& currEvent : eventTmpData)
+  {
+    EventWithTmpData& tmpData = currEvent.second;
+    tmpData.event.actionsPredecessorsCache.clear();
+    std::set<FullEventId> eventsWhiteListToSatisfyTheConditionCache;
+    _updateActionsPredecessors(tmpData.event.actionsPredecessorsCache,
+                               eventsWhiteListToSatisfyTheConditionCache,
+                               tmpData.invertSuccessionsFromActions,
+                               tmpData.invertSuccessionsFromEvents,
+                               actionTmpData, eventTmpData);
+  }
+
+
 }
 
 

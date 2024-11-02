@@ -200,6 +200,8 @@ struct CONTEXTUALPLANNER_API GoalStack
 
   std::string printGoalsCache() const;
 
+  std::set<ActionId> getActionsPredecessors() const;
+
 
 private:
   /// Map of priority to goals.

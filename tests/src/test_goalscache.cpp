@@ -15,11 +15,26 @@ void _setGoalsForAPriority(cp::Problem& pProblem,
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }
 
+std::string _actionIdsToStr(const std::set<ActionId>& pActionIds)
+{
+  std::ostringstream oss;
+  for (auto it = pActionIds.begin(); it != pActionIds.end(); ++it) {
+      if (it != pActionIds.begin()) {
+          oss << ", ";
+      }
+      oss << *it;
+  }
+  return oss.str();
+}
+
+
+
 TEST(Tool, test_goalsCache)
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
   const std::string action3 = "action3";
+  const std::string action4 = "action4";
 
   cp::Ontology ontology;
   ontology.types = cp::SetOfTypes::fromPddl("e1 e2 - entity\n"
@@ -31,7 +46,8 @@ TEST(Tool, test_goalsCache)
                                                      "fact_c\n"
                                                      "fact_d\n"
                                                      "fact_e(?e - entity) - result_type\n"
-                                                     "fact_f(?e - entity)",
+                                                     "fact_f(?e - entity)\n"
+                                                     "fact_h",
                                                      ontology.types);
 
   std::map<std::string, cp::Action> actions;
@@ -45,7 +61,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    cp::Action actionObj2({},
+    cp::Action actionObj2(cp::strToCondition("fact_c", ontology, {}, {}),
                           cp::strToWsModification("fact_d", ontology, {}, {}));
     actions.emplace(action2, actionObj2);
   }
@@ -56,15 +72,27 @@ TEST(Tool, test_goalsCache)
     actions.emplace(action3, actionObj3);
   }
 
+  {
+    cp::Action actionObj4(cp::strToCondition("fact_h", ontology, {}, {}),
+                          cp::strToWsModification("fact_a", ontology, {}, {}));
+    actions.emplace(action4, actionObj4);
+  }
 
   SetOfEvents setOfEvents;
   std::vector<Parameter> eventParameters{Parameter::fromStr("?e - entity", ontology.types)};
-  cp::Event event(cp::strToCondition("fact_a", ontology, {}, eventParameters),
-                  cp::strToWsModification("forall(?e - entity, when(fact_f(?e), set(fact_b(?e), fact_e(?e))))", ontology, {}, eventParameters));
-  event.parameters = std::move(eventParameters);
-  setOfEvents.add(event);
+  {
+    cp::Event event(cp::strToCondition("fact_a", ontology, {}, eventParameters),
+                    cp::strToWsModification("forall(?e - entity, when(fact_f(?e), set(fact_b(?e), fact_e(?e))))", ontology, {}, eventParameters));
+    event.parameters = std::move(eventParameters);
+    setOfEvents.add(event);
+  }
+  {
+    cp::Event event(cp::strToCondition("fact_d", ontology, {}, eventParameters),
+                    cp::strToWsModification("fact_h", ontology, {}, eventParameters));
+    event.parameters = std::move(eventParameters);
+    setOfEvents.add(event);
+  }
   Domain domain(std::move(actions), ontology, std::move(setOfEvents));
-
 
   const auto& domainOntology = domain.getOntology();
 
@@ -80,6 +108,7 @@ TEST(Tool, test_goalsCache)
     EXPECT_EQ("goal: fact_d\n"
               "---------------------------\n"
               "actions: action2", problem.goalStack.printGoalsCache());
+    EXPECT_EQ("action2, action3", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
   }
 
   {
@@ -88,12 +117,14 @@ TEST(Tool, test_goalsCache)
     EXPECT_EQ("goal: fact_b(ent)=r2\n"
               "---------------------------\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
+    EXPECT_EQ("action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
   }
 
   {
     _setGoalsForAPriority(problem, {cp::Goal::fromStr("!fact_c", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("", problem.goalStack.printGoalsCache());
+    EXPECT_EQ("", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
   }
 
   {
@@ -102,6 +133,7 @@ TEST(Tool, test_goalsCache)
     EXPECT_EQ("goal: !fact_b(ent)=r1\n"
               "---------------------------\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
+    EXPECT_EQ("action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
   }
 
   {
@@ -111,6 +143,7 @@ TEST(Tool, test_goalsCache)
               "---------------------------\n"
               "actions: action1\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
+    EXPECT_EQ("action1, action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
   }
 
   {
@@ -119,6 +152,7 @@ TEST(Tool, test_goalsCache)
     EXPECT_EQ("goal: !fact_b(sub_ent2)=r1\n"
               "---------------------------\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
+    EXPECT_EQ("action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
   }
 
   {
@@ -128,6 +162,7 @@ TEST(Tool, test_goalsCache)
               "---------------------------\n"
               "actions: action1\n"
               "events: soe_from_constructor|event", problem.goalStack.printGoalsCache());
+    EXPECT_EQ( "action1, action2, action3, action4", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
   }
 }
 

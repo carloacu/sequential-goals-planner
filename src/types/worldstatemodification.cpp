@@ -9,6 +9,13 @@
 namespace cp
 {
 
+void Successions::add(const Successions& pSuccessions)
+{
+  actions.insert(pSuccessions.actions.begin(), pSuccessions.actions.end());
+  events.insert(pSuccessions.events.begin(), pSuccessions.events.end());
+}
+
+
 void Successions::addSuccesionsOptFact(const FactOptional& pFactOptional,
                                        const Domain& pDomain,
                                        const WorldStateModificationContainerId& pContainerId,

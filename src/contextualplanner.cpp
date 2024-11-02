@@ -726,63 +726,6 @@ bool _isMoreOptimalNextAction(
 }
 
 
-void _findFirstActionForAGoalAndSetOfActions(PotentialNextAction& pCurrentResult,
-                                             std::optional<PotentialNextActionComparisonCache>& pPotentialNextActionComparisonCacheOpt,
-                                             std::set<ActionId>& pAlreadyDoneActions,
-                                             TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                                             const FactsToValue::ConstMapOfFactIterator& pActions,
-                                             const Goal& pGoal,
-                                             const Problem& pProblem,
-                                             const Domain& pDomain,
-                                             bool pTryToDoMoreOptimalSolution,
-                                             std::size_t pLength,
-                                             const Historical* pGlobalHistorical)
-{
-  PotentialNextAction newPotNextAction;
-  auto& domainActions = pDomain.actions();
-  for (const ActionId& currAction : pActions)
-  {
-    if (pAlreadyDoneActions.count(currAction) > 0)
-      continue;
-    pAlreadyDoneActions.insert(currAction);
-
-    auto itAction = domainActions.find(currAction);
-    if (itAction != domainActions.end())
-    {
-      const Action& action = itAction->second;
-      if (!action.canThisActionBeUsedByThePlanner)
-        continue;
-      FactsAlreadyChecked factsAlreadyChecked;
-      auto newPotRes = PotentialNextAction(currAction, action);
-      auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currAction);
-      if (newTreePtr != nullptr && // To skip leaf of already seen path
-          _lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, pTryToDoMoreOptimalSolution, *newTreePtr,
-                                  action.effect.worldStateModification, action.effect.potentialWorldStateModification,
-                                  pGoal, pProblem, pDomain, factsAlreadyChecked, currAction) &&
-          (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parameters)))
-      {
-        while (true)
-        {
-          if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotRes, newPotNextAction, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGoal, pGlobalHistorical))
-          {
-            assert(newPotRes.actionPtr != nullptr);
-            newPotNextAction = newPotRes;
-          }
-          if (!newPotRes.removeAPossibility())
-            break;
-        }
-      }
-    }
-  }
-
-  if (_isMoreOptimalNextAction(pPotentialNextActionComparisonCacheOpt, newPotNextAction, pCurrentResult, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGoal, pGlobalHistorical))
-  {
-    assert(newPotNextAction.actionPtr != nullptr);
-    pCurrentResult = newPotNextAction;
-  }
-}
-
-
 ActionId _findFirstActionForAGoal(
     std::map<Parameter, std::set<Entity>>& pParameters,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
@@ -795,26 +738,50 @@ ActionId _findFirstActionForAGoal(
     const ActionPtrWithGoal* pPreviousActionPtr)
 {
   PotentialNextAction res;
-  std::set<ActionId> alreadyDoneActions;
+  std::set<ActionId> actionIdsToSkip;
   if (pPreviousActionPtr != nullptr &&
       pPreviousActionPtr->goal.objective() == pGoal.objective() &&
       pPreviousActionPtr->actionPtr != nullptr)
-    alreadyDoneActions = pPreviousActionPtr->actionPtr->actionsSuccessionsWithoutInterestCache;
+    actionIdsToSkip = pPreviousActionPtr->actionPtr->actionsSuccessionsWithoutInterestCache;
   std::optional<PotentialNextActionComparisonCache> potentialNextActionComparisonCacheOpt;
-  for (const auto& currFact : pProblem.worldState.facts())
-  {
-    auto itPrecToActions = pDomain.preconditionToActions().find(currFact.first);
-    _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt, alreadyDoneActions,
-                                            pTreeOfAlreadyDonePath, itPrecToActions, pGoal,
-                                            pProblem, pDomain, pTryToDoMoreOptimalSolution,
-                                            pLength, pGlobalHistorical);
-  }
 
-  auto actionWithoutPrecondition = pDomain.actionsWithoutFactToAddInPrecondition().valuesWithoutFact();
-  _findFirstActionForAGoalAndSetOfActions(res, potentialNextActionComparisonCacheOpt, alreadyDoneActions,
-                                          pTreeOfAlreadyDonePath, actionWithoutPrecondition, pGoal,
-                                          pProblem, pDomain, pTryToDoMoreOptimalSolution,
-                                          pLength, pGlobalHistorical);
+  const auto& actions = pGoal.getActionsPredecessors();
+  auto& domainActions = pDomain.actions();
+  for (const ActionId& currAction : actions)
+  {
+    if (actionIdsToSkip.count(currAction) > 0)
+      continue;
+
+    auto itAction = domainActions.find(currAction);
+    if (itAction != domainActions.end())
+    {
+      const Action& action = itAction->second;
+      if (!action.canThisActionBeUsedByThePlanner)
+        continue;
+      auto* newTreePtr = pTreeOfAlreadyDonePath.getNextActionTreeIfNotAnExistingLeaf(currAction);
+      if (newTreePtr != nullptr) // To skip leaf of already seen path
+      {
+        FactsAlreadyChecked factsAlreadyChecked;
+        auto newPotRes = PotentialNextAction(currAction, action);
+        if (_lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.parameters, pTryToDoMoreOptimalSolution, *newTreePtr,
+                                    action.effect.worldStateModification, action.effect.potentialWorldStateModification,
+                                    pGoal, pProblem, pDomain, factsAlreadyChecked, currAction) &&
+            (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parameters)))
+        {
+          while (true)
+          {
+            if (_isMoreOptimalNextAction(potentialNextActionComparisonCacheOpt, newPotRes, res, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGoal, pGlobalHistorical))
+            {
+              assert(newPotRes.actionPtr != nullptr);
+              res = newPotRes;
+            }
+            if (!newPotRes.removeAPossibility())
+              break;
+          }
+        }
+      }
+    }
+  }
   pParameters = std::move(res.parameters);
   return res.actionId;
 }

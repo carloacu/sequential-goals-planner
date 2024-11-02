@@ -7,8 +7,16 @@
 namespace cp
 {
 using ActionId = std::string;
-using EventId = std::string;
 using SetOfEventsId = std::string;
+using EventId = std::string;
+
+using FullEventId = std::string;
+
+
+static const FullEventId generateFullEventId(const SetOfEventsId& pSetOfEventsId, const EventId& pEventId)
+{
+  return pSetOfEventsId + "|" + pEventId;
+}
 
 
 } // !cp

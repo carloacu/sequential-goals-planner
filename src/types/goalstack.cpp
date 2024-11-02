@@ -434,6 +434,21 @@ std::string GoalStack::printGoalsCache() const
 }
 
 
+std::set<ActionId> GoalStack::getActionsPredecessors() const
+{
+  std::set<ActionId> res;
+  for (const auto& currGoalsGroup : _goals)
+  {
+    for (const Goal& currGoal : currGoalsGroup.second)
+    {
+      auto subRes = currGoal.getActionsPredecessors();
+      res.insert(subRes.begin(), subRes.end());
+    }
+  }
+  return res;
+}
+
+
 void GoalStack::_removeNoStackableGoalsAndNotifyGoalsChanged(
     const WorldState& pWorldState,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)

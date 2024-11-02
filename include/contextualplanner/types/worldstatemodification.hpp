@@ -35,6 +35,7 @@ struct CONTEXTUALPLANNER_API Successions
   bool empty() const { return actions.empty() && events.empty(); }
   void clear() { actions.clear(); events.clear(); }
 
+  void add(const Successions& pSuccessions);
   void addSuccesionsOptFact(const FactOptional& pFactOptional,
                             const Domain& pDomain,
                             const WorldStateModificationContainerId& pContainerId,
@@ -132,6 +133,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
                                 const WorldStateModificationContainerId& pContainerId,
                                 const std::set<FactOptional>& pOptionalFactsToIgnore) = 0;
   virtual void removePossibleSuccession(const ActionId& pActionIdToRemove) = 0;
+  virtual void getSuccesions(Successions& pSuccessions) const = 0;
   virtual void printSuccesions(std::string& pRes) const = 0;
 
   /// Equality operators.
