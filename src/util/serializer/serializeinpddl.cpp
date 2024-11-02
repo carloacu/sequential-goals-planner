@@ -448,19 +448,28 @@ std::string problemToPddl(const Problem& pProblem,
   if (!goals.empty())
   {
     res += std::string(identation, ' ') + "(:goal\n";
-    res += std::string(subIdentation, ' ') + "(and\n";
-    for (auto itGoalsGroup = goals.end(); itGoalsGroup != goals.begin(); )
+    if (goals.size() == 1 && goals.begin()->second.size() == 1)
     {
-      --itGoalsGroup;
-      for (const Goal& currGoal : itGoalsGroup->second)
-      {
-        auto pddlGoal = currGoal.toPddl(subSubIdentation);
-        res += std::string(subSubIdentation, ' ') + pddlGoal + "\n";
-        pddlGoals.emplace_back(pddlGoal);
-      }
+      const auto& currGoal = goals.begin()->second.front();
+      auto pddlGoal = currGoal.toPddl(subSubIdentation);
+      res += std::string(subSubIdentation, ' ') + pddlGoal + "\n";
+      pddlGoals.emplace_back(pddlGoal);
     }
-
-    res += std::string(subIdentation, ' ') + ")\n";
+    else
+    {
+      res += std::string(subIdentation, ' ') + "(and ;; __SEQUENTIALLY\n";
+      for (auto itGoalsGroup = goals.end(); itGoalsGroup != goals.begin(); )
+      {
+        --itGoalsGroup;
+        for (const Goal& currGoal : itGoalsGroup->second)
+        {
+          auto pddlGoal = currGoal.toPddl(subSubIdentation);
+          res += std::string(subSubIdentation, ' ') + pddlGoal + "\n";
+          pddlGoals.emplace_back(pddlGoal);
+        }
+      }
+      res += std::string(subIdentation, ' ') + ")\n";
+    }
     res += std::string(identation, ' ') + ")\n\n";
   }
 

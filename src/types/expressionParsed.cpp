@@ -237,6 +237,7 @@ ExpressionParsed ExpressionParsed::fromPddl(const std::string& pStr,
             res = fromPddl(pStr, pPos, pCanHaveFollowingExpression);
             return res;
           }
+          res.skipSpacesWithTagExtraction(pStr, pPos);
           inName = false;
           continue;
         }

@@ -385,7 +385,7 @@ void _test_loadPddlDomain()
         (on-site c s1)
         (on-site w s1)
     )
-    (:goal (and  ; a comment
+    (:goal (and ;; __SEQUENTIALLY
             (walls-built s1)
             (cables-installed s1)
             (windows-fitted s1)
@@ -412,7 +412,7 @@ void _test_loadPddlDomain()
     )
 
     (:goal
-        (and
+        (and ;; __SEQUENTIALLY
             (walls-built s1)
             (cables-installed s1)
             (windows-fitted s1)

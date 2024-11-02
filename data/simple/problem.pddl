@@ -13,9 +13,10 @@
   )
 
   (:goal
-    (and
+    (and ;; __SEQUENTIALLY
       (at-object box1 locationC)
       (at robot1 locationA)
+      (at robot1 locationB)
     )
   )
 )

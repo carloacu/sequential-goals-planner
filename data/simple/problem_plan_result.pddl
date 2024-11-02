@@ -6,3 +6,4 @@
 02: (move robot1 locationB locationC) [1]
 03: (drop robot1 box1 locationC) [1]
 04: (move robot1 locationC locationA) [1]
+05: (move robot1 locationA locationB) [1]

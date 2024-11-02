@@ -3,12 +3,13 @@
 
 ## Description
 
-This is C++ library to do planification PDDL for goals sorted by priorities.<br/>
-Each pieces of goals inside the `and` function will be satisfied one after another.<br/>
+This is C++ library to do planification PDDL.
+The specificity of this planner is that it handles goals sorted by priorities.<br/>
+Each pieces of goals inside the `and` function with this c tag `__SEQUENTIALLY` in the comments will be satisfied one after another.<br/>
 Example:
 ```lisp
   (:goal
-    (and
+    (and ;; __SEQUENTIALLY
       (at-object box1 locationC)
       (at robot1 locationA)
     )
