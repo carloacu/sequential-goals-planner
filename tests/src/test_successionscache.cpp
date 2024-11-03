@@ -61,9 +61,9 @@ void _test_actionSuccessions()
   }
 
   {
-    std::vector<cp::Parameter> parameters4(1, cp::Parameter::fromStr("?e - entity", ontology.types));
-    cp::Action actionObj4(cp::strToCondition("not(locked(moves)) & not(fact_a) & fact_h(?e)", ontology, {}, parameters4),
-                          cp::strToWsModification("not(locked(moves)) & fact_e & fact_h(?e)", ontology, {}, parameters4));
+    std::vector<cp::Parameter> parameters4{cp::Parameter::fromStr("?e1 - entity", ontology.types), cp::Parameter::fromStr("?e2 - entity", ontology.types)};
+    cp::Action actionObj4(cp::strToCondition("not(locked(moves)) & not(fact_a) & fact_h(?e1)", ontology, {}, parameters4),
+                          cp::strToWsModification("not(locked(moves)) & fact_e & fact_h(?e2)", ontology, {}, parameters4));
     actionObj4.parameters = std::move(parameters4);
     actions.emplace(action4, actionObj4);
   }

@@ -56,7 +56,8 @@ struct ActionWithConditionAndFactFacts
           return true;
 
         for (auto& otherCondOptFact : pOther.factsFromCondition)
-          if (effectOptFact == otherCondOptFact)
+          if (effectOptFact.isFactNegated == otherCondOptFact.isFactNegated &&
+              effectOptFact.fact.areEqualExceptAnyValuesAndFluent(otherCondOptFact.fact, nullptr, nullptr, &action.parameters))
             return true;
         continue;
       }
