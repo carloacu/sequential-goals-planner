@@ -4009,17 +4009,25 @@ void _fixEventWithFluentInParameter()
   cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   EXPECT_EQ("action: action1\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "fact: fact_a(titi)=*\n"
-                         "event: soe_from_constructor|event\n"
-                         "\n"
-                         "\n"
-                         "event: soe_from_constructor|event\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "fact: fact_e(?a)=?v\n"
-                         "action: action2\n", domain.printSuccessionCache());
+            "----------------------------------\n"
+            "\n"
+            "fact: fact_a(titi)=*\n"
+            "event: soe_from_constructor|event\n"
+            "\n"
+            "not action: action1\n"
+            "\n"
+            "\n"
+            "action: action2\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action2\n"
+            "\n"
+            "\n"
+            "event: soe_from_constructor|event\n"
+            "----------------------------------\n"
+            "\n"
+            "fact: fact_e(?a)=?v\n"
+            "action: action2\n", domain.printSuccessionCache());
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
@@ -4063,10 +4071,18 @@ void _derivedPredicates()
 
   cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   EXPECT_EQ("action: action1\n"
-                         "----------------------------------\n"
-                         "\n"
-                         "fact: fact_a(titi)=*\n"
-                         "action: action2\n", domain.printSuccessionCache());
+            "----------------------------------\n"
+            "\n"
+            "fact: fact_a(titi)=*\n"
+            "action: action2\n"
+            "\n"
+            "not action: action1\n"
+            "\n"
+            "\n"
+            "action: action2\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action2\n", domain.printSuccessionCache());
 
   auto& setOfEventsMap = domain.getSetOfEvents();
   cp::Problem problem;

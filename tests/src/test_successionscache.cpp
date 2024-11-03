@@ -32,6 +32,7 @@ void _test_actionSuccessions()
                                                      "fact_d\n"
                                                      "fact_e\n"
                                                      "fact_f\n"
+                                                     "fact_h(?e - entity)\n"
                                                      "locked(?r - resource)",
                                                      ontology.types);
 
@@ -60,8 +61,10 @@ void _test_actionSuccessions()
   }
 
   {
-    cp::Action actionObj4(cp::strToCondition("not(locked(moves)) & not(fact_a)", ontology, {}, {}),
-                          cp::strToWsModification("not(locked(moves)) & fact_e", ontology, {}, {}));
+    std::vector<cp::Parameter> parameters4(1, cp::Parameter::fromStr("?e - entity", ontology.types));
+    cp::Action actionObj4(cp::strToCondition("not(locked(moves)) & not(fact_a) & fact_h(?e)", ontology, {}, parameters4),
+                          cp::strToWsModification("not(locked(moves)) & fact_e & fact_h(?e)", ontology, {}, parameters4));
+    actionObj4.parameters = std::move(parameters4);
     actions.emplace(action4, actionObj4);
   }
 
@@ -85,17 +88,27 @@ void _test_actionSuccessions()
             "action: action2\n"
             "action: action5\n"
             "\n"
+            "not action: action1\n"
+            "\n"
+            "\n"
+            "action: action2\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action2\n"
+            "\n"
             "\n"
             "action: action3\n"
             "----------------------------------\n"
             "\n"
+            "not action: action3\n"
             "not action: action5\n"
             "\n"
             "\n"
             "action: action5\n"
             "----------------------------------\n"
             "\n"
-            "not action: action3\n", domain.printSuccessionCache());
+            "not action: action3\n"
+            "not action: action5\n", domain.printSuccessionCache());
 }
 
 
@@ -134,6 +147,13 @@ void _test_notActionSuccessions()
 
   Domain domain(actions, ontology);
   EXPECT_EQ("action: action1\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action1\n"
+            "not action: action2\n"
+            "\n"
+            "\n"
+            "action: action2\n"
             "----------------------------------\n"
             "\n"
             "not action: action2\n", domain.printSuccessionCache());
@@ -177,6 +197,13 @@ void _test_impossibleSuccessions()
 
   Domain domain(actions, ontology, {}, {}, timelessFacts);
   EXPECT_EQ("action: action1\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action1\n"
+            "not action: action2\n"
+            "\n"
+            "\n"
+            "action: action2\n"
             "----------------------------------\n"
             "\n"
             "not action: action2\n", domain.printSuccessionCache());

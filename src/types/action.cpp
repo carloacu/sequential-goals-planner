@@ -64,7 +64,7 @@ void Action::removePossibleSuccessionCache(const ActionId& pActionIdToRemove)
 }
 
 
-std::string Action::printSuccessionCache(const ActionId& pIdOfThisAction) const
+std::string Action::printSuccessionCache() const
 {
   std::string res;
   if (effect.worldStateModification)
@@ -74,8 +74,7 @@ std::string Action::printSuccessionCache(const ActionId& pIdOfThisAction) const
 
   std::string actionWithoutInterestStr = "";
   for (const auto& currActionId : actionsSuccessionsWithoutInterestCache)
-    if (currActionId != pIdOfThisAction)
-      actionWithoutInterestStr += "not action: " + currActionId + "\n";
+    actionWithoutInterestStr += "not action: " + currActionId + "\n";
   if (!actionWithoutInterestStr.empty())
   {
     if (res != "")

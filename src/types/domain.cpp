@@ -51,7 +51,15 @@ struct ActionWithConditionAndFactFacts
     for (auto& effectOptFact : factsFromEffect)
     {
       if (effectOptFact.fact.hasAParameter(true))
-        return true;
+      {
+        if (actionId != pOther.actionId)
+          return true;
+
+        for (auto& otherCondOptFact : pOther.factsFromCondition)
+          if (effectOptFact == otherCondOptFact)
+            return true;
+        continue;
+      }
 
       if (effectOptFact.fact.fluent() && effectOptFact.fact.fluent()->isAnyValue())
         for (auto& otherCondOptFact : pOther.factsFromCondition)
@@ -59,7 +67,7 @@ struct ActionWithConditionAndFactFacts
               effectOptFact.fact.areEqualExceptAnyValuesAndFluent(otherCondOptFact.fact))
             return true;
 
-      if (!effectOptFact.fact.hasAParameter(false))
+      if (!effectOptFact.fact.fluent() || !effectOptFact.fact.fluent()->isAParameterToFill())
         for (auto& otherCondOptFact : pOther.factsFromCondition)
           if (effectOptFact.isFactNegated != otherCondOptFact.isFactNegated &&
               effectOptFact.fact == otherCondOptFact.fact)
@@ -340,7 +348,7 @@ std::string Domain::printSuccessionCache() const
   for (const auto& currAction : _actions)
   {
     const Action& action = currAction.second;
-    auto sc = action.printSuccessionCache(currAction.first);
+    auto sc = action.printSuccessionCache();
     if (!sc.empty())
     {
       if (!res.empty())
@@ -418,10 +426,8 @@ void Domain::_updateSuccessions()
 
     for (auto& currActionSucc : actionTmpData)
     {
-      if (tmpData.actionId == currActionSucc.second.actionId)
-        tmpData.action.actionsSuccessionsWithoutInterestCache.insert(currActionSucc.second.actionId);
-      else if (tmpData.isImpossibleSuccession(currActionSucc.second) ||
-               !tmpData.doesSuccessionsHasAnInterest(currActionSucc.second))
+      if (tmpData.isImpossibleSuccession(currActionSucc.second) ||
+          !tmpData.doesSuccessionsHasAnInterest(currActionSucc.second))
       {
         tmpData.action.actionsSuccessionsWithoutInterestCache.insert(currActionSucc.second.actionId);
         tmpData.action.removePossibleSuccessionCache(currActionSucc.second.actionId);

@@ -106,7 +106,7 @@ struct CONTEXTUALPLANNER_API Action
                              const ActionId& pIdOfThisAction,
                              const std::set<FactOptional>& pFactsFromCondition);
   void removePossibleSuccessionCache(const ActionId& pActionIdToRemove);
-  std::string printSuccessionCache(const ActionId& pIdOfThisAction) const;
+  std::string printSuccessionCache() const;
 
   // TODO: remove that function?
   void throwIfNotValid(const SetOfFacts& pSetOfFact);
