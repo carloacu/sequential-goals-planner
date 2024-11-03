@@ -5,9 +5,9 @@ namespace cp
 {
 
 ActionInvocationWithGoal::ActionInvocationWithGoal(const std::string& pActionId,
-    const std::map<Parameter, std::set<Entity>>& pParameters,
-    std::unique_ptr<Goal> pFromGoal,
-    int pFromGoalPriority)
+                                                   const std::map<Parameter, std::set<Entity>>& pParameters,
+                                                   std::unique_ptr<Goal> pFromGoal,
+                                                   int pFromGoalPriority)
   : actionInvocation(pActionId, pParameters),
     fromGoal(std::move(pFromGoal)),
     fromGoalPriority(pFromGoalPriority)

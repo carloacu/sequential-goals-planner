@@ -3186,6 +3186,71 @@ void _hardProblemThatNeedsToBeSmart()
 
 
 
+
+void _hardProblemThatNeedsToBeSmartWithAnEvent()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  const std::string action4 = "action4";
+  const std::string action5 = "action5";
+
+  cp::Ontology ontology;
+  ontology.types = cp::SetOfTypes::fromPddl("entity");
+  ontology.constants = cp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                     _fact_b + "\n" +
+                                                     _fact_c + "\n" +
+                                                     _fact_d + "\n" +
+                                                     _fact_e + "\n" +
+                                                     _fact_f, ontology.types);
+
+  std::map<std::string, cp::Action> actions;
+  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
+  actionObj1.parameters = std::move(act1Parameters);
+  actions.emplace(action1, actionObj1);
+
+  cp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
+                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+  actions.emplace(action2, actionObj2);
+
+  cp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
+                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+  actions.emplace(action3, actionObj3);
+
+  cp::Action actionObj4(_condition_fromStr(_fact_a + "=val4", ontology),
+                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+  actions.emplace(action4, actionObj4);
+
+  cp::Action actionObj5(_condition_fromStr(_fact_b + " & !" + _fact_d, ontology),
+                        _worldStateModification_fromStr(_fact_e, ontology));
+  actions.emplace(action5, actionObj5);
+
+  cp::SetOfEvents setOfEvents;
+  {
+    cp::Event event1(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
+                     _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
+    setOfEvents.add(event1);
+  }
+
+
+  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  auto& setOfEventsMap = domain.getSetOfEvents();
+
+  cp::Problem problem;
+  _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
+  _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
+
+  EXPECT_EQ(action1 + "(?obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action1 + "(?obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action5, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+}
+
+
+
 void _goalsToDoInParallel()
 {
   const std::string action1 = "action1";
@@ -4345,6 +4410,7 @@ TEST(Planner, test_planWithSingleType)
   _checkFilterFactInConditionAndThenPropagate();
   _checkOutputValueOfLookForAnActionToDo();
   _hardProblemThatNeedsToBeSmart();
+  _hardProblemThatNeedsToBeSmartWithAnEvent();
   _goalsToDoInParallel();
   _checkOverallEffectDuringParallelisation();
   _checkSimpleExists();
