@@ -383,6 +383,9 @@ bool _updatePossibleParameters(
     bool pTryToGetAllPossibleParentParameterValues,
     std::map<Parameter, std::set<Entity>>& pCpTmpParameters)
 {
+  if (pCpParentParameters.empty() && pCpTmpParameters.empty())
+    return true;
+
   if (!pTryToGetAllPossibleParentParameterValues)
   {
     pParentParameters = std::move(pCpParentParameters);
