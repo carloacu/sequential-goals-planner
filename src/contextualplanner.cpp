@@ -74,19 +74,36 @@ struct ActionPtrWithGoal
 };
 
 
+struct DataRelatedToOptimisation
+{
+  bool tryToDoMoreOptimalSolution = false;
+  std::map<Parameter, std::set<Entity>> parameterToEntitiesFromEvent;
+};
+
+
 struct PotentialNextActionParametersWithTmpData
 {
   PotentialNextActionParametersWithTmpData()
     : parameters(),
-      satisfyObjective(false),
-      nextInPlanCanBeAnEvent(false)
+      satisfyObjective(false)
   {
   }
 
   std::map<Parameter, std::set<Entity>> parameters;
   bool satisfyObjective;
-  bool nextInPlanCanBeAnEvent;
 
+  bool nextStepIsAnEvent(const std::map<Parameter, std::set<Entity>>& pParameterToEntitiesFromEvent) const
+  {
+    for (auto& currParam : parameters)
+    {
+      auto it = pParameterToEntitiesFromEvent.find(currParam.first);
+      if (it != pParameterToEntitiesFromEvent.end())
+        for (auto& currEntity : currParam.second)
+          if (it->second.count(currEntity) > 0)
+            return true;
+    }
+    return false;
+  }
   bool removeAPossibility();
 };
 
@@ -278,7 +295,7 @@ std::set<Entity> _paramTypenameToEntities(const std::string& pParamtypename,
 
 
 bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParametersWithTmpData,
-                             bool pTryToGetAllPossibleParentParameterValues,
+                             DataRelatedToOptimisation& pDataRelatedToOptimisation,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
                              const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
@@ -307,7 +324,8 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
     for (const auto& currParam : pParameters)
       parametersWithData.parameters[currParam];
 
-    if (_lookForAPossibleEffect(parametersWithData, false, pTreeOfAlreadyDonePath,
+    DataRelatedToOptimisation dataRelatedToOptimisation;
+    if (_lookForAPossibleEffect(parametersWithData, dataRelatedToOptimisation, pTreeOfAlreadyDonePath,
                                 pWorldStateModificationPtr1, pWorldStateModificationPtr2,
                                 pContext, pFactsAlreadychecked, pFromDeductionId))
     {
@@ -380,13 +398,14 @@ bool _updatePossibleParameters(
     std::map<Parameter, std::set<Entity>>& pParentParameters,
     std::map<Parameter, std::set<Entity>>& pCpParentParameters,
     std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
-    bool pTryToGetAllPossibleParentParameterValues,
-    std::map<Parameter, std::set<Entity>>& pCpTmpParameters)
+    DataRelatedToOptimisation& pDataRelatedToOptimisation,
+    std::map<Parameter, std::set<Entity>>& pCpTmpParameters,
+    bool pFromEvent)
 {
   if (pCpParentParameters.empty() && pCpTmpParameters.empty())
     return true;
 
-  if (!pTryToGetAllPossibleParentParameterValues)
+  if (!pDataRelatedToOptimisation.tryToDoMoreOptimalSolution)
   {
     pParentParameters = std::move(pCpParentParameters);
     if (pTmpParentParametersPtr != nullptr)
@@ -394,8 +413,24 @@ bool _updatePossibleParameters(
     return true;
   }
 
-  for (auto& currParam : pCpParentParameters)
-    pNewPossibleParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
+  if (pFromEvent && pDataRelatedToOptimisation.tryToDoMoreOptimalSolution)
+  {
+    for (auto& currParam : pCpParentParameters)
+    {
+      auto& currentEntities = pNewPossibleParentParameters[currParam.first];
+      for (auto& currEntity : currParam.second)
+      {
+        if (currentEntities.emplace(currEntity).second)
+          pDataRelatedToOptimisation.parameterToEntitiesFromEvent[currParam.first].insert(currEntity);
+      }
+    }
+  }
+  else
+  {
+    for (auto& currParam : pCpParentParameters)
+      pNewPossibleParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
+  }
+
   if (pTmpParentParametersPtr != nullptr)
     for (auto& currParam : pCpTmpParameters)
       pNewPossibleTmpParentParameters[currParam.first].insert(currParam.second.begin(), currParam.second.end());
@@ -404,13 +439,12 @@ bool _updatePossibleParameters(
 
 
 PossibleEffect _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
-    bool& pNextInPlanCanBeAnEvent,
     const std::set<ActionId>& pActionSuccessions,
     const std::map<SetOfEventsId, std::set<EventId>>& pEventSuccessions,
     const FactOptional& pFactOptional,
     std::map<Parameter, std::set<Entity>>& pParentParameters,
     std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
-    bool pTryToGetAllPossibleParentParameterValues,
+    DataRelatedToOptimisation& pDataRelatedToOptimisation,
     TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
     const std::map<SetOfEventsId, SetOfEvents>& pEvents,
     const ResearchContext& pContext,
@@ -449,7 +483,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
       if (newRes == PossibleEffect::SATISFIED &&
           _updatePossibleParameters(newPossibleParentParameters, newPossibleTmpParentParameters,
                                     pParentParameters, cpParentParameters, pTmpParentParametersPtr,
-                                    pTryToGetAllPossibleParentParameterValues, cpTmpParameters))
+                                    pDataRelatedToOptimisation, cpTmpParameters, false))
         return res;
     }
   }
@@ -490,10 +524,9 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
 
             if (newRes == PossibleEffect::SATISFIED)
             {
-              pNextInPlanCanBeAnEvent = true;
               if (_updatePossibleParameters(newPossibleParentParameters, newPossibleTmpParentParameters,
                                             pParentParameters, cpParentParameters, pTmpParentParametersPtr,
-                                            pTryToGetAllPossibleParentParameterValues, cpTmpParameters))
+                                            pDataRelatedToOptimisation, cpTmpParameters, true))
                 return res;
             }
           }
@@ -614,7 +647,7 @@ bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
 
 
 bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParametersWithTmpData,
-                             bool pTryToGetAllPossibleParentParameterValues,
+                             DataRelatedToOptimisation& pDataRelatedToOptimisation,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
                              const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
@@ -646,9 +679,8 @@ bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParamete
           subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
 
         auto possibleEffect = _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
-              pParametersWithTmpData.nextInPlanCanBeAnEvent,
               pSuccessions.actions, pSuccessions.events, pFactOptional, pParametersWithTmpData.parameters, pParametersToModifyInPlacePtr,
-              pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
+              pDataRelatedToOptimisation, pTreeOfAlreadyDonePath,
               setOfEvents, pContext, subFactsAlreadychecked);
 
         if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
@@ -717,16 +749,17 @@ PlanCost _extractPlanCost(
 
 bool _isMoreOptimalNextAction(
     std::optional<PotentialNextActionComparisonCache>& pPotentialNextActionComparisonCacheOpt,
-    const PotentialNextAction& pNewPotentialNextAction, // not const because cache cost can be modified
-    const PotentialNextAction& pCurrentNextAction, // not const because cache cost can be modified
+    bool& pNextInPlanCanBeAnEvent,
+    const PotentialNextAction& pNewPotentialNextAction,
+    const PotentialNextAction& pCurrentNextAction,
     const Problem& pProblem,
     const Domain& pDomain,
-    bool pTryToDoMoreOptimalSolution,
+    const DataRelatedToOptimisation& pDataRelatedToOptimisation,
     std::size_t pLength,
     const Goal& pCurrentGoal,
     const Historical* pGlobalHistorical)
 {
-  if (pTryToDoMoreOptimalSolution &&
+  if (pDataRelatedToOptimisation.tryToDoMoreOptimalSolution &&
       pLength == 0 &&
       pNewPotentialNextAction.actionPtr != nullptr &&
       pCurrentNextAction.actionPtr != nullptr &&
@@ -738,13 +771,14 @@ bool _isMoreOptimalNextAction(
     std::unique_ptr<std::chrono::steady_clock::time_point> now;
 
     PlanCost newCost;
+    bool nextStepIsAnEvent = pNewPotentialNextAction.parametersWithData.nextStepIsAnEvent(pDataRelatedToOptimisation.parameterToEntitiesFromEvent);
     {
       auto localProblem1 = pProblem;
       bool goalChanged = false;
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
       updateProblemForNextPotentialPlannerResult(localProblem1, goalChanged, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       ActionPtrWithGoal actionPtrWithGoal(pNewPotentialNextAction.actionPtr, pCurrentGoal);
-      auto* actionPtrWithGoalPtr = pNewPotentialNextAction.parametersWithData.nextInPlanCanBeAnEvent ? nullptr : &actionPtrWithGoal;
+      auto* actionPtrWithGoalPtr = nextStepIsAnEvent ? nullptr : &actionPtrWithGoal;
       newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr, lookForAnActionOutputInfos, actionPtrWithGoalPtr);
     }
 
@@ -756,7 +790,8 @@ bool _isMoreOptimalNextAction(
       updateProblemForNextPotentialPlannerResult(localProblem2, goalChanged, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       pPotentialNextActionComparisonCacheOpt = PotentialNextActionComparisonCache();
       ActionPtrWithGoal actionPtrWithGoal(pCurrentNextAction.actionPtr, pCurrentGoal);
-      auto* actionPtrWithGoalPtr = pCurrentNextAction.parametersWithData.nextInPlanCanBeAnEvent ? nullptr : &actionPtrWithGoal;
+      bool nextStepIsAnEventForCurrentAction = pCurrentNextAction.parametersWithData.nextStepIsAnEvent(pDataRelatedToOptimisation.parameterToEntitiesFromEvent);
+      auto* actionPtrWithGoalPtr = nextStepIsAnEventForCurrentAction ? nullptr : &actionPtrWithGoal;
       pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr, lookForAnActionOutputInfos, actionPtrWithGoalPtr);
     }
 
@@ -764,6 +799,7 @@ bool _isMoreOptimalNextAction(
     {
       pPotentialNextActionComparisonCacheOpt->currentCost = newCost;
       pPotentialNextActionComparisonCacheOpt->effectsWithWorseCosts.push_back(&pCurrentNextAction.actionPtr->effect);
+      pNextInPlanCanBeAnEvent = nextStepIsAnEvent;
       return true;
     }
     if (pPotentialNextActionComparisonCacheOpt->currentCost.isBetterThan(newCost))
@@ -773,8 +809,15 @@ bool _isMoreOptimalNextAction(
     }
   }
 
-  return pNewPotentialNextAction.isMoreImportantThan(pCurrentNextAction, pProblem, pGlobalHistorical);
+  bool res = pNewPotentialNextAction.isMoreImportantThan(pCurrentNextAction, pProblem, pGlobalHistorical);
+  if (res)
+  {
+    pNextInPlanCanBeAnEvent = pNewPotentialNextAction.parametersWithData.nextStepIsAnEvent(pDataRelatedToOptimisation.parameterToEntitiesFromEvent);
+    return true;
+  }
+  return false;
 }
+
 
 ActionId _findFirstActionForAGoal(
     std::map<Parameter, std::set<Entity>>& pParameters,
@@ -816,14 +859,16 @@ ActionId _findFirstActionForAGoal(
       {
         FactsAlreadyChecked factsAlreadyChecked;
         auto newPotRes = PotentialNextAction(currActionId, action);
-        if (_lookForAPossibleEffect(newPotRes.parametersWithData, pTryToDoMoreOptimalSolution, *newTreePtr,
+        DataRelatedToOptimisation dataRelatedToOptimisation;
+        dataRelatedToOptimisation.tryToDoMoreOptimalSolution = pTryToDoMoreOptimalSolution;
+        if (_lookForAPossibleEffect(newPotRes.parametersWithData, dataRelatedToOptimisation, *newTreePtr,
                                     action.effect.worldStateModification, action.effect.potentialWorldStateModification,
                                     context, factsAlreadyChecked, currActionId) &&
             (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parametersWithData.parameters)))
         {
           while (true)
           {
-            if (_isMoreOptimalNextAction(potentialNextActionComparisonCacheOpt, newPotRes, res, pProblem, pDomain, pTryToDoMoreOptimalSolution, pLength, pGoal, pGlobalHistorical))
+            if (_isMoreOptimalNextAction(potentialNextActionComparisonCacheOpt, pNextInPlanCanBeAnEvent, newPotRes, res, pProblem, pDomain, dataRelatedToOptimisation, pLength, pGoal, pGlobalHistorical))
             {
               assert(newPotRes.actionPtr != nullptr);
               res = newPotRes;
@@ -836,7 +881,6 @@ ActionId _findFirstActionForAGoal(
     }
   }
   pParameters = std::move(res.parametersWithData.parameters);
-  pNextInPlanCanBeAnEvent = res.parametersWithData.nextInPlanCanBeAnEvent;
   return res.actionId;
 }
 
