@@ -73,14 +73,30 @@ struct ActionPtrWithGoal
   const cp::Goal& goal;
 };
 
+
+struct PotentialNextActionParametersWithTmpData
+{
+  PotentialNextActionParametersWithTmpData()
+    : parameters(),
+      satisfyObjective(false),
+      nextInPlanCanBeAnEvent(false)
+  {
+  }
+
+  std::map<Parameter, std::set<Entity>> parameters;
+  bool satisfyObjective;
+  bool nextInPlanCanBeAnEvent;
+
+  bool removeAPossibility();
+};
+
+
 struct PotentialNextAction
 {
   PotentialNextAction()
     : actionId(""),
       actionPtr(nullptr),
-      parameters(),
-      satisfyObjective(false),
-      nextInPlanCanBeAnEvent(false)
+      parametersWithData()
   {
   }
   PotentialNextAction(const ActionId& pActionId,
@@ -88,14 +104,12 @@ struct PotentialNextAction
 
   ActionId actionId;
   const Action* actionPtr;
-  std::map<Parameter, std::set<Entity>> parameters;
-  bool satisfyObjective;
-  bool nextInPlanCanBeAnEvent;
+  PotentialNextActionParametersWithTmpData parametersWithData;
 
   bool isMoreImportantThan(const PotentialNextAction& pOther,
                            const Problem& pProblem,
                            const Historical* pGlobalHistorical) const;
-  bool removeAPossibility();
+  bool removeAPossibility() { return parametersWithData.removeAPossibility(); }
 };
 
 
@@ -103,11 +117,10 @@ PotentialNextAction::PotentialNextAction(const ActionId& pActionId,
                                          const Action& pAction)
   : actionId(pActionId),
     actionPtr(&pAction),
-    parameters(),
-    satisfyObjective(false)
+    parametersWithData()
 {
   for (const auto& currParam : pAction.parameters)
-    parameters[currParam];
+    parametersWithData.parameters[currParam];
 }
 
 
@@ -173,6 +186,19 @@ void _getPreferInContextStatistics(std::size_t& nbOfPreconditionsSatisfied,
 }
 
 
+bool PotentialNextActionParametersWithTmpData::removeAPossibility()
+{
+  for (auto& currParam : parameters)
+  {
+    if (currParam.second.size() > 1)
+    {
+      currParam.second.erase(currParam.second.begin());
+      return true;
+    }
+  }
+  return false;
+}
+
 bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
                                               const Problem& pProblem,
                                               const Historical* pGlobalHistorical) const
@@ -230,20 +256,6 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 }
 
 
-bool PotentialNextAction::removeAPossibility()
-{
-  for (auto& currParam : parameters)
-  {
-    if (currParam.second.size() > 1)
-    {
-      currParam.second.erase(currParam.second.begin());
-      return true;
-    }
-  }
-  return false;
-}
-
-
 std::set<Entity> _paramTypenameToEntities(const std::string& pParamtypename,
                                           const Domain& pDomain,
                                           const Problem& pProblem)
@@ -265,9 +277,7 @@ std::set<Entity> _paramTypenameToEntities(const std::string& pParamtypename,
 }
 
 
-bool _lookForAPossibleEffect(bool& pSatisfyObjective,
-                             bool& pNextInPlanCanBeAnEvent,
-                             std::map<Parameter, std::set<Entity>>& pParameters,
+bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParametersWithTmpData,
                              bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
@@ -293,13 +303,11 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
       (pCondition->containsFactOpt(pFactOptional, pParentParameters, pTmpParentParametersPtr, pParameters) &&
        pCondition->canBecomeTrue(pContext.problem.worldState, pParameters)))
   {
-    std::map<Parameter, std::set<Entity>> parametersToValues;
+    PotentialNextActionParametersWithTmpData parametersWithData;
     for (const auto& currParam : pParameters)
-      parametersToValues[currParam];
+      parametersWithData.parameters[currParam];
 
-    bool satisfyObjective = false;
-    bool nextInPlanCanBeAnEvent = false;
-    if (_lookForAPossibleEffect(satisfyObjective, nextInPlanCanBeAnEvent, parametersToValues, false, pTreeOfAlreadyDonePath,
+    if (_lookForAPossibleEffect(parametersWithData, false, pTreeOfAlreadyDonePath,
                                 pWorldStateModificationPtr1, pWorldStateModificationPtr2,
                                 pContext, pFactsAlreadychecked, pFromDeductionId))
     {
@@ -320,13 +328,13 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
                 return false;
 
               // Maybe the extracted parameter is also a parameter so we replace by it's value
-              auto itParam = parametersToValues.find(parentParamValue->toParameter());
-              if (itParam != parametersToValues.end())
+              auto itParam = parametersWithData.parameters.find(parentParamValue->toParameter());
+              if (itParam != parametersWithData.parameters.end())
                 newParamValues = itParam->second;
               else
                 newParamValues.insert(*parentParamValue);
               return !newParamValues.empty();
-            }, pContext.problem.worldState, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersToValues);
+            }, pContext.problem.worldState, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersWithData.parameters);
 
 
             if (newParamValues.empty())
@@ -602,9 +610,7 @@ bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
 }
 
 
-bool _lookForAPossibleEffect(bool& pSatisfyObjective,
-                             bool& pNextInPlanCanBeAnEvent,
-                             std::map<Parameter, std::set<Entity>>& pParameters,
+bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParametersWithTmpData,
                              bool pTryToGetAllPossibleParentParameterValues,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                              const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
@@ -614,10 +620,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
                              const std::string& pFromDeductionId)
 {
   if (pContext.goal.canDeductionSatisfyThisGoal(pFromDeductionId) &&
-      _doesStatisfyTheGoal(pParameters, pWorldStateModificationPtr1, pWorldStateModificationPtr2,
+      _doesStatisfyTheGoal(pParametersWithTmpData.parameters, pWorldStateModificationPtr1, pWorldStateModificationPtr2,
                            pContext, pFromDeductionId))
   {
-    pSatisfyObjective = true;
+    pParametersWithTmpData.satisfyObjective = true;
     return true;
   }
 
@@ -637,8 +643,8 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
           subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
 
         auto possibleEffect = _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
-              pNextInPlanCanBeAnEvent,
-              pSuccessions.actions, pSuccessions.events, pFactOptional, pParameters, pParametersToModifyInPlacePtr,
+              pParametersWithTmpData.nextInPlanCanBeAnEvent,
+              pSuccessions.actions, pSuccessions.events, pFactOptional, pParametersWithTmpData.parameters, pParametersToModifyInPlacePtr,
               pTryToGetAllPossibleParentParameterValues, pTreeOfAlreadyDonePath,
               setOfEvents, pContext, subFactsAlreadychecked);
 
@@ -653,10 +659,10 @@ bool _lookForAPossibleEffect(bool& pSatisfyObjective,
     };
 
   if (pWorldStateModificationPtr1)
-    if (pWorldStateModificationPtr1->iterateOnSuccessions(successionsCallback, pParameters, pContext.problem.worldState, pFromDeductionId))
+    if (pWorldStateModificationPtr1->iterateOnSuccessions(successionsCallback, pParametersWithTmpData.parameters, pContext.problem.worldState, pFromDeductionId))
       return true;
   if (pWorldStateModificationPtr2)
-    if (pWorldStateModificationPtr2->iterateOnSuccessions(successionsCallback, pParameters, pContext.problem.worldState, pFromDeductionId))
+    if (pWorldStateModificationPtr2->iterateOnSuccessions(successionsCallback, pParametersWithTmpData.parameters, pContext.problem.worldState, pFromDeductionId))
       return true;
   return false;
 }
@@ -722,10 +728,10 @@ bool _isMoreOptimalNextAction(
       pNewPotentialNextAction.actionPtr != nullptr &&
       pCurrentNextAction.actionPtr != nullptr &&
       (pNewPotentialNextAction.actionPtr->effect != pCurrentNextAction.actionPtr->effect ||
-       pNewPotentialNextAction.parameters != pCurrentNextAction.parameters))
+       pNewPotentialNextAction.parametersWithData.parameters != pCurrentNextAction.parametersWithData.parameters))
   {
-    ActionInvocationWithGoal oneStepOfPlannerResult1(pNewPotentialNextAction.actionId, pNewPotentialNextAction.parameters, {}, 0);
-    ActionInvocationWithGoal oneStepOfPlannerResult2(pCurrentNextAction.actionId, pCurrentNextAction.parameters, {}, 0);
+    ActionInvocationWithGoal oneStepOfPlannerResult1(pNewPotentialNextAction.actionId, pNewPotentialNextAction.parametersWithData.parameters, {}, 0);
+    ActionInvocationWithGoal oneStepOfPlannerResult2(pCurrentNextAction.actionId, pCurrentNextAction.parametersWithData.parameters, {}, 0);
     std::unique_ptr<std::chrono::steady_clock::time_point> now;
 
     PlanCost newCost;
@@ -735,7 +741,7 @@ bool _isMoreOptimalNextAction(
       LookForAnActionOutputInfos lookForAnActionOutputInfos;
       updateProblemForNextPotentialPlannerResult(localProblem1, goalChanged, oneStepOfPlannerResult1, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       ActionPtrWithGoal actionPtrWithGoal(pNewPotentialNextAction.actionPtr, pCurrentGoal);
-      auto* actionPtrWithGoalPtr = pNewPotentialNextAction.nextInPlanCanBeAnEvent ? nullptr : &actionPtrWithGoal;
+      auto* actionPtrWithGoalPtr = pNewPotentialNextAction.parametersWithData.nextInPlanCanBeAnEvent ? nullptr : &actionPtrWithGoal;
       newCost = _extractPlanCost(localProblem1, pDomain, now, nullptr, lookForAnActionOutputInfos, actionPtrWithGoalPtr);
     }
 
@@ -747,7 +753,7 @@ bool _isMoreOptimalNextAction(
       updateProblemForNextPotentialPlannerResult(localProblem2, goalChanged, oneStepOfPlannerResult2, pDomain, now, nullptr, &lookForAnActionOutputInfos);
       pPotentialNextActionComparisonCacheOpt = PotentialNextActionComparisonCache();
       ActionPtrWithGoal actionPtrWithGoal(pCurrentNextAction.actionPtr, pCurrentGoal);
-      auto* actionPtrWithGoalPtr = pCurrentNextAction.nextInPlanCanBeAnEvent ? nullptr : &actionPtrWithGoal;
+      auto* actionPtrWithGoalPtr = pCurrentNextAction.parametersWithData.nextInPlanCanBeAnEvent ? nullptr : &actionPtrWithGoal;
       pPotentialNextActionComparisonCacheOpt->currentCost = _extractPlanCost(localProblem2, pDomain, now, nullptr, lookForAnActionOutputInfos, actionPtrWithGoalPtr);
     }
 
@@ -807,11 +813,10 @@ ActionId _findFirstActionForAGoal(
       {
         FactsAlreadyChecked factsAlreadyChecked;
         auto newPotRes = PotentialNextAction(currActionId, action);
-        if (_lookForAPossibleEffect(newPotRes.satisfyObjective, newPotRes.nextInPlanCanBeAnEvent, newPotRes.parameters,
-                                    pTryToDoMoreOptimalSolution, *newTreePtr,
+        if (_lookForAPossibleEffect(newPotRes.parametersWithData, pTryToDoMoreOptimalSolution, *newTreePtr,
                                     action.effect.worldStateModification, action.effect.potentialWorldStateModification,
                                     context, factsAlreadyChecked, currActionId) &&
-            (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parameters)))
+            (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parametersWithData.parameters)))
         {
           while (true)
           {
@@ -827,8 +832,8 @@ ActionId _findFirstActionForAGoal(
       }
     }
   }
-  pParameters = std::move(res.parameters);
-  pNextInPlanCanBeAnEvent = res.nextInPlanCanBeAnEvent;
+  pParameters = std::move(res.parametersWithData.parameters);
+  pNextInPlanCanBeAnEvent = res.parametersWithData.nextInPlanCanBeAnEvent;
   return res.actionId;
 }
 
