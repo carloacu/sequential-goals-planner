@@ -79,7 +79,13 @@ void _test_dataDirectory(const std::string& pDataPath,
 }
 
 
-TEST_F(PlannerUsingExternalData, test_problemsInData)
+TEST_F(PlannerUsingExternalData, test_problemsInData_simple)
 {
   _test_dataDirectory(PlannerUsingExternalData::dataPath, "simple");
+}
+
+
+TEST_F(PlannerUsingExternalData, test_problemsInData_sequential_goal)
+{
+  _test_dataDirectory(PlannerUsingExternalData::dataPath, "sequential_goal");
 }

@@ -96,6 +96,7 @@ struct WorldStateModificationNode : public WorldStateModification
   bool iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
                             std::map<Parameter, std::set<Entity>>& pParameters,
                             const WorldState& pWorldState,
+                            bool pCanSatisfyThisGoal,
                             const std::string& pFromDeductionId) const override;
   void updateSuccesions(const Domain& pDomain,
                         const WorldStateModificationContainerId& pContainerId,
@@ -202,9 +203,10 @@ struct WorldStateModificationFact : public WorldStateModification
   bool iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
                             std::map<Parameter, std::set<Entity>>&,
                             const WorldState&,
+                            bool pCanSatisfyThisGoal,
                             const std::string&) const override
   {
-    if (!_successions.empty())
+    if (pCanSatisfyThisGoal || !_successions.empty())
        return pCallback(_successions, factOptional, nullptr, [](const std::map<Parameter, std::set<Entity>>&){ return true; });
     return false;
   }
@@ -298,6 +300,7 @@ struct WorldStateModificationNumber : public WorldStateModification
   bool iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>&,
                             std::map<Parameter, std::set<Entity>>&,
                             const WorldState&,
+                            bool,
                             const std::string&) const override { return false; }
   void updateSuccesions(const Domain&,
                         const WorldStateModificationContainerId&,

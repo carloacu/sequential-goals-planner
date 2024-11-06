@@ -338,12 +338,14 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
           {
             auto& newParamValues = pNewParentParameters[pParameter];
 
+            bool foundSomethingThatMatched = false;
             pCondition->findConditionCandidateFromFactFromEffect(
                   [&](const FactOptional& pConditionFactOptional)
             {
               auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameter, pConditionFactOptional.fact);
               if (!parentParamValue)
                 return false;
+              foundSomethingThatMatched = true;
 
               // Maybe the extracted parameter is also a parameter so we replace by it's value
               auto itParam = parametersWithData.parameters.find(parentParamValue->toParameter());
@@ -355,7 +357,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
             }, pContext.problem.worldState, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersWithData.parameters);
 
 
-            if (newParamValues.empty())
+            if (foundSomethingThatMatched && newParamValues.empty())
             {
               if (pParameter.type)
                 newParamValues = _paramTypenameToEntities(pParameter.type->name, pContext.domain, pContext.problem);
@@ -438,7 +440,10 @@ bool _updatePossibleParameters(
 }
 
 
-PossibleEffect _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
+void _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
+    PossibleEffect& res,
+    std::map<Parameter, std::set<Entity>>& newPossibleParentParameters,
+    std::map<Parameter, std::set<Entity>>& newPossibleTmpParentParameters,
     const std::set<ActionId>& pActionSuccessions,
     const std::map<SetOfEventsId, std::set<EventId>>& pEventSuccessions,
     const FactOptional& pFactOptional,
@@ -450,9 +455,6 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
     const ResearchContext& pContext,
     FactsAlreadyChecked& pFactsAlreadychecked)
 {
-  auto res = PossibleEffect::NOT_SATISFIED;
-  std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
-  std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
   auto& actions = pContext.domain.actions();
   for (const auto& currActionId : pActionSuccessions)
   {
@@ -484,7 +486,7 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
           _updatePossibleParameters(newPossibleParentParameters, newPossibleTmpParentParameters,
                                     pParentParameters, cpParentParameters, pTmpParentParametersPtr,
                                     pDataRelatedToOptimisation, cpTmpParameters, false))
-        return res;
+        return;
     }
   }
 
@@ -527,32 +529,47 @@ PossibleEffect _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
               if (_updatePossibleParameters(newPossibleParentParameters, newPossibleTmpParentParameters,
                                             pParentParameters, cpParentParameters, pTmpParentParametersPtr,
                                             pDataRelatedToOptimisation, cpTmpParameters, true))
-                return res;
+                return;
             }
           }
         }
       }
     }
   }
-
-  if (!newPossibleParentParameters.empty())
-  {
-    pParentParameters = std::move(newPossibleParentParameters);
-    if (pTmpParentParametersPtr != nullptr)
-      *pTmpParentParametersPtr = std::move(newPossibleTmpParentParameters);
-  }
-  return res;
 }
 
 
-bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
-                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
-                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
-                          const ResearchContext& pContext,
-                          const std::string& pFromDeductionId)
+
+bool _doesConditionMatchAnOptionalFact(const std::map<Parameter, std::set<Entity>>& pParameters,
+                                       const FactOptional& pFactOptional,
+                                       const std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
+                                       const ResearchContext& pContext)
 {
   const auto& objective = pContext.goal.objective();
+  return objective.findConditionCandidateFromFactFromEffect(
+        [&](const FactOptional& pConditionFactOptional)
+  {
+    if (pContext.problem.worldState.isOptionalFactSatisfied(pConditionFactOptional))
+      return false;
 
+    if (pConditionFactOptional.isFactNegated != pFactOptional.isFactNegated)
+      return pConditionFactOptional.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pConditionFactOptional.fact.fluent() != pFactOptional.fact.fluent();
+
+    bool pIsWrappingExpressionNegated = false; // TODO: replace by real value
+    if ((!pIsWrappingExpressionNegated && pFactOptional.isFactNegated == pConditionFactOptional.isFactNegated) ||
+        (pIsWrappingExpressionNegated && pFactOptional.isFactNegated != pConditionFactOptional.isFactNegated))
+      return pConditionFactOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pParameters, pParametersToModifyInPlacePtr);
+    return false;
+  }, pContext.problem.worldState, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
+}
+
+
+bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
+                             const FactOptional& pFactOptional,
+                             std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
+                             const ResearchContext& pContext)
+{
+  const auto& objective = pContext.goal.objective();
   auto fillParameter = [&](const FactOptional& pFactOptional,
                            std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                            const Parameter& pParameter,
@@ -564,18 +581,20 @@ bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
     {
       auto& newParamValues = pNewParameters[pParameter];
 
+      bool foundSomethingThatMatched = false;
       objective.findConditionCandidateFromFactFromEffect(
             [&](const FactOptional& pConditionFactOptional)
       {
         auto parentParamValue = pFactOptional.fact.tryToExtractArgumentFromExample(pParameter, pConditionFactOptional.fact);
         if (!parentParamValue)
           return false;
+        foundSomethingThatMatched = true;
 
         newParamValues.insert(*parentParamValue);
         return !newParamValues.empty();
       }, pContext.problem.worldState, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
 
-      if (newParamValues.empty())
+      if (foundSomethingThatMatched && newParamValues.empty())
       {
         if (pParameter.type)
           newParamValues = _paramTypenameToEntities(pParameter.type->name, pContext.domain, pContext.problem);
@@ -585,55 +604,60 @@ bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
     return true;
   };
 
-  auto checkObjectiveCallback = [&](const FactOptional& pFactOptional, std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) -> bool
+  auto cpParentParameters = pParameters;
+  std::map<Parameter, std::set<Entity>> cpTmpParameters;
+  if (pParametersToModifyInPlacePtr != nullptr)
+    cpTmpParameters = *pParametersToModifyInPlacePtr;
+
+  std::map<Parameter, std::set<Entity>> newParameters;
+  for (auto& currParam : cpParentParameters)
+    if (!fillParameter(pFactOptional, &cpTmpParameters, currParam.first, currParam.second, newParameters))
+      return false;
+  applyNewParams(cpParentParameters, newParameters);
+
+  if (pContext.problem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &cpParentParameters, pParametersToModifyInPlacePtr, nullptr))
+    return false;
+
+  if (pParametersToModifyInPlacePtr != nullptr)
   {
-    bool match = objective.findConditionCandidateFromFactFromEffect(
-          [&](const FactOptional& pConditionFactOptional)
-    {
-      if (pConditionFactOptional.isFactNegated != pFactOptional.isFactNegated)
-        return pConditionFactOptional.fact.areEqualWithoutFluentConsideration(pFactOptional.fact) && pConditionFactOptional.fact.fluent() != pFactOptional.fact.fluent();
-
-      bool pIsWrappingExpressionNegated = false; // TODO: replace by real value
-      if ((!pIsWrappingExpressionNegated && pFactOptional.isFactNegated == pConditionFactOptional.isFactNegated) ||
-          (pIsWrappingExpressionNegated && pFactOptional.isFactNegated != pConditionFactOptional.isFactNegated))
-        return pConditionFactOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pParameters, pParametersToModifyInPlacePtr);
-      return false;
-    }, pContext.problem.worldState, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
-    if (!match)
-      return false;
-
-    if (!pParameters.empty() || pParametersToModifyInPlacePtr != nullptr)
-    {
-      auto cpParentParameters = pParameters;
-      std::map<Parameter, std::set<Entity>> cpTmpParameters;
-      if (pParametersToModifyInPlacePtr != nullptr)
-        cpTmpParameters = *pParametersToModifyInPlacePtr;
-
-      std::map<Parameter, std::set<Entity>> newParameters;
-      for (auto& currParam : cpParentParameters)
-        if (!fillParameter(pFactOptional, &cpTmpParameters, currParam.first, currParam.second, newParameters))
-          return false;
-      applyNewParams(cpParentParameters, newParameters);
-
-      if (pContext.problem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &cpParentParameters, pParametersToModifyInPlacePtr, nullptr))
+    std::map<Parameter, std::set<Entity>> newTmpParameters;
+    for (auto& currParam : cpTmpParameters)
+      if (!fillParameter(pFactOptional, &cpTmpParameters, currParam.first, currParam.second, newTmpParameters))
         return false;
+    applyNewParams(cpTmpParameters, newTmpParameters);
 
-      pParameters = std::move(cpParentParameters);
+    *pParametersToModifyInPlacePtr = std::move(cpTmpParameters);
+  }
 
-      if (pParametersToModifyInPlacePtr != nullptr)
-      {
-        std::map<Parameter, std::set<Entity>> newTmpParameters;
-        for (auto& currParam : cpTmpParameters)
-          if (!fillParameter(pFactOptional, &cpTmpParameters, currParam.first, currParam.second, newTmpParameters))
-            return false;
-        applyNewParams(cpTmpParameters, newTmpParameters);
+  pParameters = std::move(cpParentParameters);
+  return true;
+}
 
-        *pParametersToModifyInPlacePtr = std::move(cpTmpParameters);
-        return pCheckValidity(*pParametersToModifyInPlacePtr);
-      }
+
+bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
+                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
+                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
+                          const ResearchContext& pContext,
+                          const std::string& pFromDeductionId)
+{
+  auto checkObjectiveCallback = [&](const FactOptional& pFactOptional,
+      std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
+      const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) -> bool
+  {
+    if (_doesConditionMatchAnOptionalFact(pParameters, pFactOptional, pParametersToModifyInPlacePtr, pContext))
+    {
+      if (pParameters.empty() && pParametersToModifyInPlacePtr == nullptr)
+        return true;
+
+       if (_checkObjectiveCallback(pParameters, pFactOptional, pParametersToModifyInPlacePtr, pContext))
+       {
+         if (pParametersToModifyInPlacePtr != nullptr &&  !pCheckValidity(*pParametersToModifyInPlacePtr))
+           return false;
+         return true;
+       }
+       return false;
     }
-
-    return true;
+    return false;
   };
 
   if (pWorldStateModificationPtr1 &&
@@ -655,12 +679,17 @@ bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParamete
                              FactsAlreadyChecked& pFactsAlreadychecked,
                              const std::string& pFromDeductionId)
 {
-  if (pContext.goal.canDeductionSatisfyThisGoal(pFromDeductionId) &&
-      _doesStatisfyTheGoal(pParametersWithTmpData.parameters, pWorldStateModificationPtr1, pWorldStateModificationPtr2,
-                           pContext, pFromDeductionId))
+  bool canSatisfyThisGoal = pContext.goal.canDeductionSatisfyThisGoal(pFromDeductionId);
+  if (canSatisfyThisGoal &&
+      pContext.goal.isASimpleFactObjective())
   {
-    pParametersWithTmpData.satisfyObjective = true;
-    return true;
+    if (_doesStatisfyTheGoal(pParametersWithTmpData.parameters, pWorldStateModificationPtr1, pWorldStateModificationPtr2,
+                             pContext, pFromDeductionId))
+    {
+      pParametersWithTmpData.satisfyObjective = true;
+      return true;
+    }
+    canSatisfyThisGoal = false;
   }
 
   // Iterate on possible successions
@@ -669,35 +698,70 @@ bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParamete
                                  const cp::FactOptional& pFactOptional,
                                  std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                                  const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) {
-      if ((!pFactOptional.isFactNegated && pFactsAlreadychecked.factsToAdd.count(pFactOptional.fact) == 0) ||
-          (pFactOptional.isFactNegated && pFactsAlreadychecked.factsToRemove.count(pFactOptional.fact) == 0))
+    auto possibleEffect = PossibleEffect::NOT_SATISFIED;
+    std::map<Parameter, std::set<Entity>> newPossibleParentParameters;
+    std::map<Parameter, std::set<Entity>> newPossibleTmpParentParameters;
+    bool checkActionAndEvents = true;
+
+    if (canSatisfyThisGoal &&
+        _doesConditionMatchAnOptionalFact(pParametersWithTmpData.parameters, pFactOptional, pParametersToModifyInPlacePtr, pContext))
+    {
+      if (pParametersWithTmpData.parameters.empty() && pParametersToModifyInPlacePtr == nullptr)
+        return true;
+
+      auto cpParentParameters = pParametersWithTmpData.parameters;
+      std::map<Parameter, std::set<Entity>> cpTmpParameters;
+      if (pParametersToModifyInPlacePtr != nullptr)
+        cpTmpParameters = *pParametersToModifyInPlacePtr;
+
+      if (_checkObjectiveCallback(cpParentParameters, pFactOptional, &cpTmpParameters, pContext))
       {
-        FactsAlreadyChecked subFactsAlreadychecked = pFactsAlreadychecked;
-        if (!pFactOptional.isFactNegated)
-          subFactsAlreadychecked.factsToAdd.insert(pFactOptional.fact);
-        else
-          subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
-
-        auto possibleEffect = _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
-              pSuccessions.actions, pSuccessions.events, pFactOptional, pParametersWithTmpData.parameters, pParametersToModifyInPlacePtr,
-              pDataRelatedToOptimisation, pTreeOfAlreadyDonePath,
-              setOfEvents, pContext, subFactsAlreadychecked);
-
-        if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
-          possibleEffect = PossibleEffect::NOT_SATISFIED;
-
-        if (possibleEffect != PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD)
-          pFactsAlreadychecked.swap(subFactsAlreadychecked);
-        return possibleEffect == PossibleEffect::SATISFIED;
+        possibleEffect = PossibleEffect::SATISFIED;
+        if (_updatePossibleParameters(newPossibleParentParameters, newPossibleTmpParentParameters,
+                                      pParametersWithTmpData.parameters, cpParentParameters, pParametersToModifyInPlacePtr,
+                                      pDataRelatedToOptimisation, cpTmpParameters, false))
+          checkActionAndEvents = false;
       }
-      return false;
+    }
+
+    if (checkActionAndEvents &&
+        (!pSuccessions.actions.empty() || !pSuccessions.events.empty()) &&
+        ((!pFactOptional.isFactNegated && pFactsAlreadychecked.factsToAdd.count(pFactOptional.fact) == 0) ||
+         (pFactOptional.isFactNegated && pFactsAlreadychecked.factsToRemove.count(pFactOptional.fact) == 0)))
+    {
+      FactsAlreadyChecked subFactsAlreadychecked = pFactsAlreadychecked;
+      if (!pFactOptional.isFactNegated)
+        subFactsAlreadychecked.factsToAdd.insert(pFactOptional.fact);
+      else
+        subFactsAlreadychecked.factsToRemove.insert(pFactOptional.fact);
+
+      _lookForAPossibleExistingOrNotFactFromActionsAndEvents(
+            possibleEffect, newPossibleParentParameters, newPossibleTmpParentParameters,
+            pSuccessions.actions, pSuccessions.events, pFactOptional, pParametersWithTmpData.parameters, pParametersToModifyInPlacePtr,
+            pDataRelatedToOptimisation, pTreeOfAlreadyDonePath,
+            setOfEvents, pContext, subFactsAlreadychecked);
+
+      if (possibleEffect != PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD)
+        pFactsAlreadychecked.swap(subFactsAlreadychecked);
+    }
+
+    if (!newPossibleParentParameters.empty())
+    {
+      pParametersWithTmpData.parameters = std::move(newPossibleParentParameters);
+      if (pParametersToModifyInPlacePtr != nullptr)
+        *pParametersToModifyInPlacePtr = std::move(newPossibleTmpParentParameters);
+    }
+
+    if (possibleEffect == PossibleEffect::SATISFIED && pParametersToModifyInPlacePtr != nullptr && !pCheckValidity(*pParametersToModifyInPlacePtr))
+      possibleEffect = PossibleEffect::NOT_SATISFIED;
+    return possibleEffect == PossibleEffect::SATISFIED;
     };
 
   if (pWorldStateModificationPtr1)
-    if (pWorldStateModificationPtr1->iterateOnSuccessions(successionsCallback, pParametersWithTmpData.parameters, pContext.problem.worldState, pFromDeductionId))
+    if (pWorldStateModificationPtr1->iterateOnSuccessions(successionsCallback, pParametersWithTmpData.parameters, pContext.problem.worldState, canSatisfyThisGoal, pFromDeductionId))
       return true;
   if (pWorldStateModificationPtr2)
-    if (pWorldStateModificationPtr2->iterateOnSuccessions(successionsCallback, pParametersWithTmpData.parameters, pContext.problem.worldState, pFromDeductionId))
+    if (pWorldStateModificationPtr2->iterateOnSuccessions(successionsCallback, pParametersWithTmpData.parameters, pContext.problem.worldState, canSatisfyThisGoal, pFromDeductionId))
       return true;
   return false;
 }

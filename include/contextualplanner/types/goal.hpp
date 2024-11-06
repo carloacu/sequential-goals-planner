@@ -93,6 +93,8 @@ struct CONTEXTUALPLANNER_API Goal
    */
   int getMaxTimeToKeepInactive() const { return _maxTimeToKeepInactive; }
 
+  bool isASimpleFactObjective() const;
+
   void refreshIfNeeded(const Domain& pDomain);
 
   std::string printActionsThatCanSatisfyThisGoal() const;

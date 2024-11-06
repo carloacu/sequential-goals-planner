@@ -127,6 +127,7 @@ struct CONTEXTUALPLANNER_API WorldStateModification
   virtual bool iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
                                     std::map<Parameter, std::set<Entity>>& pParameters,
                                     const WorldState& pWorldState,
+                                    bool pCanSatisfyThisGoal,
                                     const std::string& pFromDeductionId) const = 0;
 
   virtual void updateSuccesions(const Domain& pDomain,

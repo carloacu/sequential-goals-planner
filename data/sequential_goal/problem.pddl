@@ -13,9 +13,13 @@
   )
 
   (:goal
-    (and
-      (at robot1 locationA)
-      (at-object box1 locationC)
+    (and ;; __SEQUENTIALLY
+      (started_notified)
+      (and
+        (at robot1 locationA)
+        (at-object box1 locationC)
+      )
+      (finished_notified)
     )
   )
 )

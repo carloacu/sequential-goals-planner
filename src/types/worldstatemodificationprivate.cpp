@@ -420,15 +420,16 @@ bool WorldStateModificationNode::canSatisfyObjective(const std::function<bool (c
 bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (const Successions&, const FactOptional&, std::map<Parameter, std::set<Entity>>*, const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>&)>& pCallback,
                                                       std::map<Parameter, std::set<Entity>>& pParameters,
                                                       const WorldState& pWorldState,
+                                                      bool pCanSatisfyThisGoal,
                                                       const std::string& pFromDeductionId) const
 {
   const auto& setOfFacts = pWorldState.factsMapping();
 
   if (nodeType == WorldStateModificationNodeType::AND)
-    return (leftOperand && leftOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId)) ||
-        (rightOperand && rightOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId));
+    return (leftOperand && leftOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pCanSatisfyThisGoal, pFromDeductionId)) ||
+        (rightOperand && rightOperand->iterateOnSuccessions(pCallback, pParameters, pWorldState, pCanSatisfyThisGoal, pFromDeductionId));
 
-  if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand && !_successions.empty())
+  if (nodeType == WorldStateModificationNodeType::ASSIGN && leftOperand && rightOperand && (pCanSatisfyThisGoal || !_successions.empty()))
   {
     auto* leftFactPtr = toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
@@ -456,12 +457,12 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
           [&](const WorldStateModification& pWsModification)
     {
       if (!res)
-        res = pWsModification.iterateOnSuccessions(pCallback, pParameters, pWorldState, pFromDeductionId);
+        res = pWsModification.iterateOnSuccessions(pCallback, pParameters, pWorldState, pCanSatisfyThisGoal, pFromDeductionId);
     }, setOfFacts);
     return res;
   }
 
-  if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand && rightOperand && !_successions.empty())
+  if (nodeType == WorldStateModificationNodeType::INCREASE && leftOperand && rightOperand && (pCanSatisfyThisGoal || !_successions.empty()))
   {
     auto* leftFactPtr = toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
@@ -472,7 +473,7 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
     }
   }
 
-  if (nodeType == WorldStateModificationNodeType::DECREASE && leftOperand && rightOperand && !_successions.empty())
+  if (nodeType == WorldStateModificationNodeType::DECREASE && leftOperand && rightOperand && (pCanSatisfyThisGoal || !_successions.empty()))
   {
     auto* leftFactPtr = toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)
@@ -483,7 +484,7 @@ bool WorldStateModificationNode::iterateOnSuccessions(const std::function<bool (
     }
   }
 
-  if (nodeType == WorldStateModificationNodeType::MULTIPLY && leftOperand && rightOperand && !_successions.empty())
+  if (nodeType == WorldStateModificationNodeType::MULTIPLY && leftOperand && rightOperand && (pCanSatisfyThisGoal || !_successions.empty()))
   {
     auto* leftFactPtr = toWmFact(*leftOperand);
     if (leftFactPtr != nullptr)

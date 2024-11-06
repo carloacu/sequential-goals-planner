@@ -162,6 +162,13 @@ std::string Goal::toPddl(std::size_t pIdentation) const
   return res;
 }
 
+
+bool Goal::isASimpleFactObjective() const
+{
+  return _objective && _objective->fcFactPtr() != nullptr;
+}
+
+
 void Goal::refreshIfNeeded(const Domain& pDomain)
 {
   if (_uuidOfLastDomainUsedForCache == pDomain.getUuid())
