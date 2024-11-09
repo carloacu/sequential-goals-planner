@@ -5,7 +5,7 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <contextualplanner/types/derivedpredicate.hpp>
+#include <prioritizedgoalsplanner/types/derivedpredicate.hpp>
 
 namespace cp
 {

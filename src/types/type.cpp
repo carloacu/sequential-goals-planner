@@ -1,4 +1,4 @@
-#include <contextualplanner/types/type.hpp>
+#include <prioritizedgoalsplanner/types/type.hpp>
 #include <stdexcept>
 
 namespace cp

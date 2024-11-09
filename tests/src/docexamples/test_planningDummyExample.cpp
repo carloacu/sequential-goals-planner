@@ -2,8 +2,8 @@
 #include <map>
 #include <memory>
 #include <assert.h>
-#include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 
 void planningDummyExample()

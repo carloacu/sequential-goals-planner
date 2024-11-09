@@ -1,6 +1,6 @@
-#include <contextualplanner/types/predicate.hpp>
+#include <prioritizedgoalsplanner/types/predicate.hpp>
 #include <stdexcept>
-#include <contextualplanner/types/setoftypes.hpp>
+#include <prioritizedgoalsplanner/types/setoftypes.hpp>
 #include "expressionParsed.hpp"
 
 

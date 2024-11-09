@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <contextualplanner/util/arithmeticevaluator.hpp>
+#include <prioritizedgoalsplanner/util/arithmeticevaluator.hpp>
 
 using namespace cp;
 

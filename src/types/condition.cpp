@@ -1,9 +1,9 @@
-#include <contextualplanner/types/condition.hpp>
+#include <prioritizedgoalsplanner/types/condition.hpp>
 #include <optional>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/setofderivedpredicates.hpp>
-#include <contextualplanner/types/worldstate.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/setofderivedpredicates.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
 namespace cp

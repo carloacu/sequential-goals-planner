@@ -1,5 +1,5 @@
-#include <contextualplanner/util/replacevariables.hpp>
-#include <contextualplanner/util/arithmeticevaluator.hpp>
+#include <prioritizedgoalsplanner/util/replacevariables.hpp>
+#include <prioritizedgoalsplanner/util/arithmeticevaluator.hpp>
 
 namespace cp
 {

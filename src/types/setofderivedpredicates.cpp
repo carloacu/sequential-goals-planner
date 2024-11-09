@@ -1,5 +1,5 @@
-#include <contextualplanner/types/setofderivedpredicates.hpp>
-#include <contextualplanner/types/derivedpredicate.hpp>
+#include <prioritizedgoalsplanner/types/setofderivedpredicates.hpp>
+#include <prioritizedgoalsplanner/types/derivedpredicate.hpp>
 
 
 namespace cp

@@ -7,7 +7,7 @@
 #include "condition.hpp"
 #include "factoptional.hpp"
 #include "../util/api.hpp"
-#include <contextualplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
 
 namespace cp
 {

@@ -1,9 +1,9 @@
-#include <contextualplanner/types/goal.hpp>
+#include <prioritizedgoalsplanner/types/goal.hpp>
 #include <assert.h>
-#include <contextualplanner/types/condtionstovalue.hpp>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
-#include <contextualplanner/util/serializer/serializeinpddl.hpp>
+#include <prioritizedgoalsplanner/types/condtionstovalue.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
 
 namespace cp
 {

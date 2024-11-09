@@ -4,11 +4,11 @@
 #include <list>
 #include <map>
 #include "util/api.hpp"
-#include <contextualplanner/util/alias.hpp>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/actioninvocationwithgoal.hpp>
-#include <contextualplanner/types/problem.hpp>
-#include <contextualplanner/types/lookforanactionoutputinfos.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <prioritizedgoalsplanner/types/problem.hpp>
+#include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
 namespace cp
 {

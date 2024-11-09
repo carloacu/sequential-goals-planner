@@ -1,7 +1,7 @@
-#include <contextualplanner/util/print.hpp>
+#include <prioritizedgoalsplanner/util/print.hpp>
 #include <sstream>
 #include <iomanip>
-#include <contextualplanner/contextualplanner.hpp>
+#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 
 
 namespace cp

@@ -1,4 +1,4 @@
-#include <contextualplanner/types/historical.hpp>
+#include <prioritizedgoalsplanner/types/historical.hpp>
 
 
 namespace cp

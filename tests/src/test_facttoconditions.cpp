@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/factstovalue.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/types/factstovalue.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
 
 using namespace cp;
 

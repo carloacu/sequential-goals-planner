@@ -6,7 +6,7 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <contextualplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
 
 namespace cp
 {

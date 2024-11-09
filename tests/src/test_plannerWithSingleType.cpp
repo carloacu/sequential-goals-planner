@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
-#include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/types/axiom.hpp>
-#include <contextualplanner/types/predicate.hpp>
-#include <contextualplanner/types/setofevents.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
-#include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
-#include <contextualplanner/util/print.hpp>
+#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
+#include <prioritizedgoalsplanner/types/axiom.hpp>
+#include <prioritizedgoalsplanner/types/predicate.hpp>
+#include <prioritizedgoalsplanner/types/setofevents.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/util/trackers/goalsremovedtracker.hpp>
+#include <prioritizedgoalsplanner/util/print.hpp>
 
 namespace
 {

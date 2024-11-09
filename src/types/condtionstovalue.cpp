@@ -1,6 +1,6 @@
-#include <contextualplanner/types/condtionstovalue.hpp>
-#include <contextualplanner/types/condition.hpp>
-#include <contextualplanner/types/factoptional.hpp>
+#include <prioritizedgoalsplanner/types/condtionstovalue.hpp>
+#include <prioritizedgoalsplanner/types/condition.hpp>
+#include <prioritizedgoalsplanner/types/factoptional.hpp>
 
 namespace cp
 {

@@ -1,9 +1,9 @@
-#include <contextualplanner/types/worldstatemodification.hpp>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
 #include "expressionParsed.hpp"
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 #include "worldstatemodificationprivate.hpp"
 
 namespace cp

@@ -3,9 +3,9 @@
 
 #include <map>
 #include "../util/api.hpp"
-#include <contextualplanner/types/event.hpp>
-#include <contextualplanner/types/factstovalue.hpp>
-#include <contextualplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/types/event.hpp>
+#include <prioritizedgoalsplanner/types/factstovalue.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
 
 namespace cp
 {

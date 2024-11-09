@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(contextualplanner_tests)
+project(prioritizedgoalsplanner_tests)
 
 include_directories(".")
 
 if(NOT CONTEXTUALPLANNER_FOUND)
-  find_package(contextualplannerlib)
+  find_package(prioritizedgoalsplannerlib)
 endif()
 
 enable_testing()
@@ -13,7 +13,7 @@ find_package(GTest REQUIRED)
 
 
 add_executable(
-  contextualplanner_tests
+  prioritizedgoalsplanner_tests
 
   src/plannerusingexternaldata.hpp
 
@@ -38,12 +38,12 @@ add_executable(
 )
 
 
-target_link_libraries(contextualplanner_tests
+target_link_libraries(prioritizedgoalsplanner_tests
   ${GTEST_LIBRARIES}
   ${CONTEXTUALPLANNER_LIBRARIES}
 )
 
 add_test(
-  NAME contextualplanner_tests
-  COMMAND contextualplanner_tests
+  NAME prioritizedgoalsplanner_tests
+  COMMAND prioritizedgoalsplanner_tests
 )

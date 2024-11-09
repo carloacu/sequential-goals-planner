@@ -1,11 +1,11 @@
 #include "plannerusingexternaldata.hpp"
 #include <gtest/gtest.h>
 #include <fstream>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/problem.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
-#include <contextualplanner/util/serializer/serializeinpddl.hpp>
-#include <contextualplanner/contextualplanner.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/problem.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
+#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 
 
 using namespace cp;

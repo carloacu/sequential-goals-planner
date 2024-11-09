@@ -3,8 +3,8 @@
 
 #include <vector>
 #include "../util/api.hpp"
-#include <contextualplanner/types/condition.hpp>
-#include <contextualplanner/types/problemmodification.hpp>
+#include <prioritizedgoalsplanner/types/condition.hpp>
+#include <prioritizedgoalsplanner/types/problemmodification.hpp>
 
 
 namespace cp

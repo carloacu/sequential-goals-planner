@@ -2,7 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_FACTSALREADYCHECKED_HPP
 
 #include <set>
-#include <contextualplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
 
 namespace cp
 {

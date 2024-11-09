@@ -1,10 +1,10 @@
 #ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEM_HPP
 #define INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEM_HPP
 
-#include <contextualplanner/types/goalstack.hpp>
-#include <contextualplanner/types/worldstate.hpp>
-#include <contextualplanner/types/historical.hpp>
-#include <contextualplanner/types/setofentities.hpp>
+#include <prioritizedgoalsplanner/types/goalstack.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/types/historical.hpp>
+#include <prioritizedgoalsplanner/types/setofentities.hpp>
 #include "../util/api.hpp"
 
 

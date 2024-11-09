@@ -8,8 +8,8 @@
 #include <vector>
 #include "../util/api.hpp"
 #include "factoptional.hpp"
-#include <contextualplanner/util/continueorbreak.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/util/continueorbreak.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 namespace cp
 {

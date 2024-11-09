@@ -1,9 +1,9 @@
 #include "plannerusingexternaldata.hpp"
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 std::string PlannerUsingExternalData::dataPath = "";
 
-// Arguments to set: --dataPath ../../data/problems/
+// Arguments to set: --dataPath ../../data/
 
 
 int main(int argc, char **argv)

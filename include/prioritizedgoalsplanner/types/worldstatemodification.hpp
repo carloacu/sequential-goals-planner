@@ -6,8 +6,8 @@
 #include <optional>
 #include "factoptional.hpp"
 #include "../util/api.hpp"
-#include <contextualplanner/util/alias.hpp>
-#include <contextualplanner/util/continueorbreak.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/util/continueorbreak.hpp>
 
 namespace cp
 {

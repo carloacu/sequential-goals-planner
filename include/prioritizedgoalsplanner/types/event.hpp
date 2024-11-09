@@ -6,9 +6,9 @@
 #include <map>
 #include <vector>
 #include "../util/api.hpp"
-#include <contextualplanner/types/condition.hpp>
-#include <contextualplanner/types/worldstatemodification.hpp>
-#include <contextualplanner/types/goal.hpp>
+#include <prioritizedgoalsplanner/types/condition.hpp>
+#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
+#include <prioritizedgoalsplanner/types/goal.hpp>
 
 namespace cp
 {

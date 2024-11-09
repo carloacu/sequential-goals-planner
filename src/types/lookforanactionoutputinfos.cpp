@@ -1,4 +1,4 @@
-#include <contextualplanner/types/lookforanactionoutputinfos.hpp>
+#include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
 
 namespace cp

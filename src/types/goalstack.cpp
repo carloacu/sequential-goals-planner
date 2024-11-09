@@ -1,11 +1,11 @@
-#include <contextualplanner/types/goalstack.hpp>
+#include <prioritizedgoalsplanner/types/goalstack.hpp>
 #include <map>
 #include <sstream>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/actioninvocationwithgoal.hpp>
-#include <contextualplanner/types/setofevents.hpp>
-#include <contextualplanner/util/util.hpp>
-#include <contextualplanner/types/lookforanactionoutputinfos.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <prioritizedgoalsplanner/types/setofevents.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
 
 namespace cp

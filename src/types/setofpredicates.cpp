@@ -1,7 +1,7 @@
-#include <contextualplanner/types/setofpredicates.hpp>
+#include <prioritizedgoalsplanner/types/setofpredicates.hpp>
 #include <vector>
-#include <contextualplanner/types/setoftypes.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/setoftypes.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
 namespace cp

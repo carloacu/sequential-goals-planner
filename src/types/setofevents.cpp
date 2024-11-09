@@ -1,5 +1,5 @@
-#include <contextualplanner/types/setofevents.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/setofevents.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 namespace cp
 {

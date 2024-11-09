@@ -1,8 +1,8 @@
-#include <contextualplanner/types/factstovalue.hpp>
+#include <prioritizedgoalsplanner/types/factstovalue.hpp>
 #include <stdexcept>
-#include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/util/alias.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 namespace cp
 {

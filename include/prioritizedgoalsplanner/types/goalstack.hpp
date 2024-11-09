@@ -5,11 +5,11 @@
 #include <map>
 #include <memory>
 #include "../util/api.hpp"
-#include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/goal.hpp>
-#include <contextualplanner/types/event.hpp>
-#include <contextualplanner/types/worldstate.hpp>
-#include <contextualplanner/util/observableunsafe.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/types/goal.hpp>
+#include <prioritizedgoalsplanner/types/event.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/util/observableunsafe.hpp>
 
 
 namespace cp

@@ -4,10 +4,10 @@
 #include <map>
 #include <memory>
 #include <set>
-#include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/factstovalue.hpp>
-#include <contextualplanner/types/setoffacts.hpp>
-#include <contextualplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/types/factstovalue.hpp>
+#include <prioritizedgoalsplanner/types/setoffacts.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
 
 
 namespace cp

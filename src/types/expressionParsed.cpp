@@ -1,8 +1,8 @@
 #include "expressionParsed.hpp"
 #include <stdexcept>
-#include <contextualplanner/types/factoptional.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/factoptional.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 namespace cp
 {

@@ -1,5 +1,5 @@
-#include <contextualplanner/types/problemmodification.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/problemmodification.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 
 namespace cp

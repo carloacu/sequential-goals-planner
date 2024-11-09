@@ -1,9 +1,9 @@
-#include <contextualplanner/contextualplanner.hpp>
+#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 #include <algorithm>
 #include <iomanip>
 #include <optional>
-#include <contextualplanner/types/setofevents.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/setofevents.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 #include "types/factsalreadychecked.hpp"
 #include "types/treeofalreadydonepaths.hpp"
 #include "algo/converttoparallelplan.hpp"

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <contextualplanner/types/entity.hpp>
-#include <contextualplanner/types/parameter.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/entity.hpp>
+#include <prioritizedgoalsplanner/types/parameter.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 using namespace cp;
 

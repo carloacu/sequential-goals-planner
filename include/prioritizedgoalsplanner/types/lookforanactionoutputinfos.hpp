@@ -5,7 +5,7 @@
 #include <optional>
 #include <set>
 #include "../util/api.hpp"
-#include <contextualplanner/types/goal.hpp>
+#include <prioritizedgoalsplanner/types/goal.hpp>
 
 
 namespace cp

@@ -7,8 +7,8 @@
 #include <optional>
 #include <set>
 #include "../util/api.hpp"
-#include <contextualplanner/types/entity.hpp>
-#include <contextualplanner/types/predicate.hpp>
+#include <prioritizedgoalsplanner/types/entity.hpp>
+#include <prioritizedgoalsplanner/types/predicate.hpp>
 
 namespace cp
 {

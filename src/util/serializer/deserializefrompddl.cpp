@@ -1,8 +1,8 @@
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include <memory>
-#include <contextualplanner/types/axiom.hpp>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/problem.hpp>
+#include <prioritizedgoalsplanner/types/axiom.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/problem.hpp>
 #include "../../types/expressionParsed.hpp"
 #include "../../types/worldstatemodificationprivate.hpp"
 

@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include <contextualplanner/types/action.hpp>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/setoffacts.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/types/action.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/setoffacts.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 
 using namespace cp;

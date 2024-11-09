@@ -2,8 +2,8 @@
 #define INCLUDE_CONTEXTUALPLANNER_DERIVEDPREDICATE_HPP
 
 #include "../util/api.hpp"
-#include <contextualplanner/types/predicate.hpp>
-#include <contextualplanner/types/condition.hpp>
+#include <prioritizedgoalsplanner/types/predicate.hpp>
+#include <prioritizedgoalsplanner/types/condition.hpp>
 
 
 namespace cp

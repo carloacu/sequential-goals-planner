@@ -2,7 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_CONDITIONSTOVALUE_HPP
 
 #include "../util/api.hpp"
-#include <contextualplanner/types/factstovalue.hpp>
+#include <prioritizedgoalsplanner/types/factstovalue.hpp>
 
 namespace cp
 {

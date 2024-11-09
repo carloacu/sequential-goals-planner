@@ -1,12 +1,12 @@
 #include "converttoparallelplan.hpp"
 #include <list>
-#include <contextualplanner/types/action.hpp>
-#include <contextualplanner/types/actioninvocationwithgoal.hpp>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/lookforanactionoutputinfos.hpp>
-#include <contextualplanner/types/problem.hpp>
-#include <contextualplanner/types/worldstate.hpp>
-#include <contextualplanner/contextualplanner.hpp>
+#include <prioritizedgoalsplanner/types/action.hpp>
+#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
+#include <prioritizedgoalsplanner/types/problem.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 #include "notifyactiondone.hpp"
 
 namespace cp

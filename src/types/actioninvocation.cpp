@@ -1,6 +1,6 @@
-#include <contextualplanner/types/actioninvocation.hpp>
-#include <contextualplanner/types/entity.hpp>
-#include <contextualplanner/types/parameter.hpp>
+#include <prioritizedgoalsplanner/types/actioninvocation.hpp>
+#include <prioritizedgoalsplanner/types/entity.hpp>
+#include <prioritizedgoalsplanner/types/parameter.hpp>
 
 namespace cp
 {

@@ -1,8 +1,8 @@
-#include <contextualplanner/types/parameter.hpp>
+#include <prioritizedgoalsplanner/types/parameter.hpp>
 #include <vector>
-#include <contextualplanner/types/entity.hpp>
-#include <contextualplanner/types/setoftypes.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/entity.hpp>
+#include <prioritizedgoalsplanner/types/setoftypes.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 
 namespace cp

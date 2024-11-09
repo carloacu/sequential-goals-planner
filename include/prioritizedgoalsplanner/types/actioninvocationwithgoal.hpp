@@ -4,8 +4,8 @@
 #include <memory>
 #include <string>
 #include "../util/api.hpp"
-#include <contextualplanner/types/goal.hpp>
-#include <contextualplanner/types/actioninvocation.hpp>
+#include <prioritizedgoalsplanner/types/goal.hpp>
+#include <prioritizedgoalsplanner/types/actioninvocation.hpp>
 
 
 namespace cp

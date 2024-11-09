@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/problem.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/predicate.hpp>
-#include <contextualplanner/types/setofentities.hpp>
-#include <contextualplanner/types/setofpredicates.hpp>
-#include <contextualplanner/types/worldstatemodification.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
-#include <contextualplanner/util/serializer/serializeinpddl.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/problem.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/predicate.hpp>
+#include <prioritizedgoalsplanner/types/setofentities.hpp>
+#include <prioritizedgoalsplanner/types/setofpredicates.hpp>
+#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
 
 namespace
 {

@@ -1,10 +1,10 @@
-#include <contextualplanner/types/entity.hpp>
+#include <prioritizedgoalsplanner/types/entity.hpp>
 #include <vector>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/parameter.hpp>
-#include <contextualplanner/types/setofentities.hpp>
-#include <contextualplanner/types/setoftypes.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/parameter.hpp>
+#include <prioritizedgoalsplanner/types/setofentities.hpp>
+#include <prioritizedgoalsplanner/types/setoftypes.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 
 namespace cp

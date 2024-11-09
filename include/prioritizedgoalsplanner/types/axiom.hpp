@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <list>
 #include <vector>
-#include <contextualplanner/types/condition.hpp>
-#include <contextualplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/types/condition.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
 
 namespace cp
 {

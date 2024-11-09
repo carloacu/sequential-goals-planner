@@ -1,5 +1,5 @@
-#include <contextualplanner/types/action.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/action.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 namespace cp
 {

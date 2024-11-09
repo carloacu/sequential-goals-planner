@@ -2,7 +2,7 @@
 #define INCLUDE_CONTEXTUALPLANNER_SETOfCONSTFACTS_HPP
 
 #include "../util/api.hpp"
-#include <contextualplanner/types/setoffacts.hpp>
+#include <prioritizedgoalsplanner/types/setoffacts.hpp>
 
 
 namespace cp

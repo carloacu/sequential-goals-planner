@@ -4,8 +4,8 @@
 #include "api.hpp"
 #include <map>
 #include <list>
-#include <contextualplanner/types/problem.hpp>
-#include <contextualplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/problem.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
 
 
 namespace cp

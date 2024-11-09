@@ -1,12 +1,12 @@
-#include <contextualplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
 #include <list>
-#include <contextualplanner/types/goalstack.hpp>
-#include <contextualplanner/types/actioninvocationwithgoal.hpp>
-#include <contextualplanner/types/setoffacts.hpp>
-#include <contextualplanner/types/setofevents.hpp>
-#include <contextualplanner/types/worldstatemodification.hpp>
-#include <contextualplanner/util/util.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/types/goalstack.hpp>
+#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <prioritizedgoalsplanner/types/setoffacts.hpp>
+#include <prioritizedgoalsplanner/types/setofevents.hpp>
+#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include "worldstatecache.hpp"
 
 namespace cp

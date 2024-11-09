@@ -1,8 +1,8 @@
-#include <contextualplanner/types/setoffacts.hpp>
+#include <prioritizedgoalsplanner/types/setoffacts.hpp>
 #include <stdexcept>
-#include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/util/alias.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
 namespace cp

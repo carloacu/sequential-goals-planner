@@ -4,12 +4,12 @@
 #include <map>
 #include <set>
 #include "../util/api.hpp"
-#include <contextualplanner/util/alias.hpp>
-#include <contextualplanner/types/action.hpp>
-#include <contextualplanner/types/condtionstovalue.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/setofevents.hpp>
-#include <contextualplanner/types/setofconstfacts.hpp>
+#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <prioritizedgoalsplanner/types/action.hpp>
+#include <prioritizedgoalsplanner/types/condtionstovalue.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/setofevents.hpp>
+#include <prioritizedgoalsplanner/types/setofconstfacts.hpp>
 
 namespace cp
 {

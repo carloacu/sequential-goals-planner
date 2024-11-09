@@ -1,7 +1,7 @@
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/condition.hpp>
-#include <contextualplanner/types/worldstate.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/condition.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 #include "../util/uuid.hpp"
 #include "expressionParsed.hpp"
 

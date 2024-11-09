@@ -1,6 +1,6 @@
 #include "worldstatecache.hpp"
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
 #include "factsalreadychecked.hpp"
 
 

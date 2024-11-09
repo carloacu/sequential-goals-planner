@@ -1,6 +1,6 @@
-#include <contextualplanner/types/derivedpredicate.hpp>
-#include <contextualplanner/types/setofentities.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/types/derivedpredicate.hpp>
+#include <prioritizedgoalsplanner/types/setofentities.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace cp
 {

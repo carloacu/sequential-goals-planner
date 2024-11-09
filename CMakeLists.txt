@@ -1,53 +1,53 @@
-project(contextualplanner)
+project(prioritizedgoalsplanner)
 cmake_minimum_required(VERSION 3.8)
 
-include(contextualplanner-config.cmake)
+include(prioritizedgoalsplanner-config.cmake)
 
 # Making a lib
 set(CONTEXTUAL_PLANNER_HPPS
-    include/contextualplanner/types/action.hpp
-    include/contextualplanner/types/actioninvocation.hpp
-    include/contextualplanner/types/actioninvocationwithgoal.hpp
-    include/contextualplanner/types/axiom.hpp
-    include/contextualplanner/types/condition.hpp
-    include/contextualplanner/types/derivedpredicate.hpp
-    include/contextualplanner/types/domain.hpp
-    include/contextualplanner/types/entity.hpp
-    include/contextualplanner/types/event.hpp
-    include/contextualplanner/types/fact.hpp
-    include/contextualplanner/types/factoptional.hpp
-    include/contextualplanner/types/goal.hpp
-    include/contextualplanner/types/goalstack.hpp
-    include/contextualplanner/types/historical.hpp
-    include/contextualplanner/types/lookforanactionoutputinfos.hpp
-    include/contextualplanner/types/factstovalue.hpp
-    include/contextualplanner/types/ontology.hpp
-    include/contextualplanner/types/parameter.hpp
-    include/contextualplanner/types/predicate.hpp
-    include/contextualplanner/types/problem.hpp
-    include/contextualplanner/types/problemmodification.hpp
-    include/contextualplanner/types/setofentities.hpp
-    include/contextualplanner/types/setofevents.hpp
-    include/contextualplanner/types/setoffacts.hpp
-    include/contextualplanner/types/setofpredicates.hpp
-    include/contextualplanner/types/setofderivedpredicates.hpp
-    include/contextualplanner/types/setoftypes.hpp
-    include/contextualplanner/types/setofconstfacts.hpp
-    include/contextualplanner/types/type.hpp
-    include/contextualplanner/types/worldstate.hpp
-    include/contextualplanner/types/worldstatemodification.hpp
-    include/contextualplanner/util/exportsymbols/macro.hpp
-    include/contextualplanner/util/serializer/deserializefrompddl.hpp
-    include/contextualplanner/util/serializer/serializeinpddl.hpp
-    include/contextualplanner/util/trackers/goalsremovedtracker.hpp
-    include/contextualplanner/util/api.hpp
-    include/contextualplanner/util/alias.hpp
-    include/contextualplanner/util/arithmeticevaluator.hpp
-    include/contextualplanner/util/print.hpp
-    include/contextualplanner/util/observableunsafe.hpp
-    include/contextualplanner/util/replacevariables.hpp
-    include/contextualplanner/util/util.hpp
-    include/contextualplanner/contextualplanner.hpp
+    include/prioritizedgoalsplanner/types/action.hpp
+    include/prioritizedgoalsplanner/types/actioninvocation.hpp
+    include/prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp
+    include/prioritizedgoalsplanner/types/axiom.hpp
+    include/prioritizedgoalsplanner/types/condition.hpp
+    include/prioritizedgoalsplanner/types/derivedpredicate.hpp
+    include/prioritizedgoalsplanner/types/domain.hpp
+    include/prioritizedgoalsplanner/types/entity.hpp
+    include/prioritizedgoalsplanner/types/event.hpp
+    include/prioritizedgoalsplanner/types/fact.hpp
+    include/prioritizedgoalsplanner/types/factoptional.hpp
+    include/prioritizedgoalsplanner/types/goal.hpp
+    include/prioritizedgoalsplanner/types/goalstack.hpp
+    include/prioritizedgoalsplanner/types/historical.hpp
+    include/prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp
+    include/prioritizedgoalsplanner/types/factstovalue.hpp
+    include/prioritizedgoalsplanner/types/ontology.hpp
+    include/prioritizedgoalsplanner/types/parameter.hpp
+    include/prioritizedgoalsplanner/types/predicate.hpp
+    include/prioritizedgoalsplanner/types/problem.hpp
+    include/prioritizedgoalsplanner/types/problemmodification.hpp
+    include/prioritizedgoalsplanner/types/setofentities.hpp
+    include/prioritizedgoalsplanner/types/setofevents.hpp
+    include/prioritizedgoalsplanner/types/setoffacts.hpp
+    include/prioritizedgoalsplanner/types/setofpredicates.hpp
+    include/prioritizedgoalsplanner/types/setofderivedpredicates.hpp
+    include/prioritizedgoalsplanner/types/setoftypes.hpp
+    include/prioritizedgoalsplanner/types/setofconstfacts.hpp
+    include/prioritizedgoalsplanner/types/type.hpp
+    include/prioritizedgoalsplanner/types/worldstate.hpp
+    include/prioritizedgoalsplanner/types/worldstatemodification.hpp
+    include/prioritizedgoalsplanner/util/exportsymbols/macro.hpp
+    include/prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp
+    include/prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp
+    include/prioritizedgoalsplanner/util/trackers/goalsremovedtracker.hpp
+    include/prioritizedgoalsplanner/util/api.hpp
+    include/prioritizedgoalsplanner/util/alias.hpp
+    include/prioritizedgoalsplanner/util/arithmeticevaluator.hpp
+    include/prioritizedgoalsplanner/util/print.hpp
+    include/prioritizedgoalsplanner/util/observableunsafe.hpp
+    include/prioritizedgoalsplanner/util/replacevariables.hpp
+    include/prioritizedgoalsplanner/util/util.hpp
+    include/prioritizedgoalsplanner/prioritizedgoalsplanner.hpp
 )
 
 
@@ -102,27 +102,27 @@ set(CONTEXTUAL_PLANNER_SRCS
     src/util/util.cpp
     src/util/uuid.hpp
     src/util/uuid.cpp
-    src/contextualplanner.cpp
+    src/prioritizedgoalsplanner.cpp
 )
 
 
 include_directories(include)
 
 
-add_library(contextualplannerlib SHARED
+add_library(prioritizedgoalsplannerlib SHARED
   ${CONTEXTUAL_PLANNER_HPPS}
   ${CONTEXTUAL_PLANNER_SRCS}
-  include/contextualplanner/types/setofderivedpredicates.hpp
+  include/prioritizedgoalsplanner/types/setofderivedpredicates.hpp
   src/types/setofderivedpredicates.cpp
   src/types/axiom.cpp
-  include/contextualplanner/types/setofconstfacts.hpp
-  include/contextualplanner/types/condtionstovalue.hpp
+  include/prioritizedgoalsplanner/types/setofconstfacts.hpp
+  include/prioritizedgoalsplanner/types/condtionstovalue.hpp
   src/types/condtionstovalue.cpp
-  include/contextualplanner/util/continueorbreak.hpp
+  include/prioritizedgoalsplanner/util/continueorbreak.hpp
 )
-target_compile_features(contextualplannerlib PRIVATE cxx_std_14)
+target_compile_features(prioritizedgoalsplannerlib PRIVATE cxx_std_14)
 
-install(TARGETS contextualplannerlib DESTINATION lib)
+install(TARGETS prioritizedgoalsplannerlib DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)
 
 

@@ -1,7 +1,7 @@
-#include <contextualplanner/types/axiom.hpp>
-#include <contextualplanner/types/event.hpp>
-#include <contextualplanner/types/worldstatemodification.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/types/axiom.hpp>
+#include <prioritizedgoalsplanner/types/event.hpp>
+#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace cp
 {

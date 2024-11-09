@@ -3,8 +3,8 @@
 
 #include <memory>
 #include <optional>
-#include <contextualplanner/types/worldstatemodification.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 
 namespace cp
 {

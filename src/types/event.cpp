@@ -1,4 +1,4 @@
-#include <contextualplanner/types/event.hpp>
+#include <prioritizedgoalsplanner/types/event.hpp>
 
 namespace cp
 {

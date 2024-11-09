@@ -1,6 +1,6 @@
-#include <contextualplanner/util/serializer/serializeinpddl.hpp>
-#include <contextualplanner/types/domain.hpp>
-#include <contextualplanner/types/problem.hpp>
+#include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
+#include <prioritizedgoalsplanner/types/problem.hpp>
 #include "../../types/worldstatemodificationprivate.hpp"
 
 

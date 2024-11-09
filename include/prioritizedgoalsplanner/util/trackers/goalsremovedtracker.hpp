@@ -4,7 +4,7 @@
 #include <set>
 #include <string>
 #include "../api.hpp"
-#include <contextualplanner/util/observableunsafe.hpp>
+#include <prioritizedgoalsplanner/util/observableunsafe.hpp>
 
 
 namespace cp

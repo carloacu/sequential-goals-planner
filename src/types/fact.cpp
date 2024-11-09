@@ -1,14 +1,14 @@
-#include <contextualplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
 #include <algorithm>
 #include <memory>
 #include <assert.h>
 #include <optional>
 #include <stdexcept>
-#include <contextualplanner/types/factoptional.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/parameter.hpp>
-#include <contextualplanner/types/setoffacts.hpp>
-#include <contextualplanner/util/util.hpp>
+#include <prioritizedgoalsplanner/types/factoptional.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/parameter.hpp>
+#include <prioritizedgoalsplanner/types/setoffacts.hpp>
+#include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
 namespace cp

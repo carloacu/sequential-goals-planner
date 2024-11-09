@@ -1,4 +1,4 @@
-#include <contextualplanner/types/actioninvocationwithgoal.hpp>
+#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
 
 
 namespace cp

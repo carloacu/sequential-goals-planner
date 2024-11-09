@@ -1,5 +1,5 @@
-#include <contextualplanner/util/trackers/goalsremovedtracker.hpp>
-#include <contextualplanner/types/goalstack.hpp>
+#include <prioritizedgoalsplanner/util/trackers/goalsremovedtracker.hpp>
+#include <prioritizedgoalsplanner/types/goalstack.hpp>
 
 
 namespace cp

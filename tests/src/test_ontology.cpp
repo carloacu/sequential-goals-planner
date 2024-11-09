@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
-#include <contextualplanner/types/action.hpp>
-#include <contextualplanner/types/fact.hpp>
-#include <contextualplanner/types/goalstack.hpp>
-#include <contextualplanner/types/ontology.hpp>
-#include <contextualplanner/types/setofevents.hpp>
-#include <contextualplanner/types/worldstate.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <prioritizedgoalsplanner/types/action.hpp>
+#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <prioritizedgoalsplanner/types/goalstack.hpp>
+#include <prioritizedgoalsplanner/types/ontology.hpp>
+#include <prioritizedgoalsplanner/types/setofevents.hpp>
+#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace
 {
