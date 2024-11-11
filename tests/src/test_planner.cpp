@@ -585,6 +585,35 @@ void _parameterToFillFromConditionOfFirstAction()
 }
 
 
+void _planToMove()
+{
+  const std::string action1 = "action1";
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location\n"
+                                             "graspable_obj - object");
+  ontology.constants = pgp::SetOfEntities::fromPddl("loc1 - location\n"
+                                                    "bottle - graspable_obj", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot - location\n"
+                                                      "locationOf(?o - object) - location", ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> actionParameters{pgp::Parameter::fromStr("?o - object", ontology.types)};
+  pgp::Action action1Obj({}, pgp::strToWsModification("assign(locationOfRobot, locationOf(?o))", ontology, {}, actionParameters));
+  action1Obj.parameters = std::move(actionParameters);
+  actions.emplace(action1, action1Obj);
+  pgp::Domain domain(std::move(actions), ontology);
+  auto& setOfEventsMap = domain.getSetOfEvents();
+
+  pgp::Problem problem;
+  auto& entities = problem.entities;
+  problem.worldState.addFact(pgp::Fact("locationOf(bottle)=loc1", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
+                             ontology, entities, _now);
+  _setGoalsForAPriority(problem, {pgp::Goal::fromStr("locationOfRobot=loc1", ontology, entities)});
+
+  EXPECT_EQ(action1 + "(?o -> bottle)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+}
+
+
 }
 
 
@@ -606,4 +635,5 @@ TEST(Planner, test_planner)
   _doNextActionThatBringsToTheSmallerCost();
   _satisfyGoalWithSuperiorOperator();
   _parameterToFillFromConditionOfFirstAction();
+  _planToMove();
 }

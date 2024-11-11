@@ -834,6 +834,27 @@ void Fact::generateSignatureForAllSubTypes(std::list<std::string>& pRes) const
 }
 
 
+void Fact::generateSignatureForAllUpperTypes(std::list<std::string>& pRes) const
+{
+  pRes.emplace_back(factSignature());
+
+  for (std::size_t i = 0; i < _arguments.size(); ++i)
+  {
+    const auto& currArg = _arguments[i];
+    if (currArg.type)
+    {
+      auto parentType = currArg.type->parent;
+      while (parentType)
+      {
+        auto fact = *this;
+        fact.setArgumentType(i, parentType);
+        pRes.emplace_back(fact.factSignature());
+        parentType = parentType->parent;
+      }
+    }
+  }
+}
+
 void Fact::generateSignatureForSubAndUpperTypes(std::list<std::string>& pRes) const
 {
   pRes.emplace_back(factSignature());

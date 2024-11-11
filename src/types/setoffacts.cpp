@@ -119,8 +119,9 @@ void SetOfFacts::add(const Fact& pFact,
     }
   }
 
+
   std::list<std::string> factSignatures;
-  pFact.generateSignatureForAllSubTypes(factSignatures);
+  pFact.generateSignatureForAllUpperTypes(factSignatures);
   for (auto& currSignature : factSignatures)
   {
     auto& factArguments = pFact.arguments();
@@ -189,9 +190,10 @@ bool SetOfFacts::_erase(const Fact& pFact)
     }
 
     std::list<std::string> factSignatures;
-    pFact.generateSignatureForAllSubTypes(factSignatures);
-    for (auto& currSignature : factSignatures)
+    pFact.generateSignatureForAllUpperTypes(factSignatures);
+    for (auto itSignature = factSignatures.rbegin(); itSignature != factSignatures.rend(); ++itSignature)
     {
+      auto& currSignature = *itSignature;
       auto& factArguments = pFact.arguments();
       auto itParameterToValues = _signatureToLists.find(currSignature);
       if (itParameterToValues != _signatureToLists.end())
