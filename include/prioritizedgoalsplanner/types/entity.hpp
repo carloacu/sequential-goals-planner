@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_ENTITY_HPP
-#define INCLUDE_CONTEXTUALPLANNER_ENTITY_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_ENTITY_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_ENTITY_HPP
 
 #include <string>
 #include <vector>
@@ -14,7 +14,7 @@ struct SetOfEntities;
 struct SetOfTypes;
 
 
-struct CONTEXTUALPLANNER_API Entity
+struct PRIORITIZEDGOALSPLANNER_API Entity
 {
   Entity(const std::string& pValue,
          const std::shared_ptr<Type>& pType);
@@ -54,4 +54,4 @@ struct CONTEXTUALPLANNER_API Entity
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_ENTITY_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_ENTITY_HPP

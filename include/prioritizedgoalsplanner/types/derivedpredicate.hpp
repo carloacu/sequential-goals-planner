@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_DERIVEDPREDICATE_HPP
-#define INCLUDE_CONTEXTUALPLANNER_DERIVEDPREDICATE_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_DERIVEDPREDICATE_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_DERIVEDPREDICATE_HPP
 
 #include "../util/api.hpp"
 #include <prioritizedgoalsplanner/types/predicate.hpp>
@@ -9,7 +9,7 @@
 namespace cp
 {
 
-struct CONTEXTUALPLANNER_API DerivedPredicate
+struct PRIORITIZEDGOALSPLANNER_API DerivedPredicate
 {
   DerivedPredicate(const Predicate& pPredicate,
                    const std::string& pConditionStr,
@@ -29,4 +29,4 @@ struct CONTEXTUALPLANNER_API DerivedPredicate
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_DERIVEDPREDICATE_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_DERIVEDPREDICATE_HPP

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_DOMAIN_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_DOMAIN_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_DOMAIN_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_DOMAIN_HPP
 
 #include <map>
 #include <set>
@@ -15,7 +15,7 @@ namespace cp
 {
 
 /// Set of all the actions that the bot can do with accessors to optimize the search of a action.
-struct CONTEXTUALPLANNER_API Domain
+struct PRIORITIZEDGOALSPLANNER_API Domain
 {
   /// Construct an empty domain.
   Domain();
@@ -143,4 +143,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_DOMAIN_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_DOMAIN_HPP

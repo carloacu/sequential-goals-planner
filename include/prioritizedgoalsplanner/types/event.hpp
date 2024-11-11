@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_EVENT_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_EVENT_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_EVENT_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_EVENT_HPP
 
 #include <assert.h>
 #include <functional>
@@ -14,7 +14,7 @@ namespace cp
 {
 
 /// Specification what is an event.
-struct CONTEXTUALPLANNER_API Event
+struct PRIORITIZEDGOALSPLANNER_API Event
 {
   /// Construct an event.
   Event(std::unique_ptr<Condition> pPrecondition,
@@ -61,4 +61,4 @@ struct CONTEXTUALPLANNER_API Event
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_EVENT_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_EVENT_HPP

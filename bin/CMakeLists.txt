@@ -4,7 +4,8 @@ project(prioritized_goals_planner_bin)
 
 include_directories(".")
 
-if(NOT CONTEXTUALPLANNER_FOUND)
+
+if(NOT PRIORITIZEDGOALSPLANNER_FOUND)
   find_package(prioritized_goals_planner_lib)
 endif()
 
@@ -17,5 +18,5 @@ add_executable(
 
 
 target_link_libraries(prioritized_goals_planner
-  ${CONTEXTUALPLANNER_LIBRARIES}
+  ${PRIORITIZEDGOALSPLANNER_LIBRARIES}
 )

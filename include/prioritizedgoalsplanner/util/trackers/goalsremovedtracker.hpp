@@ -11,7 +11,7 @@ namespace cp
 {
 struct GoalStack;
 
-struct CONTEXTUALPLANNER_API GoalsRemovedTracker
+struct PRIORITIZEDGOALSPLANNER_API GoalsRemovedTracker
 {
   GoalsRemovedTracker(const GoalStack& pGoalStack);
   ~GoalsRemovedTracker();

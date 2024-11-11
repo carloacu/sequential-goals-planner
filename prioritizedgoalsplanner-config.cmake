@@ -2,16 +2,16 @@ get_filename_component(_prioritizedgoalsplanner_root "${CMAKE_CURRENT_LIST_FILE}
 get_filename_component(_prioritizedgoalsplanner_root "${_prioritizedgoalsplanner_root}" ABSOLUTE)
 
 
-set(CONTEXTUALPLANNER_FOUND TRUE)
+set(PRIORITIZEDGOALSPLANNER_FOUND TRUE)
 
 set(
-  CONTEXTUALPLANNER_INCLUDE_DIRS
+  PRIORITIZEDGOALSPLANNER_INCLUDE_DIRS
   ${_prioritizedgoalsplanner_root}/include
   CACHE INTERNAL "" FORCE
 )
 
 set(
-  CONTEXTUALPLANNER_LIBRARIES
+  PRIORITIZEDGOALSPLANNER_LIBRARIES
   "prioritized_goals_planner_lib"
 )
 

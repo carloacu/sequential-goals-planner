@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_AXIOM_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_AXIOM_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_AXIOM_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_AXIOM_HPP
 
 #include <assert.h>
 #include <list>
@@ -13,7 +13,7 @@ struct Event;
 
 
 /// Specification what is a derived predicate.
-struct CONTEXTUALPLANNER_API Axiom
+struct PRIORITIZEDGOALSPLANNER_API Axiom
 {
   /// Construct a derived predicate.
   Axiom(std::unique_ptr<Condition> pContext,
@@ -49,4 +49,4 @@ struct CONTEXTUALPLANNER_API Axiom
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_AXIOM_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_AXIOM_HPP

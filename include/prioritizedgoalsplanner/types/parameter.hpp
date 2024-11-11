@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_PARAMETER_HPP
-#define INCLUDE_CONTEXTUALPLANNER_PARAMETER_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_PARAMETER_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_PARAMETER_HPP
 
 #include <string>
 #include "../util/api.hpp"
@@ -11,7 +11,7 @@ struct Entity;
 struct SetOfTypes;
 
 
-struct CONTEXTUALPLANNER_API Parameter
+struct PRIORITIZEDGOALSPLANNER_API Parameter
 {
   Parameter(const std::string& pName,
             const std::shared_ptr<Type>& pType);
@@ -40,4 +40,4 @@ struct CONTEXTUALPLANNER_API Parameter
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_PARAMETER_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_PARAMETER_HPP

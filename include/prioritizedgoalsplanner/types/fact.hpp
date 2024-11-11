@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_FACT_HPP
-#define INCLUDE_CONTEXTUALPLANNER_FACT_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_FACT_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_FACT_HPP
 
 #include <string>
 #include <vector>
@@ -18,7 +18,7 @@ struct SetOfEntities;
 struct SetOfFacts;
 
 /// Knowledge that can be contained in a world.
-struct CONTEXTUALPLANNER_API Fact
+struct PRIORITIZEDGOALSPLANNER_API Fact
 {
   /**
    * @brief Construct a fact.
@@ -299,4 +299,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_FACT_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_FACT_HPP

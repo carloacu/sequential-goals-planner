@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_UTIL_UTIL_HPP
-#define INCLUDE_CONTEXTUALPLANNER_UTIL_UTIL_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_UTIL_UTIL_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_UTIL_UTIL_HPP
 
 #include "api.hpp"
 #include <functional>
@@ -40,45 +40,45 @@ bool operator==(const Number& lhs, const Number& rhs);
 std::string numberToString(const Number& num);
 
 
-extern bool CONTEXTUALPLANNER_DEBUG_FOR_TESTS;
+extern bool PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS;
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 bool isNumber(const std::string& str);
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 void unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,
                       const std::map<Parameter, std::set<Entity>>& pInMap);
 
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 void applyNewParams(std::map<Parameter, std::set<Entity>>& pParameters,
                     std::map<Parameter, std::set<Entity>>& pNewParameters);
 
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::optional<Entity> plusIntOrStr(const std::optional<Entity>& pNb1,
                                    const std::optional<Entity>& pNb2);
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::optional<Entity> minusIntOrStr(const std::optional<Entity>& pNb1,
                                     const std::optional<Entity>& pNb2);
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::optional<Entity> multiplyNbOrStr(const std::optional<Entity>& pNb1,
                                       const std::optional<Entity>& pNb2);
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 bool compIntNb(const std::string& pNb1Str,
                const Number& pNb2,
                bool pBoolSuperiorOrInferior,
                bool pCanBeEqual);
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::string incrementLastNumberUntilAConditionIsSatisfied(
     const std::string& pStr,
     const std::function<bool(const std::string&)>& pCondition);
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 void split(std::vector<std::string>& pStrs,
            const std::string& pStr,
            const std::string& pSeparator);
@@ -144,4 +144,4 @@ std::list<T> intersectTwoLists(const std::list<T>& pList1,
 
 }
 
-#endif // INCLUDE_CONTEXTUALPLANNER_UTIL_UTIL_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_UTIL_UTIL_HPP

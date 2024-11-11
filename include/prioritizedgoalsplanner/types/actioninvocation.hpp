@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_ACTIONINVOCATION_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_ACTIONINVOCATION_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTIONINVOCATION_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTIONINVOCATION_HPP
 
 #include <map>
 #include <set>
@@ -14,7 +14,7 @@ struct Parameter;
 
 
 /// Struct gathering the identifier of an action with some parameter values.
-struct CONTEXTUALPLANNER_API ActionInvocation
+struct PRIORITIZEDGOALSPLANNER_API ActionInvocation
 {
   /// Construct ActionInstance.
   ActionInvocation(const std::string& pActionId,
@@ -37,4 +37,4 @@ struct CONTEXTUALPLANNER_API ActionInvocation
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_ACTIONINVOCATION_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTIONINVOCATION_HPP

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_UTIL_PRINT_HPP
-#define INCLUDE_CONTEXTUALPLANNER_UTIL_PRINT_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_UTIL_PRINT_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_UTIL_PRINT_HPP
 
 #include "api.hpp"
 #include <map>
@@ -16,7 +16,7 @@ namespace cp
  * @param pGoals Goals to print.
  * @return The string of printed goals.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::string printGoals(const std::map<int, std::vector<Goal>>& pGoals);
 
 
@@ -29,11 +29,11 @@ std::string printGoals(const std::map<int, std::vector<Goal>>& pGoals);
  * @param pNow Current time.
  * @return The string of the table of goals.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::string printGoalsTable(std::size_t pGoalNameMaxSize,
                             const std::map<int, std::vector<Goal>>& pGoals,
                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 }
 
-#endif // INCLUDE_CONTEXTUALPLANNER_UTIL_PRINT_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_UTIL_PRINT_HPP

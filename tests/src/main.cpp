@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   if (PlannerUsingExternalData::dataPath.empty())
     throw std::runtime_error("--dataPath option is missing. (For ex do: --dataPath ../../data/)");
 
-  cp::CONTEXTUALPLANNER_DEBUG_FOR_TESTS = true;
+  cp::PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS = true;
   ::testing::InitGoogleTest(&argc, argv);
   int res = RUN_ALL_TESTS();
   return res;

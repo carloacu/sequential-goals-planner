@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_SETOfCONSTFACTS_HPP
-#define INCLUDE_CONTEXTUALPLANNER_SETOfCONSTFACTS_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_SETOfCONSTFACTS_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_SETOfCONSTFACTS_HPP
 
 #include "../util/api.hpp"
 #include <prioritizedgoalsplanner/types/setoffacts.hpp>
@@ -8,7 +8,7 @@
 namespace cp
 {
 
-struct CONTEXTUALPLANNER_API SetOfConstFacts
+struct PRIORITIZEDGOALSPLANNER_API SetOfConstFacts
 {
   static SetOfConstFacts fromPddl(const std::string& pStr,
                                   std::size_t& pPos,
@@ -30,4 +30,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_SETOfCONSTFACTS_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_SETOfCONSTFACTS_HPP

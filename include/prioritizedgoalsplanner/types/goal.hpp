@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_GOAL_HPP
-#define INCLUDE_CONTEXTUALPLANNER_GOAL_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_GOAL_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_GOAL_HPP
 
 #include <memory>
 #include <string>
@@ -15,7 +15,7 @@ struct Domain;
 
 
 // A characteristic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
-struct CONTEXTUALPLANNER_API Goal
+struct PRIORITIZEDGOALSPLANNER_API Goal
 {
   Goal(std::unique_ptr<Condition> pObjective,
        bool pIsPersistentIfSkipped = false,
@@ -144,4 +144,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_GOAL_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_GOAL_HPP

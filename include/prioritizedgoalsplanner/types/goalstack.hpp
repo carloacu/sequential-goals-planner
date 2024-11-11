@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_GOALSTACK_HPP
-#define INCLUDE_CONTEXTUALPLANNER_GOALSTACK_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_GOALSTACK_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_GOALSTACK_HPP
 
 #include <set>
 #include <map>
@@ -22,7 +22,7 @@ struct LookForAnActionOutputInfos;
 
 
 /// Current world, goal for the world and historical of actions done.
-struct CONTEXTUALPLANNER_API GoalStack
+struct PRIORITIZEDGOALSPLANNER_API GoalStack
 {
   /// Construct a problem.
   GoalStack() = default;
@@ -270,4 +270,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_GOALSTACK_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_GOALSTACK_HPP

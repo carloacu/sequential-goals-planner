@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_CONTEXTUALPLANNER_HPP
-#define INCLUDE_CONTEXTUALPLANNER_CONTEXTUALPLANNER_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_PRIORITIZEDGOALSPLANNER_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_PRIORITIZEDGOALSPLANNER_HPP
 
 #include <list>
 #include <map>
@@ -26,7 +26,7 @@ namespace cp
  * @param[out] pLookForAnActionOutputInfosPtr Output to know informations (is the goal satified, does the goal resolution failed, how many goals was solved, ...)
  * @return The next action to do, his parameters and information about the goal that motivated that action.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
     Problem& pProblem,
     const Domain& pDomain,
@@ -46,7 +46,7 @@ std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
  * Note that the problem already have a historical. The problem historical has more priority than this historical.<br/>
  * @return The next actions to do in parallel.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
     Problem& pProblem,
     const Domain& pDomain,
@@ -61,7 +61,7 @@ std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
  * @param[in] pActionInvocationWithGoal Planner result step that motivated this action.
  * @param[in] pNow Current time.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 void notifyActionStarted(Problem& pProblem,
                          const Domain& pDomain,
                          const ActionInvocationWithGoal& pActionInvocationWithGoal,
@@ -74,7 +74,7 @@ void notifyActionStarted(Problem& pProblem,
  * @param[in] pOnStepOfPlannerResult Planner result step that motivated this action.
  * @param[in] pNow Current time.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
@@ -93,7 +93,7 @@ void notifyActionDone(Problem& pProblem,
  * @param[out] pGoalsDonePtr List of goals satisfied during the plannification.
  * @return List of all the actions to do with their parameters with values.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::list<ActionInvocationWithGoal> planForEveryGoals(
     Problem& pProblem,
     const Domain& pDomain,
@@ -108,11 +108,11 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
  * @param[in] pSep Separator between each action of the plan to do sequentially.
  * @return The plan written in string.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep = ", ");
 
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain);
 /**
@@ -121,11 +121,11 @@ std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
  * @param[in] pSep Separator between each action of the plan to do sequentially.
  * @return The list of goals written in string.
  */
-CONTEXTUALPLANNER_API
+PRIORITIZEDGOALSPLANNER_API
 std::string goalsToStr(const std::list<cp::Goal>& pGoals,
                        const std::string& pSep = ", ");
 
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_CONTEXTUALPLANNER_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_PRIORITIZEDGOALSPLANNER_HPP

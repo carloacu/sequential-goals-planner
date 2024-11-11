@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_ACTION_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_ACTION_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTION_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTION_HPP
 
 #include <vector>
 #include "../util/api.hpp"
@@ -13,7 +13,7 @@ struct SetOfDerivedPredicates;
 
 
 /// Thing that the bot can do
-struct CONTEXTUALPLANNER_API Action
+struct PRIORITIZEDGOALSPLANNER_API Action
 {
   /**
    * @brief Construct an Action.
@@ -148,4 +148,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_ACTION_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTION_HPP

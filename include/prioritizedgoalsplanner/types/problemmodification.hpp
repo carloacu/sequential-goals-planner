@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEMMODIFICATION_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEMMODIFICATION_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEMMODIFICATION_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEMMODIFICATION_HPP
 
 #include <functional>
 #include <map>
@@ -15,7 +15,7 @@ namespace cp
 
 
 // Specification of a problem modification.
-struct CONTEXTUALPLANNER_API ProblemModification
+struct PRIORITIZEDGOALSPLANNER_API ProblemModification
 {
   /// Construct a problem modification without arguments.
   ProblemModification()
@@ -169,4 +169,4 @@ inline void ProblemModification::replaceArgument(const Entity& pOld,
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEMMODIFICATION_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEMMODIFICATION_HPP

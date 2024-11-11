@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_HISTORICAL_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_HISTORICAL_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_HISTORICAL_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_HISTORICAL_HPP
 
 #include <mutex>
 #include <memory>
@@ -13,7 +13,7 @@ namespace cp
 
 
 /// Container of the actions already done.
-struct CONTEXTUALPLANNER_API Historical
+struct PRIORITIZEDGOALSPLANNER_API Historical
 {
   /// Set the mutex.
   void setMutex(std::shared_ptr<std::mutex> pMutex);
@@ -56,4 +56,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_HISTORICAL_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_HISTORICAL_HPP

@@ -772,7 +772,7 @@ std::string Fact::factSignature() const
   if (_factSignature != "")
     return _factSignature;
 
-  if (CONTEXTUALPLANNER_DEBUG_FOR_TESTS)
+  if (PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS)
     throw std::runtime_error("_factSignature is not set");
   return generateFactSignature();
 }

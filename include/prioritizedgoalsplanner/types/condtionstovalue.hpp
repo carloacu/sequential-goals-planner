@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_CONDITIONSTOVALUE_HPP
-#define INCLUDE_CONTEXTUALPLANNER_CONDITIONSTOVALUE_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITIONSTOVALUE_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITIONSTOVALUE_HPP
 
 #include "../util/api.hpp"
 #include <prioritizedgoalsplanner/types/factstovalue.hpp>
@@ -10,7 +10,7 @@ struct Condition;
 struct Fact;
 
 
-struct CONTEXTUALPLANNER_API ConditionsToValue
+struct PRIORITIZEDGOALSPLANNER_API ConditionsToValue
 {
 public:
   bool add(const Condition& pCondition,
@@ -32,4 +32,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_CONDITIONSTOVALUE_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITIONSTOVALUE_HPP

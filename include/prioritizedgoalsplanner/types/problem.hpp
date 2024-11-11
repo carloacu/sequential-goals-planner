@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEM_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEM_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEM_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEM_HPP
 
 #include <prioritizedgoalsplanner/types/goalstack.hpp>
 #include <prioritizedgoalsplanner/types/worldstate.hpp>
@@ -21,7 +21,7 @@ namespace cp
  *  The other part of the planification is the domain. The domain describes how the word can be modified.<br/>
  *  Contrary to the problem, the domain does not change a lot usually.
  */
-struct CONTEXTUALPLANNER_API Problem
+struct PRIORITIZEDGOALSPLANNER_API Problem
 {
   Problem(const SetOfFacts* pFactsPtr = nullptr)
     : name(),
@@ -50,4 +50,4 @@ struct CONTEXTUALPLANNER_API Problem
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_PROBLEM_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEM_HPP

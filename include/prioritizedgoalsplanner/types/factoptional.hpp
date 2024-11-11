@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_FACTOPTIONAL_HPP
-#define INCLUDE_CONTEXTUALPLANNER_FACTOPTIONAL_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_FACTOPTIONAL_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_FACTOPTIONAL_HPP
 
 #include <functional>
 #include <string>
@@ -12,7 +12,7 @@ namespace cp
 {
 
 /// Fact that can be negated.
-struct CONTEXTUALPLANNER_API FactOptional
+struct PRIORITIZEDGOALSPLANNER_API FactOptional
 {
   /**
    * @brief Construct an optional fact.
@@ -85,4 +85,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_FACTOPTIONAL_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_FACTOPTIONAL_HPP

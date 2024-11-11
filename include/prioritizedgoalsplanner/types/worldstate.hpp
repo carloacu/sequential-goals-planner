@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_WORLDSTATE_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_WORLDSTATE_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATE_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATE_HPP
 
 #include <chrono>
 #include <list>
@@ -30,7 +30,7 @@ struct WorldStateCache;
  * It is composed of a set of facts.<br/>
  * It also has accessors to optimize algorithms that will use this world state.
  */
-struct CONTEXTUALPLANNER_API WorldState
+struct PRIORITIZEDGOALSPLANNER_API WorldState
 {
   /// Construct a world state.
   WorldState(const SetOfFacts* pFactsPtr = nullptr);
@@ -373,4 +373,4 @@ private:
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_WORLDSTATE_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATE_HPP

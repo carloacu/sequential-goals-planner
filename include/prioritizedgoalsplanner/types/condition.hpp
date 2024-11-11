@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_CONDITION_HPP
-#define INCLUDE_CONTEXTUALPLANNER_CONDITION_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITION_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITION_HPP
 
 #include <functional>
 #include <map>
@@ -32,7 +32,7 @@ enum class ConditionPart
 };
 
 /// Condition with a tree structure to check in a world.
-struct CONTEXTUALPLANNER_API Condition
+struct PRIORITIZEDGOALSPLANNER_API Condition
 {
   /**
    * @brief Convert the condition to a string.
@@ -202,7 +202,7 @@ static bool canBeEqual(ConditionNodeType pConditionNodeType) {
 }
 
 /// Condition tree node that holds children.
-struct CONTEXTUALPLANNER_API ConditionNode : public Condition
+struct PRIORITIZEDGOALSPLANNER_API ConditionNode : public Condition
 {
   std::string toStr(const std::function<std::string(const Fact&)>* pFactWriterPtr,
                     bool pPrintAnyFluent) const override;
@@ -265,7 +265,7 @@ struct CONTEXTUALPLANNER_API ConditionNode : public Condition
 
 
 /// Condition tree to manage exists operator.
-struct CONTEXTUALPLANNER_API ConditionExists : public Condition
+struct PRIORITIZEDGOALSPLANNER_API ConditionExists : public Condition
 {
   ConditionExists(const Parameter& pParameter,
                   std::unique_ptr<Condition> pCondition);
@@ -331,7 +331,7 @@ struct CONTEXTUALPLANNER_API ConditionExists : public Condition
 
 
 /// Condition tree node that holds the negation of a condition.
-struct CONTEXTUALPLANNER_API ConditionNot : public Condition
+struct PRIORITIZEDGOALSPLANNER_API ConditionNot : public Condition
 {
   ConditionNot(std::unique_ptr<Condition> pCondition);
 
@@ -394,7 +394,7 @@ struct CONTEXTUALPLANNER_API ConditionNot : public Condition
 
 
 /// Condition tree node that holds only an optional fact.
-struct CONTEXTUALPLANNER_API ConditionFact : public Condition
+struct PRIORITIZEDGOALSPLANNER_API ConditionFact : public Condition
 {
   ConditionFact(const FactOptional& pFactOptional);
 
@@ -455,7 +455,7 @@ struct CONTEXTUALPLANNER_API ConditionFact : public Condition
 
 
 /// Condition tree node that holds only a number.
-struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
+struct PRIORITIZEDGOALSPLANNER_API ConditionNumber : public Condition
 {
   ConditionNumber(const Number& pNb);
 
@@ -515,4 +515,4 @@ struct CONTEXTUALPLANNER_API ConditionNumber : public Condition
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_CONDITION_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITION_HPP

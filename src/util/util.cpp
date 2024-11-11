@@ -6,7 +6,7 @@
 
 namespace cp
 {
-bool CONTEXTUALPLANNER_DEBUG_FOR_TESTS = false;  // Define the variable and initialize it
+bool PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS = false;  // Define the variable and initialize it
 
 namespace
 {

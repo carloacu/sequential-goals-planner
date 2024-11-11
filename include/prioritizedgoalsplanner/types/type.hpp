@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_TYPES_TYPE_HPP
-#define INCLUDE_CONTEXTUALPLANNER_TYPES_TYPE_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_TYPE_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_TYPE_HPP
 
 #include "../util/api.hpp"
 #include <string>
@@ -9,7 +9,7 @@
 namespace cp
 {
 
-struct CONTEXTUALPLANNER_API Type
+struct PRIORITIZEDGOALSPLANNER_API Type
 {
   Type(const std::string& pName,
        const std::shared_ptr<Type>& pParent = {});
@@ -35,4 +35,4 @@ struct CONTEXTUALPLANNER_API Type
 
 } // namespace cp
 
-#endif // INCLUDE_CONTEXTUALPLANNER_TYPES_TYPE_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_TYPE_HPP

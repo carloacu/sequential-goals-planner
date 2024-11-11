@@ -4,7 +4,7 @@ project(prioritized_goals_planner_tests)
 
 include_directories(".")
 
-if(NOT CONTEXTUALPLANNER_FOUND)
+if(NOT PRIORITIZEDGOALSPLANNER_FOUND)
   find_package(prioritized_goals_planner_lib)
 endif()
 
@@ -40,7 +40,7 @@ add_executable(
 
 target_link_libraries(prioritized_goals_planner_tests
   ${GTEST_LIBRARIES}
-  ${CONTEXTUALPLANNER_LIBRARIES}
+  ${PRIORITIZEDGOALSPLANNER_LIBRARIES}
 )
 
 add_test(

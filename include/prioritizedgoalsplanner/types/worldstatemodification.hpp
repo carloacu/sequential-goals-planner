@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONTEXTUALPLANNER_WORLDSTATEMODIFICATION_HPP
-#define INCLUDE_CONTEXTUALPLANNER_WORLDSTATEMODIFICATION_HPP
+#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_WORLDSTATEMODIFICATION_HPP
+#define INCLUDE_PRIORITIZEDGOALSPLANNER_WORLDSTATEMODIFICATION_HPP
 
 #include <functional>
 #include <memory>
@@ -16,7 +16,7 @@ struct Domain;
 struct WorldState;
 
 
-struct CONTEXTUALPLANNER_API WorldStateModificationContainerId
+struct PRIORITIZEDGOALSPLANNER_API WorldStateModificationContainerId
 {
   bool isAction(const ActionId& pActionId) const { return actionIdToExclude && *actionIdToExclude == pActionId; }
   bool isEvent(const SetOfEventsId& pSetOfEventsId,
@@ -30,7 +30,7 @@ struct CONTEXTUALPLANNER_API WorldStateModificationContainerId
 
 
 
-struct CONTEXTUALPLANNER_API Successions
+struct PRIORITIZEDGOALSPLANNER_API Successions
 {
   bool empty() const { return actions.empty() && events.empty(); }
   void clear() { actions.clear(); events.clear(); }
@@ -52,7 +52,7 @@ struct CONTEXTUALPLANNER_API Successions
 
 
 /// Modification of a world state represented in a tree structure to apply to a world state.
-struct CONTEXTUALPLANNER_API WorldStateModification
+struct PRIORITIZEDGOALSPLANNER_API WorldStateModification
 {
   /**
    * @brief Create a world state modification by concatenating two existing world state modifications.
@@ -170,4 +170,4 @@ struct CONTEXTUALPLANNER_API WorldStateModification
 } // !cp
 
 
-#endif // INCLUDE_CONTEXTUALPLANNER_WORLDSTATEMODIFICATION_HPP
+#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_WORLDSTATEMODIFICATION_HPP
