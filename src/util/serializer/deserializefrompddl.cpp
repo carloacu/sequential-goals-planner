@@ -1054,10 +1054,7 @@ DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
           if (!res.domainPtr)
             throw std::runtime_error("problem init are defined before the domain.");
           const auto& ontology = res.domainPtr->getOntology();
-
-          SetOfFacts setOfFacts = res.problemPtr->worldState.factsMapping();
-          setOfFacts.addFactsFromPddl(pStr, pos, ontology, res.problemPtr->entities);
-          res.problemPtr->worldState = WorldState(&setOfFacts);
+          res.problemPtr->worldState.addFactsFromPddl(pStr, pos, ontology, res.problemPtr->entities);
         }
         else if (token == ":goal")
         {

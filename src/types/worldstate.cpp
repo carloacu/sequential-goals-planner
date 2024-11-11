@@ -63,6 +63,18 @@ void WorldState::operator=(const WorldState& pOther)
   _cache = std::make_unique<WorldStateCache>(*this, *pOther._cache);
 }
 
+
+void WorldState::addFactsFromPddl(const std::string& pStr,
+                                  std::size_t& pPos,
+                                  const Ontology& pOntology,
+                                  const SetOfEntities& pEntities,
+                                  bool pCanFactsBeRemoved)
+{
+  _factsMapping.addFactsFromPddl(pStr, pPos, pOntology, pEntities, pCanFactsBeRemoved);
+  _cache = std::make_unique<WorldStateCache>(*this);
+}
+
+
 void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                   const std::unique_ptr<WorldStateModification>& pEffect,
                                   bool& pGoalChanged,
