@@ -1,6 +1,13 @@
 project(prioritizedgoalsplanner)
 cmake_minimum_required(VERSION 3.8)
 
+option(
+  CMAKE_INSTALL_INCLUDEDIR
+  "Where to install the includes"
+  include
+)
+
+
 include(prioritizedgoalsplanner-config.cmake)
 
 # Making a lib
@@ -122,9 +129,24 @@ add_library(prioritized_goals_planner_lib SHARED
 )
 target_compile_features(prioritized_goals_planner_lib PRIVATE cxx_std_14)
 
-install(TARGETS prioritized_goals_planner_lib DESTINATION lib)
-install(DIRECTORY include/ DESTINATION include)
+target_include_directories(prioritized_goals_planner_lib PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
+# Create a proper installed package that can be included.
+install(TARGETS prioritized_goals_planner_lib
+    EXPORT prioritized_goals_planner_libTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+install(DIRECTORY include/prioritizedgoalsplanner DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(EXPORT prioritized_goals_planner_libTargets
+    FILE prioritized_goals_planner_libTargets.cmake
+    NAMESPACE cp::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/prioritized_goals_planner
+)
 
 add_subdirectory(bin)
 

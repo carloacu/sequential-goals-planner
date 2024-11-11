@@ -113,9 +113,9 @@ struct PRIORITIZEDGOALSPLANNER_API ProblemModification
 
 inline bool ProblemModification::hasFact(const cp::Fact& pFact) const
 {
-  if (worldStateModification && worldStateModification->hasFact(pFact) ||
-      potentialWorldStateModification && potentialWorldStateModification->hasFact(pFact) ||
-      worldStateModificationAtStart && worldStateModificationAtStart->hasFact(pFact))
+  if ((worldStateModification && worldStateModification->hasFact(pFact)) ||
+      (potentialWorldStateModification && potentialWorldStateModification->hasFact(pFact)) ||
+      (worldStateModificationAtStart && worldStateModificationAtStart->hasFact(pFact)))
     return true;
   for (const auto& currGoalWithPriority : goalsToAdd)
     for (const auto& currGoal : currGoalWithPriority.second)
