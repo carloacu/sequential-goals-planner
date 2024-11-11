@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 
-namespace cp
+namespace pgp
 {
 
 class ArithmeticEvaluator

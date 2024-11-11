@@ -11,7 +11,7 @@
 #include <prioritizedgoalsplanner/util/continueorbreak.hpp>
 #include <prioritizedgoalsplanner/util/util.hpp>
 
-namespace cp
+namespace pgp
 {
 struct WorldState;
 struct ConditionNode;
@@ -512,7 +512,7 @@ struct PRIORITIZEDGOALSPLANNER_API ConditionNumber : public Condition
 
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITION_HPP

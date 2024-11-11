@@ -7,7 +7,7 @@
 #include <string>
 #include <prioritizedgoalsplanner/types/derivedpredicate.hpp>
 
-namespace cp
+namespace pgp
 {
 struct Condition;
 struct Predicate;
@@ -29,6 +29,6 @@ private:
   std::map<std::string, DerivedPredicate> _nameToDerivedPredicate;
 };
 
-} // namespace cp
+} // namespace pgp
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_SETOFDERIVEDPREDICATES_HPP

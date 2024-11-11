@@ -4,7 +4,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace cp
+namespace pgp
 {
 
 SetOfPredicates::SetOfPredicates()
@@ -18,7 +18,7 @@ SetOfPredicates SetOfPredicates::fromStr(const std::string& pStr,
 {
   SetOfPredicates res;
   std::vector<std::string> lineSplitted;
-  cp::split(lineSplitted, pStr, "\n");
+  pgp::split(lineSplitted, pStr, "\n");
   for (auto& currLine : lineSplitted)
     if (!currLine.empty())
       res.addPredicate(Predicate(currLine, false, pSetOfTypes));
@@ -126,4 +126,4 @@ bool SetOfPredicates::hasPredicateOfPddlType(PredicatePddlType pTypeFilter) cons
 }
 
 
-} // !cp
+} // !pgp

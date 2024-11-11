@@ -2,7 +2,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 bool ProblemModification::operator==(const ProblemModification& pOther) const
@@ -35,4 +35,4 @@ std::set<FactOptional> ProblemModification::getAllOptFactsThatCanBeModified() co
   return res;
 }
 
-} // !cp
+} // !pgp

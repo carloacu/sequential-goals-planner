@@ -1,13 +1,13 @@
 #include <prioritizedgoalsplanner/types/event.hpp>
 
-namespace cp
+namespace pgp
 {
 
 
 Event::Event(std::unique_ptr<Condition> pPrecondition,
              std::unique_ptr<WorldStateModification> pFactsToModify,
              const std::vector<Parameter>& pParameters,
-             const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd)
+             const std::map<int, std::vector<pgp::Goal>>& pGoalsToAdd)
   : parameters(pParameters),
     precondition(pPrecondition ? std::move(pPrecondition) : std::unique_ptr<Condition>()),
     factsToModify(pFactsToModify ? std::move(pFactsToModify) : std::unique_ptr<WorldStateModification>()),
@@ -42,4 +42,4 @@ std::string Event::printSuccessionCache() const
 }
 
 
-} // !cp
+} // !pgp

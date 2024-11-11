@@ -6,7 +6,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -1061,4 +1061,4 @@ std::unique_ptr<Condition> ConditionNumber::clone(const std::map<Parameter, Enti
 }
 
 
-} // !cp
+} // !pgp

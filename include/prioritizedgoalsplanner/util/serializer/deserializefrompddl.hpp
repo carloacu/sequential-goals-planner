@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace cp
+namespace pgp
 {
 struct Condition;
 struct Domain;
@@ -67,7 +67,7 @@ std::unique_ptr<WorldStateModification> strToWsModification(const std::string& p
                                                              const SetOfEntities& pEntities,
                                                              const std::vector<Parameter>& pParameters);
 
-} // End of namespace cp
+} // End of namespace pgp
 
 
 

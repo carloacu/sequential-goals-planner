@@ -8,7 +8,7 @@
 #include <string>
 #include "entity.hpp"
 
-namespace cp
+namespace pgp
 {
 struct SetOfTypes;
 
@@ -38,6 +38,6 @@ private:
   std::map<std::string, std::set<Entity>> _typeNameToEntities;
 };
 
-} // namespace cp
+} // namespace pgp
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_SETOFENTITIES_HPP

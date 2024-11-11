@@ -5,7 +5,7 @@
 #include "../util/api.hpp"
 #include "type.hpp"
 
-namespace cp
+namespace pgp
 {
 struct Entity;
 struct SetOfTypes;
@@ -37,7 +37,7 @@ struct PRIORITIZEDGOALSPLANNER_API Parameter
   std::shared_ptr<Type> type;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_PARAMETER_HPP

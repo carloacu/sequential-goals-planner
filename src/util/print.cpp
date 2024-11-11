@@ -4,7 +4,7 @@
 #include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 namespace

@@ -11,7 +11,7 @@
 #include <prioritizedgoalsplanner/types/setofevents.hpp>
 #include <prioritizedgoalsplanner/types/setofconstfacts.hpp>
 
-namespace cp
+namespace pgp
 {
 
 /// Set of all the actions that the bot can do with accessors to optimize the search of a action.
@@ -140,7 +140,7 @@ private:
   void _updateSuccessions();
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_DOMAIN_HPP

@@ -1,7 +1,7 @@
 #include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 ActionInvocationWithGoal::ActionInvocationWithGoal(const std::string& pActionId,
@@ -18,7 +18,7 @@ ActionInvocationWithGoal::ActionInvocationWithGoal(const std::string& pActionId,
 ActionInvocationWithGoal::ActionInvocationWithGoal
 (const ActionInvocationWithGoal& pOther)
  : actionInvocation(pOther.actionInvocation),
-   fromGoal(pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<cp::Goal>()),
+   fromGoal(pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<pgp::Goal>()),
    fromGoalPriority(pOther.fromGoalPriority)
 {
 }
@@ -27,9 +27,9 @@ ActionInvocationWithGoal::ActionInvocationWithGoal
 void ActionInvocationWithGoal::operator=(const ActionInvocationWithGoal& pOther)
 {
   actionInvocation = pOther.actionInvocation;
-  fromGoal = pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<cp::Goal>();
+  fromGoal = pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<pgp::Goal>();
   fromGoalPriority = pOther.fromGoalPriority;
 }
 
 
-} // !cp
+} // !pgp

@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <functional>
 
-namespace cp
+namespace pgp
 {
 
 constexpr std::size_t SEED_LENGTH = 8;
@@ -56,4 +56,4 @@ std::string generateUuid() {
 
 
 
-} // End of namespace cp
+} // End of namespace pgp

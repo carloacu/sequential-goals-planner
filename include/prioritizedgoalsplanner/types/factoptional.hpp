@@ -8,7 +8,7 @@
 #include "../util/api.hpp"
 #include "fact.hpp"
 
-namespace cp
+namespace pgp
 {
 
 /// Fact that can be negated.
@@ -82,7 +82,7 @@ private:
   void _simplify();
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_FACTOPTIONAL_HPP

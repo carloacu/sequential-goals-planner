@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 
-namespace cp
+namespace pgp
 {
 
 PRIORITIZEDGOALSPLANNER_API

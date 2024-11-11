@@ -8,7 +8,7 @@
 #include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
 
-namespace cp
+namespace pgp
 {
 const int GoalStack::defaultPriority = 10;
 
@@ -46,7 +46,7 @@ bool GoalStack::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlanne
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
     goalChanged = _addGoals(*pGoalsToAdd, pWorldState, pNow) || goalChanged;
   if (pGoalsToAddInCurrentPriority != nullptr && !pGoalsToAddInCurrentPriority->empty())
-    goalChanged = _addGoals(std::map<int, std::vector<cp::Goal>>{{currentPriority, *pGoalsToAddInCurrentPriority}}, pWorldState, pNow) || goalChanged;
+    goalChanged = _addGoals(std::map<int, std::vector<pgp::Goal>>{{currentPriority, *pGoalsToAddInCurrentPriority}}, pWorldState, pNow) || goalChanged;
 
   if (goalChanged)
   {
@@ -516,4 +516,4 @@ bool GoalStack::_removeNoStackableGoals(const WorldState& pWorldState,
 
 
 
-} // !cp
+} // !pgp

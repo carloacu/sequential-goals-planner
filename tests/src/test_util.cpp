@@ -3,17 +3,17 @@
 #include <prioritizedgoalsplanner/types/parameter.hpp>
 #include <prioritizedgoalsplanner/util/util.hpp>
 
-using namespace cp;
+using namespace pgp;
 
 namespace
 {
 
-cp::Parameter _parameter(const std::string& pStr) {
-  return cp::Parameter(pStr, {});
+pgp::Parameter _parameter(const std::string& pStr) {
+  return pgp::Parameter(pStr, {});
 }
 
-cp::Entity _entity(const std::string& pStr) {
-  return cp::Entity(pStr, {});
+pgp::Entity _entity(const std::string& pStr) {
+  return pgp::Entity(pStr, {});
 }
 
 std::string _toStr(const std::list<std::map<Parameter, Entity>>& pParams)
@@ -36,9 +36,9 @@ std::string _toStr(const std::list<std::map<Parameter, Entity>>& pParams)
   return res;
 }
 
-std::string _unfoldMapWithSet(const std::map<Parameter, std::set<cp::Entity>>& pInMap)
+std::string _unfoldMapWithSet(const std::map<Parameter, std::set<pgp::Entity>>& pInMap)
 {
-  std::list<std::map<Parameter, cp::Entity>> res;
+  std::list<std::map<Parameter, pgp::Entity>> res;
   unfoldMapWithSet(res, pInMap);
   return _toStr(res);
 }
@@ -68,12 +68,12 @@ void test_autoIncrementOfVersion()
   };
   auto incrementAddIdAndReturnValue = [&](const std::string& pId)
   {
-    auto newId = cp::incrementLastNumberUntilAConditionIsSatisfied(pId, isIdOkForInsertion);
+    auto newId = pgp::incrementLastNumberUntilAConditionIsSatisfied(pId, isIdOkForInsertion);
     ids.insert(newId);
     return newId;
   };
 
-  EXPECT_EQ("", cp::incrementLastNumberUntilAConditionIsSatisfied("", isIdOkForInsertion));
+  EXPECT_EQ("", pgp::incrementLastNumberUntilAConditionIsSatisfied("", isIdOkForInsertion));
   EXPECT_EQ("dede", incrementAddIdAndReturnValue("dede"));
   EXPECT_EQ("dede_2", incrementAddIdAndReturnValue("dede"));
   EXPECT_EQ("dede_3", incrementAddIdAndReturnValue("dede"));

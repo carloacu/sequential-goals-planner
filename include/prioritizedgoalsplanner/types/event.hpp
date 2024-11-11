@@ -10,7 +10,7 @@
 #include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
 #include <prioritizedgoalsplanner/types/goal.hpp>
 
-namespace cp
+namespace pgp
 {
 
 /// Specification what is an event.
@@ -20,7 +20,7 @@ struct PRIORITIZEDGOALSPLANNER_API Event
   Event(std::unique_ptr<Condition> pPrecondition,
         std::unique_ptr<WorldStateModification> pFactsToModify,
         const std::vector<Parameter>& pParameters = {},
-        const std::map<int, std::vector<cp::Goal>>& pGoalsToAdd = {});
+        const std::map<int, std::vector<pgp::Goal>>& pGoalsToAdd = {});
 
   /// Construct a copy.
   Event(const Event& pEvent)
@@ -50,7 +50,7 @@ struct PRIORITIZEDGOALSPLANNER_API Event
   /// Facts to add or to remove if the condition is true.
   const std::unique_ptr<WorldStateModification> factsToModify;
   /// Goals to add if the condition is true.
-  const std::map<int, std::vector<cp::Goal>> goalsToAdd;
+  const std::map<int, std::vector<pgp::Goal>> goalsToAdd;
 
   std::set<ActionId> actionsPredecessorsCache;
   std::set<FullEventId> eventsPredecessorsCache;
@@ -58,7 +58,7 @@ struct PRIORITIZEDGOALSPLANNER_API Event
 
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_EVENT_HPP

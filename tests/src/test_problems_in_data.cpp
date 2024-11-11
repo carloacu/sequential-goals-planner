@@ -8,7 +8,7 @@
 #include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 
 
-using namespace cp;
+using namespace pgp;
 
 namespace
 {
@@ -62,16 +62,16 @@ void _test_dataDirectory(const std::string& pDataPath,
   auto directory = pDataPath + "/" + pProblemDirectory;
 
   auto domainContent = _getFileContent(directory + "/domain.pddl");
-  std::map<std::string, cp::Domain> loadedDomains;
-  auto domain = cp::pddlToDomain(domainContent, loadedDomains);
+  std::map<std::string, pgp::Domain> loadedDomains;
+  auto domain = pgp::pddlToDomain(domainContent, loadedDomains);
   loadedDomains.emplace(domain.getName(), std::move(domain));
 
   auto problemContent = _getFileContent(directory + "/problem.pddl");
-  cp::DomainAndProblemPtrs domainAndProblemPtrs = cp::pddlToProblem(problemContent, loadedDomains);
+  pgp::DomainAndProblemPtrs domainAndProblemPtrs = pgp::pddlToProblem(problemContent, loadedDomains);
   auto& problem = *domainAndProblemPtrs.problemPtr;
 
   std::string expected = _getFileContentWithoutComments(directory + "/problem_plan_result.pddl");
-  std::string actualPlan = cp::planToPddl(cp::planForEveryGoals(problem, domain, {}), domain);
+  std::string actualPlan = pgp::planToPddl(pgp::planForEveryGoals(problem, domain, {}), domain);
   EXPECT_EQ(expected, actualPlan);
 }
 

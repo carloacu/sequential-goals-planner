@@ -7,7 +7,7 @@
 #include <string>
 #include "type.hpp"
 
-namespace cp
+namespace pgp
 {
 
 struct PRIORITIZEDGOALSPLANNER_API SetOfTypes
@@ -32,6 +32,6 @@ private:
   std::map<std::string, std::shared_ptr<Type>> _nameToType;
 };
 
-} // namespace cp
+} // namespace pgp
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_SETOFTYPES_HPP

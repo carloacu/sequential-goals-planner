@@ -4,7 +4,7 @@
 #include "../../types/worldstatemodificationprivate.hpp"
 
 
-namespace cp
+namespace pgp
 {
 namespace
 {

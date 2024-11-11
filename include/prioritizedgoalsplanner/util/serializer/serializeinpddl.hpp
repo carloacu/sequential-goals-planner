@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace cp
+namespace pgp
 {
 struct Condition;
 struct Domain;
@@ -19,7 +19,7 @@ std::string problemToPddl(const Problem& pProblem,
 std::string conditionToPddl(const Condition& pCondition,
                             std::size_t pIdentation);
 
-} // End of namespace cp
+} // End of namespace pgp
 
 
 

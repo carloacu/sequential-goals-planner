@@ -12,7 +12,7 @@
 #include <prioritizedgoalsplanner/util/observableunsafe.hpp>
 
 
-namespace cp
+namespace pgp
 {
 struct Domain;
 struct ProblemModification;
@@ -47,7 +47,7 @@ struct PRIORITIZEDGOALSPLANNER_API GoalStack
                         LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /// Be notified when goals changed.
-  cpstd::observable::ObservableUnsafe<void (const std::map<int, std::vector<Goal>>&)> onGoalsChanged{};
+  pgpstd::observable::ObservableUnsafe<void (const std::map<int, std::vector<Goal>>&)> onGoalsChanged{};
 
 
   // Goal stack
@@ -267,7 +267,7 @@ private:
   friend struct WorldState;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_GOALSTACK_HPP

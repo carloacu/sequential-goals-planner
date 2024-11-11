@@ -5,7 +5,7 @@
 #include "expressionParsed.hpp"
 #include <prioritizedgoalsplanner/util/util.hpp>
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -710,4 +710,4 @@ const WorldStateModificationNumber* toWmNumber(const WorldStateModification& pOt
 }
 
 
-} // !cp
+} // !pgp

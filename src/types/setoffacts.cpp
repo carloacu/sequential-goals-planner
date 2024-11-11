@@ -5,7 +5,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -340,7 +340,7 @@ typename SetOfFacts::SetOfFactIterator SetOfFacts::find(const Fact& pFact,
   return SetOfFactIterator(exactMatchPtr);
 }
 
-std::optional<Entity> SetOfFacts::getFactFluent(const cp::Fact& pFact) const
+std::optional<Entity> SetOfFacts::getFactFluent(const pgp::Fact& pFact) const
 {
   auto factMatchingInWs = find(pFact, true);
   for (const auto& currFact : factMatchingInWs)
@@ -415,5 +415,5 @@ const std::list<Fact>* SetOfFacts::_findAnExactCall(
 
 
 
-} // !cp
+} // !pgp
 

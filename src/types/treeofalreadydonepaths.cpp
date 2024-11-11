@@ -1,6 +1,6 @@
 #include "treeofalreadydonepaths.hpp"
 
-namespace cp
+namespace pgp
 {
 
 
@@ -28,4 +28,4 @@ TreeOfAlreadyDonePath* TreeOfAlreadyDonePath::getNextInflectionTreeIfNotAnExisti
 
 
 
-} // !cp
+} // !pgp

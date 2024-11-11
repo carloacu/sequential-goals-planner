@@ -12,7 +12,7 @@
 #include <memory>
 #include <variant>
 
-namespace cp
+namespace pgp
 {
 struct Entity;
 struct Parameter;

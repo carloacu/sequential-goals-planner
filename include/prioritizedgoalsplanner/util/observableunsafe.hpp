@@ -6,7 +6,7 @@
 #include <functional>
 
 
-namespace cpstd
+namespace pgpstd
 {
 namespace observable
 {
@@ -95,7 +95,7 @@ void ObservableUnsafe<FuncSignature>::operator()(Args&&... pArgs)
 
 
 } // End of namespace observable
-} // End of namespace cpstd
+} // End of namespace pgpstd
 
 
 

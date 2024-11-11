@@ -9,21 +9,21 @@
 #include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 #include "notifyactiondone.hpp"
 
-namespace cp
+namespace pgp
 {
 
 namespace
 {
 
-std::list<cp::Goal> _checkSatisfiedGoals(
+std::list<pgp::Goal> _checkSatisfiedGoals(
     const Problem& pProblem,
     const Domain& pDomain,
-    const std::list<std::list<cp::ActionInvocationWithGoal>>& pPlan,
-    const cp::ActionInvocationWithGoal* pActionToDoFirstPtr,
-    const cp::ActionInvocationWithGoal* pActionToSkipPtr,
+    const std::list<std::list<pgp::ActionInvocationWithGoal>>& pPlan,
+    const pgp::ActionInvocationWithGoal* pActionToDoFirstPtr,
+    const pgp::ActionInvocationWithGoal* pActionToSkipPtr,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  std::list<cp::Goal> res;
+  std::list<pgp::Goal> res;
   auto problem = pProblem;
   const auto& actions = pDomain.actions();
 
@@ -67,15 +67,15 @@ std::list<cp::Goal> _checkSatisfiedGoals(
 
 
 
-std::list<std::list<cp::ActionInvocationWithGoal>> toParallelPlan
-(std::list<cp::ActionInvocationWithGoal>& pSequentialPlan,
+std::list<std::list<pgp::ActionInvocationWithGoal>> toParallelPlan
+(std::list<pgp::ActionInvocationWithGoal>& pSequentialPlan,
  bool pParalleliseOnyFirstStep,
  const Problem& pProblem,
  const Domain& pDomain,
- const std::list<cp::Goal>& pGoals,
+ const std::list<pgp::Goal>& pGoals,
  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  std::list<std::list<cp::ActionInvocationWithGoal>> res;
+  std::list<std::list<pgp::ActionInvocationWithGoal>> res;
   auto currentProblem = pProblem;
 
   // Connvert list of actions to a list of list of actions
@@ -124,4 +124,4 @@ std::list<std::list<cp::ActionInvocationWithGoal>> toParallelPlan
 
 
 
-} // End of namespace cp
+} // End of namespace pgp

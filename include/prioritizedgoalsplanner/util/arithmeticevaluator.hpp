@@ -4,7 +4,7 @@
 #include <string>
 #include "api.hpp"
 
-namespace cp
+namespace pgp
 {
 
 PRIORITIZEDGOALSPLANNER_API

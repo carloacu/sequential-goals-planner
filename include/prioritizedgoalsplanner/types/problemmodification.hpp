@@ -10,7 +10,7 @@
 #include <prioritizedgoalsplanner/types/goal.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 
@@ -33,10 +33,10 @@ struct PRIORITIZEDGOALSPLANNER_API ProblemModification
    * @param[in] pPotentialWorldStateModification Modification of the world used only for planification.<br/>
    * We supposed it will be potentially applied inderectly by extractors.
    */
-  ProblemModification(std::unique_ptr<cp::WorldStateModification> pWorldStateModification,
-                      std::unique_ptr<cp::WorldStateModification> pPotentialWorldStateModification = std::unique_ptr<cp::WorldStateModification>())
-    : worldStateModification(pWorldStateModification ? std::move(pWorldStateModification): std::unique_ptr<cp::WorldStateModification>()),
-      potentialWorldStateModification(pPotentialWorldStateModification ? std::move(pPotentialWorldStateModification) : std::unique_ptr<cp::WorldStateModification>()),
+  ProblemModification(std::unique_ptr<pgp::WorldStateModification> pWorldStateModification,
+                      std::unique_ptr<pgp::WorldStateModification> pPotentialWorldStateModification = std::unique_ptr<pgp::WorldStateModification>())
+    : worldStateModification(pWorldStateModification ? std::move(pWorldStateModification): std::unique_ptr<pgp::WorldStateModification>()),
+      potentialWorldStateModification(pPotentialWorldStateModification ? std::move(pPotentialWorldStateModification) : std::unique_ptr<pgp::WorldStateModification>()),
       worldStateModificationAtStart(),
       goalsToAdd(),
       goalsToAddInCurrentPriority()
@@ -45,9 +45,9 @@ struct PRIORITIZEDGOALSPLANNER_API ProblemModification
 
   /// Copy constructor.
   ProblemModification(const ProblemModification& pOther)
-    : worldStateModification(pOther.worldStateModification ? pOther.worldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
-      potentialWorldStateModification(pOther.potentialWorldStateModification ? pOther.potentialWorldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
-      worldStateModificationAtStart(pOther.worldStateModificationAtStart ? pOther.worldStateModificationAtStart->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>()),
+    : worldStateModification(pOther.worldStateModification ? pOther.worldStateModification->clone(nullptr) : std::unique_ptr<pgp::WorldStateModification>()),
+      potentialWorldStateModification(pOther.potentialWorldStateModification ? pOther.potentialWorldStateModification->clone(nullptr) : std::unique_ptr<pgp::WorldStateModification>()),
+      worldStateModificationAtStart(pOther.worldStateModificationAtStart ? pOther.worldStateModificationAtStart->clone(nullptr) : std::unique_ptr<pgp::WorldStateModification>()),
       goalsToAdd(pOther.goalsToAdd),
       goalsToAddInCurrentPriority(pOther.goalsToAddInCurrentPriority)
   {
@@ -56,9 +56,9 @@ struct PRIORITIZEDGOALSPLANNER_API ProblemModification
   /// Copy operator.
   void operator=(const ProblemModification& pOther)
   {
-    worldStateModification = pOther.worldStateModification ? pOther.worldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
-    potentialWorldStateModification = pOther.potentialWorldStateModification ? pOther.potentialWorldStateModification->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
-    worldStateModificationAtStart = pOther.worldStateModificationAtStart ? pOther.worldStateModificationAtStart->clone(nullptr) : std::unique_ptr<cp::WorldStateModification>();
+    worldStateModification = pOther.worldStateModification ? pOther.worldStateModification->clone(nullptr) : std::unique_ptr<pgp::WorldStateModification>();
+    potentialWorldStateModification = pOther.potentialWorldStateModification ? pOther.potentialWorldStateModification->clone(nullptr) : std::unique_ptr<pgp::WorldStateModification>();
+    worldStateModificationAtStart = pOther.worldStateModificationAtStart ? pOther.worldStateModificationAtStart->clone(nullptr) : std::unique_ptr<pgp::WorldStateModification>();
     goalsToAdd = pOther.goalsToAdd;
     goalsToAddInCurrentPriority = pOther.goalsToAddInCurrentPriority;
   }
@@ -71,7 +71,7 @@ struct PRIORITIZEDGOALSPLANNER_API ProblemModification
   bool operator!=(const ProblemModification& pOther) const { return !operator==(pOther); }
 
   /// Check if this object contains a fact or the negation of the fact.
-  bool hasFact(const cp::Fact& pFact) const;
+  bool hasFact(const pgp::Fact& pFact) const;
 
   /**
    * @brief Add the content of another problem modifiation.
@@ -95,15 +95,15 @@ struct PRIORITIZEDGOALSPLANNER_API ProblemModification
   std::string potentialWorldStateModification_str() const { return potentialWorldStateModification ? potentialWorldStateModification->toStr() : ""; }
 
   /// World modifications declared and that will be applied to the world.
-  std::unique_ptr<cp::WorldStateModification> worldStateModification;
+  std::unique_ptr<pgp::WorldStateModification> worldStateModification;
   /// World modifications declared but that will not be applied to the world.
-  std::unique_ptr<cp::WorldStateModification> potentialWorldStateModification;
+  std::unique_ptr<pgp::WorldStateModification> potentialWorldStateModification;
   /// World modifications declared and that will be applied to the world when the action starts.
-  std::unique_ptr<cp::WorldStateModification> worldStateModificationAtStart;
+  std::unique_ptr<pgp::WorldStateModification> worldStateModificationAtStart;
   /// Goal priorities to goals to add in the goal stack.
-  std::map<int, std::vector<cp::Goal>> goalsToAdd;
+  std::map<int, std::vector<pgp::Goal>> goalsToAdd;
   /// Goals to add in the goal stack in current priority of the goal stack.
-  std::vector<cp::Goal> goalsToAddInCurrentPriority;
+  std::vector<pgp::Goal> goalsToAddInCurrentPriority;
 };
 
 
@@ -111,7 +111,7 @@ struct PRIORITIZEDGOALSPLANNER_API ProblemModification
 
 // Implemenation
 
-inline bool ProblemModification::hasFact(const cp::Fact& pFact) const
+inline bool ProblemModification::hasFact(const pgp::Fact& pFact) const
 {
   if ((worldStateModification && worldStateModification->hasFact(pFact)) ||
       (potentialWorldStateModification && potentialWorldStateModification->hasFact(pFact)) ||
@@ -166,7 +166,7 @@ inline void ProblemModification::replaceArgument(const Entity& pOld,
     worldStateModificationAtStart->replaceArgument(pOld, pNew);
 }
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEMMODIFICATION_HPP

@@ -8,7 +8,7 @@
 #include "parameter.hpp"
 
 
-namespace cp
+namespace pgp
 {
 
 struct PRIORITIZEDGOALSPLANNER_API Predicate
@@ -33,7 +33,7 @@ struct PRIORITIZEDGOALSPLANNER_API Predicate
   std::shared_ptr<Type> fluent;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_PREDICATE_HPP

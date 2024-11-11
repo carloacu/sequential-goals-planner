@@ -9,7 +9,7 @@
 #include <prioritizedgoalsplanner/util/alias.hpp>
 #include <prioritizedgoalsplanner/util/continueorbreak.hpp>
 
-namespace cp
+namespace pgp
 {
 struct Condition;
 struct Domain;
@@ -70,10 +70,10 @@ struct PRIORITIZEDGOALSPLANNER_API WorldStateModification
   virtual std::string toStr(bool pPrintAnyFluent = true) const = 0;
 
   /// Check if this object contains a fact or the negation of the fact.
-  virtual bool hasFact(const cp::Fact& pFact) const = 0;
+  virtual bool hasFact(const pgp::Fact& pFact) const = 0;
 
   /// Check if this object contains an optional fact.
-  virtual bool hasFactOptional(const cp::FactOptional& FactOptional) const = 0;
+  virtual bool hasFactOptional(const pgp::FactOptional& FactOptional) const = 0;
 
   /// Does this object only represents a set of facts.
   virtual bool isOnlyASetOfFacts() const = 0;
@@ -167,7 +167,7 @@ struct PRIORITIZEDGOALSPLANNER_API WorldStateModification
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_WORLDSTATEMODIFICATION_HPP

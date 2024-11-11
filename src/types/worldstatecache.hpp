@@ -10,7 +10,7 @@
 #include <prioritizedgoalsplanner/util/alias.hpp>
 
 
-namespace cp
+namespace pgp
 {
 struct Domain;
 struct Event;
@@ -110,7 +110,7 @@ private:
                                        FactsAlreadyChecked& pFactsAlreadychecked);
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATECACHE_HPP

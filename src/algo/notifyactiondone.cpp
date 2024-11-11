@@ -5,7 +5,7 @@
 #include <prioritizedgoalsplanner/types/problem.hpp>
 #include <prioritizedgoalsplanner/types/worldstate.hpp>
 
-namespace cp
+namespace pgp
 {
 
 void notifyActionInvocationDone(Problem& pProblem,
@@ -80,4 +80,4 @@ void updateProblemForNextPotentialPlannerResultWithAction(
 }
 
 
-} // End of namespace cp
+} // End of namespace pgp

@@ -8,7 +8,7 @@
 #include <prioritizedgoalsplanner/util/alias.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 
@@ -53,7 +53,7 @@ private:
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_HISTORICAL_HPP

@@ -7,7 +7,7 @@
 #include "../util/api.hpp"
 
 
-namespace cp
+namespace pgp
 {
 struct Entity;
 struct Parameter;
@@ -34,7 +34,7 @@ struct PRIORITIZEDGOALSPLANNER_API ActionInvocation
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTIONINVOCATION_HPP

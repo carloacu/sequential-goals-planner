@@ -2,7 +2,7 @@
 #include <prioritizedgoalsplanner/types/condition.hpp>
 #include <prioritizedgoalsplanner/types/factoptional.hpp>
 
-namespace cp
+namespace pgp
 {
 
 
@@ -38,5 +38,5 @@ void ConditionsToValue::erase(const std::string& pValue)
 
 
 
-} // !cp
+} // !pgp
 

@@ -5,7 +5,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 
@@ -44,7 +44,7 @@ Parameter Parameter::fromStr(const std::string& pStr,
                              const SetOfTypes& pSetOfTypes)
 {
   std::vector<std::string> nameWithType;
-  cp::split(nameWithType, pStr, "-");
+  pgp::split(nameWithType, pStr, "-");
 
   if (nameWithType.empty())
     throw std::runtime_error("\"" + pStr + "\" is not a valid entity");
@@ -88,4 +88,4 @@ bool Parameter::isAParameterToFill() const
 
 
 
-} // !cp
+} // !pgp

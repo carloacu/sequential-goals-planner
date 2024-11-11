@@ -6,7 +6,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 #include "worldstatemodificationprivate.hpp"
 
-namespace cp
+namespace pgp
 {
 
 void Successions::add(const Successions& pSuccessions)
@@ -78,4 +78,4 @@ std::unique_ptr<WorldStateModification> WorldStateModification::createByConcaten
 }
 
 
-} // !cp
+} // !pgp

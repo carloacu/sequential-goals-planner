@@ -7,7 +7,7 @@
 #include <prioritizedgoalsplanner/types/factstovalue.hpp>
 #include <prioritizedgoalsplanner/util/alias.hpp>
 
-namespace cp
+namespace pgp
 {
 
 /// Container of a set of events.
@@ -62,7 +62,7 @@ private:
   EventLinks _reachableEventLinks{};
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_SETOFEVENTS_HPP

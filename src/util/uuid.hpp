@@ -3,12 +3,12 @@
 
 #include <string>
 
-namespace cp
+namespace pgp
 {
 
 std::string generateUuid();
 
-} // End of namespace cp
+} // End of namespace pgp
 
 
 #endif // PRIORITIZEDGOALSPLANNER_SRC_UTIL_UUID_HPP

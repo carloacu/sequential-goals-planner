@@ -7,7 +7,7 @@
 #include <prioritizedgoalsplanner/types/condition.hpp>
 #include <prioritizedgoalsplanner/types/fact.hpp>
 
-namespace cp
+namespace pgp
 {
 struct Event;
 
@@ -46,7 +46,7 @@ struct PRIORITIZEDGOALSPLANNER_API Axiom
 
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_AXIOM_HPP

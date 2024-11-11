@@ -1,7 +1,7 @@
 #include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 LookForAnActionOutputInfos::LookForAnActionOutputInfos()
@@ -38,5 +38,5 @@ void LookForAnActionOutputInfos::notifyNotSatisfiedGoal(const Goal& pGoal)
     ++_nbOfNonPersistentGoalsNotSatisfied;
 }
 
-} // !cp
+} // !pgp
 

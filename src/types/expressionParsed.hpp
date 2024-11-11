@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace cp
+namespace pgp
 {
 struct FactOptional;
 struct Ontology;
@@ -70,7 +70,7 @@ struct ExpressionParsed
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_EXPRESSION_PARSED_HPP

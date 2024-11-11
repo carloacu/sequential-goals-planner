@@ -8,7 +8,7 @@
 #include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
 #include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
 
-using namespace cp;
+using namespace pgp;
 
 namespace
 {
@@ -86,14 +86,14 @@ int main(int argc, char* argv[])
   }
 
   auto domainContent = _getFileContent(domain_file);
-  std::map<std::string, cp::Domain> loadedDomains;
-  auto domain = cp::pddlToDomain(domainContent, loadedDomains);
+  std::map<std::string, pgp::Domain> loadedDomains;
+  auto domain = pgp::pddlToDomain(domainContent, loadedDomains);
   loadedDomains.emplace(domain.getName(), std::move(domain));
   if (verbose)
     std::cout << "Parsing domain file \"" << domain_file << "\" done successfully." << std::endl;
 
   auto problemContent = _getFileContent(problem_file);
-  cp::DomainAndProblemPtrs domainAndProblemPtrs = cp::pddlToProblem(problemContent, loadedDomains);
+  pgp::DomainAndProblemPtrs domainAndProblemPtrs = pgp::pddlToProblem(problemContent, loadedDomains);
   auto& problem = *domainAndProblemPtrs.problemPtr;
   if (verbose)
     std::cout << "Parsing problem file \"" << problem_file << "\" done successfully." << std::endl;
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 
   if (verbose)
     std::cout << "Searching for a plan..." << std::endl;
-  std::string planStr = cp::planToPddl(cp::planForEveryGoals(problem, domain, {}), domain);
+  std::string planStr = pgp::planToPddl(pgp::planForEveryGoals(problem, domain, {}), domain);
 
 
   if (planStr == "")

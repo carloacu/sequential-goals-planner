@@ -2,7 +2,7 @@
 #include <prioritizedgoalsplanner/types/derivedpredicate.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 SetOfDerivedPredicates::SetOfDerivedPredicates()
@@ -42,4 +42,4 @@ std::unique_ptr<Condition> SetOfDerivedPredicates::optFactToConditionPtr(const F
   return {};
 }
 
-} // !cp
+} // !pgp

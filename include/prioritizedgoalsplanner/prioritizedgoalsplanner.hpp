@@ -10,7 +10,7 @@
 #include <prioritizedgoalsplanner/types/problem.hpp>
 #include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
-namespace cp
+namespace pgp
 {
 
 
@@ -109,11 +109,11 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
  * @return The plan written in string.
  */
 PRIORITIZEDGOALSPLANNER_API
-std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
+std::string planToStr(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep = ", ");
 
 PRIORITIZEDGOALSPLANNER_API
-std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
+std::string planToPddl(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain);
 /**
  * @brief Convert a list of goals to a string.
@@ -122,10 +122,10 @@ std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
  * @return The list of goals written in string.
  */
 PRIORITIZEDGOALSPLANNER_API
-std::string goalsToStr(const std::list<cp::Goal>& pGoals,
+std::string goalsToStr(const std::list<pgp::Goal>& pGoals,
                        const std::string& pSep = ", ");
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_PRIORITIZEDGOALSPLANNER_HPP

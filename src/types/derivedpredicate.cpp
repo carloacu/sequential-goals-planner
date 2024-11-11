@@ -2,16 +2,16 @@
 #include <prioritizedgoalsplanner/types/setofentities.hpp>
 #include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
-namespace cp
+namespace pgp
 {
 
 DerivedPredicate::DerivedPredicate(const Predicate& pPredicate,
                                    const std::string& pConditionStr,
-                                   const cp::Ontology& pOntology)
+                                   const pgp::Ontology& pOntology)
   : predicate(pPredicate),
     condition()
 {
-  std::vector<cp::Parameter> parameters;
+  std::vector<pgp::Parameter> parameters;
   for (const auto& currParam : pPredicate.parameters)
     if (currParam.isAParameterToFill())
       parameters.emplace_back(currParam);
@@ -35,4 +35,4 @@ void DerivedPredicate::operator=(const DerivedPredicate& pDerivedPredicate)
 }
 
 
-} // !cp
+} // !pgp

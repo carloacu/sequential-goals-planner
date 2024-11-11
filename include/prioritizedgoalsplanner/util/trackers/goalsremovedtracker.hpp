@@ -7,7 +7,7 @@
 #include <prioritizedgoalsplanner/util/observableunsafe.hpp>
 
 
-namespace cp
+namespace pgp
 {
 struct GoalStack;
 
@@ -15,15 +15,15 @@ struct PRIORITIZEDGOALSPLANNER_API GoalsRemovedTracker
 {
   GoalsRemovedTracker(const GoalStack& pGoalStack);
   ~GoalsRemovedTracker();
-  cpstd::observable::ObservableUnsafe<void (const std::set<std::string>&)> onGoalsRemoved{};
+  pgpstd::observable::ObservableUnsafe<void (const std::set<std::string>&)> onGoalsRemoved{};
 
 
 private:
   std::set<std::string> _existingGoals;
-  cpstd::observable::Connection _onGoalsChangedConnection;
+  pgpstd::observable::Connection _onGoalsChangedConnection;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_TRACKERS_GOALSREMOVEDTRACKER_HPP

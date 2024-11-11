@@ -8,7 +8,7 @@
 #include "../util/api.hpp"
 
 
-namespace cp
+namespace pgp
 {
 
 /**
@@ -47,7 +47,7 @@ struct PRIORITIZEDGOALSPLANNER_API Problem
   Historical historical;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_PROBLEM_HPP

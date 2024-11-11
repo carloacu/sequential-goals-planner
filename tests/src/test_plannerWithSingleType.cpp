@@ -9,7 +9,7 @@
 
 namespace
 {
-const std::map<cp::SetOfEventsId, cp::SetOfEvents> _emptySetOfEvents;
+const std::map<pgp::SetOfEventsId, pgp::SetOfEvents> _emptySetOfEvents;
 const std::string _sep = ", ";
 const std::unique_ptr<std::chrono::steady_clock::time_point> _now = {};
 
@@ -20,11 +20,11 @@ const std::string _fact_d = "fact_d";
 const std::string _fact_e = "fact_e";
 const std::string _fact_f = "fact_f";
 const std::string _fact_g = "fact_g";
-const std::string _fact_punctual_p1 = cp::Fact::punctualPrefix + "fact_p1";
-const std::string _fact_punctual_p2 = cp::Fact::punctualPrefix + "fact_p2";
-const std::string _fact_punctual_p3 = cp::Fact::punctualPrefix + "fact_p3";
-const std::string _fact_punctual_p4 = cp::Fact::punctualPrefix + "fact_p4";
-const std::string _fact_punctual_p5 = cp::Fact::punctualPrefix + "fact_p5";
+const std::string _fact_punctual_p1 = pgp::Fact::punctualPrefix + "fact_p1";
+const std::string _fact_punctual_p2 = pgp::Fact::punctualPrefix + "fact_p2";
+const std::string _fact_punctual_p3 = pgp::Fact::punctualPrefix + "fact_p3";
+const std::string _fact_punctual_p4 = pgp::Fact::punctualPrefix + "fact_p4";
+const std::string _fact_punctual_p5 = pgp::Fact::punctualPrefix + "fact_p5";
 const std::string _fact_advertised = "advertised";
 const std::string _fact_beginOfConversation = "begin_of_conversation";
 const std::string _fact_presented = "presented";
@@ -40,8 +40,8 @@ const std::string _fact_engagedWithUser = "engaged_with_user";
 const std::string _fact_userSatisfied = "user_satisfied";
 const std::string _fact_robotLearntABehavior = "robot_learnt_a_behavior";
 const std::string _fact_headTouched = "head_touched";
-const std::string _fact_punctual_headTouched = cp::Fact::punctualPrefix + "head_touched";
-const std::string _fact_punctual_checkedIn = cp::Fact::punctualPrefix + "checked_in";
+const std::string _fact_punctual_headTouched = pgp::Fact::punctualPrefix + "head_touched";
+const std::string _fact_punctual_checkedIn = pgp::Fact::punctualPrefix + "checked_in";
 
 const std::string _action_presentation = "presentation";
 const std::string _action_askQuestion1 = "ask_question_1";
@@ -58,255 +58,255 @@ const std::string _action_navigate = "navigate";
 const std::string _action_welcome = "welcome";
 const std::string _action_grab = "grab";
 const std::string _action_ungrab = "ungrab";
-static const std::vector<cp::Parameter> _emptyParameters;
+static const std::vector<pgp::Parameter> _emptyParameters;
 
 
-cp::Fact _fact(const std::string& pStr,
-               const cp::Ontology& pOntology,
-               const std::vector<cp::Parameter>& pParameters = {}) {
-  return cp::Fact(pStr, false, pOntology, {}, pParameters);
+pgp::Fact _fact(const std::string& pStr,
+               const pgp::Ontology& pOntology,
+               const std::vector<pgp::Parameter>& pParameters = {}) {
+  return pgp::Fact(pStr, false, pOntology, {}, pParameters);
 }
 
-cp::Parameter _parameter(const std::string& pStr,
-                         const cp::Ontology& pOntology) {
-  return cp::Parameter::fromStr(pStr, pOntology.types);
+pgp::Parameter _parameter(const std::string& pStr,
+                         const pgp::Ontology& pOntology) {
+  return pgp::Parameter::fromStr(pStr, pOntology.types);
 }
 
-cp::Entity _entityDeclaration(const std::string& pStr,
-                              const cp::Ontology& pOntology) {
-  return cp::Entity::fromDeclaration(pStr, pOntology.types);
+pgp::Entity _entityDeclaration(const std::string& pStr,
+                              const pgp::Ontology& pOntology) {
+  return pgp::Entity::fromDeclaration(pStr, pOntology.types);
 }
 
-cp::Goal _goal(const std::string& pStr,
-               const cp::Ontology& pOntology,
+pgp::Goal _goal(const std::string& pStr,
+               const pgp::Ontology& pOntology,
                int pMaxTimeToKeepInactive = -1,
                const std::string& pGoalGroupId = "") {
-  return cp::Goal::fromStr(pStr, pOntology, {}, pMaxTimeToKeepInactive, pGoalGroupId);
+  return pgp::Goal::fromStr(pStr, pOntology, {}, pMaxTimeToKeepInactive, pGoalGroupId);
 }
 
-std::unique_ptr<cp::Condition> _condition_fromStr(const std::string& pConditionStr,
-                                                  const cp::Ontology& pOntology,
-                                                  const std::vector<cp::Parameter>& pParameters = {}) {
-  return cp::strToCondition(pConditionStr, pOntology, {}, pParameters);
+std::unique_ptr<pgp::Condition> _condition_fromStr(const std::string& pConditionStr,
+                                                  const pgp::Ontology& pOntology,
+                                                  const std::vector<pgp::Parameter>& pParameters = {}) {
+  return pgp::strToCondition(pConditionStr, pOntology, {}, pParameters);
 }
 
-std::unique_ptr<cp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr,
-                                                                            const cp::Ontology& pOntology,
-                                                                            const std::vector<cp::Parameter>& pParameters = {}) {
-  return cp::strToWsModification(pStr, pOntology, {}, pParameters);
+std::unique_ptr<pgp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr,
+                                                                            const pgp::Ontology& pOntology,
+                                                                            const std::vector<pgp::Parameter>& pParameters = {}) {
+  return pgp::strToWsModification(pStr, pOntology, {}, pParameters);
 }
 
-void _setGoalsForAPriority(cp::Problem& pProblem,
+void _setGoalsForAPriority(pgp::Problem& pProblem,
                            const std::vector<std::string>& pGoalStrs,
-                           const cp::Ontology& pOntology,
+                           const pgp::Ontology& pOntology,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = cp::GoalStack::defaultPriority)
+                           int pPriority = pgp::GoalStack::defaultPriority)
 {
-  std::vector<cp::Goal> goals;
+  std::vector<pgp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
-    goals.emplace_back(cp::Goal::fromStr(currFactStr, pOntology, cp::SetOfEntities()));
+    goals.emplace_back(pgp::Goal::fromStr(currFactStr, pOntology, pgp::SetOfEntities()));
   pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow, pPriority);
 }
 
 
-void _setGoalsForAPriority(cp::Problem& pProblem,
-                           const std::vector<cp::Goal>& pGoals,
+void _setGoalsForAPriority(pgp::Problem& pProblem,
+                           const std::vector<pgp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = cp::GoalStack::defaultPriority)
+                           int pPriority = pgp::GoalStack::defaultPriority)
 {
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }
 
 
-void _setGoals(cp::Problem& pProblem,
+void _setGoals(pgp::Problem& pProblem,
                const std::map<int, std::vector<std::string>>& pGoalStrs,
-               const cp::Ontology& pOntology,
+               const pgp::Ontology& pOntology,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  std::map<int, std::vector<cp::Goal>> goals;
+  std::map<int, std::vector<pgp::Goal>> goals;
   for (auto& currGoals : pGoalStrs)
   {
     auto& goalsForAPrio = goals[currGoals.first];
     for (auto& currGoal : currGoals.second)
-      goalsForAPrio.emplace_back(cp::Goal::fromStr(currGoal, pOntology, cp::SetOfEntities()));
+      goalsForAPrio.emplace_back(pgp::Goal::fromStr(currGoal, pOntology, pgp::SetOfEntities()));
   }
   pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow);
 }
 
 
-void _setGoals(cp::Problem& pProblem,
-               const std::map<int, std::vector<cp::Goal>>& pGoals,
+void _setGoals(pgp::Problem& pProblem,
+               const std::map<int, std::vector<pgp::Goal>>& pGoals,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow);
 }
 
 
-void _addGoals(cp::Problem& pProblem,
+void _addGoals(pgp::Problem& pProblem,
                const std::map<int, std::vector<std::string>>& pGoalStrs,
-               const cp::Ontology& pOntology,
+               const pgp::Ontology& pOntology,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  std::map<int, std::vector<cp::Goal>> goals;
+  std::map<int, std::vector<pgp::Goal>> goals;
   for (auto& currGoals : pGoalStrs)
   {
     auto& goalsForAPrio = goals[currGoals.first];
     for (auto& currGoal : currGoals.second)
-      goalsForAPrio.emplace_back(cp::Goal::fromStr(currGoal, pOntology, cp::SetOfEntities()));
+      goalsForAPrio.emplace_back(pgp::Goal::fromStr(currGoal, pOntology, pgp::SetOfEntities()));
   }
   pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow);
 }
 
-void _addGoalsForAPriority(cp::Problem& pProblem,
+void _addGoalsForAPriority(pgp::Problem& pProblem,
                            const std::vector<std::string>& pGoalStrs,
-                           const cp::Ontology& pOntology,
+                           const pgp::Ontology& pOntology,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = cp::GoalStack::defaultPriority)
+                           int pPriority = pgp::GoalStack::defaultPriority)
 {
-  std::vector<cp::Goal> goals;
+  std::vector<pgp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
-    goals.emplace_back(cp::Goal::fromStr(currFactStr, pOntology, cp::SetOfEntities()));
+    goals.emplace_back(pgp::Goal::fromStr(currFactStr, pOntology, pgp::SetOfEntities()));
   pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow, pPriority);
 }
 
 
-void _addGoalsForAPriority(cp::Problem& pProblem,
-                           const std::vector<cp::Goal>& pGoals,
+void _addGoalsForAPriority(pgp::Problem& pProblem,
+                           const std::vector<pgp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = cp::GoalStack::defaultPriority)
+                           int pPriority = pgp::GoalStack::defaultPriority)
 {
   pProblem.goalStack.addGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }
 
 
-void _setFacts(cp::WorldState& pWorldState,
+void _setFacts(pgp::WorldState& pWorldState,
                const std::set<std::string>& pFactStrs,
-               cp::GoalStack& pGoalStack,
-               const cp::Ontology& pOntology,
-               const std::map<cp::SetOfEventsId, cp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents) {
-  std::set<cp::Fact> facts;
+               pgp::GoalStack& pGoalStack,
+               const pgp::Ontology& pOntology,
+               const std::map<pgp::SetOfEventsId, pgp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents) {
+  std::set<pgp::Fact> facts;
   for (auto& currFactStr : pFactStrs)
-    facts.emplace(currFactStr, false, pOntology, cp::SetOfEntities(), std::vector<cp::Parameter>());
-  pWorldState.setFacts(facts, pGoalStack, pSetOfEvents, pOntology, cp::SetOfEntities(), _now);
+    facts.emplace(currFactStr, false, pOntology, pgp::SetOfEntities(), std::vector<pgp::Parameter>());
+  pWorldState.setFacts(facts, pGoalStack, pSetOfEvents, pOntology, pgp::SetOfEntities(), _now);
 }
 
-void _addFact(cp::WorldState& pWorldState,
+void _addFact(pgp::WorldState& pWorldState,
               const std::string& pFactStr,
-              cp::GoalStack& pGoalStack,
-              const cp::Ontology& pOntology,
-              const std::map<cp::SetOfEventsId, cp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
+              pgp::GoalStack& pGoalStack,
+              const pgp::Ontology& pOntology,
+              const std::map<pgp::SetOfEventsId, pgp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, cp::SetOfEntities(), pNow);
+  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, pgp::SetOfEntities(), pNow);
 }
 
-void _removeFact(cp::WorldState& pWorldState,
+void _removeFact(pgp::WorldState& pWorldState,
                  const std::string& pFactStr,
-                 cp::GoalStack& pGoalStack,
-                 const cp::Ontology& pOntology,
-                 const std::map<cp::SetOfEventsId, cp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
+                 pgp::GoalStack& pGoalStack,
+                 const pgp::Ontology& pOntology,
+                 const std::map<pgp::SetOfEventsId, pgp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.removeFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, cp::SetOfEntities(), pNow);
+  pWorldState.removeFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, pgp::SetOfEntities(), pNow);
 }
 
-bool _hasFact(cp::WorldState& pWorldState,
+bool _hasFact(pgp::WorldState& pWorldState,
               const std::string& pFactStr,
-              const cp::Ontology& pOntology) {
+              const pgp::Ontology& pOntology) {
   return pWorldState.hasFact(_fact(pFactStr, pOntology));
 }
 
 
-std::string _solveStrConst(const cp::Problem& pProblem,
-                           const std::map<std::string, cp::Action>& pActions,
-                           const cp::Ontology& pOntology,
-                           cp::Historical* pGlobalHistorical = nullptr)
+std::string _solveStrConst(const pgp::Problem& pProblem,
+                           const std::map<std::string, pgp::Action>& pActions,
+                           const pgp::Ontology& pOntology,
+                           pgp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  cp::Domain domain(pActions, pOntology);
-  return cp::planToStr(cp::planForEveryGoals(problem, domain, {}, pGlobalHistorical), _sep);
+  pgp::Domain domain(pActions, pOntology);
+  return pgp::planToStr(pgp::planForEveryGoals(problem, domain, {}, pGlobalHistorical), _sep);
 }
 
-std::string _solveStrConst(const cp::Problem& pProblem,
-                           const cp::Domain& pDomain,
-                           cp::Historical* pGlobalHistorical = nullptr)
+std::string _solveStrConst(const pgp::Problem& pProblem,
+                           const pgp::Domain& pDomain,
+                           pgp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  return cp::planToStr(cp::planForEveryGoals(problem, pDomain, {}, pGlobalHistorical), _sep);
+  return pgp::planToStr(pgp::planForEveryGoals(problem, pDomain, {}, pGlobalHistorical), _sep);
 }
 
-std::string _solveStr(cp::Problem& pProblem,
-                      const std::map<std::string, cp::Action>& pActions,
-                      const cp::Ontology& pOntology,
+std::string _solveStr(pgp::Problem& pProblem,
+                      const std::map<std::string, pgp::Action>& pActions,
+                      const pgp::Ontology& pOntology,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                      cp::Historical* pGlobalHistorical = nullptr)
+                      pgp::Historical* pGlobalHistorical = nullptr)
 {
-  cp::Domain domain(pActions, pOntology);
-  return cp::planToStr(cp::planForEveryGoals(pProblem, domain, pNow, pGlobalHistorical), _sep);
+  pgp::Domain domain(pActions, pOntology);
+  return pgp::planToStr(pgp::planForEveryGoals(pProblem, domain, pNow, pGlobalHistorical), _sep);
 }
 
-std::string _solveStr(cp::Problem& pProblem,
-                      const cp::Domain& pDomain,
+std::string _solveStr(pgp::Problem& pProblem,
+                      const pgp::Domain& pDomain,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                      cp::Historical* pGlobalHistorical = nullptr)
+                      pgp::Historical* pGlobalHistorical = nullptr)
 {
-  return cp::planToStr(cp::planForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
+  return pgp::planToStr(pgp::planForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
 }
 
 
-std::string _getGoalsDoneDuringAPlannificationConst(const cp::Problem& pProblem,
-                                                    const cp::Domain& pDomain,
-                                                    cp::Historical* pGlobalHistorical = nullptr)
+std::string _getGoalsDoneDuringAPlannificationConst(const pgp::Problem& pProblem,
+                                                    const pgp::Domain& pDomain,
+                                                    pgp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  std::list<cp::Goal> pGoalsDone;
-  cp::planForEveryGoals(problem, pDomain, {}, pGlobalHistorical, &pGoalsDone);
-  return cp::goalsToStr(pGoalsDone, _sep);
+  std::list<pgp::Goal> pGoalsDone;
+  pgp::planForEveryGoals(problem, pDomain, {}, pGlobalHistorical, &pGoalsDone);
+  return pgp::goalsToStr(pGoalsDone, _sep);
 }
 
-cp::ActionInvocationWithGoal _lookForAnActionToDo(cp::Problem& pProblem,
-                                                  const cp::Domain& pDomain,
+pgp::ActionInvocationWithGoal _lookForAnActionToDo(pgp::Problem& pProblem,
+                                                  const pgp::Domain& pDomain,
                                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                  const cp::Historical* pGlobalHistorical = nullptr)
+                                                  const pgp::Historical* pGlobalHistorical = nullptr)
 {
-  auto plan = cp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
+  auto plan = pgp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
     return plan.front();
-  return cp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
-cp::ActionInvocationWithGoal _lookForAnActionToDoConst(const cp::Problem& pProblem,
-                                                       const cp::Domain& pDomain,
+pgp::ActionInvocationWithGoal _lookForAnActionToDoConst(const pgp::Problem& pProblem,
+                                                       const pgp::Domain& pDomain,
                                                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                       const cp::Historical* pGlobalHistorical = nullptr)
+                                                       const pgp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
-  auto plan = cp::planForMoreImportantGoalPossible(problem, pDomain, true, pNow, pGlobalHistorical);
+  auto plan = pgp::planForMoreImportantGoalPossible(problem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
     return plan.front();
-  return cp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
-std::string _lookForAnActionToDoStr(cp::Problem& pProblem,
-                                    const cp::Domain& pDomain,
+std::string _lookForAnActionToDoStr(pgp::Problem& pProblem,
+                                    const pgp::Domain& pDomain,
                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                    const cp::Historical* pGlobalHistorical = nullptr)
+                                    const pgp::Historical* pGlobalHistorical = nullptr)
 {
   return _lookForAnActionToDo(pProblem, pDomain, pNow, pGlobalHistorical).actionInvocation.toStr();
 }
 
-std::string _lookForAnActionToDoConstStr(const cp::Problem& pProblem,
-                                         const cp::Domain& pDomain,
+std::string _lookForAnActionToDoConstStr(const pgp::Problem& pProblem,
+                                         const pgp::Domain& pDomain,
                                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                         const cp::Historical* pGlobalHistorical = nullptr)
+                                         const pgp::Historical* pGlobalHistorical = nullptr)
 {
   return _lookForAnActionToDoConst(pProblem, pDomain, pNow, pGlobalHistorical).actionInvocation.toStr();
 }
 
-cp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
-    cp::Problem& pProblem,
-    const cp::Domain& pDomain,
+pgp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
+    pgp::Problem& pProblem,
+    const pgp::Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  auto plan = cp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow);
+  auto plan = pgp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow);
   if (!plan.empty())
   {
     auto& firstActionInPlan = plan.front();
@@ -314,22 +314,22 @@ cp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
     notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
     return firstActionInPlan;
   }
-  return cp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
 }
 
 
 std::string _lookForAnActionToDoInParallelThenNotifyToStr(
-    cp::Problem& pProblem,
-    const cp::Domain& pDomain,
+    pgp::Problem& pProblem,
+    const pgp::Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  auto actions = cp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
+  auto actions = pgp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
   for (auto& currAction : actions)
   {
     notifyActionStarted(pProblem, pDomain, currAction, pNow);
     notifyActionDone(pProblem, pDomain, currAction, pNow);
   }
-  return cp::planToStr(actions);
+  return pgp::planToStr(actions);
 }
 
 
@@ -337,15 +337,15 @@ std::string _lookForAnActionToDoInParallelThenNotifyToStr(
 
 void _test_createEmptyGoal()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("goal_name", ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("goal_name", ontology.types);
   _goal("goal_name", ontology, -1, "");
 }
 
 void _test_goalToStr()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("a\n"
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("a\n"
                                                      "b\n"
                                                      "condition\n"
                                                      "goal_name", ontology.types);
@@ -358,10 +358,10 @@ void _test_goalToStr()
 
 void _test_factToStr()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("human");
-  ontology.constants = cp::SetOfEntities::fromPddl("h1 - human", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?h - human)", ontology.types);
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("human");
+  ontology.constants = pgp::SetOfEntities::fromPddl("h1 - human", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("isEngaged(?h - human)", ontology.types);
   EXPECT_EQ("isEngaged(h1)", _fact("isEngaged(h1)", ontology).toStr());
 }
 
@@ -370,14 +370,14 @@ void _test_factToStr()
 
 void _test_conditionParameters()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location\n"
                                            "entity\n"
                                            "robot - physical_object");
-  ontology.constants = cp::SetOfEntities::fromPddl("me self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me self - robot\n"
                                                   "pen - physical_object\n"
                                                   "entrance kitchen - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
                                                      "grab(?r - robot, ?e - entity)\n"
                                                      "sf\n"
                                                      "ent - entity\n"
@@ -390,8 +390,8 @@ void _test_conditionParameters()
                                                      "distance(?po - physical_object, ?l - location) - number", ontology.types);
 
   ASSERT_FALSE(_condition_fromStr("", ontology).operator bool());
-  std::vector<cp::Parameter> parameters = {_parameter("?target - location", ontology), _parameter("?object - entity", ontology)};
-  std::map<cp::Parameter, cp::Entity> parametersToEntities = {{_parameter("?target - location", ontology), _entityDeclaration("kitchen - location", ontology)}, {_parameter("?object - location", ontology), _entityDeclaration("chair - entity", ontology)}};
+  std::vector<pgp::Parameter> parameters = {_parameter("?target - location", ontology), _parameter("?object - entity", ontology)};
+  std::map<pgp::Parameter, pgp::Entity> parametersToEntities = {{_parameter("?target - location", ontology), _entityDeclaration("kitchen - location", ontology)}, {_parameter("?object - location", ontology), _entityDeclaration("chair - entity", ontology)}};
   EXPECT_EQ("location(me)=kitchen & grab(me, chair)",
                          _condition_fromStr("location(me)=?target & grab(me, ?object)", ontology, parameters)->clone(&parametersToEntities)->toStr());
   EXPECT_EQ("location(me)=kitchen & grab(me, chair)",
@@ -426,14 +426,14 @@ void _test_conditionParameters()
 
 void _test_wsModificationToStr()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location\n"
                                            "entity\n"
                                            "robot - physical_object");
-  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets - entity\n"
                                                   "target - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
                                                      "locationEntity(?e - entity) - location\n"
                                                      "checkPointLocation - location\n"
                                                      "grab(?e - entity)\n"
@@ -466,15 +466,15 @@ void _test_wsModificationToStr()
 
 void _test_invertCondition()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location\n"
                                            "entity\n"
                                            "robot - physical_object");
-  ontology.constants = cp::SetOfEntities::fromPddl("me self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me self - robot\n"
                                                   "chair - entity\n"
                                                   "pen - physical_object\n"
                                                   "kitchen entrance - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
                                                      "locationEntity(?e - entity) - location\n"
                                                      "grab(?r - robot, ?e - entity)\n"
                                                      "distance(?po - physical_object, ?l - location) - number\n"
@@ -488,14 +488,14 @@ void _test_invertCondition()
 
 void _test_checkCondition()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("b c d - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("a - entity", ontology.types);
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("b c d - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("a - entity", ontology.types);
 
-  cp::WorldState worldState;
-  cp::GoalStack goalStack;
-  std::map<cp::SetOfEventsId, cp::SetOfEvents> setOfEvents;
+  pgp::WorldState worldState;
+  pgp::GoalStack goalStack;
+  std::map<pgp::SetOfEventsId, pgp::SetOfEvents> setOfEvents;
   worldState.addFact(_fact("a=c", ontology), goalStack, setOfEvents, {}, {}, {});
   EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
   EXPECT_FALSE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
@@ -522,12 +522,12 @@ void _test_checkCondition()
 
 void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_advertised + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_advertised + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_checkedIn, ontology.types);
-  cp::GoalStack goalStack;
-  cp::WorldState worldState;
+  pgp::GoalStack goalStack;
+  pgp::WorldState worldState;
   EXPECT_EQ(0u, goalStack.goals().size());
   goalStack.pushBackGoal(_goal(_fact_advertised, ontology), worldState, {}, 10);
   goalStack.pushBackGoal(_goal(_fact_beHappy, ontology), worldState, {}, 9);
@@ -540,11 +540,11 @@ void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
 
 void _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_checkedIn, ontology.types);
-  cp::GoalStack goalStack;
-  cp::WorldState worldState;
+  pgp::GoalStack goalStack;
+  pgp::WorldState worldState;
   EXPECT_EQ(0u, goalStack.goals().size());
   goalStack.pushBackGoal(_goal("persist(!" + _fact_a + ")", ontology), worldState, {}, 10);
   EXPECT_EQ(1u, goalStack.goals().size());
@@ -554,15 +554,15 @@ void _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal()
 
 void _noPreconditionGoalImmediatlyReached()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("be_happy", ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("be_happy", ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_goodBoy, cp::Action({},
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_goodBoy, pgp::Action({},
                                               _worldStateModification_fromStr("be_happy", ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {"be_happy"}, ontology);
   EXPECT_EQ(_action_goodBoy, _lookForAnActionToDoStr(problem, domain));
   EXPECT_TRUE(!problem.goalStack.goals().empty());
@@ -574,15 +574,15 @@ void _noPreconditionGoalImmediatlyReached()
 
 void _removeGoalWhenItIsSatisfiedByAnAction()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("be_happy", ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("be_happy", ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_goodBoy, cp::Action({},
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_goodBoy, pgp::Action({},
                                               _worldStateModification_fromStr("be_happy", ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {"be_happy"}, ontology);
 
   auto plannerResult = _lookForAnActionToDoThenNotify(problem, domain);
@@ -595,15 +595,15 @@ void _removeGoalWhenItIsSatisfiedByAnAction()
 
 void _removeAnAction()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("be_happy", ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("be_happy", ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_goodBoy, cp::Action({},
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_goodBoy, pgp::Action({},
                                               _worldStateModification_fromStr("be_happy", ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {"be_happy"}, ontology);
   EXPECT_EQ(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
   domain.removeAction(_action_goodBoy);
@@ -614,20 +614,20 @@ void _removeAnAction()
 void _removeSomeGoals()
 {
   const std::string goalGroupId = "greetAndCheckIn";
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("be_happy\n"
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("be_happy\n"
                                                      "checked_in\n"
                                                      "greeted", ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr("greeted", ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr("checked_in", ontology)));
-  actions.emplace(_action_goodBoy, cp::Action({}, _worldStateModification_fromStr("be_happy", ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr("greeted", ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr("checked_in", ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action({}, _worldStateModification_fromStr("be_happy", ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {"be_happy"}, ontology);
-  cp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
+  pgp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
   std::set<std::string> goalsRemoved;
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
     goalsRemoved = pGoalsRemoved;
@@ -649,15 +649,15 @@ void _removeSomeGoals()
 
 void _notifyGoalRemovedWhenItIsImmediatlyRemoved()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e, ontology.types);
 
-  cp::Problem problem;
-  cp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
+  pgp::Problem problem;
+  pgp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
   std::set<std::string> goalsRemoved;
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
     goalsRemoved = pGoalsRemoved;
@@ -697,21 +697,21 @@ void _notifyGoalRemovedWhenItIsImmediatlyRemoved()
 
 void _handlePreconditionWithNegatedFacts()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_userSatisfied, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
                                             _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_joke, cp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
+  actions.emplace(_action_joke, pgp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
                                            _worldStateModification_fromStr(_fact_userSatisfied, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_userSatisfied, ontology),
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_userSatisfied, ontology),
                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_checkedIn}, ontology);
   auto actionToDo = _lookForAnActionToDoStr(problem, domain);
   EXPECT_TRUE(actionToDo == _action_greet || actionToDo == _action_joke);
@@ -724,21 +724,21 @@ void _testWithNegatedAccessibleFacts()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e, ontology.types);
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action(_condition_fromStr(_fact_e + " & !" + _fact_b, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action(_condition_fromStr(_fact_e + " & !" + _fact_b, ontology),
                                       _worldStateModification_fromStr("!" + _fact_c, ontology)));
-  actions.emplace(action2, cp::Action({}, _worldStateModification_fromStr("!" + _fact_b, ontology)));
-  actions.emplace(action3, cp::Action(_condition_fromStr(_fact_a + " & !" + _fact_c, ontology),
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr("!" + _fact_b, ontology)));
+  actions.emplace(action3, pgp::Action(_condition_fromStr(_fact_a + " & !" + _fact_c, ontology),
                                       _worldStateModification_fromStr(_fact_d, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setFacts(problem.worldState, {_fact_a, _fact_b, _fact_c}, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_d}, ontology);
   EXPECT_EQ("", _lookForAnActionToDoConstStr(problem, domain));
@@ -748,17 +748,17 @@ void _testWithNegatedAccessibleFacts()
 
 void _noPlanWithALengthOf2()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_greeted, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_greeted, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_greet + _sep +
@@ -768,20 +768,20 @@ void _noPlanWithALengthOf2()
 
 void _noPlanWithALengthOf3()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action(_condition_fromStr(_fact_greeted, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action(_condition_fromStr(_fact_greeted, ontology),
                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_checkedIn, ontology),
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_greet + _sep +
@@ -791,19 +791,19 @@ void _noPlanWithALengthOf3()
 
 void _2preconditions()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_checkIn, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_checkIn + _sep +
@@ -813,19 +813,19 @@ void _2preconditions()
 
 void _2Goals()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_greet + _sep +
@@ -835,19 +835,19 @@ void _2Goals()
 
 void _2UnrelatedGoals()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_checkedIn, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_greet + _sep +
@@ -858,18 +858,18 @@ void _2UnrelatedGoals()
 
 void _impossibleGoal()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_checkedIn, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   EXPECT_EQ(_action_checkIn, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_checkIn + _sep +
@@ -879,27 +879,27 @@ void _impossibleGoal()
 
 void _privigelizeTheActionsThatHaveManyPreferedInContext()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_hasQrCode + "\n" +
                                                      _fact_hasCheckInPasword + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_checkInWithQrCode, cp::Action(_condition_fromStr(_fact_hasQrCode, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_checkInWithQrCode, pgp::Action(_condition_fromStr(_fact_hasQrCode, ontology),
                                                         _worldStateModification_fromStr(_fact_checkedIn, ontology),
                                                         _condition_fromStr(_fact_hasQrCode, ontology)));
-  actions.emplace(_action_checkInWithPassword, cp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
+  actions.emplace(_action_checkInWithPassword, pgp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
                                                           _worldStateModification_fromStr(_fact_checkedIn, ontology),
                                                           _condition_fromStr(_fact_hasCheckInPasword, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted, _fact_beHappy}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_greet + _sep +
@@ -921,24 +921,24 @@ void _privigelizeTheActionsThatHaveManyPreferedInContext()
 
 void _preconditionThatCannotBeSolved()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_hasQrCode + "\n" +
                                                      _fact_hasCheckInPasword + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkInWithQrCode, cp::Action(_condition_fromStr(_fact_hasQrCode, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkInWithQrCode, pgp::Action(_condition_fromStr(_fact_hasQrCode, ontology),
                                                         _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_checkInWithPassword, cp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
+  actions.emplace(_action_checkInWithPassword, pgp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
                                                           _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_TRUE(_lookForAnActionToDoStr(problem, domain).empty());
 }
@@ -946,25 +946,25 @@ void _preconditionThatCannotBeSolved()
 
 void _preferInContext()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_hasQrCode + "\n" +
                                                      _fact_hasCheckInPasword + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkInWithQrCode, cp::Action({},
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkInWithQrCode, pgp::Action({},
                                                         _worldStateModification_fromStr(_fact_checkedIn, ontology),
                                                         _condition_fromStr(_fact_hasQrCode, ontology)));
-  actions.emplace(_action_checkInWithPassword, cp::Action({},
+  actions.emplace(_action_checkInWithPassword, pgp::Action({},
                                                           _worldStateModification_fromStr(_fact_checkedIn, ontology),
                                                           _condition_fromStr(_fact_hasCheckInPasword, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_greet + _sep +
             _action_checkInWithPassword + _sep +
@@ -980,7 +980,7 @@ void _preferInContext()
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions, ontology));
 
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   _setFacts(problem.worldState, {}, problem.goalStack, ontology);
   EXPECT_EQ(_action_checkIn + _sep +
             _action_greet + _sep +
@@ -996,7 +996,7 @@ void _preferInContext()
             _action_greet + _sep +
             _action_goodBoy, _solveStrConst(problem, actions, ontology));
 
-  actions.emplace(_action_checkInWithRealPerson, cp::Action({},
+  actions.emplace(_action_checkInWithRealPerson, pgp::Action({},
                                                             _worldStateModification_fromStr(_fact_checkedIn, ontology),
                                                             _condition_fromStr("!" + _fact_hasQrCode, ontology)));
   _setFacts(problem.worldState, {}, problem.goalStack, ontology);
@@ -1008,23 +1008,23 @@ void _preferInContext()
 
 void _preferWhenPreconditionAreCloserToTheRealFacts()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_beginOfConversation + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_beginOfConversation + "\n" +
                                                      _fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_presented, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({},
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({},
                                             _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology),
                                             _condition_fromStr(_fact_beginOfConversation, ontology)));
-  actions.emplace(_action_presentation, cp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
+  actions.emplace(_action_presentation, pgp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_checkIn + _sep +
             _action_presentation + _sep +
@@ -1039,22 +1039,22 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
 
 void _avoidToDo2TimesTheSameActionIfPossble()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_presented, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({},
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({},
                                             _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology)));
-  actions.emplace(_action_presentation, cp::Action({},
+  actions.emplace(_action_presentation, pgp::Action({},
                                                    _worldStateModification_fromStr(_fact_presented, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_checkIn + _sep +
             _action_greet + _sep +
@@ -1073,20 +1073,20 @@ void _avoidToDo2TimesTheSameActionIfPossble()
 
 void _takeHistoricalIntoAccount()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_presented, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology)));
-  actions.emplace(_action_presentation, cp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology)));
+  actions.emplace(_action_presentation, pgp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_checkIn + _sep +
             _action_greet + _sep +
@@ -1100,22 +1100,22 @@ void _takeHistoricalIntoAccount()
 
 void _goDoTheActionThatHaveTheMostPreferInContextValidated()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_advertised + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_is_close, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_advertise, cp::Action({}, _worldStateModification_fromStr(_fact_advertised, ontology)));
-  actions.emplace(_action_checkIn, cp::Action(_condition_fromStr(_fact_is_close, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_advertise, pgp::Action({}, _worldStateModification_fromStr(_fact_advertised, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action(_condition_fromStr(_fact_is_close, ontology),
                                               _worldStateModification_fromStr(_fact_checkedIn, ontology),
                                               _condition_fromStr(_fact_is_close, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_advertised + "&" + _fact_checkedIn, ontology),
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_advertised + "&" + _fact_checkedIn, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setFacts(problem.worldState, {_fact_is_close}, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_checkIn, _lookForAnActionToDoStr(problem, domain));
@@ -1124,17 +1124,17 @@ void _goDoTheActionThatHaveTheMostPreferInContextValidated()
 
 void _checkNotInAPrecondition()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_greeted, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
                                             _worldStateModification_fromStr(_fact_greeted, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   problem.worldState.modify(_worldStateModification_fromStr(_fact_checkedIn, ontology), problem.goalStack,
@@ -1145,14 +1145,14 @@ void _checkNotInAPrecondition()
 
 void _checkClearGoalsWhenItsAlreadySatisfied()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted, ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted, ontology.types);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setFacts(problem.worldState, {_fact_greeted}, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_greeted}, ontology);
   EXPECT_EQ(1, problem.goalStack.goals().size());
-  cp::Domain domain;
+  pgp::Domain domain;
   _lookForAnActionToDo(problem, domain);
   EXPECT_EQ(0, problem.goalStack.goals().size());
 }
@@ -1160,8 +1160,8 @@ void _checkClearGoalsWhenItsAlreadySatisfied()
 
 void _checkActionHasAFact()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
@@ -1169,10 +1169,10 @@ void _checkActionHasAFact()
                                                      _fact_f + "\n" +
                                                      _fact_g, ontology.types);
 
-  cp::ProblemModification effect(_worldStateModification_fromStr(_fact_a + " & !" + _fact_b, ontology));
+  pgp::ProblemModification effect(_worldStateModification_fromStr(_fact_a + " & !" + _fact_b, ontology));
   effect.potentialWorldStateModification = _worldStateModification_fromStr(_fact_c, ontology);
-  effect.goalsToAdd[cp::GoalStack::defaultPriority] = {_goal(_fact_d, ontology)};
-  const cp::Action action(_condition_fromStr(_fact_e, ontology),
+  effect.goalsToAdd[pgp::GoalStack::defaultPriority] = {_goal(_fact_d, ontology)};
+  const pgp::Action action(_condition_fromStr(_fact_e, ontology),
                           effect,
                           _condition_fromStr(_fact_f, ontology));
   EXPECT_TRUE(action.hasFact(_fact(_fact_a, ontology)));
@@ -1187,15 +1187,15 @@ void _checkActionHasAFact()
 
 void _precoditionEqualEffect()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_beHappy, ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_beHappy, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr(_fact_beHappy, ontology),
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr(_fact_beHappy, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_TRUE(_lookForAnActionToDoStr(problem, domain).empty());
 }
@@ -1205,41 +1205,41 @@ void _addGoalEvenForEmptyAction()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a, ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  cp::Action act1Obj({}, {});
+  std::map<pgp::ActionId, pgp::Action> actions;
+  pgp::Action act1Obj({}, {});
   act1Obj.effect.goalsToAddInCurrentPriority.push_back(_goal(_fact_a, ontology));
   actions.emplace(action1, act1Obj);
-  actions.emplace(action2, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
 
-  cp::Domain domain(std::move(actions), ontology);
-  cp::Problem problem;
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
   EXPECT_TRUE(problem.goalStack.goals().empty());
-  cp::notifyActionDone(problem, domain, cp::ActionInvocationWithGoal(action1, {}, {}, 0), {});
+  pgp::notifyActionDone(problem, domain, pgp::ActionInvocationWithGoal(action1, {}, {}, 0), {});
   EXPECT_FALSE(problem.goalStack.goals().empty());
 }
 
 void _circularDependencies()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_checkedIn + "\n" +
                                                      _fact_hasCheckInPasword + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action(_condition_fromStr(_fact_greeted, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action(_condition_fromStr(_fact_greeted, ontology),
                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace("check-in-pwd", cp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
+  actions.emplace("check-in-pwd", pgp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
                                              _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace("inverse-of-check-in-pwd", cp::Action(_condition_fromStr(_fact_checkedIn, ontology),
+  actions.emplace("inverse-of-check-in-pwd", pgp::Action(_condition_fromStr(_fact_checkedIn, ontology),
                                                         _worldStateModification_fromStr(_fact_hasCheckInPasword, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ("", _lookForAnActionToDoConstStr(problem, domain));
 }
@@ -1247,18 +1247,18 @@ void _circularDependencies()
 
 void _triggerActionThatRemoveAFact()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_beSad + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_beSad + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_joke, cp::Action(_condition_fromStr(_fact_beSad, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_joke, pgp::Action(_condition_fromStr(_fact_beSad, ontology),
                                            _worldStateModification_fromStr("!" + _fact_beSad, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action(_condition_fromStr("!" + _fact_beSad, ontology),
+  actions.emplace(_action_goodBoy, pgp::Action(_condition_fromStr("!" + _fact_beSad, ontology),
                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
-  cp::Historical historical;
-  cp::Problem problem;
+  pgp::Historical historical;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_beSad, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
   EXPECT_EQ(_action_joke + _sep +
@@ -1268,16 +1268,16 @@ void _triggerActionThatRemoveAFact()
 
 void _actionWithConstantValue()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location");
-  ontology.constants = cp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("place - location", ontology.types);
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location");
+  ontology.constants = pgp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("place - location", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Action navigate({}, _worldStateModification_fromStr("place=kitchen", ontology));
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action navigate({}, _worldStateModification_fromStr("place=kitchen", ontology));
   actions.emplace(_action_navigate, navigate);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("place=kitchen", ontology)});
   EXPECT_EQ(_action_navigate, _solveStr(problem, actions, ontology));
 }
@@ -1285,18 +1285,18 @@ void _actionWithConstantValue()
 
 void _actionWithParameterizedValue()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location");
-  ontology.constants = cp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("place - location", ontology.types);
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location");
+  ontology.constants = pgp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("place - location", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> parameters(1, _parameter("?target - location", ontology));
-  cp::Action navigate({}, _worldStateModification_fromStr("place=?target", ontology, parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> parameters(1, _parameter("?target - location", ontology));
+  pgp::Action navigate({}, _worldStateModification_fromStr("place=?target", ontology, parameters));
   navigate.parameters = std::move(parameters);
   actions.emplace(_action_navigate, navigate);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("place=kitchen", ontology)});
   EXPECT_EQ(_action_navigate + "(?target -> kitchen)", _solveStr(problem, actions, ontology));
 }
@@ -1304,18 +1304,18 @@ void _actionWithParameterizedValue()
 
 void _actionWithParameterizedParameter()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("human");
-  ontology.constants = cp::SetOfEntities::fromPddl("h1 - human", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("isHappy(?h - human)", ontology.types);
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("human");
+  ontology.constants = pgp::SetOfEntities::fromPddl("h1 - human", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("isHappy(?h - human)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> parameters(1, _parameter("?human - human", ontology));
-  cp::Action joke({}, _worldStateModification_fromStr("isHappy(?human)", ontology, parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> parameters(1, _parameter("?human - human", ontology));
+  pgp::Action joke({}, _worldStateModification_fromStr("isHappy(?human)", ontology, parameters));
   joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)});
   EXPECT_EQ(_action_joke + "(?human -> h1)", _solveStr(problem, actions, ontology));
 }
@@ -1323,20 +1323,20 @@ void _actionWithParameterizedParameter()
 
 void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("human");
-  ontology.constants = cp::SetOfEntities::fromPddl("h1 h2 - human", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("isEngaged(?h - human)\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("human");
+  ontology.constants = pgp::SetOfEntities::fromPddl("h1 h2 - human", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("isEngaged(?h - human)\n"
                                                      "isHappy(?h - human)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> parameters(1, _parameter("?human - human", ontology));
-  cp::Action joke(_condition_fromStr("isEngaged(?human)", ontology, parameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> parameters(1, _parameter("?human - human", ontology));
+  pgp::Action joke(_condition_fromStr("isEngaged(?human)", ontology, parameters),
                   _worldStateModification_fromStr("isHappy(?human)", ontology, parameters));
   joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "isEngaged(h2)", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)});
   EXPECT_EQ("", _solveStr(problem, actions, ontology));
@@ -1344,24 +1344,24 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 
 void _actionWithParametersInsideThePath()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location");
-  ontology.constants = cp::SetOfEntities::fromPddl("entrance kitchen - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("place - location\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location");
+  ontology.constants = pgp::SetOfEntities::fromPddl("entrance kitchen - location", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("place - location\n"
                                                      "welcomePeople", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navigateParameters(1, _parameter("?target - location", ontology));
-  cp::Action navigateAction({},
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navigateParameters(1, _parameter("?target - location", ontology));
+  pgp::Action navigateAction({},
                             _worldStateModification_fromStr("place=?target", ontology, navigateParameters));
   navigateAction.parameters = std::move(navigateParameters);
   actions.emplace(_action_navigate, navigateAction);
 
   actions.emplace(_action_welcome,
-                  cp::Action(_condition_fromStr("place=entrance", ontology),
+                  pgp::Action(_condition_fromStr("place=entrance", ontology),
                              _worldStateModification_fromStr("welcomePeople", ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "place=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)});
   EXPECT_EQ(_action_navigate + "(?target -> entrance)" + _sep +
@@ -1373,13 +1373,13 @@ void _actionWithParametersInsideThePath()
 
 void _testPersistGoal()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr("welcomePeople", ontology.types);
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("welcomePeople", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_welcome, cp::Action({}, _worldStateModification_fromStr("welcomePeople", ontology)));
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_welcome, pgp::Action({}, _worldStateModification_fromStr("welcomePeople", ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)});
   EXPECT_EQ(1, problem.goalStack.goals().size());
   EXPECT_EQ(_action_welcome, _solveStr(problem, actions, ontology));
@@ -1387,7 +1387,7 @@ void _testPersistGoal()
   EXPECT_EQ("", _solveStr(problem, actions, ontology));
   EXPECT_EQ(0, problem.goalStack.goals().size());
 
-  problem = cp::Problem();
+  problem = pgp::Problem();
   _setGoalsForAPriority(problem, {_goal("persist(welcomePeople)", ontology)});
   EXPECT_EQ(1, problem.goalStack.goals().size());
   EXPECT_EQ(_action_welcome, _solveStr(problem, actions, ontology));
@@ -1399,15 +1399,15 @@ void _testPersistGoal()
 
 void _testPersistImplyGoal()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_checkedIn, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_greeted + ", " + _fact_checkedIn + "))", ontology)});
   EXPECT_EQ("", _solveStr(problem, actions, ontology));
   _addFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
@@ -1417,15 +1417,15 @@ void _testPersistImplyGoal()
 
 void _testImplyGoal()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_checkedIn, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("imply(" + _fact_greeted + ", " + _fact_checkedIn + ")", ontology)});
   EXPECT_EQ("", _solveStr(problem, actions, ontology));
   // It is not a persistent goal it is removed
@@ -1436,19 +1436,19 @@ void _testImplyGoal()
 
 void _checkPreviousBugAboutSelectingAnInappropriateAction()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
                                                      _fact_userSatisfied + "\n" +
                                                      _fact_robotLearntABehavior + "\n" +
                                                      _fact_advertised, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_askQuestion1, cp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_askQuestion1, pgp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
                                                    _worldStateModification_fromStr(_fact_userSatisfied, ontology),
                                                    _condition_fromStr("!" + _fact_robotLearntABehavior, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({},
+  actions.emplace(_action_checkIn, pgp::Action({},
                                               _worldStateModification_fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised, ontology)));
-  cp::Problem problem;
+  pgp::Problem problem;
   _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {"persist(" + _fact_userSatisfied + ")"}, ontology);
   EXPECT_EQ(_action_askQuestion1, _solveStr(problem, actions, ontology));
@@ -1459,19 +1459,19 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
 
 void _dontLinkActionWithPreferredInContext()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
                                                      _fact_userSatisfied + "\n" +
                                                      _fact_checkedIn, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(_action_askQuestion1, cp::Action({},
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(_action_askQuestion1, pgp::Action({},
                                                    _worldStateModification_fromStr(_fact_userSatisfied, ontology),
                                                    _condition_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_checkIn, cp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
+  actions.emplace(_action_checkIn, pgp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_userSatisfied}, ontology);
   EXPECT_EQ(_action_askQuestion1, _solveStr(problem, actions, ontology));
@@ -1480,17 +1480,17 @@ void _dontLinkActionWithPreferredInContext()
 
 void _checkPriorities()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_checkedIn, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoals(problem, {{10, {_fact_greeted}}, {9, {_fact_beHappy}}}, ontology);
   EXPECT_EQ(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions, ontology));
@@ -1499,24 +1499,24 @@ void _checkPriorities()
 
 void _stackablePropertyOfGoals()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_checkedIn + "\n" +
                                                      _fact_presented, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  actions.emplace(_action_presentation, cp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
+  actions.emplace(_action_presentation, pgp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoals(problem, {{10, {_goal(_fact_greeted, ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
   EXPECT_EQ(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions, ontology));
 
-  cp::Problem problem2;
+  pgp::Problem problem2;
   _setGoals(problem2, {{10, {_goal(_fact_greeted, ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
   problem2.goalStack.pushFrontGoal(_goal(_fact_presented, ontology), problem2.worldState, {}, 10);
   EXPECT_EQ(_action_presentation + _sep +
@@ -1527,39 +1527,39 @@ void _stackablePropertyOfGoals()
 
 void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNotSatisfied()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_beHappy + "\n" +
                                                      _fact_checkedIn + "\n" +
                                                      _fact_presented, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  actions.emplace(_action_goodBoy, cp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
-  actions.emplace(_action_presentation, cp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  actions.emplace(_action_goodBoy, pgp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
+  actions.emplace(_action_presentation, pgp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
 
   // Even if _fact_checkedIn has maxTimeToKeepInactive equal to 0, it is not removed because the goal with a higher priority is inactive.
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoals(problem, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
   EXPECT_EQ(_action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions, ontology));
 
-  cp::Problem problem2;
+  pgp::Problem problem2;
   _addFact(problem2.worldState, _fact_presented, problem2.goalStack, ontology); // The difference here is that the condition of the first goal is satisfied
   _setGoals(problem2, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
   EXPECT_EQ(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem2, actions, ontology));
 
 
-  cp::Problem problem3;
+  pgp::Problem problem3;
   _setGoals(problem3, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
   _addFact(problem3.worldState, _fact_presented, problem3.goalStack, ontology); // The difference here is that the condition is validated after the add of the goal
   EXPECT_EQ(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem3, actions, ontology));
 
 
-  cp::Problem problem4;
+  pgp::Problem problem4;
   _setGoals(problem4, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
   _addFact(problem4.worldState, _fact_presented, problem4.goalStack, ontology); // Here _fact_checkedIn goal shoud be removed from the stack
   _removeFact(problem4.worldState, _fact_presented, problem4.goalStack, ontology); // The difference here is that the condition was validated only punctually
@@ -1570,23 +1570,23 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
 
 void _checkMaxTimeToKeepInactiveForGoals()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_checkedIn, ontology.types);
 
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoals(problem, {{10, {_goal(_fact_greeted, ontology), _goal(_fact_checkedIn, ontology, 60)}}}, now);
   EXPECT_EQ(_action_greet + _sep +
             _action_checkIn, _solveStr(problem, actions, ontology, now));
 
 
-  cp::Problem problem2;
+  pgp::Problem problem2;
   _setGoals(problem2, {{10, {_goal(_fact_greeted, ontology), _goal(_fact_checkedIn, ontology, 60)}}}, now);
   now = std::make_unique<std::chrono::steady_clock::time_point>(*now + std::chrono::seconds(100));
   EXPECT_EQ(_action_greet, _solveStr(problem2, actions, ontology, now));
@@ -1596,21 +1596,21 @@ void _checkMaxTimeToKeepInactiveForGoals()
 
 void _changePriorityOfGoal()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_checkedIn + "\n" +
                                                      _fact_userSatisfied, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
-  std::map<int, std::vector<cp::Goal>> goalsFromSubscription;
-  cp::Problem problem;
-  auto onGoalsChangedConnection = problem.goalStack.onGoalsChanged.connectUnsafe([&](const std::map<int, std::vector<cp::Goal>>& pGoals) {
+  std::map<int, std::vector<pgp::Goal>> goalsFromSubscription;
+  pgp::Problem problem;
+  auto onGoalsChangedConnection = problem.goalStack.onGoalsChanged.connectUnsafe([&](const std::map<int, std::vector<pgp::Goal>>& pGoals) {
     goalsFromSubscription = pGoals;
   });
-  cp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
+  pgp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
   std::set<std::string> goalsRemoved;
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
     goalsRemoved = pGoalsRemoved;
@@ -1666,100 +1666,100 @@ void _changePriorityOfGoal()
 
 void _factChangedNotification()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
                                                      _fact_checkedIn + "\n" +
                                                      _fact_userSatisfied + "\n" +
                                                      _fact_punctual_p1 + "\n" +
                                                      _fact_beginOfConversation, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_greet, cp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn + "&" + _fact_punctual_p1, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_greet, pgp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn + "&" + _fact_punctual_p1, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
-  std::map<cp::Fact, bool> factsChangedFromSubscription;
-  cp::Problem problem;
+  std::map<pgp::Fact, bool> factsChangedFromSubscription;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_beginOfConversation, problem.goalStack, ontology);
-  auto factsChangedConnection = problem.worldState.onFactsChanged.connectUnsafe([&](const std::map<cp::Fact, bool>& pFacts) {
+  auto factsChangedConnection = problem.worldState.onFactsChanged.connectUnsafe([&](const std::map<pgp::Fact, bool>& pFacts) {
     factsChangedFromSubscription = pFacts;
   });
-  std::list<cp::Fact> punctualFactsAdded;
-  auto onPunctualFactsConnection = problem.worldState.onPunctualFacts.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+  std::list<pgp::Fact> punctualFactsAdded;
+  auto onPunctualFactsConnection = problem.worldState.onPunctualFacts.connectUnsafe([&](const std::set<pgp::Fact>& pFacts) {
     punctualFactsAdded.insert(punctualFactsAdded.end(), pFacts.begin(), pFacts.end());
   });
-  std::list<cp::Fact> factsAdded;
-  auto onFactsAddedConnection = problem.worldState.onFactsAdded.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+  std::list<pgp::Fact> factsAdded;
+  auto onFactsAddedConnection = problem.worldState.onFactsAdded.connectUnsafe([&](const std::set<pgp::Fact>& pFacts) {
     factsAdded.insert(factsAdded.end(), pFacts.begin(), pFacts.end());
   });
-  std::list<cp::Fact> factsRemoved;
-  auto onFactsRemovedConnection = problem.worldState.onFactsRemoved.connectUnsafe([&](const std::set<cp::Fact>& pFacts) {
+  std::list<pgp::Fact> factsRemoved;
+  auto onFactsRemovedConnection = problem.worldState.onFactsRemoved.connectUnsafe([&](const std::set<pgp::Fact>& pFacts) {
     factsRemoved.insert(factsRemoved.end(), pFacts.begin(), pFacts.end());
   });
 
   _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, ontology);
   {
-    static const std::map<cp::Fact, bool> res;
+    static const std::map<pgp::Fact, bool> res;
     EXPECT_EQ(res, factsChangedFromSubscription);
   }
 
   auto plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   EXPECT_EQ(_action_greet, plannerResult.actionInvocation.actionId);
   {
-    std::map<cp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
+    std::map<pgp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
                                     {_fact(_fact_greeted, ontology), true}};
     EXPECT_EQ(res, factsChangedFromSubscription);
   }
   {
-    static const std::list<cp::Fact> res;
+    static const std::list<pgp::Fact> res;
     EXPECT_EQ(res, punctualFactsAdded);
   }
   {
-    std::list<cp::Fact> res = {_fact(_fact_greeted, ontology)};
+    std::list<pgp::Fact> res = {_fact(_fact_greeted, ontology)};
     EXPECT_EQ(res, factsAdded);
   }
   factsAdded.clear();
   {
-    static const std::list<cp::Fact> res;
+    static const std::list<pgp::Fact> res;
     EXPECT_EQ(res, factsRemoved);
   }
 
   plannerResult =_lookForAnActionToDoThenNotify(problem, domain);
   EXPECT_EQ(_action_checkIn, plannerResult.actionInvocation.actionId);
   {
-    std::map<cp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
+    std::map<pgp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
                                     {_fact(_fact_greeted, ontology), true},
                                     {_fact(_fact_checkedIn, ontology), true}};
     EXPECT_EQ(res, factsChangedFromSubscription);
   }
   {
-    std::list<cp::Fact> res = {_fact(_fact_punctual_p1, ontology)};
+    std::list<pgp::Fact> res = {_fact(_fact_punctual_p1, ontology)};
     EXPECT_EQ(res, punctualFactsAdded);
   }
   {
-    std::list<cp::Fact> res = {_fact(_fact_checkedIn, ontology)};
+    std::list<pgp::Fact> res = {_fact(_fact_checkedIn, ontology)};
     EXPECT_EQ(res, factsAdded);
   }
   {
-    static const std::list<cp::Fact> res;
+    static const std::list<pgp::Fact> res;
     EXPECT_EQ(res, factsRemoved);
   }
   _removeFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
   {
-    std::map<cp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
+    std::map<pgp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
                                     {_fact(_fact_checkedIn, ontology), true}};
     EXPECT_EQ(res, factsChangedFromSubscription);
   }
   {
-    std::list<cp::Fact> res = {_fact(_fact_punctual_p1, ontology)};
+    std::list<pgp::Fact> res = {_fact(_fact_punctual_p1, ontology)};
     EXPECT_EQ(res, punctualFactsAdded);
   }
   {
-    std::list<cp::Fact> res = {_fact(_fact_checkedIn, ontology)};
+    std::list<pgp::Fact> res = {_fact(_fact_checkedIn, ontology)};
     EXPECT_EQ(res, factsAdded);
   }
   {
-    std::list<cp::Fact> res = {_fact(_fact_greeted, ontology)};
+    std::list<pgp::Fact> res = {_fact(_fact_greeted, ontology)};
     EXPECT_EQ(res, factsRemoved);
   }
 
@@ -1774,18 +1774,18 @@ void _factChangedNotification()
 
 void _checkEvents()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
                                                      _fact_checkedIn, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   // Event: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
-  domain.addSetOfEvents(cp::Event(_condition_fromStr(_fact_headTouched, ontology),
+  domain.addSetOfEvents(pgp::Event(_condition_fromStr(_fact_headTouched, ontology),
                                   _worldStateModification_fromStr("!" + _fact_headTouched, ontology),
                                   _emptyParameters, {{{9, {_goal(_fact_checkedIn, ontology)}}}}));
   EXPECT_EQ("", _solveStr(problem, domain, _now));
@@ -1799,20 +1799,20 @@ void _checkEvents()
 
 void _checkEventsWithImply()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
                                                      _fact_checkedIn + "\n" +
                                                      _fact_userWantsToCheckedIn, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
   // Event: if (_fact_headTouched) then add(_fact_userWantsToCheckedIn) and remove(_fact_headTouched)
-  cp::Domain domain(std::move(actions), ontology,
-                    cp::Event(_condition_fromStr(_fact_headTouched, ontology),
+  pgp::Domain domain(std::move(actions), ontology,
+                    pgp::Event(_condition_fromStr(_fact_headTouched, ontology),
                               _worldStateModification_fromStr(_fact_userWantsToCheckedIn + " & !" + _fact_headTouched, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))", ontology)});
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfEvents();
@@ -1824,19 +1824,19 @@ void _checkEventsWithImply()
 
 void _checkEventWithPunctualCondition()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
                                                      _fact_userWantsToCheckedIn, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr("!" + _fact_userWantsToCheckedIn, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr("!" + _fact_userWantsToCheckedIn, ontology)));
 
   // Event: if (_fact_punctual_headTouched) then add(_fact_userWantsToCheckedIn)
-  cp::Domain domain(std::move(actions), ontology,
-                    cp::Event(_condition_fromStr(_fact_punctual_headTouched, ontology),
+  pgp::Domain domain(std::move(actions), ontology,
+                    pgp::Event(_condition_fromStr(_fact_punctual_headTouched, ontology),
                               _worldStateModification_fromStr(_fact_userWantsToCheckedIn, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfEvents();
@@ -1848,22 +1848,22 @@ void _checkEventWithPunctualCondition()
 
 void _checkEventAtEndOfAPlan()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
                                                      _fact_userWantsToCheckedIn + "\n" +
                                                      _fact_punctual_checkedIn, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(_action_checkIn, cp::Action({}, _worldStateModification_fromStr(_fact_punctual_checkedIn, ontology)));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(_action_checkIn, pgp::Action({}, _worldStateModification_fromStr(_fact_punctual_checkedIn, ontology)));
 
-  cp::SetOfEvents setOfEvents;
-  setOfEvents.add(cp::Event(_condition_fromStr(_fact_punctual_headTouched, ontology),
+  pgp::SetOfEvents setOfEvents;
+  setOfEvents.add(pgp::Event(_condition_fromStr(_fact_punctual_headTouched, ontology),
                             _worldStateModification_fromStr(_fact_userWantsToCheckedIn, ontology)));
-  setOfEvents.add(cp::Event(_condition_fromStr(_fact_punctual_checkedIn, ontology),
+  setOfEvents.add(pgp::Event(_condition_fromStr(_fact_punctual_checkedIn, ontology),
                             _worldStateModification_fromStr("!" + _fact_userWantsToCheckedIn, ontology)));
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfEvents();
@@ -1878,31 +1878,31 @@ void _checkEventInsideAPlan()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
-  actions.emplace(action2, cp::Action(_condition_fromStr(_fact_c, ontology), _worldStateModification_fromStr(_fact_d, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, pgp::Action(_condition_fromStr(_fact_c, ontology), _worldStateModification_fromStr(_fact_d, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
   {
-    cp::SetOfEvents setOfEvents;
-    setOfEvents.add(cp::Event(_condition_fromStr(_fact_a, ontology),
+    pgp::SetOfEvents setOfEvents;
+    setOfEvents.add(pgp::Event(_condition_fromStr(_fact_a, ontology),
                               _worldStateModification_fromStr(_fact_b, ontology)));
-    setOfEvents.add(cp::Event(_condition_fromStr(_fact_b + "&" + _fact_d, ontology),
+    setOfEvents.add(pgp::Event(_condition_fromStr(_fact_b + "&" + _fact_d, ontology),
                               _worldStateModification_fromStr(_fact_c, ontology)));
     domain.addSetOfEvents(std::move(setOfEvents));
   }
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
   EXPECT_EQ("", _solveStrConst(problem, domain));
 
-  domain.addSetOfEvents(cp::Event(_condition_fromStr(_fact_b, ontology),
+  domain.addSetOfEvents(pgp::Event(_condition_fromStr(_fact_b, ontology),
                                   _worldStateModification_fromStr(_fact_c, ontology)));
 
   EXPECT_EQ(action1 + _sep + action2, _solveStrConst(problem, domain)); // check with a copy of the problem
@@ -1926,8 +1926,8 @@ void _checkEventThatAddAGoal()
   const std::string action4 = "action4";
   const std::string action5 = "action5";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
@@ -1935,25 +1935,25 @@ void _checkEventThatAddAGoal()
                                                      _fact_f + "\n" +
                                                      _fact_g, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
-  actions.emplace(action2, cp::Action(_condition_fromStr(_fact_c, ontology),
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, pgp::Action(_condition_fromStr(_fact_c, ontology),
                                       _worldStateModification_fromStr(_fact_d, ontology)));
-  actions.emplace(action3, cp::Action(_condition_fromStr(_fact_c + "&" + _fact_f, ontology),
+  actions.emplace(action3, pgp::Action(_condition_fromStr(_fact_c + "&" + _fact_f, ontology),
                                       _worldStateModification_fromStr(_fact_e, ontology)));
-  actions.emplace(action4, cp::Action(_condition_fromStr(_fact_b, ontology),
+  actions.emplace(action4, pgp::Action(_condition_fromStr(_fact_b, ontology),
                                       _worldStateModification_fromStr(_fact_f, ontology)));
-  actions.emplace(action5, cp::Action(_condition_fromStr(_fact_b, ontology),
+  actions.emplace(action5, pgp::Action(_condition_fromStr(_fact_b, ontology),
                                       _worldStateModification_fromStr(_fact_g, ontology)));
-  cp::SetOfEvents setOfEvents;
-  setOfEvents.add(cp::Event(_condition_fromStr(_fact_a, ontology),
+  pgp::SetOfEvents setOfEvents;
+  setOfEvents.add(pgp::Event(_condition_fromStr(_fact_a, ontology),
                             _worldStateModification_fromStr(_fact_b, ontology),
-                            _emptyParameters, {{cp::GoalStack::defaultPriority, {_goal(_fact_e, ontology)}}}));
-  setOfEvents.add(cp::Event(_condition_fromStr(_fact_b, ontology),
+                            _emptyParameters, {{pgp::GoalStack::defaultPriority, {_goal(_fact_e, ontology)}}}));
+  setOfEvents.add(pgp::Event(_condition_fromStr(_fact_b, ontology),
                             _worldStateModification_fromStr(_fact_c, ontology)));
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("imply(" + _fact_g + ", " + _fact_d + ")", ontology)});
   EXPECT_EQ("", _solveStrConst(problem, domain));
   auto& setOfEventsMap = domain.getSetOfEvents();
@@ -1969,30 +1969,30 @@ void _testGetNotSatisfiedGoals()
   auto goal3 = "imply(" + _fact_c + ", " + _fact_d + ")";
   auto goal4 = "persist(imply(!" + _fact_c + ", " + _fact_d + "))";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d, ontology.types);
 
-  cp::Problem problem;
-  _addGoalsForAPriority(problem, {goal1}, ontology, {}, cp::GoalStack::defaultPriority + 1);
+  pgp::Problem problem;
+  _addGoalsForAPriority(problem, {goal1}, ontology, {}, pgp::GoalStack::defaultPriority + 1);
   _addGoalsForAPriority(problem, {goal2, goal3, goal4}, ontology);
 
-  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3 + ", " + goal4, cp::printGoals(problem.goalStack.goals()));
-  EXPECT_EQ(goal2 + ", " + goal4, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3 + ", " + goal4, pgp::printGoals(problem.goalStack.goals()));
+  EXPECT_EQ(goal2 + ", " + goal4, pgp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
   _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
-  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal4, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal4, pgp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
   _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
-  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3, pgp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology);
-  EXPECT_EQ(goal1 + ", " + goal2, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal1 + ", " + goal2, pgp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
   _removeFact(problem.worldState, _fact_a, problem.goalStack, ontology);
-  EXPECT_EQ(goal2, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal2, pgp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
   _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
-  EXPECT_EQ("", cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ("", pgp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
   _removeFact(problem.worldState, _fact_d, problem.goalStack, ontology);
-  EXPECT_EQ(goal3, cp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal3, pgp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
 }
 
 
@@ -2002,86 +2002,86 @@ void _testGoalUnderPersist()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e, ontology.types);
 
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
-  actions.emplace(action2, cp::Action({}, _worldStateModification_fromStr(_fact_c, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_c, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
   {
-    cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
+    pgp::Problem problem;
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, pgp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, pgp::GoalStack::defaultPriority);
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
-    cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
+    pgp::Problem problem;
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, pgp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, pgp::GoalStack::defaultPriority);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
-    cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
+    pgp::Problem problem;
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, pgp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, pgp::GoalStack::defaultPriority);
     _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
     EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain));
   }
 
   {
-    cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
+    pgp::Problem problem;
+    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, pgp::GoalStack::defaultPriority + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain));
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, pgp::GoalStack::defaultPriority);
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
-    cp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, cp::GoalStack::defaultPriority + 2);
+    pgp::Problem problem;
+    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, pgp::GoalStack::defaultPriority + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, pgp::GoalStack::defaultPriority);
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
-    cp::Problem problem;
-    _addGoalsForAPriority(problem, {_fact_c}, ontology, now, cp::GoalStack::defaultPriority + 2);
+    pgp::Problem problem;
+    _addGoalsForAPriority(problem, {_fact_c}, ontology, now, pgp::GoalStack::defaultPriority + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, cp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, pgp::GoalStack::defaultPriority);
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
-    cp::Problem problem;
-    problem.goalStack.pushBackGoal({_goal("persist(!" + _fact_e + ")", ontology)}, problem.worldState, now, cp::GoalStack::defaultPriority + 2);
-    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, cp::GoalStack::defaultPriority + 2);
+    pgp::Problem problem;
+    problem.goalStack.pushBackGoal({_goal("persist(!" + _fact_e + ")", ontology)}, problem.worldState, now, pgp::GoalStack::defaultPriority + 2);
+    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, pgp::GoalStack::defaultPriority + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 1)}, now, cp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 1)}, now, pgp::GoalStack::defaultPriority);
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain, now));
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain, now));
 
     _removeFact(problem.worldState, _fact_c, problem.goalStack, ontology);
-    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, cp::GoalStack::defaultPriority + 2);
+    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, pgp::GoalStack::defaultPriority + 2);
     auto plannerResult = _lookForAnActionToDo(problem, domain, now);
     EXPECT_EQ(action2, plannerResult.actionInvocation.actionId);
 
     now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now() + std::chrono::minutes(5));
-    cp::notifyActionDone(problem, domain, plannerResult, now);
+    pgp::notifyActionDone(problem, domain, plannerResult, now);
 
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId); // Not action1 because it was inactive for too long
@@ -2092,8 +2092,8 @@ void _testGoalUnderPersist()
 
 void _checkLinkedEvents()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_userWantsToCheckedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_userWantsToCheckedIn + "\n" +
                                                      _fact_a + "\n" +
                                                      _fact_punctual_p1 + "\n" +
                                                      _fact_punctual_p2 + "\n" +
@@ -2102,17 +2102,17 @@ void _checkLinkedEvents()
                                                      _fact_punctual_p5 + "\n" +
                                                      _fact_e, ontology.types);
 
-  cp::SetOfEvents setOfEvents;
-  cp::Problem problem;
+  pgp::SetOfEvents setOfEvents;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
-  setOfEvents.add(cp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
+  setOfEvents.add(pgp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
                             _worldStateModification_fromStr(_fact_a, ontology)));
-  setOfEvents.add(cp::Event(_condition_fromStr(_fact_punctual_p5, ontology),
+  setOfEvents.add(pgp::Event(_condition_fromStr(_fact_punctual_p5, ontology),
                             _worldStateModification_fromStr(_fact_punctual_p2 + "&" + _fact_punctual_p3, ontology)));
-  setOfEvents.add(cp::Event(_condition_fromStr(_fact_punctual_p4, ontology),
+  setOfEvents.add(pgp::Event(_condition_fromStr(_fact_punctual_p4, ontology),
                             _worldStateModification_fromStr(_fact_punctual_p5 + "&" + _fact_punctual_p1, ontology)));
 
-  std::map<cp::SetOfEventsId, cp::SetOfEvents> setOfEventsMap = {{"soe", setOfEvents}};
+  std::map<pgp::SetOfEventsId, pgp::SetOfEvents> setOfEventsMap = {{"soe", setOfEvents}};
   EXPECT_FALSE(_hasFact(problem.worldState, _fact_a, ontology));
   _addFact(problem.worldState, _fact_punctual_p4, problem.goalStack, ontology, setOfEventsMap, _now);
   EXPECT_TRUE(_hasFact(problem.worldState, _fact_a, ontology));
@@ -2122,23 +2122,23 @@ void _checkLinkedEvents()
 
 void _oneStepTowards()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
                                                      _fact_greeted + "\n" +
                                                      _fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_beHappy, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  cp::ProblemModification greetPbModification;
+  std::map<pgp::ActionId, pgp::Action> actions;
+  pgp::ProblemModification greetPbModification;
   greetPbModification.potentialWorldStateModification = _worldStateModification_fromStr(_fact_greeted, ontology);
-  actions.emplace(_action_greet, cp::Action({}, greetPbModification));
-  actions.emplace(_action_goodBoy, cp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
+  actions.emplace(_action_greet, pgp::Action({}, greetPbModification));
+  actions.emplace(_action_goodBoy, pgp::Action({}, _worldStateModification_fromStr(_fact_beHappy, ontology)));
   static const std::string actionb = "actionb";
-  actions.emplace(actionb, cp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  actions.emplace(actionb, pgp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   auto implyGoal = _goal("persist(imply(" + _fact_a + ", " + _fact_b + "))", ontology, 0);
   _setGoals(problem, {{11, {implyGoal}},
                       {10, {_goal("oneStepTowards(" + _fact_greeted + ")", ontology, 0)}},
@@ -2157,8 +2157,8 @@ void _oneStepTowards()
 
 void _infrenceLinksFromManyEventsSets()
 {
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
@@ -2167,28 +2167,28 @@ void _infrenceLinksFromManyEventsSets()
 
   const std::string action1 = "action1";
   const std::string action2 = "action2";
-  std::map<cp::ActionId, cp::Action> actions;
-  cp::ProblemModification pbModification;
+  std::map<pgp::ActionId, pgp::Action> actions;
+  pgp::ProblemModification pbModification;
   pbModification.potentialWorldStateModification = _worldStateModification_fromStr(_fact_d, ontology);
-  actions.emplace(action1, cp::Action({}, pbModification));
-  actions.emplace(action2, cp::Action({}, _worldStateModification_fromStr(_fact_c, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  actions.emplace(action1, pgp::Action({}, pbModification));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_c, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
-  EXPECT_TRUE(cp::GoalStack::defaultPriority >= 1);
-  auto lowPriority = cp::GoalStack::defaultPriority - 1;
-  domain.addSetOfEvents(cp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
+  EXPECT_TRUE(pgp::GoalStack::defaultPriority >= 1);
+  auto lowPriority = pgp::GoalStack::defaultPriority - 1;
+  domain.addSetOfEvents(pgp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
                                   {}, _emptyParameters,
                                   {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology)}}}));
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoals(problem, {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology, 0)}}});
 
   {
-    cp::SetOfEvents setOfEvents2;
-    setOfEvents2.add(cp::Event(_condition_fromStr(_fact_punctual_p1, ontology),
+    pgp::SetOfEvents setOfEvents2;
+    setOfEvents2.add(pgp::Event(_condition_fromStr(_fact_punctual_p1, ontology),
                                _worldStateModification_fromStr(_fact_b + "&" + _fact_punctual_p2, ontology)));
-    setOfEvents2.add(cp::Event(_condition_fromStr(_fact_b, ontology),
+    setOfEvents2.add(pgp::Event(_condition_fromStr(_fact_b, ontology),
                                {}, _emptyParameters,
-                               {{cp::GoalStack::defaultPriority, {_goal("oneStepTowards(" + _fact_c + ")", ontology)}}}));
+                               {{pgp::GoalStack::defaultPriority, {_goal("oneStepTowards(" + _fact_c + ")", ontology)}}}));
     domain.addSetOfEvents(setOfEvents2);
   }
 
@@ -2205,17 +2205,17 @@ void _factValueModification()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("a b - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("a b - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr("!" + _fact_b, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr("!" + _fact_b, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoals(problem, {{10, {_goal("persist(imply(" + _fact_a + "=a, " + "!" + _fact_b + "))", ontology, 0)}}});
 
   _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
@@ -2232,19 +2232,19 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  cp::ProblemModification wm(_worldStateModification_fromStr(_fact_a, ontology));
+  std::map<pgp::ActionId, pgp::Action> actions;
+  pgp::ProblemModification wm(_worldStateModification_fromStr(_fact_a, ontology));
   wm.goalsToAddInCurrentPriority.push_back(_goal(_fact_b, ontology, 0));
-  actions.emplace(action1, cp::Action({}, wm));
-  actions.emplace(action2, cp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  actions.emplace(action1, pgp::Action({}, wm));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
-  cp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
+  pgp::Problem problem;
+  pgp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
   std::set<std::string> goalsRemoved;
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
     goalsRemoved = pGoalsRemoved;
@@ -2266,18 +2266,18 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
 
 void _setWsModification()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me object - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me object - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?o - entity) - loc_type", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("set(location(me), location(object))", ontology));
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action navAction({}, _worldStateModification_fromStr("set(location(me), location(object))", ontology));
   actions.emplace(_action_navigate, navAction);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(object)=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("location(me)=kitchen", ontology)});
@@ -2287,20 +2287,20 @@ void _setWsModification()
 
 void _forAllWsModification()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me object1 object2 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me object1 object2 - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
   const std::string action1 = "action1";
-  std::map<std::string, cp::Action> actions;
-  cp::Action navAction({}, _worldStateModification_fromStr("forall(?obj - entity, grab(me, ?obj), set(location(?obj), location(me)))", ontology));
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action navAction({}, _worldStateModification_fromStr("forall(?obj - entity, grab(me, ?obj), set(location(?obj), location(me)))", ontology));
   actions.emplace(action1, navAction);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(object1)=kitchen", problem.goalStack, ontology);
   _addFact(problem.worldState, "grab(me, object1)", problem.goalStack, ontology);
@@ -2313,27 +2313,27 @@ void _forAllWsModification()
 
 void _actionNavigationAndGrabObjectWithParameters()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me sweets - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me sweets - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
-  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
+  pgp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
-  cp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
+  std::vector<pgp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
+  pgp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   const auto& setOfFacts = problem.worldState.factsMapping();
@@ -2346,27 +2346,27 @@ void _actionNavigationAndGrabObjectWithParameters()
 
 void _actionNavigationAndGrabObjectWithParameters2()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me sweets - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me sweets - entity\n"
                                                   "corridor kitchen - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
-  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
+  pgp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
-  cp::Action grabAction(_condition_fromStr("equals(location(?object), location(me))", ontology, grabParameters),
+  std::vector<pgp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
+  pgp::Action grabAction(_condition_fromStr("equals(location(?object), location(me))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   const auto& setOfFacts = problem.worldState.factsMapping();
@@ -2382,33 +2382,33 @@ void _moveObject()
 {
   const std::string actionNavigate2 = "actionNavigate2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me sweets - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me sweets - entity\n"
                                                   "corridor kitchen bedroom - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
-  cp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
+  pgp::Action navAction({}, _worldStateModification_fromStr("location(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> nav2Parameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
-  cp::Action navAction2(_condition_fromStr("grab(me, ?object)", ontology, nav2Parameters),
+  std::vector<pgp::Parameter> nav2Parameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
+  pgp::Action navAction2(_condition_fromStr("grab(me, ?object)", ontology, nav2Parameters),
                         _worldStateModification_fromStr("location(me)=?targetLocation & location(?object)=?targetLocation", ontology, nav2Parameters));
   navAction2.parameters = std::move(nav2Parameters);
   actions.emplace(actionNavigate2, navAction2);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
-  cp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
+  std::vector<pgp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
+  pgp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("location(sweets)=bedroom", ontology)});
@@ -2420,42 +2420,42 @@ void _moveObject()
 
 void _moveAndUngrabObject()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets - entity\n"
                                                   "kitchen bedroom - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
                                                      "locationOfObj(?o - entity) - loc_type\n"
                                                      "grab(?e - robot, ?o - entity)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
-  cp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", ontology, navParameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
+  pgp::Action navAction({}, _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
+  std::vector<pgp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
+  pgp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  std::vector<cp::Parameter> ungrabParameters(1, _parameter("?object - entity", ontology));
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ontology, ungrabParameters));
+  std::vector<pgp::Parameter> ungrabParameters(1, _parameter("?object - entity", ontology));
+  pgp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ontology, ungrabParameters));
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
-  cp::Problem problem;
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
-  cp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
+  pgp::Problem problem;
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
+  pgp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
                   _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   auto& setOfEventsMap = domain.getSetOfEvents();
   _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -2476,59 +2476,59 @@ void _failToMoveAnUnknownObject()
   const std::string actionLeavePod = "actionLeavePod";
   const std::string actionRanomWalk = "actionRanomWalk";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets - entity\n"
                                                   "kitchen bedroom - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
                                                      "locationOfObj(?o - entity) - loc_type\n"
                                                      "grab(?e - robot, ?o - entity)\n"
                                                      "charging(?r - robot)\n"
                                                      "isLost", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
-  cp::Action navAction(_condition_fromStr("!isLost & !charging(me)", ontology, navParameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
+  pgp::Action navAction(_condition_fromStr("!isLost & !charging(me)", ontology, navParameters),
                        _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  cp::Action randomWalkAction(_condition_fromStr("!charging(me)", ontology),
+  pgp::Action randomWalkAction(_condition_fromStr("!charging(me)", ontology),
                               _worldStateModification_fromStr("!isLost", ontology));
   actions.emplace(actionRanomWalk, randomWalkAction);
 
-  cp::Action leavePodAction({}, _worldStateModification_fromStr("!charging(me)", ontology));
+  pgp::Action leavePodAction({}, _worldStateModification_fromStr("!charging(me)", ontology));
   actions.emplace(actionLeavePod, leavePodAction);
 
-  std::vector<cp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
-  cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObj(?object)=*", ontology, whereIsObjectParameters),
+  std::vector<pgp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
+  pgp::Action whereIsObjectAction(_condition_fromStr("!locationOfObj(?object)=*", ontology, whereIsObjectParameters),
                                  _worldStateModification_fromStr("locationOfObj(?object)=?aLocation", ontology, whereIsObjectParameters));
   whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
-  std::vector<cp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
+  std::vector<pgp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
+  pgp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  std::vector<cp::Parameter> ungrabParameters{_parameter("?object - entity", ontology)};
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ontology, ungrabParameters));
+  std::vector<pgp::Parameter> ungrabParameters{_parameter("?object - entity", ontology)};
+  pgp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me, ?object)", ontology, ungrabParameters));
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
-  cp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
+  pgp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
                   _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)});
 
   auto& setOfEventsMap = domain.getSetOfEvents();
@@ -2550,14 +2550,14 @@ void _completeMovingObjectScenario()
 {
   const std::string actionWhereIsObject = "actionWhereIsObject";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets bottle - entity\n"
                                                   "kitchen bedroom entrance - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
                                                      "locationOfObject(?o - entity) - loc_type\n"
                                                      "grab(?e - robot) - entity\n"
                                                      "charging(?r - robot)\n"
@@ -2565,39 +2565,39 @@ void _completeMovingObjectScenario()
                                                      "pathIsBlocked\n"
                                                      "lost(?r - robot)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> navParameters{_parameter("?targetPlace - loc_type", ontology)};
-  cp::Action navAction(_condition_fromStr("!lost(me) & !pathIsBlocked", ontology, navParameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters{_parameter("?targetPlace - loc_type", ontology)};
+  pgp::Action navAction(_condition_fromStr("!lost(me) & !pathIsBlocked", ontology, navParameters),
                        _worldStateModification_fromStr("locationOfRobot(me)=?targetPlace", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
-  std::vector<cp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
-  cp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & not(exists(?o - entity, grab(me)=?o))", ontology, grabParameters),
+  std::vector<pgp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
+  pgp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & not(exists(?o - entity, grab(me)=?o))", ontology, grabParameters),
                         _worldStateModification_fromStr("grab(me)=?object", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
-  std::vector<cp::Parameter> ungrabParameters{_parameter("?object - entity", ontology)};
-  cp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=?object", ontology, ungrabParameters));
+  std::vector<pgp::Parameter> ungrabParameters{_parameter("?object - entity", ontology)};
+  pgp::Action ungrabAction({}, _worldStateModification_fromStr("!grab(me)=?object", ontology, ungrabParameters));
   ungrabAction.parameters = std::move(ungrabParameters);
   actions.emplace(_action_ungrab, ungrabAction);
 
-  std::vector<cp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
-  cp::Action whereIsObjectAction(_condition_fromStr("!locationOfObject(?object)=*", ontology, whereIsObjectParameters),
+  std::vector<pgp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
+  pgp::Action whereIsObjectAction(_condition_fromStr("!locationOfObject(?object)=*", ontology, whereIsObjectParameters),
                                  _worldStateModification_fromStr("locationOfObject(?object)=?aLocation", ontology, whereIsObjectParameters));
   whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> eventParameters{_parameter("?object - entity", ontology), _parameter("?location - loc_type", ontology)};
-  cp::Event event(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object", ontology, eventParameters),
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> eventParameters{_parameter("?object - entity", ontology), _parameter("?location - loc_type", ontology)};
+  pgp::Event event(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object", ontology, eventParameters),
                   _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets", ontology)});
 
   EXPECT_EQ(actionWhereIsObject + "(?aLocation -> bedroom, ?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2619,46 +2619,46 @@ void _eventWithANegatedFactWithParameter()
   const std::string actionUngrabRightHand = "actionUngrabRightHand";
   const std::string actionUngrabBothHands = "actionUngrabBothHands";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot\n"
                                            "entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me - robot\n"
                                                   "sweets bottle glass - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("grab(?e - robot, ?e - entity)\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("grab(?e - robot, ?e - entity)\n"
                                                      "hasTwoHandles(?e - entity)\n"
                                                      "grabLeftHand(?r - robot) - entity\n"
                                                      "grabRightHand(?r - robot) - entity", ontology.types);
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> ungrabLeftParameters{_parameter("?object - entity", ontology)};
-  cp::Action ungrabLeftAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabLeftParameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> ungrabLeftParameters{_parameter("?object - entity", ontology)};
+  pgp::Action ungrabLeftAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabLeftParameters),
                               _worldStateModification_fromStr("!grabLeftHand(me)=?object", ontology, ungrabLeftParameters));
   ungrabLeftAction.parameters = std::move(ungrabLeftParameters);
   actions.emplace(actionUngrabLeftHand, ungrabLeftAction);
 
-  std::vector<cp::Parameter> ungrabRightParameters{_parameter("?object - entity", ontology)};
-  cp::Action ungrabRightAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabRightParameters),
+  std::vector<pgp::Parameter> ungrabRightParameters{_parameter("?object - entity", ontology)};
+  pgp::Action ungrabRightAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabRightParameters),
                                _worldStateModification_fromStr("!grabRightHand(me)=?object", ontology, ungrabRightParameters));
   ungrabRightAction.parameters = std::move(ungrabRightParameters);
   actions.emplace(actionUngrabRightHand, ungrabRightAction);
 
-  std::vector<cp::Parameter> ungrabBothParameters{_parameter("?object - entity", ontology)};
-  cp::Action ungrabBothAction(_condition_fromStr("hasTwoHandles(?object)", ontology, ungrabBothParameters),
+  std::vector<pgp::Parameter> ungrabBothParameters{_parameter("?object - entity", ontology)};
+  pgp::Action ungrabBothAction(_condition_fromStr("hasTwoHandles(?object)", ontology, ungrabBothParameters),
                               _worldStateModification_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, ungrabBothParameters));
   ungrabBothAction.parameters = std::move(ungrabBothParameters);
   actions.emplace(actionUngrabBothHands, ungrabBothAction);
 
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
-  cp::Event event(_condition_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, eventParameters),
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
+  pgp::Event event(_condition_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, eventParameters),
                   _worldStateModification_fromStr("!grab(me, ?object)", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "hasTwoHandles(sweets)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "grabLeftHand(me)=sweets", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "grabRightHand(me)=sweets", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -2691,26 +2691,26 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({},
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({},
                                       _worldStateModification_fromStr("!" + _fact_a, ontology),
                                       _condition_fromStr(_fact_c + " & " + _fact_d, ontology)));
 
-  actions.emplace(action2, cp::Action(_condition_fromStr("!" + _fact_a + " & " + _fact_e, ontology),
+  actions.emplace(action2, pgp::Action(_condition_fromStr("!" + _fact_a + " & " + _fact_e, ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
 
-  actions.emplace(action3, cp::Action({},
+  actions.emplace(action3, pgp::Action({},
                                       _worldStateModification_fromStr(_fact_e, ontology)));
 
-  cp::Domain domain(std::move(actions), ontology);
-  cp::Problem problem;
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
@@ -2724,25 +2724,25 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 
 void _useTwoTimesAnEvent()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("obj1 obj2 - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("obj1 obj2 - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "(?e - entity)\n" +
                                                      _fact_c + "(?e - entity)", ontology.types);
 
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
-  cp::Event event(_condition_fromStr(_fact_a + " & " + _fact_b + "(?object)", ontology, eventParameters),
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
+  pgp::Event event(_condition_fromStr(_fact_a + " & " + _fact_b + "(?object)", ontology, eventParameters),
                   _worldStateModification_fromStr(_fact_c + "(?object)", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  std::map<std::string, pgp::Action> actions;
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_b + "(obj1)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(obj2)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_a, problem.goalStack, ontology, setOfEventsMap, _now);
@@ -2756,23 +2756,23 @@ void _linkWithAnyValueInCondition()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("toto - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("toto - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action(_condition_fromStr("!" + _fact_a + "=*", ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action(_condition_fromStr("!" + _fact_a + "=*", ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?aVal - entity", ontology)};
-  cp::Action act2({}, _worldStateModification_fromStr("!" + _fact_a + "=?aVal", ontology, act2Parameters));
+  std::vector<pgp::Parameter> act2Parameters{_parameter("?aVal - entity", ontology)};
+  pgp::Action act2({}, _worldStateModification_fromStr("!" + _fact_a + "=?aVal", ontology, act2Parameters));
   act2.parameters = std::move(act2Parameters);
   actions.emplace(action2, act2);
 
-  cp::Domain domain(std::move(actions), ontology);
-  cp::Problem problem;
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_a + "=toto", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
   EXPECT_EQ(action2 + "(?aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2785,16 +2785,16 @@ void _removeAFactWithAnyValue()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("toto - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("toto - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + " - entity", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a + " & !" + _fact_b + "=*", ontology)));
-  cp::Domain domain(std::move(actions), ontology);
-  cp::Problem problem;
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a + " & !" + _fact_b + "=*", ontology)));
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_b + "=toto", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_a, ontology)});
   EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2809,25 +2809,25 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d, ontology.types);
 
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(action1, cp::Action({},
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({},
                                       _worldStateModification_fromStr(_fact_a + "(e1)", ontology),
                                       _condition_fromStr(_fact_c, ontology)));
-  actions.emplace(action2, cp::Action(_condition_fromStr(_fact_a + "(e2)", ontology),
+  actions.emplace(action2, pgp::Action(_condition_fromStr(_fact_a + "(e2)", ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
-  actions.emplace(action3, cp::Action(_condition_fromStr(_fact_b, ontology),
+  actions.emplace(action3, pgp::Action(_condition_fromStr(_fact_b, ontology),
                                       _worldStateModification_fromStr(_fact_d, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_a + "(e2)", problem.goalStack, ontology);
   _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
@@ -2841,15 +2841,15 @@ void _checkPreferInContext()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology)));
-  actions.emplace(action2, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology)));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_a}, ontology);
   EXPECT_EQ(action1, _solveStrConst(problem, actions, ontology, &problem.historical));
@@ -2862,19 +2862,19 @@ void _checkPreferHighImportanceOfNotRepeatingIt()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  auto action1Obj = cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology));
+  std::map<std::string, pgp::Action> actions;
+  auto action1Obj = pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology));
   action1Obj.highImportanceOfNotRepeatingIt = true;
   actions.emplace(action1, action1Obj);
-  auto action2Obj = cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology));
+  auto action2Obj = pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology));
   action2Obj.highImportanceOfNotRepeatingIt = true;
   actions.emplace(action2, action2Obj);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_fact_a}, ontology);
   EXPECT_EQ(action1, _solveStrConst(problem, actions, ontology, &problem.historical));
@@ -2888,28 +2888,28 @@ void _actionWithFactWithANegatedFact()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("a b - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("a b - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({},
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({},
                                       _worldStateModification_fromStr(_fact_a + "=a", ontology)));
 
-  actions.emplace(action2, cp::Action(_condition_fromStr(_fact_a + "!=b & " + _fact_d, ontology),
+  actions.emplace(action2, pgp::Action(_condition_fromStr(_fact_a + "!=b & " + _fact_d, ontology),
                                       _worldStateModification_fromStr(_fact_c, ontology)));
 
-  actions.emplace(action3, cp::Action({},
+  actions.emplace(action3, pgp::Action({},
                                       _worldStateModification_fromStr(_fact_d, ontology),
                                       _condition_fromStr(_fact_e, ontology)));
 
-  cp::Domain domain(std::move(actions), ontology);
-  cp::Problem problem;
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_e, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
 
@@ -2923,32 +2923,32 @@ void _negatedFactValueInWorldState()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("a b c - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("a b c - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action(_condition_fromStr(_fact_a + "!=b", ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action(_condition_fromStr(_fact_a + "!=b", ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
   {
-    cp::Problem problem;
+    pgp::Problem problem;
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   }
 
   {
-    cp::Problem problem;
+    pgp::Problem problem;
     _addFact(problem.worldState, _fact_a + "=b", problem.goalStack, ontology);
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   }
 
   {
-    cp::Problem problem;
+    pgp::Problem problem;
     _addFact(problem.worldState, _fact_a + "=c", problem.goalStack, ontology);
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
@@ -2957,7 +2957,7 @@ void _negatedFactValueInWorldState()
   }
 
   {
-    cp::Problem problem;
+    pgp::Problem problem;
     _addFact(problem.worldState, _fact_a + "!=b", problem.goalStack, ontology);
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
@@ -2972,20 +2972,20 @@ void _problemThatUseADomainThatChangedSinceLastUsage()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action(_condition_fromStr(_fact_a, ontology),
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action(_condition_fromStr(_fact_a, ontology),
                                       _worldStateModification_fromStr(_fact_b, ontology)));
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
   EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain, _now)); // set problem cache about domain
 
-  domain.addAction(action2, cp::Action({},
+  domain.addAction(action2, pgp::Action({},
                                        _worldStateModification_fromStr(_fact_a, ontology)));
 
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
@@ -2998,31 +2998,31 @@ void _checkFilterFactInCondition()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "location");
-  ontology.constants = cp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
                                                   "loc1 loc2 - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
                                                      _fact_b + "(?e - entity, ?l - location)\n" +
                                                      _fact_c, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
+  std::map<std::string, pgp::Action> actions;
 
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "(?obj)", ontology, act1Parameters));
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
-  cp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "(?obj)", ontology, act2Parameters),
+  std::vector<pgp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
+  pgp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "(?obj)", ontology, act2Parameters),
                         _worldStateModification_fromStr(_fact_c, ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(obj1, loc2)", problem.goalStack, ontology, setOfEventsMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
@@ -3038,38 +3038,38 @@ void _checkFilterFactInConditionAndThenPropagate()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "location");
-  ontology.constants = cp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
                                                   "loc1 loc2 - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?e - entity, ?l - location)\n" +
                                                      _fact_c + "(?l - location)\n" +
                                                      _fact_d + "(?l - location)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
-  cp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "=?obj", ontology, act2Parameters),
+  std::vector<pgp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
+  pgp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "=?obj", ontology, act2Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?loc)", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-  std::vector<cp::Parameter> act3Parameters{_parameter("?loc - location", ontology)};
-  cp::Action actionObj3(_condition_fromStr(_fact_c + "(?loc)", ontology, act3Parameters),
+  std::vector<pgp::Parameter> act3Parameters{_parameter("?loc - location", ontology)};
+  pgp::Action actionObj3(_condition_fromStr(_fact_c + "(?loc)", ontology, act3Parameters),
                         _worldStateModification_fromStr(_fact_d + "(?loc)", ontology, act3Parameters));
   actionObj3.parameters = std::move(act3Parameters);
   actions.emplace(action3, actionObj3);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(obj2, loc2)", problem.goalStack, ontology, setOfEventsMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(loc2)", ontology)});
@@ -3084,41 +3084,41 @@ void _checkOutputValueOfLookForAnActionToDo()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a, ontology)});
 
   {
-    cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
-    auto res = cp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
+    pgp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
+    auto res = pgp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
     assert(!res.empty());
-    EXPECT_EQ(cp::PlannerStepType::IN_PROGRESS, lookForAnActionOutputInfos.getType());
+    EXPECT_EQ(pgp::PlannerStepType::IN_PROGRESS, lookForAnActionOutputInfos.getType());
     EXPECT_EQ(0, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
   }
 
   {
     _addFact(problem.worldState, _fact_a, problem.goalStack, ontology, setOfEventsMap, _now);
-    cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
-    auto res = cp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
+    pgp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
+    auto res = pgp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
     assert(res.empty());
-    EXPECT_EQ(cp::PlannerStepType::FINISHED_ON_SUCCESS, lookForAnActionOutputInfos.getType());
+    EXPECT_EQ(pgp::PlannerStepType::FINISHED_ON_SUCCESS, lookForAnActionOutputInfos.getType());
     EXPECT_EQ(1, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
   }
 
   {
     _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
-    cp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
-    auto res = cp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
+    pgp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
+    auto res = pgp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
     assert(res.empty());
-    EXPECT_EQ(cp::PlannerStepType::FINISEHD_ON_FAILURE, lookForAnActionOutputInfos.getType());
+    EXPECT_EQ(pgp::PlannerStepType::FINISEHD_ON_FAILURE, lookForAnActionOutputInfos.getType());
     EXPECT_EQ(0, lookForAnActionOutputInfos.nbOfSatisfiedGoals());
   }
 }
@@ -3133,46 +3133,46 @@ void _hardProblemThatNeedsToBeSmart()
   const std::string action5 = "action5";
   const std::string action6 = "action6";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e + "\n" +
                                                      _fact_f, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
+  pgp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
-  cp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
+  pgp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
-  cp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
+  pgp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
                         _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
   actions.emplace(action4, actionObj4);
 
-  cp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
+  pgp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action5, actionObj5);
 
-  cp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d, ontology),
+  pgp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d, ontology),
                         _worldStateModification_fromStr(_fact_e, ontology));
   actions.emplace(action6, actionObj6);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
 
@@ -3195,50 +3195,50 @@ void _hardProblemThatNeedsToBeSmartWithAnEvent()
   const std::string action4 = "action4";
   const std::string action5 = "action5";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e + "\n" +
                                                      _fact_f, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
+  pgp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
-  cp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
+  pgp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
-  cp::Action actionObj4(_condition_fromStr(_fact_a + "=val4", ontology),
+  pgp::Action actionObj4(_condition_fromStr(_fact_a + "=val4", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action4, actionObj4);
 
-  cp::Action actionObj5(_condition_fromStr(_fact_b + " & !" + _fact_d, ontology),
+  pgp::Action actionObj5(_condition_fromStr(_fact_b + " & !" + _fact_d, ontology),
                         _worldStateModification_fromStr(_fact_e, ontology));
   actions.emplace(action5, actionObj5);
 
-  cp::SetOfEvents setOfEvents;
+  pgp::SetOfEvents setOfEvents;
   {
-    cp::Event event1(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
+    pgp::Event event1(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
                      _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
     setOfEvents.add(event1);
   }
 
 
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
 
@@ -3261,10 +3261,10 @@ void _goalsToDoInParallel()
   const std::string action6 = "action6";
   const std::string action7 = "action7";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
@@ -3272,40 +3272,40 @@ void _goalsToDoInParallel()
                                                      _fact_f + "\n" +
                                                      _fact_g, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
+  pgp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
-  cp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
+  pgp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
-  cp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
+  pgp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
                         _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
   actions.emplace(action4, actionObj4);
 
-  cp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
+  pgp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action5, actionObj5);
 
-  cp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d + " & " + _fact_g, ontology),
+  pgp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d + " & " + _fact_g, ontology),
                         _worldStateModification_fromStr(_fact_e, ontology));
   actions.emplace(action6, actionObj6);
 
-  cp::Action actionObj7(_condition_fromStr(_fact_f, ontology),
+  pgp::Action actionObj7(_condition_fromStr(_fact_f, ontology),
                         _worldStateModification_fromStr(_fact_g, ontology));
   actions.emplace(action7, actionObj7);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
 
@@ -3327,30 +3327,30 @@ void _checkOverallEffectDuringParallelisation()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr("!" + _fact_d, ontology),
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action actionObj1(_condition_fromStr("!" + _fact_d, ontology),
                         _worldStateModification_fromStr(_fact_a + " & !" + _fact_d, ontology));
   actionObj1.effect.worldStateModificationAtStart = _worldStateModification_fromStr(_fact_d + " & " + _fact_e, ontology);
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2(_condition_fromStr("!" + _fact_d, ontology),
+  pgp::Action actionObj2(_condition_fromStr("!" + _fact_d, ontology),
                         _worldStateModification_fromStr(_fact_b + " & !" + _fact_d, ontology));
   actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr(_fact_d, ontology);
   actions.emplace(action2, actionObj2);
 
-  cp::Action actionObj3(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
+  pgp::Action actionObj3(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
-  cp::Domain domain(std::move(actions), ontology);
-  cp::Problem problem;
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
 
   EXPECT_EQ(action1, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
@@ -3361,20 +3361,20 @@ void _checkSimpleExists()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location");
-  ontology.constants = cp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?l - location)\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location");
+  ontology.constants = pgp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?l - location)\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l))", ontology),
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l))", ontology),
                         _worldStateModification_fromStr(_fact_b, ontology));
   actions.emplace(action1, actionObj1);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
   EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
@@ -3387,24 +3387,24 @@ void _checkExistsWithActionParameterInvolved()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "location");
-  ontology.constants = cp::SetOfEntities::fromPddl("pen - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("pen - entity\n"
                                                   "kitchen - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?l - location, ?e - entity)\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?l - location, ?e - entity)\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l, ?obj))", ontology, actionParameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l, ?obj))", ontology, actionParameters),
                         _worldStateModification_fromStr(_fact_b, ontology));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
   EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
@@ -3417,27 +3417,27 @@ void _checkExistsWithManyFactsInvolved()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("self - robot\n"
                                                   "bottle mouse pen - entity\n"
                                                   "bedroom kitchen livingroom - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
                                                      _fact_b + "(?e - entity, ?l - location)\n" +
                                                      _fact_c, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, actionParameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, actionParameters),
                         _worldStateModification_fromStr(_fact_c, ontology, actionParameters));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
 
   _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3454,32 +3454,32 @@ void _doAnActionToSatisfyAnExists()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("self - robot\n"
                                                   "bottle mouse pen - entity\n"
                                                   "bedroom kitchen livingroom - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
                                                      _fact_b + "(?e - entity, ?l - location)\n" +
                                                      _fact_c + "(?e - entity)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
+  std::vector<pgp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
+  pgp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c + "(mouse)", ontology)});
 
   _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3495,33 +3495,33 @@ void _checkForAllEffectAtStart()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("self - robot\n"
                                                   "bottle mouse pen - entity\n"
                                                   "bedroom entrance kitchen livingroom - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
                                                      _fact_b + "(?e - entity, ?l - location)\n" +
                                                      _fact_c + "(?e - entity)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
+  std::vector<pgp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
+  pgp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
   actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr("forall(?l - location, when(" + _fact_a + "(self, ?l), not(" + _fact_a + "(self, ?l))))", ontology, act2Parameters);
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c + "(mouse)", ontology)});
 
   _addFact(problem.worldState, _fact_a + "(self, entrance)", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3540,32 +3540,32 @@ void _existsWithValue()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("self - robot\n"
                                                   "pen - entity\n"
                                                   "livingroom - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot) - location\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?r - robot) - location\n" +
                                                      _fact_b + "(?e - entity) - location\n" +
                                                      _fact_c + "(?e - entity)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  cp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self)=?l & " + _fact_b + "(?obj)=?l)", ontology, act1Parameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  pgp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self)=?l & " + _fact_b + "(?obj)=?l)", ontology, act1Parameters),
                         _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  cp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self)=?loc", ontology, act2Parameters));
+  std::vector<pgp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
+  pgp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self)=?loc", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c + "(pen)", ontology)});
 
   _addFact(problem.worldState, _fact_b + "(pen)=livingroom", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3578,22 +3578,22 @@ void _notExists()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("self - robot\n"
                                                   "kitchen - location", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
                                                      _fact_b, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr("not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action actionObj1(_condition_fromStr("not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
                         _worldStateModification_fromStr(_fact_b, ontology));
   actions.emplace(action1, actionObj1);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
 
   EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -3608,35 +3608,35 @@ void _actionToSatisfyANotExists()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("location\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("location\n"
                                            "robot\n"
                                            "resource");
-  ontology.constants = cp::SetOfEntities::fromPddl("self - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("self - robot\n"
                                                   "kitchen - location\n"
                                                   "spec_rec - resource", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
                                                      _fact_b + "\n" +
                                                      "busy(?r - resource)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr("not(busy(spec_rec)) & not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action actionObj1(_condition_fromStr("not(busy(spec_rec)) & not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
                         _worldStateModification_fromStr("not(busy(spec_rec)) & " + _fact_b, ontology));
   actions.emplace(action1, actionObj1);
 
-  std::vector<cp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  cp::Action actionObj2({}, _worldStateModification_fromStr("!" + _fact_a + "(self, ?loc)", ontology, act2Parameters));
+  std::vector<pgp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
+  pgp::Action actionObj2({}, _worldStateModification_fromStr("!" + _fact_a + "(self, ?loc)", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
-  std::vector<cp::Parameter> act3Parameters{_parameter("?r - resource", ontology)};
-  cp::Action actionObj3({}, _worldStateModification_fromStr("not(busy(?r))", ontology, act3Parameters));
+  std::vector<pgp::Parameter> act3Parameters{_parameter("?r - resource", ontology)};
+  pgp::Action actionObj3({}, _worldStateModification_fromStr("not(busy(?r))", ontology, act3Parameters));
   actionObj3.parameters = std::move(act3Parameters);
   actions.emplace(action3, actionObj3);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
   _addFact(problem.worldState, "busy(spec_rec)", problem.goalStack, ontology, setOfEventsMap, _now);
 
@@ -3652,27 +3652,27 @@ void _orInCondition()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::Action actionObj1(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
+  std::map<std::string, pgp::Action> actions;
+  pgp::Action actionObj1(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action1, actionObj1);
 
-  cp::Action actionObj2(_condition_fromStr(_fact_a + " | " + _fact_b, ontology),
+  pgp::Action actionObj2(_condition_fromStr(_fact_a + " | " + _fact_b, ontology),
                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
-  cp::Action actionObj3(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
+  pgp::Action actionObj3(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
   _addFact(problem.worldState, _fact_a, problem.goalStack, ontology, setOfEventsMap, _now);
 
@@ -3683,33 +3683,33 @@ void _orInCondition()
 
 void _axioms()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("object");
-  ontology.constants = cp::SetOfEntities::fromPddl("book titi - object", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?o - object)\n" +
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("object");
+  ontology.constants = pgp::SetOfEntities::fromPddl("book titi - object", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?o - object)\n" +
                                                      _fact_b + "(?o - object)\n" +
                                                      _fact_c + "(?o - object)\n" +
                                                      _fact_d + "(?o - object)\n" +
                                                      _fact_e, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - object", ontology)};
-  cp::Axiom axiom(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", ontology, derPred1Parameters),
+  std::map<std::string, pgp::Action> actions;
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> derPred1Parameters{_parameter("?o - object", ontology)};
+  pgp::Axiom axiom(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", ontology, derPred1Parameters),
                   _fact(_fact_c + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : axiom.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
-  std::vector<cp::Parameter> derPred2Parameters{_parameter("?o - object", ontology)};
-  cp::Axiom derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", ontology, derPred2Parameters),
+  std::vector<pgp::Parameter> derPred2Parameters{_parameter("?o - object", ontology)};
+  pgp::Axiom derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", ontology, derPred2Parameters),
                               _fact(_fact_d + "(?o)", ontology, derPred2Parameters), derPred2Parameters);
   for (auto& currEvent : derivedPredicate2.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, _fact_e, problem.goalStack, ontology, setOfEventsMap, _now);
 
   EXPECT_FALSE(_hasFact(problem.worldState, _fact_c + "(book)", ontology));
@@ -3737,17 +3737,17 @@ void _assignAnotherValueToSatisfyNotGoal()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr(_fact_a + "=toto", ontology)));
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a + "=toto", ontology)));
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)});
 
   EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
@@ -3760,17 +3760,17 @@ void _assignUndefined()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  actions.emplace(action1, cp::Action({}, _worldStateModification_fromStr("assign(" + _fact_a + ", undefined)", ontology)));
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr("assign(" + _fact_a + ", undefined)", ontology)));
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)});
 
   EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
@@ -3785,23 +3785,23 @@ void _assignAFact()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
                                                   "p1 p2 p3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a + "=valGoal", ontology)});
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3816,26 +3816,26 @@ void _assignAFactToAction()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
                                                   "p1 p2 p3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
                                                      _fact_c, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  actions.emplace(action2, cp::Action(_condition_fromStr(_fact_a + "=valGoal", ontology),
+  actions.emplace(action2, pgp::Action(_condition_fromStr(_fact_a + "=valGoal", ontology),
                                       _worldStateModification_fromStr(_fact_c, ontology)));
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3850,30 +3850,30 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
+  std::vector<pgp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
+  pgp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3894,28 +3894,28 @@ void _assignAFactThenCheckExistWithAnotherFact()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d, ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  cp::Action action2Obj(_condition_fromStr("exists(?pc - param, =(" + _fact_a + ", " + _fact_c + "(?pc)))", ontology),
+  pgp::Action action2Obj(_condition_fromStr("exists(?pc - param, =(" + _fact_a + ", " + _fact_c + "(?pc)))", ontology),
                         _worldStateModification_fromStr(_fact_d, ontology));
   actions.emplace(action2, action2Obj);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3934,34 +3934,34 @@ void _existWithEqualityInEvent()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param)\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d + "(?p - param)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
-  cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
+  pgp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
                         _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
-  cp::Axiom derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
+  pgp::Axiom derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
                               _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : derivedPredicate1.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
 
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)});
   _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3987,34 +3987,34 @@ void _existWithEqualityInEvent_withEqualityInverted()
 {
   const std::string action1 = "action1";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param)\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d + "(?p - param)", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
-  cp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
+  pgp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
                         _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
-  cp::Axiom derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
+  pgp::Axiom derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
                               _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : derivedPredicate1.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
 
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)});
   _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -4042,36 +4042,36 @@ void _fixEventWithFluentInParameter()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d + "\n" +
                                                      _fact_e + "(?p - param) - entity", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
+  std::vector<pgp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
+  pgp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> derPred1Parameters{_parameter("?a - param", ontology), _parameter("?v - entity", ontology)};
-  cp::Axiom derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", ontology, derPred1Parameters),
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> derPred1Parameters{_parameter("?a - param", ontology), _parameter("?v - entity", ontology)};
+  pgp::Axiom derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", ontology, derPred1Parameters),
                               _fact(_fact_e + "(?a)=?v", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : derivedPredicate1.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   EXPECT_EQ("action: action1\n"
             "----------------------------------\n"
@@ -4094,7 +4094,7 @@ void _fixEventWithFluentInParameter()
             "fact: fact_e(?a)=?v\n"
             "action: action2\n", domain.printSuccessionCache());
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -4108,33 +4108,33 @@ void _derivedPredicates()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d, ontology.types);
   ontology.derivedPredicates.addDerivedPredicate(
-        cp::DerivedPredicate(cp::Predicate(_fact_e + "(?a - param) - entity", false, ontology.types),
+        pgp::DerivedPredicate(pgp::Predicate(_fact_e + "(?a - param) - entity", false, ontology.types),
                              _fact_a + "(?a)=?entity", ontology));
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + "(titi), " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
-  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
+  std::vector<pgp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
+  pgp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
-  cp::SetOfEvents setOfEvents;
+  pgp::SetOfEvents setOfEvents;
 
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   EXPECT_EQ("action: action1\n"
             "----------------------------------\n"
             "\n"
@@ -4150,7 +4150,7 @@ void _derivedPredicates()
             "not action: action2\n", domain.printSuccessionCache());
 
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -4164,31 +4164,31 @@ void _assignAFactTwoTimesInTheSamePlan()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 kitchen - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 kitchen - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d + "(?p - param) - entity", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
-  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
+  std::vector<pgp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
+  pgp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
                         _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a + "=kitchen", ontology)});
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -4210,39 +4210,39 @@ void _checkTwoTimesTheEqualityOfAFact()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("entity\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
                                            "param");
-  ontology.constants = cp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 bedroom kitchen - entity\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 bedroom kitchen - entity\n"
                                                   "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "(?p - param) - entity\n" +
                                                      _fact_c + "(?p - param) - entity\n" +
                                                      _fact_d + "(?p - param) - entity\n" +
                                                      _fact_e + "(?p - entity) - entity\n" +
                                                      _fact_f + " - entity", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  std::vector<cp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
-  cp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
+  pgp::Action action1Obj({}, _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_b + "(?p))", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
-  std::vector<cp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
-  cp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
+  std::vector<pgp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
+  pgp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
                         _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
-  std::vector<cp::Parameter> action3Parameters{_parameter("?tt - entity", ontology)};
-  cp::Action action3Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_e + "(?tt))", ontology, action3Parameters),
+  std::vector<pgp::Parameter> action3Parameters{_parameter("?tt - entity", ontology)};
+  pgp::Action action3Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_e + "(?tt))", ontology, action3Parameters),
                         _worldStateModification_fromStr("assign(" + _fact_f + ", ?tt)", ontology, action3Parameters));
   action3Obj.parameters = std::move(action3Parameters);
   actions.emplace(action3, action3Obj);
 
-  cp::Domain domain(std::move(actions), ontology);
+  pgp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
-  cp::Problem problem;
+  pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_f + "=bedroom", ontology)});
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -4263,39 +4263,39 @@ void _checkTwoTimesTheEqualityOfAFact()
 
 void _eventToRemoveAFactWithoutFluent()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("loc_type\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
                                            "robot");
-  ontology.constants = cp::SetOfEntities::fromPddl("me - robot\n"
+  ontology.constants = pgp::SetOfEntities::fromPddl("me - robot\n"
                                                   "house1 house2 city anotherCity - loc_type", ontology.types);
-  ontology.predicates = cp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
+  ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
                                                      "robotAt(?r - robot, ?l - loc_type)\n"
                                                      "within(?l1 - loc_type) - loc_type", ontology.types);
 
-  std::map<std::string, cp::Action> actions;
-  cp::SetOfEvents setOfEvents;
-  std::vector<cp::Parameter> inf1Parameters{_parameter("?l - loc_type", ontology)};
-  cp::Event event1(_condition_fromStr("locationOfRobot(me)=?l", ontology, inf1Parameters),
+  std::map<std::string, pgp::Action> actions;
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> inf1Parameters{_parameter("?l - loc_type", ontology)};
+  pgp::Event event1(_condition_fromStr("locationOfRobot(me)=?l", ontology, inf1Parameters),
                    _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf1Parameters));
   event1.parameters = std::move(inf1Parameters);
   setOfEvents.add(event1);
 
-  std::vector<cp::Parameter> inf2Parameters{_parameter("?l - loc_type", ontology)};
-  cp::Event event2(_condition_fromStr("exists(?loc - loc_type, locationOfRobot(me)=?loc & within(?loc)=?l)", ontology, inf2Parameters),
+  std::vector<pgp::Parameter> inf2Parameters{_parameter("?l - loc_type", ontology)};
+  pgp::Event event2(_condition_fromStr("exists(?loc - loc_type, locationOfRobot(me)=?loc & within(?loc)=?l)", ontology, inf2Parameters),
                    _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf2Parameters));
   event2.parameters = std::move(inf2Parameters);
   setOfEvents.add(event2);
 
-  std::vector<cp::Parameter> inf3Parameters{_parameter("?l - loc_type", ontology)};
-  cp::Event event3(_condition_fromStr("!locationOfRobot(me)=?l", ontology, inf3Parameters),
+  std::vector<pgp::Parameter> inf3Parameters{_parameter("?l - loc_type", ontology)};
+  pgp::Event event3(_condition_fromStr("!locationOfRobot(me)=?l", ontology, inf3Parameters),
                    _worldStateModification_fromStr("forall(?ll - loc_type, robotAt(me, ?ll), !robotAt(me, ?ll))", ontology, inf3Parameters));
   event3.parameters = std::move(inf3Parameters);
   setOfEvents.add(event3);
-  cp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  cp::Problem problem;
+  pgp::Problem problem;
   _addFact(problem.worldState, "within(house1)=city", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "within(house2)=city", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "locationOfRobot(me)=house1", problem.goalStack, ontology, setOfEventsMap, _now);

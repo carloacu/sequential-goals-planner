@@ -19,39 +19,39 @@ void planningExampleWithAPreconditionSolve()
   // Current clock to set to different functions
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(userIsGreeted + "\n" +
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(userIsGreeted + "\n" +
                                                      proposedOurHelpToUser, ontology.types);
 
   // Initialize the domain with a set of actions
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::strToWsModification(userIsGreeted, ontology, {}, {})));
-  actions.emplace(askHowICanHelp, cp::Action(cp::strToCondition(userIsGreeted, ontology, {}, {}),
-                                             cp::strToWsModification(proposedOurHelpToUser, ontology, {}, {})));
-  cp::Domain domain(actions, ontology);
+  std::map<pgp::ActionId, pgp::Action> actions;
+  actions.emplace(sayHi, pgp::Action({}, pgp::strToWsModification(userIsGreeted, ontology, {}, {})));
+  actions.emplace(askHowICanHelp, pgp::Action(pgp::strToCondition(userIsGreeted, ontology, {}, {}),
+                                             pgp::strToWsModification(proposedOurHelpToUser, ontology, {}, {})));
+  pgp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy
-  cp::Problem problem;
-  problem.goalStack.setGoals({cp::Goal::fromStr(proposedOurHelpToUser, ontology, {})}, problem.worldState, now);
+  pgp::Problem problem;
+  problem.goalStack.setGoals({pgp::Goal::fromStr(proposedOurHelpToUser, ontology, {})}, problem.worldState, now);
 
   // Look for an action to do
-  auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult1 = pgp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(!planResult1.empty());
   const auto& firstActionInPlan1 = planResult1.front();
   assert(sayHi == firstActionInPlan1.actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, firstActionInPlan1, now);
+  pgp::notifyActionDone(problem, domain, firstActionInPlan1, now);
 
   // Look for the next action to do
-  auto planResult2 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult2 = pgp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(!planResult2.empty());
   const auto& firstActionInPlan2 = planResult2.front();
   assert(askHowICanHelp == firstActionInPlan2.actionInvocation.actionId); // The action found is "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, firstActionInPlan2, now);
+  pgp::notifyActionDone(problem, domain, firstActionInPlan2, now);
 
   // Look for the next action to do
-  auto planResult3 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult3 = pgp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(planResult3.empty()); // No action found
 }
 

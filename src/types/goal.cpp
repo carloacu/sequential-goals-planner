@@ -5,7 +5,7 @@
 #include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
 
-namespace cp
+namespace pgp
 {
 const std::string Goal::persistFunctionName = "persist";
 const std::string Goal::implyFunctionName = "imply";
@@ -324,4 +324,4 @@ bool Goal::canDeductionSatisfyThisGoal(const ActionId& pDeductionId) const
 
 
 
-} // !cp
+} // !pgp

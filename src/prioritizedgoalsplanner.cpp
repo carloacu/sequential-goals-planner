@@ -9,7 +9,7 @@
 #include "algo/converttoparallelplan.hpp"
 #include "algo/notifyactiondone.hpp"
 
-namespace cp
+namespace pgp
 {
 
 namespace
@@ -63,14 +63,14 @@ struct PotentialNextActionComparisonCache
 struct ActionPtrWithGoal
 {
   ActionPtrWithGoal(const Action* pActionPtr,
-                    const cp::Goal& pGoal)
+                    const pgp::Goal& pGoal)
    : actionPtr(pActionPtr),
      goal(pGoal)
   {
   }
 
   const Action* actionPtr;
-  const cp::Goal& goal;
+  const pgp::Goal& goal;
 };
 
 
@@ -297,8 +297,8 @@ std::set<Entity> _paramTypenameToEntities(const std::string& pParamtypename,
 bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParametersWithTmpData,
                              DataRelatedToOptimisation& pDataRelatedToOptimisation,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                             const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
-                             const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
+                             const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr1,
+                             const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr2,
                              const ResearchContext& pContext,
                              FactsAlreadyChecked& pFactsAlreadychecked,
                              const std::string& pFromDeductionId);
@@ -307,8 +307,8 @@ bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParamete
 PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
                                           const std::vector<Parameter>& pParameters,
                                           const std::unique_ptr<Condition>& pCondition,
-                                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
-                                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
+                                          const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr1,
+                                          const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr2,
                                           const FactOptional& pFactOptional,
                                           std::map<Parameter, std::set<Entity>>& pParentParameters,
                                           std::map<Parameter, std::set<Entity>>* pTmpParentParametersPtr,
@@ -635,8 +635,8 @@ bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
 
 
 bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
-                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
-                          const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
+                          const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr1,
+                          const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr2,
                           const ResearchContext& pContext,
                           const std::string& pFromDeductionId)
 {
@@ -673,8 +673,8 @@ bool _doesStatisfyTheGoal(std::map<Parameter, std::set<Entity>>& pParameters,
 bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParametersWithTmpData,
                              DataRelatedToOptimisation& pDataRelatedToOptimisation,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
-                             const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr1,
-                             const std::unique_ptr<cp::WorldStateModification>& pWorldStateModificationPtr2,
+                             const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr1,
+                             const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModificationPtr2,
                              const ResearchContext& pContext,
                              FactsAlreadyChecked& pFactsAlreadychecked,
                              const std::string& pFromDeductionId)
@@ -695,7 +695,7 @@ bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParamete
   // Iterate on possible successions
   auto& setOfEvents = pContext.domain.getSetOfEvents();
   auto successionsCallback = [&](const Successions& pSuccessions,
-                                 const cp::FactOptional& pFactOptional,
+                                 const pgp::FactOptional& pFactOptional,
                                  std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                                  const std::function<bool (const std::map<Parameter, std::set<Entity>>&)>& pCheckValidity) {
     auto possibleEffect = PossibleEffect::NOT_SATISFIED;
@@ -1160,7 +1160,7 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
 
 
 
-std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
+std::string planToStr(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep)
 {
   std::string res;
@@ -1177,7 +1177,7 @@ std::string planToStr(const std::list<cp::ActionInvocationWithGoal>& pPlan,
 }
 
 
-std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
+std::string planToPddl(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain)
 {
   std::size_t step = 0;
@@ -1211,7 +1211,7 @@ std::string planToPddl(const std::list<cp::ActionInvocationWithGoal>& pPlan,
   return ss.str();
 }
 
-std::string goalsToStr(const std::list<cp::Goal>& pGoals,
+std::string goalsToStr(const std::list<pgp::Goal>& pGoals,
                        const std::string& pSep)
 {
   auto size = pGoals.size();
@@ -1231,4 +1231,4 @@ std::string goalsToStr(const std::list<cp::Goal>& pGoals,
 }
 
 
-} // !cp
+} // !pgp

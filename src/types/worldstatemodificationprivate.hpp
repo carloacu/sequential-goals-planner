@@ -6,7 +6,7 @@
 #include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
 #include <prioritizedgoalsplanner/util/util.hpp>
 
-namespace cp
+namespace pgp
 {
 
 enum class WorldStateModificationNodeType
@@ -51,7 +51,7 @@ struct WorldStateModificationNode : public WorldStateModification
         (rightOperand && rightOperand->hasFact(pFact));
   }
 
-  bool hasFactOptional(const cp::FactOptional& FactOptional) const override
+  bool hasFactOptional(const pgp::FactOptional& FactOptional) const override
   {
     return (leftOperand && leftOperand->hasFactOptional(FactOptional)) ||
         (rightOperand && rightOperand->hasFactOptional(FactOptional));
@@ -160,12 +160,12 @@ struct WorldStateModificationFact : public WorldStateModification
 
   std::string toStr(bool pPrintAnyFluent) const override { return factOptional.toStr(nullptr, pPrintAnyFluent); }
 
-  bool hasFact(const cp::Fact& pFact) const override
+  bool hasFact(const pgp::Fact& pFact) const override
   {
     return factOptional.fact == pFact;
   }
 
-  bool hasFactOptional(const cp::FactOptional& FactOptional) const override
+  bool hasFactOptional(const pgp::FactOptional& FactOptional) const override
   {
     return factOptional == FactOptional;
   }
@@ -280,8 +280,8 @@ struct WorldStateModificationNumber : public WorldStateModification
 
   std::string toStr(bool) const override;
 
-  bool hasFact(const cp::Fact&) const override { return false; }
-  bool hasFactOptional(const cp::FactOptional&) const override { return false; }
+  bool hasFact(const pgp::Fact&) const override { return false; }
+  bool hasFactOptional(const pgp::FactOptional&) const override { return false; }
   bool isOnlyASetOfFacts() const override { return false; }
 
   void replaceArgument(const Entity&,
@@ -344,7 +344,7 @@ const WorldStateModificationFact* toWmFact(const WorldStateModification& pOther)
 const WorldStateModificationNumber* toWmNumber(const WorldStateModification& pOther);
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_SRC_WORLDSTATEMODIFICATIONPRIVATE_HPP

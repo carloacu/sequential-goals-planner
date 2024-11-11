@@ -4,7 +4,7 @@
 #include <prioritizedgoalsplanner/util/alias.hpp>
 #include <prioritizedgoalsplanner/util/util.hpp>
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -358,5 +358,5 @@ const std::list<std::string>* FactsToValue::_findAnExactCall(
 }
 
 
-} // !cp
+} // !pgp
 

@@ -7,7 +7,7 @@
 #include <memory>
 #include <prioritizedgoalsplanner/util/alias.hpp>
 
-namespace cp
+namespace pgp
 {
 struct ActionInvocationWithGoal;
 struct Domain;
@@ -16,15 +16,15 @@ struct Problem;
 struct WorldState;
 
 
-std::list<std::list<cp::ActionInvocationWithGoal>> toParallelPlan
-(std::list<cp::ActionInvocationWithGoal>& pSequentialPlan,
+std::list<std::list<pgp::ActionInvocationWithGoal>> toParallelPlan
+(std::list<pgp::ActionInvocationWithGoal>& pSequentialPlan,
  bool pParalleliseOnyFirstStep,
- const cp::Problem& pProblem,
- const cp::Domain& pDomain,
- const std::list<cp::Goal>& pGoals,
+ const pgp::Problem& pProblem,
+ const pgp::Domain& pDomain,
+ const std::list<pgp::Goal>& pGoals,
  const std::unique_ptr<std::chrono::_V2::steady_clock::time_point>& pNow);
 
-} // End of namespace cp
+} // End of namespace pgp
 
 
 #endif // PRIORITIZEDGOALSPLANNER_SRC_ALGO_CONVERTTOPARALLELPLAN_HPP

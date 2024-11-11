@@ -2,7 +2,7 @@
 #include <prioritizedgoalsplanner/types/entity.hpp>
 #include <prioritizedgoalsplanner/types/parameter.hpp>
 
-namespace cp
+namespace pgp
 {
 
 ActionInvocation::ActionInvocation(const std::string& pActionId,
@@ -38,4 +38,4 @@ std::string ActionInvocation::toStr() const
 }
 
 
-} // !cp
+} // !pgp

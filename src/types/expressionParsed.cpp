@@ -4,7 +4,7 @@
 #include <prioritizedgoalsplanner/types/ontology.hpp>
 #include <prioritizedgoalsplanner/util/util.hpp>
 
-namespace cp
+namespace pgp
 {
 
 namespace
@@ -433,4 +433,4 @@ bool ExpressionParsed::isEndOfTokenSeparator(char pChar)
 }
 
 
-} // !cp
+} // !pgp

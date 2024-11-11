@@ -4,7 +4,7 @@
 #include "factsalreadychecked.hpp"
 
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -142,7 +142,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
   std::vector<Fact> removableFactsToAddWithAnyValues;
 
   const auto& setOfFacts = _worldState.factsMapping();
-  pEffect.iterateOverAllAccessibleFacts([&](const cp::FactOptional& pFactOpt) {
+  pEffect.iterateOverAllAccessibleFacts([&](const pgp::FactOptional& pFactOpt) {
     if (!pFactOpt.isFactNegated)
     {
       if (_worldState.facts().count(pFactOpt.fact) == 0 &&
@@ -243,4 +243,4 @@ void WorldStateCache::_feedAccessibleFactsFromNotFact(const Fact& pFact,
 }
 
 
-} // !cp
+} // !pgp

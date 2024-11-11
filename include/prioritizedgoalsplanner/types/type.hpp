@@ -6,7 +6,7 @@
 #include <list>
 #include <memory>
 
-namespace cp
+namespace pgp
 {
 
 struct PRIORITIZEDGOALSPLANNER_API Type
@@ -33,6 +33,6 @@ struct PRIORITIZEDGOALSPLANNER_API Type
   std::list<std::shared_ptr<Type>> subTypes;
 };
 
-} // namespace cp
+} // namespace pgp
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_TYPE_HPP

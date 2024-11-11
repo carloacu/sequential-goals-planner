@@ -11,7 +11,7 @@
 #include <sstream>
 
 
-namespace cp
+namespace pgp
 {
 struct Fact;
 
@@ -143,7 +143,7 @@ private:
 
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_FACTSTOVALUE_HPP

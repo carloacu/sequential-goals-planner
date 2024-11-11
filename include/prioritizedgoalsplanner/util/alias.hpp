@@ -4,7 +4,7 @@
 #include <string>
 
 
-namespace cp
+namespace pgp
 {
 using ActionId = std::string;
 using SetOfEventsId = std::string;
@@ -19,7 +19,7 @@ static const FullEventId generateFullEventId(const SetOfEventsId& pSetOfEventsId
 }
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_ALIAS_HPP

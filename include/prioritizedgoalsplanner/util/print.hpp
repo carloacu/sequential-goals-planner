@@ -8,7 +8,7 @@
 #include <prioritizedgoalsplanner/types/domain.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 /**

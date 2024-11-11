@@ -14,7 +14,7 @@
 #include "../util/api.hpp"
 
 
-namespace cp
+namespace pgp
 {
 struct Domain;
 struct Goal;
@@ -62,13 +62,13 @@ struct PRIORITIZEDGOALSPLANNER_API WorldState
 
 
   /// Be notified when facts changed.
-  cpstd::observable::ObservableUnsafe<void (const std::map<Fact, bool>&)> onFactsChanged;
+  pgpstd::observable::ObservableUnsafe<void (const std::map<Fact, bool>&)> onFactsChanged;
   /// Be notified when punctual facts changed.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onPunctualFacts;
+  pgpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onPunctualFacts;
   /// Be notified when facts are added.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsAdded;
+  pgpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsAdded;
   /// Be notified when facts are removed.
-  cpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsRemoved;
+  pgpstd::observable::ObservableUnsafe<void (const std::set<Fact>&)> onFactsRemoved;
 
   /**
    * @brief Add a fact.
@@ -370,7 +370,7 @@ private:
   friend struct ConditionNode;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATE_HPP

@@ -5,7 +5,7 @@
 #include "../util/uuid.hpp"
 #include "expressionParsed.hpp"
 
-namespace cp
+namespace pgp
 {
 const SetOfEventsId Domain::setOfEventsIdFromConstructor = "soe_from_constructor";
 
@@ -169,7 +169,7 @@ void _updateActionsPredecessors(
  * @param[in] pSatisfiedConditionPtr Condition that is already satisfied.
  * @return True if the world state modification can do some modification in the world.
  */
-bool _canWmDoSomething(const std::unique_ptr<cp::WorldStateModification>& pWorldStateModification,
+bool _canWmDoSomething(const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModification,
                        const std::unique_ptr<Condition>& pSatisfiedConditionPtr)
 {
   if (!pWorldStateModification)
@@ -525,4 +525,4 @@ void Domain::_updateSuccessions()
 
 
 
-} // !cp
+} // !pgp

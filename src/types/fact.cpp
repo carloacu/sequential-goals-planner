@@ -11,7 +11,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace cp
+namespace pgp
 {
 namespace {
 
@@ -952,4 +952,4 @@ void Fact::_finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
 
 
 
-} // !cp
+} // !pgp

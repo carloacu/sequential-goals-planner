@@ -7,7 +7,7 @@
 #include <string>
 #include "predicate.hpp"
 
-namespace cp
+namespace pgp
 {
 struct SetOfTypes;
 
@@ -45,6 +45,6 @@ private:
   std::map<std::string, Predicate> _nameToPredicate;
 };
 
-} // namespace cp
+} // namespace pgp
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_SETOFPREDICATES_HPP

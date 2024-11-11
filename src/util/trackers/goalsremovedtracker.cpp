@@ -2,7 +2,7 @@
 #include <prioritizedgoalsplanner/types/goalstack.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 
@@ -36,5 +36,5 @@ GoalsRemovedTracker::~GoalsRemovedTracker()
 
 
 
-} // !cp
+} // !pgp
 

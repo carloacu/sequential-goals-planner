@@ -6,7 +6,7 @@
 #include "../util/api.hpp"
 #include "type.hpp"
 
-namespace cp
+namespace pgp
 {
 struct Ontology;
 struct Parameter;
@@ -51,7 +51,7 @@ struct PRIORITIZEDGOALSPLANNER_API Entity
   std::shared_ptr<Type> type;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_ENTITY_HPP

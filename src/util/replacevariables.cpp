@@ -1,7 +1,7 @@
 #include <prioritizedgoalsplanner/util/replacevariables.hpp>
 #include <prioritizedgoalsplanner/util/arithmeticevaluator.hpp>
 
-namespace cp
+namespace pgp
 {
 
 

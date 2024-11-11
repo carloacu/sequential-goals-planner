@@ -144,7 +144,7 @@ install(TARGETS prioritized_goals_planner_lib
 install(DIRECTORY include/prioritizedgoalsplanner DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT prioritized_goals_planner_libTargets
     FILE prioritized_goals_planner_libTargets.cmake
-    NAMESPACE cp::
+    NAMESPACE pgp::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/prioritized_goals_planner
 )
 

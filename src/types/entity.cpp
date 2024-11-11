@@ -7,7 +7,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -74,7 +74,7 @@ Entity Entity::fromDeclaration(const std::string& pStr,
                                const SetOfTypes& pSetOfTypes)
 {
   std::vector<std::string> nameWithType;
-  cp::split(nameWithType, pStr, "-");
+  pgp::split(nameWithType, pStr, "-");
 
   if (nameWithType.empty())
     throw std::runtime_error("\"" + pStr + "\" is not a valid entity");
@@ -176,4 +176,4 @@ bool Entity::isValidParameterAccordingToPossiblities(const std::vector<Parameter
 
 
 
-} // !cp
+} // !pgp

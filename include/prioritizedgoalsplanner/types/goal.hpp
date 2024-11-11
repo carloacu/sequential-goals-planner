@@ -9,7 +9,7 @@
 #include "../util/api.hpp"
 #include <prioritizedgoalsplanner/util/alias.hpp>
 
-namespace cp
+namespace pgp
 {
 struct Domain;
 
@@ -141,7 +141,7 @@ private:
   std::set<FullEventId> _cacheOfEventsPredecessors;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_GOAL_HPP

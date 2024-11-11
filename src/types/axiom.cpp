@@ -3,7 +3,7 @@
 #include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
 #include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
-namespace cp
+namespace pgp
 {
 
 Axiom::Axiom(std::unique_ptr<Condition> pContext,
@@ -33,4 +33,4 @@ std::list<Event> Axiom::toEvents(const Ontology& pOntology,
 }
 
 
-} // !cp
+} // !pgp

@@ -8,7 +8,7 @@
 #include "setoftypes.hpp"
 
 
-namespace cp
+namespace pgp
 {
 
 struct PRIORITIZEDGOALSPLANNER_API Ontology
@@ -19,6 +19,6 @@ struct PRIORITIZEDGOALSPLANNER_API Ontology
   SetOfDerivedPredicates derivedPredicates;
 };
 
-} // namespace cp
+} // namespace pgp
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ONTOLOGY_HPP

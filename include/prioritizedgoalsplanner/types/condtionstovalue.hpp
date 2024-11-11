@@ -4,7 +4,7 @@
 #include "../util/api.hpp"
 #include <prioritizedgoalsplanner/types/factstovalue.hpp>
 
-namespace cp
+namespace pgp
 {
 struct Condition;
 struct Fact;
@@ -29,7 +29,7 @@ private:
   FactsToValue _notFactsToValue;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_CONDITIONSTOVALUE_HPP

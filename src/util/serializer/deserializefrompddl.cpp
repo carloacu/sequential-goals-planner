@@ -6,7 +6,7 @@
 #include "../../types/expressionParsed.hpp"
 #include "../../types/worldstatemodificationprivate.hpp"
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -875,7 +875,7 @@ Domain pddlToDomain(const std::string& pStr,
                     const std::map<std::string, Domain>& pPreviousDomains)
 {
   std::string domainName = "";
-  cp::Ontology ontology;
+  pgp::Ontology ontology;
   std::map<ActionId, Action> actions;
   std::map<SetOfEventsId, SetOfEvents> idToSetOfEvents;
   SetOfConstFacts timelessFacts;
@@ -942,16 +942,16 @@ Domain pddlToDomain(const std::string& pStr,
         }
         else if (token == ":predicates")
         {
-          ontology.predicates.addAll(cp::SetOfPredicates::fromPddl(pStr, pos, ontology.types));
+          ontology.predicates.addAll(pgp::SetOfPredicates::fromPddl(pStr, pos, ontology.types));
         }
         else if (token == ":functions")
         {
           auto numberType = ontology.types.nameToType("number");
-          ontology.predicates.addAll(cp::SetOfPredicates::fromPddl(pStr, pos, ontology.types, numberType));
+          ontology.predicates.addAll(pgp::SetOfPredicates::fromPddl(pStr, pos, ontology.types, numberType));
         }
         else if (token == ":timeless")
         {
-          timelessFacts = cp::SetOfConstFacts::fromPddl(pStr, pos, ontology, {});
+          timelessFacts = pgp::SetOfConstFacts::fromPddl(pStr, pos, ontology, {});
         }
         else if (token == ":axiom")
         {

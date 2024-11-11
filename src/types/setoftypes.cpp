@@ -5,7 +5,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -62,13 +62,13 @@ void SetOfTypes::addType(const std::string& pTypeToAdd,
 void SetOfTypes::addTypesFromPddl(const std::string& pStr)
 {
   std::vector<std::string> lineSplitted;
-  cp::split(lineSplitted, pStr, "\n");
+  pgp::split(lineSplitted, pStr, "\n");
 
   for (auto& currLine : lineSplitted)
   {
     _removeAfterSemicolon(currLine);
     std::vector<std::string> typeWithParentType;
-    cp::split(typeWithParentType, currLine, "-");
+    pgp::split(typeWithParentType, currLine, "-");
 
     if (typeWithParentType.empty())
       continue;
@@ -83,7 +83,7 @@ void SetOfTypes::addTypesFromPddl(const std::string& pStr)
 
     auto typesStrs = typeWithParentType[0];
     std::vector<std::string> types;
-    cp::split(types, typesStrs, " ");
+    pgp::split(types, typesStrs, " ");
     for (auto& currType : types)
       if (!currType.empty())
         addType(currType, parentType);
@@ -137,4 +137,4 @@ bool SetOfTypes::empty() const
 }
 
 
-} // !cp
+} // !pgp

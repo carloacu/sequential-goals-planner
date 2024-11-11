@@ -4,7 +4,7 @@
 #include <prioritizedgoalsplanner/types/entity.hpp>
 #include <prioritizedgoalsplanner/types/parameter.hpp>
 
-namespace cp
+namespace pgp
 {
 bool PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS = false;  // Define the variable and initialize it
 

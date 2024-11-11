@@ -7,7 +7,7 @@
 #include <prioritizedgoalsplanner/types/problemmodification.hpp>
 
 
-namespace cp
+namespace pgp
 {
 struct SetOfDerivedPredicates;
 
@@ -92,7 +92,7 @@ struct PRIORITIZEDGOALSPLANNER_API Action
   Action clone(const SetOfDerivedPredicates& pDerivedPredicates) const;
 
   /// Check if this action contains a fact or the negation of the fact.
-  bool hasFact(const cp::Fact& pFact) const;
+  bool hasFact(const pgp::Fact& pFact) const;
 
   /**
    * @brief Replace a fact by another inside this action.
@@ -145,7 +145,7 @@ private:
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_ACTION_HPP

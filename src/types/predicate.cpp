@@ -4,7 +4,7 @@
 #include "expressionParsed.hpp"
 
 
-namespace cp
+namespace pgp
 {
 namespace
 {
@@ -97,4 +97,4 @@ std::string Predicate::toStr() const
  }
 
 
-} // !cp
+} // !pgp

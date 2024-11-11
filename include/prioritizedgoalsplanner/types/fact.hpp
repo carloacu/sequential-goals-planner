@@ -10,7 +10,7 @@
 #include <prioritizedgoalsplanner/types/entity.hpp>
 #include <prioritizedgoalsplanner/types/predicate.hpp>
 
-namespace cp
+namespace pgp
 {
 struct FactOptional;
 struct Ontology;
@@ -296,7 +296,7 @@ private:
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_FACT_HPP

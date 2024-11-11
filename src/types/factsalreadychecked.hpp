@@ -4,7 +4,7 @@
 #include <set>
 #include <prioritizedgoalsplanner/types/fact.hpp>
 
-namespace cp
+namespace pgp
 {
 
 struct FactsAlreadyChecked
@@ -20,7 +20,7 @@ struct FactsAlreadyChecked
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_FACTSALREADYCHECKED_HPP

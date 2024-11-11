@@ -8,7 +8,7 @@
 #include <vector>
 #include <prioritizedgoalsplanner/util/alias.hpp>
 
-namespace cp
+namespace pgp
 {
 struct Action;
 struct ActionInvocationWithGoal;
@@ -56,7 +56,7 @@ void updateProblemForNextPotentialPlannerResultWithAction(
     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
 
-} // End of namespace cp
+} // End of namespace pgp
 
 
 #endif // PRIORITIZEDGOALSPLANNER_SRC_ALGO_NOTIFYACTIONDONE_HPP

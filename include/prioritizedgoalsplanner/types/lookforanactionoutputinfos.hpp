@@ -8,7 +8,7 @@
 #include <prioritizedgoalsplanner/types/goal.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 enum class PlannerStepType
@@ -41,7 +41,7 @@ private:
   std::optional<bool> _firstGoalInSuccess;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_LOOKFORANACTIONOUTPUTINFOS_HPP

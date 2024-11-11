@@ -9,7 +9,7 @@
 #include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include "worldstatecache.hpp"
 
-namespace cp
+namespace pgp
 {
 
 namespace
@@ -191,7 +191,7 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
              (!currFact.isValueNegated() && currExistingFact.isValueNegated())))
         {
           WhatChanged subWhatChanged;
-          _removeFacts(subWhatChanged, std::vector<cp::Fact>{currExistingFact}, pGoalStack, pNow);
+          _removeFacts(subWhatChanged, std::vector<pgp::Fact>{currExistingFact}, pGoalStack, pNow);
           bool goalChanged = false;
           _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfEvents,
                              pOntology, pEntities, pNow);
@@ -638,4 +638,4 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
 }
 
 
-} // !cp
+} // !pgp

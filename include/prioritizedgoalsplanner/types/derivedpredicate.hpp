@@ -6,14 +6,14 @@
 #include <prioritizedgoalsplanner/types/condition.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 struct PRIORITIZEDGOALSPLANNER_API DerivedPredicate
 {
   DerivedPredicate(const Predicate& pPredicate,
                    const std::string& pConditionStr,
-                   const cp::Ontology& pOntology);
+                   const pgp::Ontology& pOntology);
 
   /// Copy constructor.
   DerivedPredicate(const DerivedPredicate& pDerivedPredicate);
@@ -26,7 +26,7 @@ struct PRIORITIZEDGOALSPLANNER_API DerivedPredicate
   std::unique_ptr<Condition> condition;
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_DERIVEDPREDICATE_HPP

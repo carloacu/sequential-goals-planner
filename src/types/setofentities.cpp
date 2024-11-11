@@ -3,7 +3,7 @@
 #include <prioritizedgoalsplanner/util/util.hpp>
 #include <prioritizedgoalsplanner/types/setoftypes.hpp>
 #include <prioritizedgoalsplanner/types/type.hpp>
-namespace cp
+namespace pgp
 {
 
 SetOfEntities::SetOfEntities()
@@ -34,11 +34,11 @@ void SetOfEntities::addAllFromPddl(const std::string& pStr,
                                    const SetOfTypes& pSetOfTypes)
 {
   std::vector<std::string> lineSplitted;
-  cp::split(lineSplitted, pStr, "\n");
+  pgp::split(lineSplitted, pStr, "\n");
   for (auto& currLine : lineSplitted)
   {
     std::vector<std::string> entitiesWithType;
-    cp::split(entitiesWithType, currLine, "-");
+    pgp::split(entitiesWithType, currLine, "-");
 
     if (entitiesWithType.empty())
       continue;
@@ -58,7 +58,7 @@ void SetOfEntities::addAllFromPddl(const std::string& pStr,
 
     auto entitiesStr = entitiesWithType[0];
     std::vector<std::string> entitiesStrs;
-    cp::split(entitiesStrs, entitiesStr, " ");
+    pgp::split(entitiesStrs, entitiesStr, " ");
     for (auto& currEntity : entitiesStrs)
       if (!currEntity.empty())
         add(Entity(currEntity, type));
@@ -112,4 +112,4 @@ std::string SetOfEntities::toStr(std::size_t pIdentation) const
 }
 
 
-} // !cp
+} // !pgp

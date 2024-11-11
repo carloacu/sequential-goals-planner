@@ -5,7 +5,7 @@
 #include <prioritizedgoalsplanner/types/setoffacts.hpp>
 
 
-namespace cp
+namespace pgp
 {
 
 struct PRIORITIZEDGOALSPLANNER_API SetOfConstFacts
@@ -27,7 +27,7 @@ private:
   SetOfFacts _setOfFacts{};
 };
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_SETOfCONSTFACTS_HPP

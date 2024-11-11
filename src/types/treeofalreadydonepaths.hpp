@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-namespace cp
+namespace pgp
 {
 
 struct TreeOfAlreadyDonePath
@@ -19,7 +19,7 @@ private:
 };
 
 
-} // !cp
+} // !pgp
 
 
 #endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TREEOFALREADYDONEPATH_HPP

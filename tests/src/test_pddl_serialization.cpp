@@ -15,17 +15,17 @@ namespace
 
 void _test_pddlSerializationParts()
 {
-  cp::Ontology ontology;
-  ontology.types = cp::SetOfTypes::fromPddl("type1 type2 - entity");
-  ontology.constants = cp::SetOfEntities::fromPddl("toto - type1\n"
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("type1 type2 - entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("toto - type1\n"
                                                    "titi - type2", ontology.types);
 
-  cp::Predicate pred("(pred_a ?e - entity)", true, ontology.types);
+  pgp::Predicate pred("(pred_a ?e - entity)", true, ontology.types);
   EXPECT_EQ("pred_a(?e - entity)", pred.toStr());
 
   {
     std::size_t pos = 0;
-    ontology.predicates = cp::SetOfPredicates::fromPddl("(pred_a ?e - entity)\n"
+    ontology.predicates = pgp::SetOfPredicates::fromPddl("(pred_a ?e - entity)\n"
                                                         "pred_b\n"
                                                         "(pred_c ?e - entity)\n"
                                                         "(battery-amount ?t - type1) - number", pos, ontology.types);
@@ -37,14 +37,14 @@ void _test_pddlSerializationParts()
 
   {
     std::size_t pos = 0;
-    cp::Fact fact = cp::Fact::fromPddl("(pred_a toto)", ontology, {}, {}, pos, &pos);
+    pgp::Fact fact = pgp::Fact::fromPddl("(pred_a toto)", ontology, {}, {}, pos, &pos);
     EXPECT_EQ("(pred_a toto)", fact.toPddl(true));
     EXPECT_EQ("pred_a(toto)", fact.toStr());
   }
 
   {
     std::size_t pos = 0;
-    std::unique_ptr<cp::WorldStateModification> ws = cp::pddlToWsModification("(decrease (battery-amount toto) 4)", pos, ontology, {}, {});
+    std::unique_ptr<pgp::WorldStateModification> ws = pgp::pddlToWsModification("(decrease (battery-amount toto) 4)", pos, ontology, {}, {});
     if (!ws)
       ASSERT_TRUE(false);
     EXPECT_EQ("decrease(battery-amount(toto), 4)", ws->toStr());
@@ -52,7 +52,7 @@ void _test_pddlSerializationParts()
 
   {
     std::size_t pos = 0;
-    std::unique_ptr<cp::WorldStateModification> ws = cp::pddlToWsModification("(forall (?e - entity) (when (pred_a ?e) (pred_c ?e))", pos, ontology, {}, {});
+    std::unique_ptr<pgp::WorldStateModification> ws = pgp::pddlToWsModification("(forall (?e - entity) (when (pred_a ?e) (pred_c ?e))", pos, ontology, {}, {});
     if (!ws)
       ASSERT_TRUE(false);
     EXPECT_EQ("forall(?e - entity, when(pred_a(?e), pred_c(?e)))", ws->toStr());
@@ -63,9 +63,9 @@ void _test_pddlSerializationParts()
 
 void _test_loadPddlDomain()
 {
-  std::map<std::string, cp::Domain> loadedDomains;
+  std::map<std::string, pgp::Domain> loadedDomains;
   {
-    auto firstDomain = cp::pddlToDomain(R"(
+    auto firstDomain = pgp::pddlToDomain(R"(
   (define
       (domain building)
       (:types ; a comment
@@ -104,7 +104,7 @@ void _test_loadPddlDomain()
     loadedDomains.emplace(firstDomain.getName(), std::move(firstDomain));
   }
 
-  auto domain = cp::pddlToDomain(R"(
+  auto domain = pgp::pddlToDomain(R"(
 (define
     (domain construction)
     (:extends building)
@@ -362,7 +362,7 @@ void _test_loadPddlDomain()
 
 ))";
 
-  auto outDomainPddl1 = cp::domainToPddl(domain);
+  auto outDomainPddl1 = pgp::domainToPddl(domain);
   if (outDomainPddl1 != expectedDomain)
   {
     std::cout << outDomainPddl1 << std::endl;
@@ -370,7 +370,7 @@ void _test_loadPddlDomain()
   }
 
 
-  cp::DomainAndProblemPtrs domainAndProblemPtrs = pddlToProblem(R"((define
+  pgp::DomainAndProblemPtrs domainAndProblemPtrs = pddlToProblem(R"((define
     (problem buildingahouse)
     (:domain construction)
     ;(:situation <situation_name>) ;deprecated
@@ -432,7 +432,7 @@ void _test_loadPddlDomain()
 
 ))";
 
-  auto outProblemPddl1 = cp::problemToPddl(*domainAndProblemPtrs.problemPtr,
+  auto outProblemPddl1 = pgp::problemToPddl(*domainAndProblemPtrs.problemPtr,
                                            *domainAndProblemPtrs.domainPtr);
   if (outProblemPddl1 != expectedProblem)
   {
@@ -441,20 +441,20 @@ void _test_loadPddlDomain()
   }
 
   // deserialize what is serialized
-  auto domain2 = cp::pddlToDomain(outDomainPddl1, {});
-  std::map<std::string, cp::Domain> loadedDomains2;
+  auto domain2 = pgp::pddlToDomain(outDomainPddl1, {});
+  std::map<std::string, pgp::Domain> loadedDomains2;
   loadedDomains2.emplace(domain2.getName(), domain2);
-  auto outDomainAndProblemPtrs2 = cp::pddlToProblem(outProblemPddl1, loadedDomains2);
+  auto outDomainAndProblemPtrs2 = pgp::pddlToProblem(outProblemPddl1, loadedDomains2);
 
   // re serialize
-  auto outDomainPddl2 = cp::domainToPddl(domain2);
+  auto outDomainPddl2 = pgp::domainToPddl(domain2);
   if (outDomainPddl2 != expectedDomain)
   {
     std::cout << outDomainPddl2 << std::endl;
     ASSERT_TRUE(false);
   }
 
-  auto outProblemPddl2 = cp::problemToPddl(*outDomainAndProblemPtrs2.problemPtr,
+  auto outProblemPddl2 = pgp::problemToPddl(*outDomainAndProblemPtrs2.problemPtr,
                                            *outDomainAndProblemPtrs2.domainPtr);
   if (outProblemPddl2 != expectedProblem)
   {

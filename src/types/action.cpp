@@ -1,7 +1,7 @@
 #include <prioritizedgoalsplanner/types/action.hpp>
 #include <prioritizedgoalsplanner/util/util.hpp>
 
-namespace cp
+namespace pgp
 {
 
 
@@ -28,7 +28,7 @@ Action Action::clone(const SetOfDerivedPredicates& pDerivedPredicates) const
   return res;
 }
 
-bool Action::hasFact(const cp::Fact& pFact) const
+bool Action::hasFact(const pgp::Fact& pFact) const
 {
   return (precondition && precondition->hasFact(pFact)) ||
       (preferInContext && preferInContext->hasFact(pFact)) ||
@@ -127,4 +127,4 @@ void Action::_throwIfNotValidForAFact(const Fact& pFact)
 
 
 
-} // !cp
+} // !pgp
