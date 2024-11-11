@@ -38,8 +38,14 @@ void _test_pddlSerializationParts()
   {
     std::size_t pos = 0;
     pgp::Fact fact = pgp::Fact::fromPddl("(pred_a toto)", ontology, {}, {}, pos, &pos);
-    EXPECT_EQ("(pred_a toto)", fact.toPddl(true));
+    EXPECT_EQ("(pred_a toto)", fact.toPddl(false));
     EXPECT_EQ("pred_a(toto)", fact.toStr());
+  }
+
+  {
+    std::size_t pos = 0;
+    pgp::Fact fact = pgp::Fact::fromPddl("(= (battery-amount toto) 3)", ontology, {}, {}, pos, &pos);
+    EXPECT_EQ("(= (battery-amount toto) 3)", fact.toPddl(false));
   }
 
   {
@@ -384,6 +390,7 @@ void _test_loadPddlDomain()
         (on-site b s1)
         (on-site c s1)
         (on-site w s1)
+        (= (position) s1)
     )
     (:goal (and ;; __SEQUENTIALLY
             (walls-built s1)
@@ -409,6 +416,7 @@ void _test_loadPddlDomain()
         (on-site b s1)
         (on-site c s1)
         (on-site w s1)
+        (= (position) s1)
     )
 
     (:goal

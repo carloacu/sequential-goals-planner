@@ -108,12 +108,22 @@ Fact::Fact(const std::string& pStr,
       _name = expressionParsed.name;
     }
 
-    for (auto& currArgument : expressionParsed.arguments)
+    _isFluentNegated = expressionParsed.isValueNegated;
+    auto* expressionParsedForArgumentsPtr = &expressionParsed;
+    if (_name == "=" && expressionParsed.arguments.size() == 2)
+    {
+      _fluent.emplace(Entity::fromUsage(expressionParsed.arguments.back().name, pOntology, pEntities, pParameters));
+      expressionParsedForArgumentsPtr = &expressionParsed.arguments.front();
+      _name = expressionParsedForArgumentsPtr->name;
+    }
+    else if (expressionParsed.value != "")
+    {
+      _fluent.emplace(Entity::fromUsage(expressionParsed.value, pOntology, pEntities, pParameters));
+    }
+
+    for (auto& currArgument : expressionParsedForArgumentsPtr->arguments)
       _arguments.push_back(Entity::fromUsage(currArgument.name, pOntology, pEntities, pParameters));
 
-    _isFluentNegated = expressionParsed.isValueNegated;
-    if (expressionParsed.value != "")
-      _fluent.emplace(Entity::fromUsage(expressionParsed.value, pOntology, pEntities, pParameters));
 
     predicate = pOntology.predicates.nameToPredicate(_name);
     _finalizeInisilizationAndValidityChecks(pOntology, pEntities, false);
