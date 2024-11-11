@@ -12,7 +12,7 @@ set(
 
 set(
   CONTEXTUALPLANNER_LIBRARIES
-  "prioritizedgoalsplannerlib"
+  "prioritized_goals_planner_lib"
 )
 
 

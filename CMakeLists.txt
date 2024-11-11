@@ -109,7 +109,7 @@ set(CONTEXTUAL_PLANNER_SRCS
 include_directories(include)
 
 
-add_library(prioritizedgoalsplannerlib SHARED
+add_library(prioritized_goals_planner_lib SHARED
   ${CONTEXTUAL_PLANNER_HPPS}
   ${CONTEXTUAL_PLANNER_SRCS}
   include/prioritizedgoalsplanner/types/setofderivedpredicates.hpp
@@ -120,9 +120,9 @@ add_library(prioritizedgoalsplannerlib SHARED
   src/types/condtionstovalue.cpp
   include/prioritizedgoalsplanner/util/continueorbreak.hpp
 )
-target_compile_features(prioritizedgoalsplannerlib PRIVATE cxx_std_14)
+target_compile_features(prioritized_goals_planner_lib PRIVATE cxx_std_14)
 
-install(TARGETS prioritizedgoalsplannerlib DESTINATION lib)
+install(TARGETS prioritized_goals_planner_lib DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)
 
 
