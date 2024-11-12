@@ -2612,6 +2612,48 @@ void _completeMovingObjectScenario()
 }
 
 
+void _moveAnObject()
+{
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("loc_type\n"
+                                             "entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("sweets bottle entrance_checkpoint - entity\n"
+                                                    "kitchen bedroom entrance - loc_type", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot - loc_type\n"
+                                                      "locationOfObject(?o - entity) - loc_type\n"
+                                                      "grab - entity", ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters{_parameter("?e - entity", ontology)};
+  pgp::Action navAction({}, _worldStateModification_fromStr("assign(locationOfRobot, locationOfObject(?e))", ontology, navParameters));
+  navAction.parameters = std::move(navParameters);
+  actions.emplace(_action_navigate, navAction);
+
+  std::vector<pgp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
+  pgp::Action grabAction(_condition_fromStr("equals(locationOfRobot, locationOfObject(?object))", ontology, grabParameters),
+                        _worldStateModification_fromStr("grab=?object", ontology, grabParameters));
+  grabAction.parameters = std::move(grabParameters);
+  actions.emplace(_action_grab, grabAction);
+
+  pgp::SetOfEvents setOfEvents;
+  std::vector<pgp::Parameter> eventParameters{_parameter("?object - entity", ontology), _parameter("?location - loc_type", ontology)};
+  pgp::Event event(_condition_fromStr("locationOfRobot=?location & grab=?object", ontology, eventParameters),
+                  _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
+  event.parameters = std::move(eventParameters);
+  setOfEvents.add(event);
+  pgp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
+
+  pgp::Problem problem;
+  auto& setOfEventsMap = domain.getSetOfEvents();
+  _addFact(problem.worldState, "locationOfObject(sweets)=kitchen", problem.goalStack, ontology, setOfEventsMap, _now);
+  _addFact(problem.worldState, "locationOfObject(entrance_checkpoint)=entrance", problem.goalStack, ontology, setOfEventsMap, _now);
+  _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=entrance", ontology)});
+  EXPECT_EQ(_action_navigate + "(?e -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(_action_navigate + "(?e -> entrance_checkpoint)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+}
+
 void _matchSkillWithObjectsWithASubType()
 {
   pgp::Ontology ontology;
@@ -4416,6 +4458,7 @@ TEST(Planner, test_planWithSingleType)
   _moveAndUngrabObject();
   _failToMoveAnUnknownObject();
   _completeMovingObjectScenario();
+  _moveAnObject();
   _matchSkillWithObjectsWithASubType();
   _eventWithANegatedFactWithParameter();
   _actionWithANegatedFactNotTriggeredIfNotNecessary();

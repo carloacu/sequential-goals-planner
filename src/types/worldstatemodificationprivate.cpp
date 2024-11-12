@@ -36,6 +36,7 @@ bool _isOkWithLocalParameters(const std::map<Parameter, std::set<Entity>>& pLoca
     {
       std::set<Entity>& parameterPossibilities = pParametersToFill.begin()->second;
 
+      std::map<Parameter, std::set<Entity>> newParameters;
       while (!parameterPossibilities.empty())
       {
         auto factWithValueToAssign = wSMFPtr->factOptional.fact;
@@ -44,16 +45,16 @@ bool _isOkWithLocalParameters(const std::map<Parameter, std::set<Entity>>& pLoca
         factWithValueToAssign.setFluent(*itBeginOfParamPoss);
 
         const auto& factAccessorsToFacts = pWorldState.factsMapping();
-        std::map<Parameter, std::set<Entity>> newParameters;
+
         if (factWithValueToAssign.isInOtherFactsMap(factAccessorsToFacts, true, &newParameters, &pParametersToModifyInPlace))
-        {
           res = true;
-          applyNewParams(pParametersToModifyInPlace, newParameters);
-          break;
-        }
         parameterPossibilities.erase(itBeginOfParamPoss);
       }
+
+      if (res)
+        applyNewParams(pParametersToModifyInPlace, newParameters);
     }
+
     return res;
   }
   return true;
