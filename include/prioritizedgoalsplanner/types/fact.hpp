@@ -266,6 +266,7 @@ struct PRIORITIZEDGOALSPLANNER_API Fact
   void generateSignatureForSubAndUpperTypes(std::list<std::string>& pRes) const;
 
   void setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pType);
+  void setFluentType(const std::shared_ptr<Type>& pType);
   void setFluent(const std::optional<Entity>& pFluent);
   void setFluentValue(const std::string& pFluentStr);
 

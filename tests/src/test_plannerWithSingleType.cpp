@@ -2560,8 +2560,6 @@ void _completeMovingObjectScenario()
   ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
                                                      "locationOfObject(?o - entity) - loc_type\n"
                                                      "grab(?e - robot) - entity\n"
-                                                     "charging(?r - robot)\n"
-                                                     "isLost\n"
                                                      "pathIsBlocked\n"
                                                      "lost(?r - robot)", ontology.types);
 
@@ -2612,6 +2610,29 @@ void _completeMovingObjectScenario()
   _setGoalsForAPriority(problem, {_goal("locationOfObject(bottle)=entrance & !grab(me)=bottle", ontology)});
   EXPECT_EQ(actionWhereIsObject + "(?aLocation -> entrance, ?object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 }
+
+
+void _matchSkillWithObjectsWithASubType()
+{
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("sub_loc_type - loc_type");
+  ontology.constants = pgp::SetOfEntities::fromPddl("kitchen - sub_loc_type", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot - loc_type", ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  std::vector<pgp::Parameter> navParameters{_parameter("?targetPlace - loc_type", ontology)};
+  pgp::Action navAction({},
+                        _worldStateModification_fromStr("locationOfRobot=?targetPlace", ontology, navParameters));
+  navAction.parameters = std::move(navParameters);
+  actions.emplace(_action_navigate, navAction);
+
+  pgp::Domain domain(std::move(actions), ontology);
+
+  pgp::Problem problem;
+  _setGoalsForAPriority(problem, {_goal("locationOfRobot=kitchen", ontology)});
+  EXPECT_EQ(_action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+}
+
 
 void _eventWithANegatedFactWithParameter()
 {
@@ -4395,6 +4416,7 @@ TEST(Planner, test_planWithSingleType)
   _moveAndUngrabObject();
   _failToMoveAnUnknownObject();
   _completeMovingObjectScenario();
+  _matchSkillWithObjectsWithASubType();
   _eventWithANegatedFactWithParameter();
   _actionWithANegatedFactNotTriggeredIfNotNecessary();
   _useTwoTimesAnEvent();

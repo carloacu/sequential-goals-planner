@@ -818,6 +818,7 @@ void Fact::generateSignatureForAllSubTypes(std::list<std::string>& pRes) const
 {
   pRes.emplace_back(factSignature());
 
+  // Generate parameters sub-types
   for (std::size_t i = 0; i < _arguments.size(); ++i)
   {
     const auto& currArg = _arguments[i];
@@ -831,6 +832,17 @@ void Fact::generateSignatureForAllSubTypes(std::list<std::string>& pRes) const
       }
     }
   }
+
+  // Generate fluent sub-types
+  if (_fluent && _fluent->type && _fluent->isAParameterToFill())
+  {
+    for (const auto& currSubType : _fluent->type->subTypes)
+    {
+      auto fact = *this;
+      fact.setFluentType(currSubType);
+      fact.generateSignatureForAllSubTypes(pRes);
+    }
+  }
 }
 
 
@@ -838,6 +850,7 @@ void Fact::generateSignatureForAllUpperTypes(std::list<std::string>& pRes) const
 {
   pRes.emplace_back(factSignature());
 
+  // Generate parameters upper-types
   for (std::size_t i = 0; i < _arguments.size(); ++i)
   {
     const auto& currArg = _arguments[i];
@@ -853,12 +866,27 @@ void Fact::generateSignatureForAllUpperTypes(std::list<std::string>& pRes) const
       }
     }
   }
+
+  // Generate fluent upper-types
+  if (_fluent && _fluent->type)
+  {
+    auto parentType = _fluent->type->parent;
+    while (parentType)
+    {
+      auto fact = *this;
+      fact.setFluentType(parentType);
+      pRes.emplace_back(fact.factSignature());
+      parentType = parentType->parent;
+    }
+  }
 }
+
 
 void Fact::generateSignatureForSubAndUpperTypes(std::list<std::string>& pRes) const
 {
   pRes.emplace_back(factSignature());
 
+  // Generate parameters sub and upper types
   for (std::size_t i = 0; i < _arguments.size(); ++i)
   {
     const auto& currArg = _arguments[i];
@@ -884,6 +912,29 @@ void Fact::generateSignatureForSubAndUpperTypes(std::list<std::string>& pRes) co
       }
     }
   }
+
+  // Generate fluent sub and upper types
+  if (_fluent && _fluent->type)
+  {
+    if (_fluent->isAParameterToFill())
+    {
+      for (const auto& currSubType : _fluent->type->subTypes)
+      {
+        auto fact = *this;
+        fact.setFluentType(currSubType);
+        fact.generateSignatureForAllSubTypes(pRes);
+      }
+    }
+
+    auto parentType = _fluent->type->parent;
+    while (parentType)
+    {
+      auto fact = *this;
+      fact.setFluentType(parentType);
+      pRes.emplace_back(fact.factSignature());
+      parentType = parentType->parent;
+    }
+  }
 }
 
 
@@ -894,6 +945,16 @@ void Fact::setArgumentType(std::size_t pIndex, const std::shared_ptr<Type>& pTyp
   _arguments[pIndex].type = pType;
   _resetFactSignatureCache();
 }
+
+void Fact::setFluentType(const std::shared_ptr<Type>& pType)
+{
+  if (_fluent)
+  {
+    _fluent->type = pType;
+    _resetFactSignatureCache();
+  }
+}
+
 
 void Fact::setFluent(const std::optional<Entity>& pFluent)
 {
