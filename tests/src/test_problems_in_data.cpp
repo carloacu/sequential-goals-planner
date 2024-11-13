@@ -85,7 +85,7 @@ TEST_F(PlannerUsingExternalData, test_problemsInData_simple)
 }
 
 
-TEST_F(PlannerUsingExternalData, test_problemsInData_sequential_goal)
+TEST_F(PlannerUsingExternalData, test_problemsInData_prioritized_goals)
 {
-  _test_dataDirectory(PlannerUsingExternalData::dataPath, "sequential_goal");
+  _test_dataDirectory(PlannerUsingExternalData::dataPath, "prioritized_goals");
 }

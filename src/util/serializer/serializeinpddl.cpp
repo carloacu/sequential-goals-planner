@@ -457,7 +457,7 @@ std::string problemToPddl(const Problem& pProblem,
     }
     else
     {
-      res += std::string(subIdentation, ' ') + "(and ;; __SEQUENTIALLY\n";
+      res += std::string(subIdentation, ' ') + "(and ;; __PRIORITIZED\n";
       for (auto itGoalsGroup = goals.end(); itGoalsGroup != goals.begin(); )
       {
         --itGoalsGroup;

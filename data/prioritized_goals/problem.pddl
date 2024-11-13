@@ -13,7 +13,7 @@
   )
 
   (:goal
-    (and ;; __SEQUENTIALLY
+    (and ;; __PRIORITIZED
       (started_notified)
       (and
         (at robot1 locationA)

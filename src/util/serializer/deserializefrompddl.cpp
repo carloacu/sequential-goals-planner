@@ -1068,7 +1068,7 @@ DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
           const auto& entities = res.problemPtr->entities;
 
           auto expressionParsed = ExpressionParsed::fromPddl(pStr, pos, false);
-          if (expressionParsed.name == "and" && expressionParsed.tags.count("__SEQUENTIALLY") > 0)
+          if (expressionParsed.name == "and" && expressionParsed.tags.count("__PRIORITIZED") > 0)
           {
             for (auto& currGoalExpParsed : expressionParsed.arguments)
             {
