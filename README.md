@@ -70,7 +70,7 @@ requirements:
 - [x] `:strips`
 - [x] `:typing`
 - [x] `:negative-preconditions`
-- [ ] `:disjunctive-preconditions`
+- [x] `:disjunctive-preconditions`
 - [x] `:equality`
 - [ ] `:existential-preconditions`
 - [ ] `:universal-preconditions`

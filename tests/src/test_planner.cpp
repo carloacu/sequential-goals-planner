@@ -28,9 +28,9 @@ void _setGoalsForAPriority(pgp::Problem& pProblem,
 }
 
 pgp::ActionInvocationWithGoal _lookForAnActionToDo(pgp::Problem& pProblem,
-                                                  const pgp::Domain& pDomain,
-                                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                  const pgp::Historical* pGlobalHistorical = nullptr)
+                                                   const pgp::Domain& pDomain,
+                                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                                   const pgp::Historical* pGlobalHistorical = nullptr)
 {
   auto plan = pgp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
@@ -64,15 +64,15 @@ void _simplest_plan_possible()
   pgp::Ontology ontology;
   ontology.types = pgp::SetOfTypes::fromPddl("type1 type2 - entity");
   ontology.constants = pgp::SetOfEntities::fromPddl("toto - type1\n"
-                                                  "titi - type2", ontology.types);
+                                                    "titi - type2", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("pred_a(?e - entity)\n"
-                                                     "pred_b\n", ontology.types);
+                                                      "pred_b\n", ontology.types);
 
   const pgp::SetOfEntities entities;
 
   std::vector<pgp::Parameter> parameters(1, pgp::Parameter::fromStr("?pa - type1", ontology.types));
   pgp::Action actionObj1(pgp::strToCondition("pred_a(?pa)", ontology, entities, parameters),
-                        pgp::strToWsModification("pred_b", ontology, entities, parameters));
+                         pgp::strToWsModification("pred_b", ontology, entities, parameters));
   actionObj1.parameters = std::move(parameters);
   actions.emplace(action1, actionObj1);
 
@@ -95,18 +95,18 @@ void _wrong_condition_type()
 
   pgp::Ontology ontology;
   ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
-                                           "type1 - entity\n"
-                                           "type2 - entity");
+                                             "type1 - entity\n"
+                                             "type2 - entity");
   ontology.constants = pgp::SetOfEntities::fromPddl("toto - type1\n"
-                                                  "titi - type2", ontology.types);
+                                                    "titi - type2", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("pred_a(?e - entity)\n"
-                                                     "pred_b\n", ontology.types);
+                                                      "pred_b\n", ontology.types);
 
   const pgp::SetOfEntities entities;
 
   std::vector<pgp::Parameter> parameters(1, pgp::Parameter::fromStr("?pa - type1", ontology.types));
   pgp::Action actionObj1(pgp::strToCondition("pred_a(?pa)", ontology, entities, parameters),
-                        pgp::strToWsModification("pred_b", ontology, entities, parameters));
+                         pgp::strToWsModification("pred_b", ontology, entities, parameters));
   actionObj1.parameters = std::move(parameters);
   actions.emplace(action1, actionObj1);
 
@@ -130,12 +130,12 @@ void _number_type()
   ontology.types = pgp::SetOfTypes::fromPddl("entity");
   ontology.constants = pgp::SetOfEntities::fromPddl("toto - entity", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("pred_a(?e - entity) - number\n"
-                                                     "pred_b", ontology.types);
+                                                      "pred_b", ontology.types);
 
   const pgp::SetOfEntities entities;
 
   pgp::Action actionObj1(pgp::strToCondition("pred_a(toto)=10", ontology, entities, {}),
-                        pgp::strToWsModification("pred_b", ontology, entities, {}));
+                         pgp::strToWsModification("pred_b", ontology, entities, {}));
   actions.emplace(action1, actionObj1);
 
   pgp::Domain domain(std::move(actions), ontology);
@@ -160,25 +160,25 @@ void _planWithActionThenEventWithFluentParameter()
   ontology.types = pgp::SetOfTypes::fromPddl("entity");
   ontology.constants = pgp::SetOfEntities::fromPddl("toto titi - entity", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("pred_a - entity\n"
-                                                     "pred_b(?e - entity)", ontology.types);
+                                                      "pred_b(?e - entity)", ontology.types);
 
   const pgp::SetOfEntities entities;
 
   pgp::Action actionObj1({},
-                        pgp::strToWsModification("pred_a=toto", ontology, entities, {}));
+                         pgp::strToWsModification("pred_a=toto", ontology, entities, {}));
   actions.emplace(action1, actionObj1);
 
   pgp::SetOfEvents setOfEvents;
   std::vector<pgp::Parameter> eventParameters{pgp::Parameter::fromStr("?e - entity", ontology.types)};
   pgp::Event event(pgp::strToCondition("pred_a=?e", ontology, entities, eventParameters),
-                          pgp::strToWsModification("pred_b(?e)", ontology, entities, eventParameters));
+                   pgp::strToWsModification("pred_b(?e)", ontology, entities, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
   pgp::Domain domain(std::move(actions), {}, std::move(setOfEvents));
   pgp::Problem problem;
   _setGoalsForAPriority(problem, {pgp::Goal::fromStr("pred_b(toto)", ontology, entities)});
- EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -189,26 +189,26 @@ void _planWithActionThenEventWithAssign()
 
   pgp::Ontology ontology;
   ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
-                                           "other_type");
+                                             "other_type");
   ontology.constants = pgp::SetOfEntities::fromPddl("toto titi - entity\n"
-                                                  "v - other_type", ontology.types);
+                                                    "v - other_type", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("pred_a - other_type\n"
-                                                     "pred_b(?e - entity) - other_type\n"
-                                                     "pred_c - other_type\n"
-                                                     "pred_d - other_type", ontology.types);
+                                                      "pred_b(?e - entity) - other_type\n"
+                                                      "pred_c - other_type\n"
+                                                      "pred_d - other_type", ontology.types);
 
   const pgp::SetOfEntities entities;
 
   std::vector<pgp::Parameter> actionParameters{pgp::Parameter::fromStr("?e - entity", ontology.types)};
   pgp::Action actionObj1({},
-                        pgp::strToWsModification("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
+                         pgp::strToWsModification("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
   pgp::SetOfEvents setOfEvents;
   std::vector<pgp::Parameter> eventParameters{pgp::Parameter::fromStr("?t - other_type", ontology.types)};
   pgp::Event event(pgp::strToCondition("pred_a=?t", ontology, entities, eventParameters),
-                          pgp::strToWsModification("pred_d=?t", ontology, entities, eventParameters));
+                   pgp::strToWsModification("pred_d=?t", ontology, entities, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
@@ -228,28 +228,28 @@ void _fluentEqualityInPrecoditionOfAnAction()
 
   pgp::Ontology ontology;
   ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
-                                           "other_type\n"
-                                           "lol");
+                                             "other_type\n"
+                                             "lol");
   ontology.constants = pgp::SetOfEntities::fromPddl("toto titi - entity\n"
-                                                  "v - other_type\n"
-                                                  "lol_val - lol", ontology.types);
+                                                    "v - other_type\n"
+                                                    "lol_val - lol", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("pred_a - other_type\n"
-                                                     "pred_b(?e - entity) - other_type\n"
-                                                     "pred_c(?l - lol) - other_type\n"
-                                                     "pred_d(?l - lol)", ontology.types);
+                                                      "pred_b(?e - entity) - other_type\n"
+                                                      "pred_c(?l - lol) - other_type\n"
+                                                      "pred_d(?l - lol)", ontology.types);
   const pgp::SetOfEntities entities;
 
   const std::string action1 = "action1";
   std::vector<pgp::Parameter> actionParameters{pgp::Parameter::fromStr("?e - entity", ontology.types)};
   pgp::Action actionObj1({},
-                        pgp::strToWsModification("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
+                         pgp::strToWsModification("assign(pred_a, pred_b(?e))", ontology, entities, actionParameters));
   actionObj1.parameters = std::move(actionParameters);
   actions.emplace(action1, actionObj1);
 
   const std::string action2 = "action2";
   std::vector<pgp::Parameter> action2Parameters{pgp::Parameter::fromStr("?l - lol", ontology.types)};
   pgp::Action actionObj2(pgp::strToCondition("=(pred_a, pred_c(?l))", ontology, entities, action2Parameters),
-                        pgp::strToWsModification("pred_d(?l)", ontology, entities, action2Parameters));
+                         pgp::strToWsModification("pred_d(?l)", ontology, entities, action2Parameters));
   actionObj2.parameters = std::move(action2Parameters);
   actions.emplace(action2, actionObj2);
 
@@ -271,9 +271,9 @@ void _testIncrementOfVariables()
   ontology.types = pgp::SetOfTypes::fromPddl("");
   ontology.constants = pgp::SetOfEntities::fromPddl("", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("numberOfQuestion - number\n"
-                                                     "maxNumberOfQuestions - number\n"
-                                                     "ask_all_the_questions\n"
-                                                     "finished_to_ask_questions", ontology.types);
+                                                      "maxNumberOfQuestions - number\n"
+                                                      "ask_all_the_questions\n"
+                                                      "finished_to_ask_questions", ontology.types);
   const pgp::SetOfEntities entities;
 
   const std::string action_askQuestion1 = "ask_question_1";
@@ -284,9 +284,9 @@ void _testIncrementOfVariables()
   std::map<std::string, pgp::Action> actions;
   const pgp::Action actionQ1({}, pgp::strToWsModification("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {}));
   const pgp::Action actionFinishToActActions(pgp::strToCondition("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
-                                            pgp::strToWsModification("ask_all_the_questions", ontology, entities, {}));
+                                             pgp::strToWsModification("ask_all_the_questions", ontology, entities, {}));
   const pgp::Action actionSayQuestionBilan(pgp::strToCondition("ask_all_the_questions", ontology, entities, {}),
-                                          pgp::strToWsModification("finished_to_ask_questions", ontology, entities, {}));
+                                           pgp::strToWsModification("finished_to_ask_questions", ontology, entities, {}));
   actions.emplace(action_askQuestion1, actionQ1);
   actions.emplace(action_askQuestion2, pgp::Action({}, pgp::strToWsModification("ask_all_the_questions & add(numberOfQuestion, 1)", ontology, entities, {})));
   actions.emplace(action_finisehdToAskQuestions, actionFinishToActActions);
@@ -342,13 +342,13 @@ void _actionWithParametersInPreconditionsAndEffects()
   ontology.types = pgp::SetOfTypes::fromPddl("");
   ontology.constants = pgp::SetOfEntities::fromPddl("", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("isEngaged(?hid - number)\n"
-                                                     "isHappy(?hid - number)", ontology.types);
+                                                      "isHappy(?hid - number)", ontology.types);
   const pgp::SetOfEntities entities;
 
   std::map<std::string, pgp::Action> actions;
   std::vector<pgp::Parameter> parameters(1, pgp::Parameter::fromStr("?human - number", ontology.types));
   pgp::Action joke(pgp::strToCondition("isEngaged(?human)", ontology, entities, parameters),
-                  pgp::strToWsModification("isHappy(?human)", ontology, entities, parameters));
+                   pgp::strToWsModification("isHappy(?human)", ontology, entities, parameters));
   joke.parameters = std::move(parameters);
   const std::string action1 = "action1";
   actions.emplace(action1, joke);
@@ -373,9 +373,9 @@ void _testQuiz()
   ontology.types = pgp::SetOfTypes::fromPddl("");
   ontology.constants = pgp::SetOfEntities::fromPddl("", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("numberOfQuestion - number\n"
-                                                     "maxNumberOfQuestions - number\n"
-                                                     "ask_all_the_questions\n"
-                                                     "finished_to_ask_questions", ontology.types);
+                                                      "maxNumberOfQuestions - number\n"
+                                                      "ask_all_the_questions\n"
+                                                      "finished_to_ask_questions", ontology.types);
   const pgp::SetOfEntities entities;
 
   const std::string action_askQuestion1 = "ask_question_1";
@@ -387,14 +387,14 @@ void _testQuiz()
   questionEffect.potentialWorldStateModification = pgp::strToWsModification("ask_all_the_questions", ontology, entities, {});
   const pgp::Action actionQ1({}, questionEffect);
   const pgp::Action actionSayQuestionBilan(pgp::strToCondition("ask_all_the_questions", ontology, entities, {}),
-                                          pgp::strToWsModification("finished_to_ask_questions", ontology, entities, {}));
+                                           pgp::strToWsModification("finished_to_ask_questions", ontology, entities, {}));
   actions.emplace(action_askQuestion1, actionQ1);
   actions.emplace(action_askQuestion2, pgp::Action({}, questionEffect));
   actions.emplace(action_sayQuestionBilan, actionSayQuestionBilan);
 
   pgp::Domain domain(std::move(actions), {},
-                    pgp::Event(pgp::strToCondition("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
-                                  pgp::strToWsModification("ask_all_the_questions", ontology, entities, {})));
+                     pgp::Event(pgp::strToCondition("equals(numberOfQuestion, maxNumberOfQuestions)", ontology, entities, {}),
+                                pgp::strToWsModification("ask_all_the_questions", ontology, entities, {})));
 
   auto initFacts = pgp::strToWsModification("numberOfQuestion=0 & maxNumberOfQuestions=3", ontology, entities, {});
 
@@ -427,16 +427,16 @@ void _doNextActionThatBringsToTheSmallerCost()
 {
   pgp::Ontology ontology;
   ontology.types = pgp::SetOfTypes::fromPddl("location\n"
-                                           "object\n"
-                                           "robot");
+                                             "object\n"
+                                             "robot");
   ontology.constants = pgp::SetOfEntities::fromPddl("me - robot\n"
-                                                   "obj1 obj2 - object\n"
-                                                   "livingRoom kitchen bedroom - location", ontology.types);
+                                                    "obj1 obj2 - object\n"
+                                                    "livingRoom kitchen bedroom - location", ontology.types);
 
   ontology.predicates = pgp::SetOfPredicates::fromStr("objectGrabable(?o - object)\n"
-                                                     "locationOfRobot(?r - robot) - location\n"
-                                                     "locationOfObject(?o - object) - location\n"
-                                                     "grab(?r - robot) - object", ontology.types);
+                                                      "locationOfRobot(?r - robot) - location\n"
+                                                      "locationOfObject(?o - object) - location\n"
+                                                      "grab(?r - robot) - object", ontology.types);
   const std::string action_navigate = "navigate";
   const std::string action_grab = "grab";
   const std::string action_ungrab = "ungrab";
@@ -449,7 +449,7 @@ void _doNextActionThatBringsToTheSmallerCost()
 
   std::vector<pgp::Parameter> grabParameters{pgp::Parameter::fromStr("?object - object", ontology.types)};
   pgp::Action grabAction(pgp::strToCondition("equals(locationOfRobot(me), locationOfObject(?object)) & !grab(me)=*", ontology, {}, grabParameters),
-                        pgp::strToWsModification("grab(me)=?object", ontology, {}, grabParameters));
+                         pgp::strToWsModification("grab(me)=?object", ontology, {}, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(action_grab, grabAction);
 
@@ -462,7 +462,7 @@ void _doNextActionThatBringsToTheSmallerCost()
   {
     std::vector<pgp::Parameter> eventParameters{pgp::Parameter::fromStr("?object - object", ontology.types), pgp::Parameter::fromStr("?location - location", ontology.types)};
     pgp::Event event(pgp::strToCondition("locationOfRobot(me)=?location & grab(me)=?object & objectGrabable(?object)", ontology, {}, eventParameters),
-                    pgp::strToWsModification("locationOfObject(?object)=?location", ontology, {}, eventParameters));
+                     pgp::strToWsModification("locationOfObject(?object)=?location", ontology, {}, eventParameters));
     event.parameters = std::move(eventParameters);
     setOfEvents.add(event);
   }
@@ -528,14 +528,14 @@ void _satisfyGoalWithSuperiorOperator()
   const std::string action1 = "action1";
   pgp::Ontology ontology;
   ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a - number\n"
-                                                     "fact_b", ontology.types);
+                                                      "fact_b", ontology.types);
 
   pgp::SetOfConstFacts timelessFacts;
   timelessFacts.add(pgp::Fact("fact_b", false, ontology, {}, {}));
 
   std::map<std::string, pgp::Action> actions;
   actions.emplace(action1, pgp::Action(pgp::strToCondition("fact_b", ontology, {}, {}),
-                                      pgp::strToWsModification("fact_a=100", ontology, {}, {})));
+                                       pgp::strToWsModification("fact_a=100", ontology, {}, {})));
   pgp::Domain domain(std::move(actions), ontology, {}, {}, timelessFacts);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
@@ -555,17 +555,17 @@ void _parameterToFillFromConditionOfFirstAction()
   const std::string action1 = "action1";
   pgp::Ontology ontology;
   ontology.types = pgp::SetOfTypes::fromPddl("location\n"
-                                           "chargingZone");
+                                             "chargingZone");
   ontology.constants = pgp::SetOfEntities::fromPddl("cz - chargingZone\n"
-                                                  "czLocation - location", ontology.types);
+                                                    "czLocation - location", ontology.types);
   ontology.predicates = pgp::SetOfPredicates::fromStr("locationOfRobot - location\n"
-                                                     "declaredLocationOfChargingZone(?cz - chargingZone) - location\n"
-                                                     "batteryLevel - number", ontology.types);
+                                                      "declaredLocationOfChargingZone(?cz - chargingZone) - location\n"
+                                                      "batteryLevel - number", ontology.types);
 
   std::map<std::string, pgp::Action> actions;
   std::vector<pgp::Parameter> actionParameters{pgp::Parameter::fromStr("?cz - chargingZone", ontology.types)};
   pgp::Action action1Obj(pgp::strToCondition("=(locationOfRobot, declaredLocationOfChargingZone(?cz))", ontology, {}, actionParameters),
-                                        pgp::strToWsModification("batteryLevel=100", ontology, {}, actionParameters));
+                         pgp::strToWsModification("batteryLevel=100", ontology, {}, actionParameters));
   action1Obj.parameters = std::move(actionParameters);
   actions.emplace(action1, action1Obj);
   pgp::Domain domain(std::move(actions), ontology);
@@ -613,6 +613,58 @@ void _planToMove()
   EXPECT_EQ(action1 + "(?o -> bottle)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
+void _disjunctiveGoal()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+                                                      "fact_b", ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, pgp::strToWsModification("fact_a", ontology, {}, {})));
+  actions.emplace(action2, pgp::Action({}, pgp::strToWsModification("fact_b", ontology, {}, {})));
+  pgp::Domain domain(std::move(actions), ontology);
+
+  pgp::Problem problem;
+  auto& entities = problem.entities;
+  _setGoalsForAPriority(problem, {pgp::Goal::fromStr("or(fact_a, fact_b)", ontology, entities)});
+
+  auto firstActionStr = _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr();
+  if (firstActionStr != action1 && firstActionStr != action2)
+    EXPECT_TRUE(false);
+  EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+}
+
+
+void _disjunctivePrecondition()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+                                                      "fact_b\n"
+                                                      "fact_c", ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, pgp::strToWsModification("fact_a", ontology, {}, {})));
+  actions.emplace(action2, pgp::Action({}, pgp::strToWsModification("fact_b", ontology, {}, {})));
+  actions.emplace(action3, pgp::Action(pgp::strToCondition("or(fact_a, fact_b)", ontology, {}, {}),
+                                       pgp::strToWsModification("fact_c", ontology, {}, {})));
+  pgp::Domain domain(std::move(actions), ontology);
+
+  pgp::Problem problem;
+  auto& entities = problem.entities;
+  _setGoalsForAPriority(problem, {pgp::Goal::fromStr("fact_c", ontology, entities)});
+
+  auto firstActionStr = _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr();
+  if (firstActionStr != action1 && firstActionStr != action2)
+    EXPECT_TRUE(false);
+  EXPECT_EQ(action3, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+}
+
 
 }
 
@@ -636,4 +688,6 @@ TEST(Planner, test_planner)
   _satisfyGoalWithSuperiorOperator();
   _parameterToFillFromConditionOfFirstAction();
   _planToMove();
+  _disjunctiveGoal();
+  _disjunctivePrecondition();
 }
