@@ -10,18 +10,19 @@
 namespace pgp
 {
 struct ActionInvocationWithGoal;
+struct ActionsToDoInParallel;
 struct Domain;
 struct Goal;
 struct Problem;
 struct WorldState;
 
 
-std::list<std::list<pgp::ActionInvocationWithGoal>> toParallelPlan
-(std::list<pgp::ActionInvocationWithGoal>& pSequentialPlan,
+std::list<ActionsToDoInParallel> toParallelPlan
+(std::list<ActionInvocationWithGoal>& pSequentialPlan,
  bool pParalleliseOnyFirstStep,
- const pgp::Problem& pProblem,
- const pgp::Domain& pDomain,
- const std::list<pgp::Goal>& pGoals,
+ Problem& pProblem,
+ const Domain& pDomain,
+ const std::list<Goal>& pGoals,
  const std::unique_ptr<std::chrono::_V2::steady_clock::time_point>& pNow);
 
 } // End of namespace pgp

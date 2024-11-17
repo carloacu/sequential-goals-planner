@@ -17,11 +17,11 @@ struct PRIORITIZEDGOALSPLANNER_API ActionInvocationWithGoal
   /// Construct ActionInvocationWithGoal.
   ActionInvocationWithGoal(const std::string& pActionId,
                            const std::map<Parameter, Entity>& pParameters,
-                           std::unique_ptr<pgp::Goal> pFromGoal,
+                           std::unique_ptr<Goal> pFromGoal,
                            int pFromGoalPriority);
   ActionInvocationWithGoal(const std::string& pActionId,
                            const std::map<Parameter, std::set<Entity>>& pParameters,
-                           std::unique_ptr<pgp::Goal> pFromGoal,
+                           std::unique_ptr<Goal> pFromGoal,
                            int pFromGoalPriority);
 
   /// Construct a copy.
@@ -33,7 +33,7 @@ struct PRIORITIZEDGOALSPLANNER_API ActionInvocationWithGoal
   /// Action with his parameters.
   ActionInvocation actionInvocation;
   /// Goal that motivated the action.
-  std::unique_ptr<pgp::Goal> fromGoal;
+  std::unique_ptr<Goal> fromGoal;
   /// Priority of the goal that motivated the action.
   int fromGoalPriority;
 };

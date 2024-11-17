@@ -79,6 +79,10 @@ struct PRIORITIZEDGOALSPLANNER_API Fact
   bool areEqualWithoutAnArgConsideration(const Fact& pFact,
                                          const std::string& pArgToIgnore) const;
 
+  bool areEqualWithoutAnArgAndFluentConsideration(const Fact& pFact,
+                                                  const std::string& pArgToIgnore) const;
+
+
   /**
    * @brief Is equal to another Fact or if any of the 2 Facts have an "any value" that can match.
    * @param[in] pOther Other fact to compare.

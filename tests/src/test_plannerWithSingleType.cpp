@@ -251,6 +251,14 @@ std::string _solveStr(pgp::Problem& pProblem,
   return pgp::planToStr(pgp::planForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
 }
 
+std::string _parallelPlanStr(pgp::Problem& pProblem,
+                             const pgp::Domain& pDomain,
+                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                             pgp::Historical* pGlobalHistorical = nullptr)
+{
+  return pgp::parallelPlanToStr(pgp::parallelPlanForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical));
+}
+
 
 std::string _getGoalsDoneDuringAPlannificationConst(const pgp::Problem& pProblem,
                                                     const pgp::Domain& pDomain,
@@ -323,13 +331,13 @@ std::string _lookForAnActionToDoInParallelThenNotifyToStr(
     const pgp::Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  auto actions = pgp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
-  for (auto& currAction : actions)
+  auto actionsToDoInParallel = pgp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
+  for (auto& currAction : actionsToDoInParallel.actions)
   {
     notifyActionStarted(pProblem, pDomain, currAction, pNow);
     notifyActionDone(pProblem, pDomain, currAction, pNow);
   }
-  return pgp::planToStr(actions);
+  return pgp::planToStr(actionsToDoInParallel.actions);
 }
 
 
@@ -1137,7 +1145,7 @@ void _checkNotInAPrecondition()
   pgp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_greeted}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
-  problem.worldState.modify(_worldStateModification_fromStr(_fact_checkedIn, ontology), problem.goalStack,
+  problem.worldState.modify(&*_worldStateModification_fromStr(_fact_checkedIn, ontology), problem.goalStack,
                             _emptySetOfEvents, {}, {}, _now);
   EXPECT_EQ(std::string(), _lookForAnActionToDoConstStr(problem, domain));
 }
@@ -3371,6 +3379,7 @@ void _goalsToDoInParallel()
   pgp::Problem problem;
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
+  auto problem2 = problem;
 
   EXPECT_EQ(action1 + "(?obj -> val3)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 
@@ -3380,6 +3389,12 @@ void _goalsToDoInParallel()
   EXPECT_EQ(action2, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
   EXPECT_EQ(action6, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
   EXPECT_EQ("", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
+
+  EXPECT_EQ("action1(?obj -> val3)\n"
+            "action4\n"
+            "action7, action1(?obj -> val1)\n"
+            "action2\n"
+            "action6", _parallelPlanStr(problem2, domain, _now));
 }
 
 

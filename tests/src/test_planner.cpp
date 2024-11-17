@@ -295,7 +295,7 @@ void _testIncrementOfVariables()
 
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   pgp::Problem problem;
-  problem.worldState.modify(pgp::strToWsModification(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
+  problem.worldState.modify(&*pgp::strToWsModification(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
   assert(pgp::strToCondition(initFactsStr, ontology, entities, {})->isTrue(problem.worldState));
   assert(!actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -313,9 +313,9 @@ void _testIncrementOfVariables()
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
-    problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
+    problem.worldState.modify(&*itAction->second.effect.worldStateModification, problem.goalStack,
                               _emptySetOfEvents, ontology, entities, _now);
-    problem.worldState.modify(pgp::strToWsModification("!ask_all_the_questions", ontology, entities, {}),
+    problem.worldState.modify(&*pgp::strToWsModification("!ask_all_the_questions", ontology, entities, {}),
                               problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
   }
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
@@ -326,12 +326,12 @@ void _testIncrementOfVariables()
   problem.historical.notifyActionDone(actionToDo);
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
-  problem.worldState.modify(itAction->second.effect.worldStateModification, problem.goalStack,
+  problem.worldState.modify(&*itAction->second.effect.worldStateModification, problem.goalStack,
                             _emptySetOfEvents, ontology, entities, _now);
   EXPECT_EQ(action_sayQuestionBilan, _lookForAnActionToDo(problem, domain).actionInvocation.toStr());
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(actionSayQuestionBilan.precondition->isTrue(problem.worldState));
-  problem.worldState.modify(actionSayQuestionBilan.effect.worldStateModification, problem.goalStack,
+  problem.worldState.modify(&*actionSayQuestionBilan.effect.worldStateModification, problem.goalStack,
                             _emptySetOfEvents, ontology, entities, _now);
 }
 
@@ -402,7 +402,7 @@ void _testQuiz()
 
   _setGoalsForAPriority(problem, {pgp::Goal::fromStr("finished_to_ask_questions", ontology, entities)});
   auto& setOfEventsMap = domain.getSetOfEvents();
-  problem.worldState.modify(initFacts, problem.goalStack, setOfEventsMap, {}, {}, _now);
+  problem.worldState.modify(&*initFacts, problem.goalStack, setOfEventsMap, {}, {}, _now);
   for (std::size_t i = 0; i < 3; ++i)
   {
     auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
@@ -413,7 +413,7 @@ void _testQuiz()
     problem.historical.notifyActionDone(actionToDo);
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
-    problem.worldState.modify(itAction->second.effect.worldStateModification,
+    problem.worldState.modify(&*itAction->second.effect.worldStateModification,
                               problem.goalStack, setOfEventsMap, {}, {}, _now);
   }
 

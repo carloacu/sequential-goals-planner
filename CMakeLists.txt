@@ -126,6 +126,7 @@ add_library(prioritized_goals_planner_lib SHARED
   include/prioritizedgoalsplanner/types/condtionstovalue.hpp
   src/types/condtionstovalue.cpp
   include/prioritizedgoalsplanner/util/continueorbreak.hpp
+  include/prioritizedgoalsplanner/types/actionstodoinparallel.hpp
 )
 target_compile_features(prioritized_goals_planner_lib PRIVATE cxx_std_14)
 

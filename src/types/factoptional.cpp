@@ -98,6 +98,30 @@ bool FactOptional::doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const Fac
 }
 
 
+bool FactOptional::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
+                                         const std::string& pParameterNameToIgnore,
+                                         bool pIsWrappingExpressionNegated) const
+{
+  for (auto& currFactOpt : pFactsOpt)
+  {
+    if (fact.areEqualWithoutAnArgAndFluentConsideration(currFactOpt.fact, pParameterNameToIgnore))
+    {
+      if (!pIsWrappingExpressionNegated)
+      {
+        if (!(fact == currFactOpt.fact && isFactNegated != currFactOpt.isFactNegated))
+          return true;
+      }
+      else
+      {
+        if (!(fact == currFactOpt.fact && !isFactNegated != currFactOpt.isFactNegated))
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+
 void FactOptional::_simplify()
 {
   if (isFactNegated && fact.isValueNegated())

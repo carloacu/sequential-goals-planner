@@ -1056,12 +1056,13 @@ std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(Problem& pP
 }
 
 
-std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
+ActionsToDoInParallel actionsToDoInParallelNow(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
     Historical* pGlobalHistorical)
 {
+  pProblem.goalStack.refreshIfNeeded(pDomain);
   std::list<Goal> goalsDone;
   auto problemForPlanResolution = pProblem;
   auto sequentialPlan = planForEveryGoals(problemForPlanResolution, pDomain, pNow, pGlobalHistorical, &goalsDone);
@@ -1086,8 +1087,9 @@ void notifyActionStarted(Problem& pProblem,
       auto worldStateModificationAtStart = itAction->second.effect.worldStateModificationAtStart->clone(&pActionInvocationWithGoal.actionInvocation.parameters);
       auto& setOfEvents = pDomain.getSetOfEvents();
       const auto& ontology = pDomain.getOntology();
-      pProblem.worldState.modify(worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
-                                 ontology, pProblem.entities, pNow);
+      if (worldStateModificationAtStart)
+        pProblem.worldState.modify(&*worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
+                                   ontology, pProblem.entities, pNow);
     }
   }
 }
@@ -1159,8 +1161,23 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
 }
 
 
+std::list<ActionsToDoInParallel> parallelPlanForEveryGoals(
+    Problem& pProblem,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    Historical* pGlobalHistorical)
+{
+  pProblem.goalStack.refreshIfNeeded(pDomain);
 
-std::string planToStr(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
+  std::list<Goal> goalsDone;
+  auto problemForPlanResolution = pProblem;
+  auto sequentialPlan = planForEveryGoals(problemForPlanResolution, pDomain, pNow, pGlobalHistorical, &goalsDone);
+  return toParallelPlan(sequentialPlan, false, pProblem, pDomain, goalsDone, pNow);
+}
+
+
+
+std::string planToStr(const std::list<ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep)
 {
   std::string res;
@@ -1177,7 +1194,28 @@ std::string planToStr(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
 }
 
 
-std::string planToPddl(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
+std::string parallelPlanToStr(const std::list<ActionsToDoInParallel>& pPlan)
+{
+  std::string res;
+  for (const auto& currAcctionsInParallel : pPlan)
+  {
+    if (!res.empty())
+      res += "\n";
+    bool firstIteration = true;
+    for (const auto& currAction : currAcctionsInParallel.actions)
+    {
+      if (firstIteration)
+        firstIteration = false;
+      else
+        res += ", ";
+      res += currAction.actionInvocation.toStr();
+    }
+  }
+  return res;
+}
+
+
+std::string planToPddl(const std::list<ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain)
 {
   std::size_t step = 0;
@@ -1209,7 +1247,7 @@ std::string planToPddl(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
   return ss.str();
 }
 
-std::string goalsToStr(const std::list<pgp::Goal>& pGoals,
+std::string goalsToStr(const std::list<Goal>& pGoals,
                        const std::string& pSep)
 {
   auto size = pGoals.size();

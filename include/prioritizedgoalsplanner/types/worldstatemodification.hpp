@@ -11,7 +11,6 @@
 
 namespace pgp
 {
-struct Condition;
 struct Domain;
 struct WorldState;
 

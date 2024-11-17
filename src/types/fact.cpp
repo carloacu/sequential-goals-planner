@@ -296,6 +296,27 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
 }
 
 
+bool Fact::areEqualWithoutAnArgAndFluentConsideration(const Fact& pFact,
+                                                      const std::string& pArgToIgnore) const
+{
+  if (pFact._name != _name ||
+      pFact._arguments.size() != _arguments.size())
+    return false;
+
+  auto itParam = _arguments.begin();
+  auto itOtherParam = pFact._arguments.begin();
+  while (itParam != _arguments.end())
+  {
+    if (*itParam != *itOtherParam && !itParam->isAnyValue() && !itOtherParam->isAnyValue() &&
+        itParam->value != pArgToIgnore)
+      return false;
+    ++itParam;
+    ++itOtherParam;
+  }
+
+  return true;
+}
+
 bool Fact::areEqualExceptAnyValues(const Fact& pOther,
                                    const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr,
                                    const std::map<Parameter, std::set<Entity>>* pOtherFactParametersToConsiderAsAnyValuePtr2,

@@ -7,6 +7,7 @@
 #include <prioritizedgoalsplanner/util/alias.hpp>
 #include <prioritizedgoalsplanner/types/domain.hpp>
 #include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <prioritizedgoalsplanner/types/actionstodoinparallel.hpp>
 #include <prioritizedgoalsplanner/types/problem.hpp>
 #include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
@@ -47,7 +48,7 @@ std::list<ActionInvocationWithGoal> planForMoreImportantGoalPossible(
  * @return The next actions to do in parallel.
  */
 PRIORITIZEDGOALSPLANNER_API
-std::list<ActionInvocationWithGoal> actionsToDoInParallelNow(
+ActionsToDoInParallel actionsToDoInParallelNow(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -101,6 +102,12 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
     Historical* pGlobalHistorical = nullptr,
     std::list<Goal>* pGoalsDonePtr = nullptr);
 
+PRIORITIZEDGOALSPLANNER_API
+std::list<ActionsToDoInParallel> parallelPlanForEveryGoals(
+    Problem& pProblem,
+    const Domain& pDomain,
+    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+    Historical* pGlobalHistorical);
 
 /**
  * @brief Convert a plan to a string.
@@ -109,11 +116,14 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
  * @return The plan written in string.
  */
 PRIORITIZEDGOALSPLANNER_API
-std::string planToStr(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
+std::string planToStr(const std::list<ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep = ", ");
 
 PRIORITIZEDGOALSPLANNER_API
-std::string planToPddl(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
+std::string parallelPlanToStr(const std::list<ActionsToDoInParallel>& pPlan);
+
+PRIORITIZEDGOALSPLANNER_API
+std::string planToPddl(const std::list<ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain);
 /**
  * @brief Convert a list of goals to a string.
@@ -122,7 +132,7 @@ std::string planToPddl(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
  * @return The list of goals written in string.
  */
 PRIORITIZEDGOALSPLANNER_API
-std::string goalsToStr(const std::list<pgp::Goal>& pGoals,
+std::string goalsToStr(const std::list<Goal>& pGoals,
                        const std::string& pSep = ", ");
 
 } // !pgp

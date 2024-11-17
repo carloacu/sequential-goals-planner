@@ -63,8 +63,9 @@ void updateProblemForNextPotentialPlannerResultWithAction(
   auto& setOfEvents = pDomain.getSetOfEvents();
 
   const auto& ontology = pDomain.getOntology();
-  pProblem.worldState.modify(pOneStepAction.effect.worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
-                             ontology, pProblem.entities, pNow);
+  if (pOneStepAction.effect.worldStateModificationAtStart)
+    pProblem.worldState.modify(&*pOneStepAction.effect.worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
+                               ontology, pProblem.entities, pNow);
 
   notifyActionInvocationDone(pProblem, pGoalChanged, setOfEvents, pOneStepOfPlannerResult, pOneStepAction.effect.worldStateModification,
                              ontology, pNow,
@@ -74,8 +75,9 @@ void updateProblemForNextPotentialPlannerResultWithAction(
   if (pOneStepAction.effect.potentialWorldStateModification)
   {
     auto potentialEffect = pOneStepAction.effect.potentialWorldStateModification->clone(&pOneStepOfPlannerResult.actionInvocation.parameters);
-    pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfEvents,
-                               ontology, pProblem.entities, pNow);
+    if (potentialEffect)
+      pProblem.worldState.modify(&*potentialEffect, pProblem.goalStack, setOfEvents,
+                                 ontology, pProblem.entities, pNow);
   }
 }
 

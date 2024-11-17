@@ -89,12 +89,12 @@ void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlann
   {
     if (pOnStepOfPlannerResult.actionInvocation.parameters.empty())
     {
-      _modify(whatChanged, pEffect, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
+      _modify(whatChanged, &*pEffect, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
     }
     else
     {
       auto effect = pEffect->clone(&pOnStepOfPlannerResult.actionInvocation.parameters);
-      _modify(whatChanged, effect, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
+      _modify(whatChanged, &*effect, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
     }
   }
 
@@ -255,19 +255,19 @@ void WorldState::_removeAFact(WhatChanged& pWhatChanged,
 }
 
 void WorldState::_modify(WhatChanged& pWhatChanged,
-                         const std::unique_ptr<WorldStateModification>& pWsModif,
+                         const WorldStateModification* pWsModifPtr,
                          GoalStack& pGoalStack,
                          const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                          const Ontology& pOntology,
                          const SetOfEntities& pEntities,
                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  if (!pWsModif)
+  if (pWsModifPtr == nullptr)
     return;
 
   std::list<Fact> factsToAdd;
   std::list<Fact> factsToRemove;
-  pWsModif->forAll(
+  pWsModifPtr->forAll(
         [&](const FactOptional& pFactOptional)
   {
     if (pFactOptional.isFactNegated)
@@ -281,7 +281,7 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
 }
 
 
-bool WorldState::modify(const std::unique_ptr<WorldStateModification>& pWsModif,
+bool WorldState::modify(const WorldStateModification* pWsModifPtr,
                         GoalStack& pGoalStack,
                         const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                         const Ontology& pOntology,
@@ -289,7 +289,7 @@ bool WorldState::modify(const std::unique_ptr<WorldStateModification>& pWsModif,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
-  _modify(whatChanged, pWsModif, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
+  _modify(whatChanged, pWsModifPtr, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents,
                      pOntology, pEntities, pNow);
@@ -555,7 +555,7 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
                 for (const auto& currParamsPoss : parametersToValuePoss)
                 {
                   auto factsToModify = currEvent.factsToModify->clone(&currParamsPoss);
-                  _modify(pWhatChanged, factsToModify, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
+                  _modify(pWhatChanged, &*factsToModify, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
                 }
               }
               else
@@ -570,14 +570,14 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
                     return false;
                   }, optFactPtr->fact, parametersToValues);
                   for (auto& currFactToRemove : factsToRemove)
-                    _modify(pWhatChanged, strToWsModification("!" + currFactToRemove->toStr(), pOntology, pEntities, {}), // Optimize to construct WorldStateModification without passing by a string
+                    _modify(pWhatChanged, &*strToWsModification("!" + currFactToRemove->toStr(), pOntology, pEntities, {}), // Optimize to construct WorldStateModification without passing by a string
                             pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
                 }
               }
             }
             else
             {
-              _modify(pWhatChanged, currEvent.factsToModify, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
+              _modify(pWhatChanged, &*currEvent.factsToModify, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
             }
           }
           if (pGoalStack.addGoals(currEvent.goalsToAdd, *this, pNow))

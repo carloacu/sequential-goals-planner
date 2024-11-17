@@ -143,13 +143,13 @@ struct PRIORITIZEDGOALSPLANNER_API WorldState
 
   /**
    * @brief Modify the world state.
-   * @param[in] pWsModif Modification to do.
+   * @param[in] pWsModifPtr Modification to do.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
    * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
-  bool modify(const std::unique_ptr<WorldStateModification>& pWsModif,
+  bool modify(const WorldStateModification* pWsModifPtr,
               GoalStack& pGoalStack,
               const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
               const Ontology& pOntology,
@@ -320,14 +320,14 @@ private:
   /**
    * @brief Modify the world state without event deduction and raising a notification.
    * @param[out] pWhatChanged Get what changed.
-   * @param[in] pWsModif Modification to do.
+   * @param[in] pWsModifPtr Modification to do.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
    * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
    * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
   void _modify(WhatChanged& pWhatChanged,
-               const std::unique_ptr<WorldStateModification>& pWsModif,
+               const WorldStateModification* pWsModifPtr,
                GoalStack& pGoalStack,
                const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
                const Ontology& pOntology,

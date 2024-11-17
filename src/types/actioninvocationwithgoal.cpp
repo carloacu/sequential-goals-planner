@@ -29,7 +29,7 @@ ActionInvocationWithGoal::ActionInvocationWithGoal(const std::string& pActionId,
 ActionInvocationWithGoal::ActionInvocationWithGoal
 (const ActionInvocationWithGoal& pOther)
  : actionInvocation(pOther.actionInvocation),
-   fromGoal(pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<pgp::Goal>()),
+   fromGoal(pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<Goal>()),
    fromGoalPriority(pOther.fromGoalPriority)
 {
 }
@@ -38,7 +38,7 @@ ActionInvocationWithGoal::ActionInvocationWithGoal
 void ActionInvocationWithGoal::operator=(const ActionInvocationWithGoal& pOther)
 {
   actionInvocation = pOther.actionInvocation;
-  fromGoal = pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<pgp::Goal>();
+  fromGoal = pOther.fromGoal ? pOther.fromGoal->clone() : std::unique_ptr<Goal>();
   fromGoalPriority = pOther.fromGoalPriority;
 }
 
