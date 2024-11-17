@@ -6,11 +6,23 @@ namespace pgp
 {
 
 ActionInvocation::ActionInvocation(const std::string& pActionId,
-                                   const std::map<Parameter, std::set<Entity>>& pParameters)
+                                   const std::map<Parameter, Entity>& pParameters)
   : actionId(pActionId),
     parameters(pParameters)
 {
 }
+
+
+ActionInvocation::ActionInvocation(const std::string& pActionId,
+                                   const std::map<Parameter, std::set<Entity>>& pParameters)
+  : actionId(pActionId),
+    parameters()
+{
+  for (auto& currParam : pParameters)
+    if (!currParam.second.empty())
+      parameters.emplace(currParam.first, *currParam.second.begin());
+}
+
 
 ActionInvocation::~ActionInvocation() {}
 
@@ -28,9 +40,7 @@ std::string ActionInvocation::toStr() const
         firstIeration = false;
       else
         res += ", ";
-      res += currParam.first.name + " -> ";
-      if (!currParam.second.empty())
-        res += currParam.second.begin()->value;
+      res += currParam.first.name + " -> " + currParam.second.value;
     }
     res += ")";
   }

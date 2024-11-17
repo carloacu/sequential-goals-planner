@@ -35,7 +35,7 @@ pgp::ActionInvocationWithGoal _lookForAnActionToDo(pgp::Problem& pProblem,
   auto plan = pgp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
     return plan.front();
-  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", std::map<pgp::Parameter, pgp::Entity>(), {}, 0);
 }
 
 pgp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
@@ -51,7 +51,7 @@ pgp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
     notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
     return firstActionInPlan;
   }
-  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", std::map<pgp::Parameter, pgp::Entity>(), {}, 0);
 }
 
 

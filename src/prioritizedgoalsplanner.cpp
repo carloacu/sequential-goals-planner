@@ -1083,7 +1083,7 @@ void notifyActionStarted(Problem& pProblem,
   {
     if (itAction->second.effect.worldStateModificationAtStart)
     {
-      auto worldStateModificationAtStart = itAction->second.effect.worldStateModificationAtStart->cloneParamSet(pActionInvocationWithGoal.actionInvocation.parameters);
+      auto worldStateModificationAtStart = itAction->second.effect.worldStateModificationAtStart->clone(&pActionInvocationWithGoal.actionInvocation.parameters);
       auto& setOfEvents = pDomain.getSetOfEvents();
       const auto& ontology = pDomain.getOntology();
       pProblem.worldState.modify(worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
@@ -1201,9 +1201,7 @@ std::string planToPddl(const std::list<pgp::ActionInvocationWithGoal>& pPlan,
         auto itParamToValues = currActionInvocation.parameters.find(currParam);
         if (itParamToValues == currActionInvocation.parameters.end())
           throw std::runtime_error("Parameter in action not found in action invocation");
-        if (itParamToValues->second.empty())
-          throw std::runtime_error("Parameter without value");
-        ss << " " + itParamToValues->second.begin()->value;
+        ss << " " + itParamToValues->second.value;
       }
     }
     ss << ") [" << action.duration() << "]\n";

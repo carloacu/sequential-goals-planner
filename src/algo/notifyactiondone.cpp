@@ -73,7 +73,7 @@ void updateProblemForNextPotentialPlannerResultWithAction(
 
   if (pOneStepAction.effect.potentialWorldStateModification)
   {
-    auto potentialEffect = pOneStepAction.effect.potentialWorldStateModification->cloneParamSet(pOneStepOfPlannerResult.actionInvocation.parameters);
+    auto potentialEffect = pOneStepAction.effect.potentialWorldStateModification->clone(&pOneStepOfPlannerResult.actionInvocation.parameters);
     pProblem.worldState.modify(potentialEffect, pProblem.goalStack, setOfEvents,
                                ontology, pProblem.entities, pNow);
   }

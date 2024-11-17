@@ -270,7 +270,7 @@ pgp::ActionInvocationWithGoal _lookForAnActionToDo(pgp::Problem& pProblem,
   auto plan = pgp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
     return plan.front();
-  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", std::map<pgp::Parameter, pgp::Entity>(), {}, 0);
 }
 
 pgp::ActionInvocationWithGoal _lookForAnActionToDoConst(const pgp::Problem& pProblem,
@@ -282,7 +282,7 @@ pgp::ActionInvocationWithGoal _lookForAnActionToDoConst(const pgp::Problem& pPro
   auto plan = pgp::planForMoreImportantGoalPossible(problem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
     return plan.front();
-  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", std::map<pgp::Parameter, pgp::Entity>(), {}, 0);
 }
 
 std::string _lookForAnActionToDoStr(pgp::Problem& pProblem,
@@ -314,7 +314,7 @@ pgp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
     notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
     return firstActionInPlan;
   }
-  return pgp::ActionInvocationWithGoal("", {}, {}, 0);
+  return pgp::ActionInvocationWithGoal("", std::map<pgp::Parameter, pgp::Entity>(), {}, 0);
 }
 
 
@@ -1217,7 +1217,7 @@ void _addGoalEvenForEmptyAction()
   pgp::Domain domain(std::move(actions), ontology);
   pgp::Problem problem;
   EXPECT_TRUE(problem.goalStack.goals().empty());
-  pgp::notifyActionDone(problem, domain, pgp::ActionInvocationWithGoal(action1, {}, {}, 0), {});
+  pgp::notifyActionDone(problem, domain, pgp::ActionInvocationWithGoal(action1, std::map<pgp::Parameter, pgp::Entity>(), {}, 0), {});
   EXPECT_FALSE(problem.goalStack.goals().empty());
 }
 

@@ -93,7 +93,7 @@ void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlann
     }
     else
     {
-      auto effect = pEffect->cloneParamSet(pOnStepOfPlannerResult.actionInvocation.parameters);
+      auto effect = pEffect->clone(&pOnStepOfPlannerResult.actionInvocation.parameters);
       _modify(whatChanged, effect, pGoalStack, pSetOfEvents, pOntology, pEntities, pNow);
     }
   }

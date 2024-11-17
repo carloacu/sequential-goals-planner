@@ -5,6 +5,17 @@ namespace pgp
 {
 
 ActionInvocationWithGoal::ActionInvocationWithGoal(const std::string& pActionId,
+                                                   const std::map<Parameter, Entity>& pParameters,
+                                                   std::unique_ptr<Goal> pFromGoal,
+                                                   int pFromGoalPriority)
+  : actionInvocation(pActionId, pParameters),
+    fromGoal(std::move(pFromGoal)),
+    fromGoalPriority(pFromGoalPriority)
+{
+}
+
+
+ActionInvocationWithGoal::ActionInvocationWithGoal(const std::string& pActionId,
                                                    const std::map<Parameter, std::set<Entity>>& pParameters,
                                                    std::unique_ptr<Goal> pFromGoal,
                                                    int pFromGoalPriority)

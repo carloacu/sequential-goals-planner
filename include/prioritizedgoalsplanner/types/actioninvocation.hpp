@@ -18,6 +18,8 @@ struct PRIORITIZEDGOALSPLANNER_API ActionInvocation
 {
   /// Construct ActionInstance.
   ActionInvocation(const std::string& pActionId,
+                   const std::map<Parameter, Entity>& pParameters);
+  ActionInvocation(const std::string& pActionId,
                    const std::map<Parameter, std::set<Entity>>& pParameters);
   ~ActionInvocation();
 
@@ -30,7 +32,7 @@ struct PRIORITIZEDGOALSPLANNER_API ActionInvocation
   /// Identifer of the action.
   std::string actionId;
   /// Action parameter values.
-  std::map<Parameter, std::set<Entity>> parameters;
+  std::map<Parameter, Entity> parameters;
 };
 
 

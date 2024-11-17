@@ -125,18 +125,6 @@ struct WorldStateModificationNode : public WorldStateModification
     return res;
   }
 
-
-  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>& pParametersToPossibleArgumentPtr) const override
-  {
-    auto res = std::make_unique<WorldStateModificationNode>(
-          nodeType,
-          leftOperand ? leftOperand->cloneParamSet(pParametersToPossibleArgumentPtr) : std::unique_ptr<WorldStateModification>(),
-          rightOperand ? rightOperand->cloneParamSet(pParametersToPossibleArgumentPtr) : std::unique_ptr<WorldStateModification>(),
-          parameterOpt);
-    res->_successions = _successions;
-    return res;
-  }
-
   WorldStateModificationNodeType nodeType;
   std::unique_ptr<WorldStateModification> leftOperand;
   std::unique_ptr<WorldStateModification> rightOperand;
@@ -252,14 +240,6 @@ struct WorldStateModificationFact : public WorldStateModification
     return res;    return res;
   }
 
-  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>& pParametersToPossibleArgumentPtr) const override
-  {
-    auto res = std::make_unique<WorldStateModificationFact>(factOptional);
-    res->factOptional.fact.replaceArguments(pParametersToPossibleArgumentPtr);
-    res->_successions = _successions;
-    return res;    return res;
-  }
-
   FactOptional factOptional;
 
 private:
@@ -322,11 +302,6 @@ struct WorldStateModificationNumber : public WorldStateModification
   }
 
   std::unique_ptr<WorldStateModification> clone(const std::map<Parameter, Entity>*) const override
-  {
-    return std::make_unique<WorldStateModificationNumber>(_nb);
-  }
-
-  std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>&) const override
   {
     return std::make_unique<WorldStateModificationNumber>(_nb);
   }

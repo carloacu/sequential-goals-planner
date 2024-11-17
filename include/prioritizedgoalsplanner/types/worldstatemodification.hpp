@@ -157,13 +157,6 @@ struct PRIORITIZEDGOALSPLANNER_API WorldStateModification
    * @return A copy of this object with arguments filling.
    */
   virtual std::unique_ptr<WorldStateModification> clone(const std::map<Parameter, Entity>* pParametersToArgumentPtr) const = 0;
-
-  /**
-   * @brief Create a copy of this object with arguments filling (or not if pParametersToPossibleArgumentPtr is nullptr).
-   * @param pParametersToPossibleArgumentPtr Parameters to replace by the first of their possible arguments in the new object to create.
-   * @return A copy of this object with arguments filling.
-   */
-  virtual std::unique_ptr<WorldStateModification> cloneParamSet(const std::map<Parameter, std::set<Entity>>& pParametersToPossibleArgumentPtr) const = 0;
 };
 
 
