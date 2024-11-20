@@ -251,14 +251,6 @@ std::string _solveStr(pgp::Problem& pProblem,
   return pgp::planToStr(pgp::planForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), _sep);
 }
 
-std::string _parallelPlanStr(pgp::Problem& pProblem,
-                             const pgp::Domain& pDomain,
-                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                             pgp::Historical* pGlobalHistorical = nullptr)
-{
-  return pgp::parallelPlanToStr(pgp::parallelPlanForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical));
-}
-
 
 std::string _getGoalsDoneDuringAPlannificationConst(const pgp::Problem& pProblem,
                                                     const pgp::Domain& pDomain,
@@ -3322,83 +3314,6 @@ void _hardProblemThatNeedsToBeSmartWithAnEvent()
 
 
 
-void _goalsToDoInParallel()
-{
-  const std::string action1 = "action1";
-  const std::string action2 = "action2";
-  const std::string action3 = "action3";
-  const std::string action4 = "action4";
-  const std::string action5 = "action5";
-  const std::string action6 = "action6";
-  const std::string action7 = "action7";
-
-  pgp::Ontology ontology;
-  ontology.types = pgp::SetOfTypes::fromPddl("entity");
-  ontology.constants = pgp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
-  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e + "\n" +
-                                                     _fact_f + "\n" +
-                                                     _fact_g, ontology.types);
-
-  std::map<std::string, pgp::Action> actions;
-  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  pgp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
-  actionObj1.parameters = std::move(act1Parameters);
-  actions.emplace(action1, actionObj1);
-
-  pgp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
-  actions.emplace(action2, actionObj2);
-
-  pgp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
-  actions.emplace(action3, actionObj3);
-
-  pgp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
-                        _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
-  actions.emplace(action4, actionObj4);
-
-  pgp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
-  actions.emplace(action5, actionObj5);
-
-  pgp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d + " & " + _fact_g, ontology),
-                        _worldStateModification_fromStr(_fact_e, ontology));
-  actions.emplace(action6, actionObj6);
-
-  pgp::Action actionObj7(_condition_fromStr(_fact_f, ontology),
-                        _worldStateModification_fromStr(_fact_g, ontology));
-  actions.emplace(action7, actionObj7);
-
-  pgp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-
-  pgp::Problem problem;
-  _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
-  auto problem2 = problem;
-
-  EXPECT_EQ(action1 + "(?obj -> val3)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-
-  EXPECT_EQ(action1 + "(?obj -> val3)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
-  EXPECT_EQ(action4, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
-  EXPECT_EQ(action7 + _sep + action1 + "(?obj -> val1)", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
-  EXPECT_EQ(action2, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
-  EXPECT_EQ(action6, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
-  EXPECT_EQ("", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
-
-  EXPECT_EQ("action1(?obj -> val3)\n"
-            "action4\n"
-            "action7, action1(?obj -> val1)\n"
-            "action2\n"
-            "action6", _parallelPlanStr(problem2, domain, _now));
-}
-
-
-
 void _checkOverallEffectDuringParallelisation()
 {
   const std::string action1 = "action1";
@@ -4491,7 +4406,6 @@ TEST(Planner, test_planWithSingleType)
   _checkOutputValueOfLookForAnActionToDo();
   _hardProblemThatNeedsToBeSmart();
   _hardProblemThatNeedsToBeSmartWithAnEvent();
-  _goalsToDoInParallel();
   _checkOverallEffectDuringParallelisation();
   _checkSimpleExists();
   _checkExistsWithActionParameterInvolved();

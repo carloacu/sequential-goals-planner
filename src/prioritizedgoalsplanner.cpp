@@ -1098,7 +1098,8 @@ void notifyActionStarted(Problem& pProblem,
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
-                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                      LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
 {
   const auto& actions = pDomain.actions();
   auto itAction = actions.find(pOnStepOfPlannerResult.actionInvocation.actionId);
@@ -1110,7 +1111,7 @@ void notifyActionDone(Problem& pProblem,
     notifyActionInvocationDone(pProblem, goalChanged, setOfEvents, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification,
                                ontology, pNow,
                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
-                               nullptr);
+                               pLookForAnActionOutputInfosPtr);
   }
 }
 
@@ -1214,7 +1215,6 @@ std::string parallelPlanToStr(const std::list<ActionsToDoInParallel>& pPlan)
   return res;
 }
 
-
 std::string planToPddl(const std::list<ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain)
 {
@@ -1222,30 +1222,31 @@ std::string planToPddl(const std::list<ActionInvocationWithGoal>& pPlan,
   std::stringstream ss;
   for (const auto& currActionInvocationWithGoal : pPlan)
   {
-    const auto& currActionInvocation = currActionInvocationWithGoal.actionInvocation;
     ss << std::setw(2) << std::setfill('0') << step << ": ";
     ++step;
-
-    auto* actionPtr = pDomain.getActionPtr(currActionInvocation.actionId);
-    if (actionPtr == nullptr)
-      throw std::runtime_error("Action " + currActionInvocation.actionId + " from a plan is not found in the domain");
-    auto& action = *actionPtr;
-
-    ss << "(" << currActionInvocation.actionId;
-    if (!action.parameters.empty())
-    {
-      for (const auto& currParam : action.parameters)
-      {
-        auto itParamToValues = currActionInvocation.parameters.find(currParam);
-        if (itParamToValues == currActionInvocation.parameters.end())
-          throw std::runtime_error("Parameter in action not found in action invocation");
-        ss << " " + itParamToValues->second.value;
-      }
-    }
-    ss << ") [" << action.duration() << "]\n";
+    ss << currActionInvocationWithGoal.actionInvocation.toPddl(pDomain) << "\n";
   }
   return ss.str();
 }
+
+
+std::string parallelPlanToPddl(const std::list<ActionsToDoInParallel>& pPlan,
+                               const Domain& pDomain)
+{
+  std::size_t step = 0;
+  std::string res;
+  for (const auto& currActionsToDoInParallel : pPlan)
+  {
+    std::stringstream ssBeginOfStep;
+    ssBeginOfStep << std::setw(2) << std::setfill('0') << step << ": ";
+    ++step;
+    for (const auto& currActionInvocationWithGoal : currActionsToDoInParallel.actions)
+      res += ssBeginOfStep.str() + currActionInvocationWithGoal.actionInvocation.toPddl(pDomain) + "\n";
+  }
+  return res;
+}
+
+
 
 std::string goalsToStr(const std::list<Goal>& pGoals,
                        const std::string& pSep)

@@ -176,6 +176,21 @@ std::list<pgp::Goal> _checkSatisfiedGoals(
   return res;
 }
 
+void _notifyActionsDoneAndRemoveCorrespondingGoals(std::list<Goal>& pGoals,
+                                                   const std::list<ActionDataForParallelisation>& pActions,
+                                                   Problem& pProblem,
+                                                   const Domain& pDomain,
+                                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+{
+  LookForAnActionOutputInfos lookForAnActionOutputInfos;
+  for (auto& currActionTmpData : pActions)
+    notifyActionDone(pProblem, pDomain, currActionTmpData.actionInvWithGoal, pNow, &lookForAnActionOutputInfos);
+  std::list<Goal> goalsSatisfied;
+  lookForAnActionOutputInfos.moveGoalsDone(goalsSatisfied);
+  for (auto& currGoal : goalsSatisfied)
+    pGoals.remove(currGoal);
+}
+
 
 }
 
@@ -186,7 +201,7 @@ std::list<ActionsToDoInParallel> toParallelPlan
  bool pParalleliseOnyFirstStep,
  Problem& pProblem,
  const Domain& pDomain,
- const std::list<Goal>& pGoals,
+ std::list<Goal>& pGoals,
  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   const auto& actions = pDomain.actions();
@@ -226,11 +241,11 @@ std::list<ActionsToDoInParallel> toParallelPlan
             auto tmpProblem = pProblem;
             notifyActionStarted(tmpProblem, pDomain, actionInvocationCand.actionInvWithGoal, pNow);
             notifyActionDone(tmpProblem, pDomain, actionInvocationCand.actionInvWithGoal, pNow);
-            for (ActionDataForParallelisation& currActionTmpData : *itPlanStep)
-              notifyActionDone(tmpProblem, pDomain, currActionTmpData.actionInvWithGoal, pNow);
+            auto remainingGoals = pGoals;
+            _notifyActionsDoneAndRemoveCorrespondingGoals(remainingGoals, *itPlanStep, tmpProblem, pDomain, pNow);
 
             auto goalsCand = _checkSatisfiedGoals(tmpProblem, pDomain, itPlanStep, currentRes, &actionInvocationCand, pNow);
-            if (goalsCand == pGoals)
+            if (goalsCand == remainingGoals)
             {
               notifyActionStarted(pProblem, pDomain, actionInvocationCand.actionInvWithGoal, pNow);
               itPlanStep->emplace_back(std::move(actionInvocationCand));
@@ -246,9 +261,7 @@ std::list<ActionsToDoInParallel> toParallelPlan
 
     if (pParalleliseOnyFirstStep)
       break;
-
-    for (ActionDataForParallelisation& currActionTmpData : *itPlanStep)
-      notifyActionDone(pProblem, pDomain, currActionTmpData.actionInvWithGoal, pNow);
+    _notifyActionsDoneAndRemoveCorrespondingGoals(pGoals, *itPlanStep, pProblem, pDomain, pNow);
   }
 
   std::list<ActionsToDoInParallel> res;

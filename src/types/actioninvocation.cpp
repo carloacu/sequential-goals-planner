@@ -1,4 +1,5 @@
 #include <prioritizedgoalsplanner/types/actioninvocation.hpp>
+#include <prioritizedgoalsplanner/types/domain.hpp>
 #include <prioritizedgoalsplanner/types/entity.hpp>
 #include <prioritizedgoalsplanner/types/parameter.hpp>
 
@@ -45,6 +46,30 @@ std::string ActionInvocation::toStr() const
     res += ")";
   }
   return res;
+}
+
+
+std::string ActionInvocation::toPddl(const Domain& pDomain) const
+{
+  std::stringstream ss;
+  auto* actionPtr = pDomain.getActionPtr(actionId);
+  if (actionPtr == nullptr)
+    throw std::runtime_error("Action " + actionId + " from a plan is not found in the domain");
+  auto& action = *actionPtr;
+
+  ss << "(" << actionId;
+  if (!action.parameters.empty())
+  {
+    for (const auto& currParam : action.parameters)
+    {
+      auto itParamToValues = parameters.find(currParam);
+      if (itParamToValues == parameters.end())
+        throw std::runtime_error("Parameter in action not found in action invocation");
+      ss << " " + itParamToValues->second.value;
+    }
+  }
+  ss << ") [" << action.duration() << "]";
+  return ss.str();
 }
 
 

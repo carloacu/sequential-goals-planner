@@ -22,7 +22,7 @@ std::list<ActionsToDoInParallel> toParallelPlan
  bool pParalleliseOnyFirstStep,
  Problem& pProblem,
  const Domain& pDomain,
- const std::list<Goal>& pGoals,
+ std::list<Goal>& pGoals,
  const std::unique_ptr<std::chrono::_V2::steady_clock::time_point>& pNow);
 
 } // End of namespace pgp

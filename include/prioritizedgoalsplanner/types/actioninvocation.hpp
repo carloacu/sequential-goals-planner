@@ -9,6 +9,7 @@
 
 namespace pgp
 {
+struct Domain;
 struct Entity;
 struct Parameter;
 
@@ -28,6 +29,8 @@ struct PRIORITIZEDGOALSPLANNER_API ActionInvocation
    * @return String containing the action identifier with his parameters.
    */
   std::string toStr() const;
+
+  std::string toPddl(const Domain& pDomain) const;
 
   /// Identifer of the action.
   std::string actionId;

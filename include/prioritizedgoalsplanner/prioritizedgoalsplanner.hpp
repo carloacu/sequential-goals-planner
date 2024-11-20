@@ -79,7 +79,8 @@ PRIORITIZEDGOALSPLANNER_API
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
-                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                      LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr = nullptr);
 
 
 /**
@@ -125,6 +126,10 @@ std::string parallelPlanToStr(const std::list<ActionsToDoInParallel>& pPlan);
 PRIORITIZEDGOALSPLANNER_API
 std::string planToPddl(const std::list<ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain);
+
+PRIORITIZEDGOALSPLANNER_API
+std::string parallelPlanToPddl(const std::list<ActionsToDoInParallel>& pPlan,
+                               const Domain& pDomain);
 /**
  * @brief Convert a list of goals to a string.
  * @param[in] pGoals List of goals to print.

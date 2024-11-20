@@ -35,6 +35,7 @@ add_executable(
   src/test_problems_in_data.cpp
   src/main.cpp
   src/test_goalscache.cpp
+  src/test_parallelplan.cpp
 )
 
 
