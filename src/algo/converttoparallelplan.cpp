@@ -241,8 +241,16 @@ std::list<ActionsToDoInParallel> toParallelPlan
 
   for (auto itPlanStep = currentRes.begin(); itPlanStep != currentRes.end(); ++itPlanStep)
   {
+    const Goal* goalPtr = nullptr;
     for (ActionDataForParallelisation& currActionTmpData : *itPlanStep)
+    {
       notifyActionStarted(pProblem, pDomain, currActionTmpData.actionInvWithGoal, pNow);
+      if (goalPtr == nullptr && currActionTmpData.actionInvWithGoal.fromGoal)
+        goalPtr = &*currActionTmpData.actionInvWithGoal.fromGoal;
+    }
+    if (goalPtr == nullptr)
+      continue;
+    auto& goal = *goalPtr;
 
     auto itPlanStepCandidate = itPlanStep;
     ++itPlanStepCandidate;
@@ -251,6 +259,9 @@ std::list<ActionsToDoInParallel> toParallelPlan
       if (!itPlanStepCandidate->empty())
       {
         auto& actionInvocationCand = itPlanStepCandidate->front();
+        if (!actionInvocationCand.actionInvWithGoal.fromGoal ||
+            *actionInvocationCand.actionInvWithGoal.fromGoal != goal)
+          break;
         if (actionInvocationCand.canBeInParallelOfList(*itPlanStep))
         {
           const Condition* conditionWithoutParameterPtr = actionInvocationCand.getConditionWithoutParameterPtr();
@@ -272,7 +283,6 @@ std::list<ActionsToDoInParallel> toParallelPlan
               continue;
             }
           }
-
         }
       }
       ++itPlanStepCandidate;

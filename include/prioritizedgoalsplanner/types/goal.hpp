@@ -20,7 +20,6 @@ struct PRIORITIZEDGOALSPLANNER_API Goal
   Goal(std::unique_ptr<Condition> pObjective,
        bool pIsPersistentIfSkipped = false,
        bool pOneStepTowards = false,
-       std::unique_ptr<FactOptional> pConditionFactPtr = {},
        int pMaxTimeToKeepInactive = -1,
        const std::string& pGoalGroupId = "");
 
@@ -75,9 +74,6 @@ struct PRIORITIZEDGOALSPLANNER_API Goal
   /// Know if the goal will be removed from the goals stack after the first time we try to satisfy it.
   bool isOneStepTowards() const { return _oneStepTowards; }
 
-  /// Get the condition associated. It is a fact that should be present in the world to enable this goal.
-  const FactOptional* conditionFactOptionalPtr() const { return _conditionFactPtr ? &*_conditionFactPtr : nullptr; }
-
   /// Get a const reference of the optional fact contained in this goal.
   const Condition& objective() const { return *_objective; }
 
@@ -110,8 +106,6 @@ struct PRIORITIZEDGOALSPLANNER_API Goal
 
   /// Persist function name.
   static const std::string persistFunctionName;
-  /// Imply function name.
-  static const std::string implyFunctionName;
   /// OneStepTowards function name.
   static const std::string oneStepTowardsFunctionName;
 
@@ -130,8 +124,6 @@ private:
   bool _isPersistentIfSkipped;
   /// Know if the goal will be removed from the goals stack after the first time we try to satisfy it.
   bool _oneStepTowards;
-  /// Condition associated, it is a fact that should be present in the world to enable this goal.
-  std::unique_ptr<FactOptional> _conditionFactPtr;
   /// Group identifier of this goal. It can be empty if the goal does not belong to a group.
   std::string _goalGroupId;
   std::string _uuidOfLastDomainUsedForCache;

@@ -138,6 +138,13 @@ bool _existsIsTrueRec(std::map<Parameter, std::set<Entity>>& pLocalParamToValue,
       return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pWorldState) ||
           _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pWorldState);
 
+    if (nodeOfConditionPtr->nodeType == ConditionNodeType::IMPLY)
+    {
+      if (_existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pWorldState))
+        return _existsIsTrueRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pWorldState);
+      return true;
+    }
+
     if (nodeOfConditionPtr->nodeType == ConditionNodeType::EQUALITY)
     {
       std::map<Entity, std::map<Parameter, std::set<Entity>>> leftOpPossibleValuesToParams;
@@ -235,7 +242,9 @@ void _existsExtractPossRec(std::map<Parameter, std::set<Entity>>& pLocalParamToV
   auto* nodeOfConditionPtr = pCondition.fcNodePtr();
   if (nodeOfConditionPtr != nullptr &&
       nodeOfConditionPtr->leftOperand && nodeOfConditionPtr->rightOperand &&
-      (nodeOfConditionPtr->nodeType == ConditionNodeType::AND || nodeOfConditionPtr->nodeType == ConditionNodeType::OR))
+      (nodeOfConditionPtr->nodeType == ConditionNodeType::AND ||
+       nodeOfConditionPtr->nodeType == ConditionNodeType::OR ||
+       nodeOfConditionPtr->nodeType == ConditionNodeType::IMPLY))
   {
     _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->leftOperand, pFacts, pFactFromEffect, pParameter, pIsNegated);
     _existsExtractPossRec(pLocalParamToValue, pConditionParametersToPossibleArguments, *nodeOfConditionPtr->rightOperand, pFacts, pFactFromEffect, pParameter, pIsNegated);
@@ -298,6 +307,8 @@ std::string ConditionNode::toStr(const std::function<std::string (const Fact&)>*
     return leftOperandStr + " & " + rightOperandStr;
   case ConditionNodeType::OR:
     return leftOperandStr + " | " + rightOperandStr;
+  case ConditionNodeType::IMPLY:
+    return "imply(" + leftOperandStr + ", " + rightOperandStr + ")";
   case ConditionNodeType::EQUALITY:
     return "equals(" + leftOperandStr + ", " + rightOperandStr + ")";
   case ConditionNodeType::PLUS:
@@ -353,7 +364,8 @@ ContinueOrBreak ConditionNode::forAll(const std::function<ContinueOrBreak (const
 {
   if (pOnlyMandatoryFacts && nodeType == ConditionNodeType::OR)
     return ContinueOrBreak::CONTINUE;
-  bool ignoreFluent = pIgnoreFluent || (nodeType != ConditionNodeType::AND && nodeType != ConditionNodeType::OR);
+  bool ignoreFluent = pIgnoreFluent || (nodeType != ConditionNodeType::AND &&
+      nodeType != ConditionNodeType::OR && nodeType != ConditionNodeType::IMPLY);
   auto res = ContinueOrBreak::CONTINUE;
   if (leftOperand)
     res = leftOperand->forAll(pFactCallback, pIsWrappingExpressionNegated, ignoreFluent, pOnlyMandatoryFacts);
@@ -379,6 +391,15 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
                                                                              pConditionParametersToPossibleArguments, pIsWrappingExpressionNegated))
       return true;
     if (rightOperand && rightOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect,
+                                                                               pFactFromEffectParameters, pFactFromEffectTmpParametersPtr,
+                                                                               pConditionParametersToPossibleArguments, pIsWrappingExpressionNegated))
+      return true;
+  }
+  else if (nodeType == ConditionNodeType::IMPLY)
+  {
+    auto conditionParametersToPossibleArguments = pConditionParametersToPossibleArguments;
+    if (leftOperand && leftOperand->isTrue(pWorldState, {}, {}, &conditionParametersToPossibleArguments) &&
+        rightOperand && rightOperand->findConditionCandidateFromFactFromEffect(pDoesConditionFactMatchFactFromEffect, pWorldState, pFactFromEffect,
                                                                                pFactFromEffectParameters, pFactFromEffectTmpParametersPtr,
                                                                                pConditionParametersToPossibleArguments, pIsWrappingExpressionNegated))
       return true;
@@ -435,7 +456,7 @@ bool ConditionNode::findConditionCandidateFromFactFromEffect(
 bool ConditionNode::untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                                const SetOfFacts& pSetOfFact) const
 {
-  if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR)
+  if (nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::OR|| nodeType == ConditionNodeType::IMPLY)
   {
     if (leftOperand && !leftOperand->untilFalse(pFactCallback, pSetOfFact))
       return false;
@@ -506,6 +527,19 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
     if (rightOperand && rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExpressionNegated))
       return true;
     return false;
+  }
+  else if (nodeType == ConditionNodeType::IMPLY)
+  {
+    bool canBecomeTrue = false;
+    if (pCanBecomeTruePtr == nullptr)
+      pCanBecomeTruePtr = &canBecomeTrue;
+
+    if (leftOperand && leftOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExpressionNegated))
+    {
+      if (rightOperand && !rightOperand->isTrue(pWorldState, pPunctualFacts, pRemovedFacts, pConditionParametersToPossibleArguments, pCanBecomeTruePtr, pIsWrappingExpressionNegated))
+        return false;
+    }
+    return true;
   }
   else if (leftOperand && rightOperand)
   {
@@ -602,6 +636,13 @@ bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
       return !pIsWrappingExpressionNegated;
     return pIsWrappingExpressionNegated;
   }
+  else if (nodeType == ConditionNodeType::IMPLY)
+  {
+    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
+      return !pIsWrappingExpressionNegated;
+    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
+      return pIsWrappingExpressionNegated;
+  }
   else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
   {
     auto* leftFactPtr = leftOperand->fcFactPtr();
@@ -681,7 +722,8 @@ bool ConditionNode::hasAContradictionWith(const std::set<FactOptional>& pFactsOp
                                           bool pIsWrappingExpressionNegated,
                                           std::list<Parameter>* pParametersPtr) const
 {
-  if ((nodeType == ConditionNodeType::AND && !pIsWrappingExpressionNegated) ||
+  bool and_or_imply = nodeType == ConditionNodeType::AND || nodeType == ConditionNodeType::IMPLY;
+  if ((and_or_imply && !pIsWrappingExpressionNegated) ||
       (nodeType == ConditionNodeType::OR && pIsWrappingExpressionNegated))
   {
     if (leftOperand && leftOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr))
@@ -689,7 +731,7 @@ bool ConditionNode::hasAContradictionWith(const std::set<FactOptional>& pFactsOp
     return rightOperand && rightOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr);
   }
   else if ((nodeType == ConditionNodeType::OR && !pIsWrappingExpressionNegated) ||
-           (nodeType == ConditionNodeType::AND && pIsWrappingExpressionNegated))
+           (and_or_imply && pIsWrappingExpressionNegated))
   {
     return leftOperand && leftOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr) &&
         rightOperand && rightOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr);
@@ -882,7 +924,8 @@ bool ConditionExists::hasAContradictionWith(const std::set<FactOptional>& pFacts
     }
 
     if (nodeOfConditionPtr->nodeType == ConditionNodeType::AND ||
-        nodeOfConditionPtr->nodeType == ConditionNodeType::OR)
+        nodeOfConditionPtr->nodeType == ConditionNodeType::OR ||
+        nodeOfConditionPtr->nodeType == ConditionNodeType::IMPLY)
     {
       return condition->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, &contextParameters);
     }

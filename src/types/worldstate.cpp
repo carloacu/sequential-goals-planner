@@ -469,9 +469,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
 
 bool WorldState::isGoalSatisfied(const Goal& pGoal) const
 {
-  auto* condFactOptPtr = pGoal.conditionFactOptionalPtr();
-  return (condFactOptPtr != nullptr && !isOptionalFactSatisfied(*condFactOptPtr)) ||
-      pGoal.objective().isTrue(*this);
+  return pGoal.objective().isTrue(*this);
 }
 
 

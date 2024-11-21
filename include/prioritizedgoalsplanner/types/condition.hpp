@@ -189,6 +189,7 @@ enum class ConditionNodeType
   INFERIOR_OR_EQUAL,
   AND,
   OR,
+  IMPLY,
   PLUS,
   MINUS
 };

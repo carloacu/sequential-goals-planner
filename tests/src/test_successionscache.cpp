@@ -211,6 +211,65 @@ void _test_impossibleSuccessions()
 
 
 
+void _test_implySuccessions()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+  const std::string action3 = "action3";
+
+  std::map<std::string, pgp::Action> actions;
+  pgp::Ontology ontology;
+  pgp::SetOfConstFacts timelessFacts;
+  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+                                                      "fact_b\n"
+                                                      "fact_c",
+                                                      ontology.types);
+
+  {
+    pgp::Action actionObj1({},
+                          pgp::strToWsModification("fact_a", ontology, {}, {}));
+    actions.emplace(action1, actionObj1);
+  }
+
+  {
+    pgp::Action actionObj2(pgp::strToCondition("imply(fact_a, fact_b)", ontology, {}, {}),
+                          pgp::strToWsModification("fact_c", ontology, {}, {}));
+    actions.emplace(action2, actionObj2);
+  }
+
+  {
+    pgp::Action actionObj3(pgp::strToCondition("imply(fact_b, fact_a)", ontology, {}, {}),
+                          pgp::strToWsModification("fact_c", ontology, {}, {}));
+    actions.emplace(action3, actionObj3);
+  }
+
+  Domain domain(actions, ontology, {}, {}, timelessFacts);
+
+  EXPECT_EQ("action: action1\n"
+            "----------------------------------\n"
+            "\n"
+            "fact: fact_a\n"
+            "action: action2\n"
+            "action: action3\n"
+            "\n"
+            "not action: action1\n"
+            "\n"
+            "\n"
+            "action: action2\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action2\n"
+            "not action: action3\n"
+            "\n"
+            "\n"
+            "action: action3\n"
+            "----------------------------------\n"
+            "\n"
+            "not action: action2\n"
+            "not action: action3\n", domain.printSuccessionCache());
+}
+
+
 }
 
 
@@ -219,4 +278,5 @@ TEST(Tool, test_successionsCache)
   _test_actionSuccessions();
   _test_notActionSuccessions();
   _test_impossibleSuccessions();
+  _test_implySuccessions();
 }

@@ -512,13 +512,15 @@ std::string conditionToPddl(const Condition& pCondition,
   {
     const auto& condNode = *condNodePtr;
 
-    if (condNode.nodeType == ConditionNodeType::AND || condNode.nodeType == ConditionNodeType::OR)
+    if (condNode.nodeType == ConditionNodeType::AND || condNode.nodeType == ConditionNodeType::OR || condNode.nodeType == ConditionNodeType::IMPLY)
     {
       std::string contentStr = "(";
       if (condNode.nodeType == ConditionNodeType::AND)
         contentStr += "and";
-      else
+      else if (condNode.nodeType == ConditionNodeType::OR)
         contentStr += "or";
+      else
+        contentStr += "imply";
       auto indentation = pIdentation + _identationOffset;
       std::string leftOperandStr;
       if (condNode.leftOperand)
@@ -575,6 +577,7 @@ std::string conditionToPddl(const Condition& pCondition,
       break;
     case ConditionNodeType::AND:
     case ConditionNodeType::OR:
+    case ConditionNodeType::IMPLY:
       break;
     }
     return res + " " + leftOperandStr + " " + rightOperandStr + ")";

@@ -8,7 +8,6 @@
 namespace pgp
 {
 const std::string Goal::persistFunctionName = "persist";
-const std::string Goal::implyFunctionName = "imply";
 const std::string Goal::oneStepTowardsFunctionName = "oneStepTowards";
 namespace
 {
@@ -17,16 +16,12 @@ const std::size_t _persistPrefixSize = _persistPrefix.size();
 
 const std::string _oneStepTowardsPrefix = Goal::oneStepTowardsFunctionName + "(";
 const std::size_t _oneStepTowardsPrefixSize = _oneStepTowardsPrefix.size();
-
-const std::string _implyPrefix = Goal::implyFunctionName + "(";
-const std::size_t _implyPrefixSize = _implyPrefix.size();
 }
 
 
 Goal::Goal(std::unique_ptr<Condition> pObjective,
            bool pIsPersistentIfSkipped,
            bool pOneStepTowards,
-           std::unique_ptr<FactOptional> pConditionFactPtr,
            int pMaxTimeToKeepInactive,
            const std::string& pGoalGroupId)
   : _objective(std::move(pObjective)),
@@ -34,7 +29,6 @@ Goal::Goal(std::unique_ptr<Condition> pObjective,
     _inactiveSince(),
     _isPersistentIfSkipped(pIsPersistentIfSkipped),
     _oneStepTowards(pOneStepTowards),
-    _conditionFactPtr(pConditionFactPtr ? std::move(pConditionFactPtr) : std::unique_ptr<FactOptional>()),
     _goalGroupId(pGoalGroupId),
     _uuidOfLastDomainUsedForCache(),
     _cacheOfActionsThatCanSatisfyThisGoal(),
@@ -54,7 +48,6 @@ Goal::Goal(const Goal& pOther,
     _inactiveSince(pOther._inactiveSince ? std::make_unique<std::chrono::steady_clock::time_point>(*pOther._inactiveSince) : std::unique_ptr<std::chrono::steady_clock::time_point>()),
     _isPersistentIfSkipped(pOther._isPersistentIfSkipped),
     _oneStepTowards(pOther._oneStepTowards),
-    _conditionFactPtr(pOther._conditionFactPtr ? std::make_unique<FactOptional>(*pOther._conditionFactPtr, pParametersPtr) : std::unique_ptr<FactOptional>()),
     _goalGroupId(pGoalGroupIdPtr != nullptr ? *pGoalGroupIdPtr : pOther._goalGroupId),
     _uuidOfLastDomainUsedForCache(pOther._uuidOfLastDomainUsedForCache),
     _cacheOfActionsThatCanSatisfyThisGoal(pOther._cacheOfActionsThatCanSatisfyThisGoal),
@@ -88,7 +81,6 @@ void Goal::operator=(const Goal& pOther)
     _inactiveSince.reset();
   _isPersistentIfSkipped = pOther._isPersistentIfSkipped;
   _oneStepTowards = pOther._oneStepTowards;
-  _conditionFactPtr = pOther._conditionFactPtr ? std::make_unique<FactOptional>(*pOther._conditionFactPtr) : std::unique_ptr<FactOptional>();
   _goalGroupId = pOther._goalGroupId;
   _uuidOfLastDomainUsedForCache = pOther._uuidOfLastDomainUsedForCache;
   _cacheOfActionsThatCanSatisfyThisGoal = pOther._cacheOfActionsThatCanSatisfyThisGoal;
@@ -141,8 +133,6 @@ void Goal::notifyActivity()
 std::string Goal::toStr() const
 {
   auto res = _objective->toStr();
-  if (_conditionFactPtr)
-    res = implyFunctionName + "(" + _conditionFactPtr->toStr() + ", " + res + ")";
   if (_oneStepTowards)
     res = oneStepTowardsFunctionName + "(" + res + ")";
   if (_isPersistentIfSkipped)
@@ -153,8 +143,6 @@ std::string Goal::toStr() const
 std::string Goal::toPddl(std::size_t pIdentation) const
 {
   auto res = conditionToPddl(*_objective, pIdentation);
-  if (_conditionFactPtr)
-    res = "(" + implyFunctionName + " " + _conditionFactPtr->toPddl(false, false) + " " + res + ")";
   if (_oneStepTowards)
     res += " ;; _ONE_STEP_TOWARDS";
   if (_isPersistentIfSkipped)

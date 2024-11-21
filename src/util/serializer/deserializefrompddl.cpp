@@ -20,6 +20,7 @@ const char* _inferiorConditionFunctionName = "<";
 const char* _inferiorOrEqualConditionFunctionName = "<=";
 const char* _andConditonFunctionName = "and";
 const char* _orConditonFunctionName = "or";
+const char* _implyConditonFunctionName = "imply";
 
 const char* _assignWsFunctionName = "assign";
 const char* _setWsFunctionName = "set"; // deprecated
@@ -208,10 +209,15 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
                                           _expressionParsedToCondition(*(++pExpressionParsed.arguments.begin()), pOntology, pEntities, pParameters, true));
   }
   else if ((pExpressionParsed.name == _andConditonFunctionName ||
-            pExpressionParsed.name == _orConditonFunctionName) &&
+            pExpressionParsed.name == _orConditonFunctionName ||
+            pExpressionParsed.name == _implyConditonFunctionName) &&
            pExpressionParsed.arguments.size() >= 2)
   {
-    auto listNodeType = pExpressionParsed.name == _andConditonFunctionName ? ConditionNodeType::AND : ConditionNodeType::OR;
+    auto listNodeType = ConditionNodeType::AND;
+    if (pExpressionParsed.name == _orConditonFunctionName)
+      listNodeType = ConditionNodeType::OR;
+    else if (pExpressionParsed.name == _implyConditonFunctionName)
+      listNodeType = ConditionNodeType::IMPLY;
     std::list<std::unique_ptr<Condition>> elts;
     for (auto& currExp : pExpressionParsed.arguments)
       elts.emplace_back(_expressionParsedToCondition(currExp, pOntology, pEntities, pParameters, false));
@@ -263,7 +269,6 @@ std::unique_ptr<Goal> _expressionParsedToGoal(ExpressionParsed& pExpressionParse
 {
   bool isPersistentIfSkipped = false;
   bool oneStepTowards = false;
-  std::unique_ptr<FactOptional> conditionFactPtr;
 
   if (pExpressionParsed.name == "persist" && pExpressionParsed.arguments.size() == 1)
   {
@@ -275,20 +280,12 @@ std::unique_ptr<Goal> _expressionParsedToGoal(ExpressionParsed& pExpressionParse
     oneStepTowards = true;
     pExpressionParsed = pExpressionParsed.arguments.front().clone();
   }
-  if (pExpressionParsed.name == "imply" && pExpressionParsed.arguments.size() == 2)
-  {
-    auto it = pExpressionParsed.arguments.begin();
-    conditionFactPtr = std::make_unique<FactOptional>(it->toFact(pOntology, pEntities, {}, false));
-    ++it;
-    pExpressionParsed = it->clone();
-  }
 
   auto objective = _expressionParsedToCondition(pExpressionParsed, pOntology, pEntities, {}, false);
   if (!objective)
     throw std::runtime_error("Failed to load the goal objective");
   return std::make_unique<Goal>(std::move(objective), isPersistentIfSkipped, oneStepTowards,
-                                std::move(conditionFactPtr), pMaxTimeToKeepInactive,
-                                pGoalGroupId);
+                                pMaxTimeToKeepInactive, pGoalGroupId);
 }
 
 

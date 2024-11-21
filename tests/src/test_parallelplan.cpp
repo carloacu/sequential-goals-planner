@@ -179,7 +179,27 @@ void _goalsToDoInParallel()
   EXPECT_EQ("", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
 }
 
-void _2goalsInParallel()
+void _2actionsInParallel()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                      _fact_b, ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
+
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
+  _setGoalsForAPriority(problem, {_goal(_fact_a + " & " + _fact_b, ontology)});
+  EXPECT_EQ("action1, action2", _parallelPlanStr(problem, domain, _now));
+}
+
+
+void _2actionsNotInParallelBecauseFrom2DifferentSkills()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -195,11 +215,12 @@ void _2goalsInParallel()
   pgp::Domain domain(std::move(actions), ontology);
   pgp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a, ontology), _goal(_fact_b, ontology)});
-  EXPECT_EQ("action1, action2", _parallelPlanStr(problem, domain, _now));
+  EXPECT_EQ("action1\n"
+            "action2", _parallelPlanStr(problem, domain, _now));
 }
 
 
-void _goalsToDoInParallelWith2Goals()
+void _moreThan2GoalsInParallel()
 {
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -221,7 +242,7 @@ void _goalsToDoInParallelWith2Goals()
 
   pgp::Domain domain(std::move(actions), ontology);
   pgp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_a, ontology), _goal(_fact_b + " & " + _fact_c + " & " + _fact_d, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_a + " & " + _fact_b + " & " + _fact_c + " & " + _fact_d, ontology)});
   auto problem2 = problem;
 
   EXPECT_EQ("action1, action3, action4\n"
@@ -252,7 +273,7 @@ void _goalsToDoInParallelWithConflitingEffects()
 
   pgp::Domain domain(std::move(actions), ontology);
   pgp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology), _goal(_fact_c, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b + " & " + _fact_c, ontology)});
 
   EXPECT_EQ("action1\n"
             "action2", _parallelPlanStr(problem, domain, _now));
@@ -266,7 +287,8 @@ void _goalsToDoInParallelWithConflitingEffects()
 TEST(Planner, test_parallelPlan)
 {
   _goalsToDoInParallel();
-  _2goalsInParallel();
-  _goalsToDoInParallelWith2Goals();
+  _2actionsInParallel();
+  _2actionsNotInParallelBecauseFrom2DifferentSkills();
+  _moreThan2GoalsInParallel();
   _goalsToDoInParallelWithConflitingEffects();
 }
