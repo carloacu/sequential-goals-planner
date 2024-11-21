@@ -79,8 +79,8 @@ struct PRIORITIZEDGOALSPLANNER_API Fact
   bool areEqualWithoutAnArgConsideration(const Fact& pFact,
                                          const std::string& pArgToIgnore) const;
 
-  bool areEqualWithoutAnArgAndFluentConsideration(const Fact& pFact,
-                                                  const std::string& pArgToIgnore) const;
+  bool areEqualWithoutArgsAndFluentConsideration(const Fact& pFact,
+                                                 const std::list<Parameter>* pParametersToIgnorePtr) const;
 
 
   /**

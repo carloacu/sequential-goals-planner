@@ -678,20 +678,21 @@ std::unique_ptr<Condition> ConditionNode::clone(const std::map<Parameter, Entity
 
 
 bool ConditionNode::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                                          bool pIsWrappingExpressionNegated) const
+                                          bool pIsWrappingExpressionNegated,
+                                          std::list<Parameter>* pParametersPtr) const
 {
   if ((nodeType == ConditionNodeType::AND && !pIsWrappingExpressionNegated) ||
       (nodeType == ConditionNodeType::OR && pIsWrappingExpressionNegated))
   {
-    if (leftOperand && leftOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated))
+    if (leftOperand && leftOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr))
       return true;
-    return rightOperand && rightOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated);
+    return rightOperand && rightOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr);
   }
   else if ((nodeType == ConditionNodeType::OR && !pIsWrappingExpressionNegated) ||
            (nodeType == ConditionNodeType::AND && pIsWrappingExpressionNegated))
   {
-    return leftOperand && leftOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated) &&
-        rightOperand && rightOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated);
+    return leftOperand && leftOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr) &&
+        rightOperand && rightOperand->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, pParametersPtr);
   }
   else if (leftOperand && rightOperand)
   {
@@ -852,14 +853,19 @@ std::unique_ptr<Condition> ConditionExists::clone(const std::map<Parameter, Enti
 }
 
 
-bool ConditionExists::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt, bool pIsWrappingExpressionNegated) const
+bool ConditionExists::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
+                                            bool pIsWrappingExpressionNegated,
+                                            std::list<Parameter>* pParametersPtr) const
 {
   if (!condition)
     return false;
+  auto contextParameters = addParameter(pParametersPtr, parameter);
 
   auto* factOfConditionPtr = condition->fcFactPtr();
   if (factOfConditionPtr != nullptr)
-    return factOfConditionPtr->factOptional.hasAContradictionWith(pFactsOpt, parameter.name, pIsWrappingExpressionNegated);
+  {
+    return factOfConditionPtr->factOptional.hasAContradictionWith(pFactsOpt, &contextParameters, pIsWrappingExpressionNegated);
+  }
 
   auto* nodeOfConditionPtr = condition->fcNodePtr();
   if (nodeOfConditionPtr != nullptr &&
@@ -870,7 +876,7 @@ bool ConditionExists::hasAContradictionWith(const std::set<FactOptional>& pFacts
         nodeOfConditionPtr->nodeType == ConditionNodeType::INFERIOR || nodeOfConditionPtr->nodeType == ConditionNodeType::INFERIOR_OR_EQUAL)
     {
       for (auto& currFactOpt : pFactsOpt)
-        if (factOfConditionPtr->factOptional.fact.areEqualWithoutAnArgAndFluentConsideration(currFactOpt.fact, parameter.name))
+        if (factOfConditionPtr->factOptional.fact.areEqualWithoutArgsAndFluentConsideration(currFactOpt.fact, &contextParameters))
           return true;
       return false;
     }
@@ -878,8 +884,7 @@ bool ConditionExists::hasAContradictionWith(const std::set<FactOptional>& pFacts
     if (nodeOfConditionPtr->nodeType == ConditionNodeType::AND ||
         nodeOfConditionPtr->nodeType == ConditionNodeType::OR)
     {
-      std::map<Parameter, Entity> parameters{{parameter, Entity::createAnyEntity()}};
-      return condition->clone(&parameters)->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated);
+      return condition->hasAContradictionWith(pFactsOpt, pIsWrappingExpressionNegated, &contextParameters);
     }
   }
   return true;
@@ -988,9 +993,10 @@ std::unique_ptr<Condition> ConditionNot::clone(const std::map<Parameter, Entity>
 
 
 bool ConditionNot::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                                         bool pIsWrappingExpressionNegated) const
+                                         bool pIsWrappingExpressionNegated,
+                                         std::list<Parameter>* pParametersPtr) const
 {
-  return condition->hasAContradictionWith(pFactsOpt, !pIsWrappingExpressionNegated);
+  return condition->hasAContradictionWith(pFactsOpt, !pIsWrappingExpressionNegated, pParametersPtr);
 }
 
 
@@ -1102,9 +1108,10 @@ std::unique_ptr<Condition> ConditionFact::clone(const std::map<Parameter, Entity
 }
 
 bool ConditionFact::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                                          bool pIsWrappingExpressionNegated) const
+                                          bool pIsWrappingExpressionNegated,
+                                          std::list<Parameter>* pParametersPtr) const
 {
-  return factOptional.hasAContradictionWith(pFactsOpt, "", pIsWrappingExpressionNegated);
+  return factOptional.hasAContradictionWith(pFactsOpt, pParametersPtr, pIsWrappingExpressionNegated);
 }
 
 

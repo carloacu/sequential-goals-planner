@@ -74,7 +74,7 @@ struct PRIORITIZEDGOALSPLANNER_API FactOptional
   bool doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const FactOptional& pOptFact) const;
 
   bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                             const std::string& pParameterNameToIgnore,
+                             std::list<Parameter>* pParametersPtr,
                              bool pIsWrappingExpressionNegated) const;
 
   /// Is the fact negated.

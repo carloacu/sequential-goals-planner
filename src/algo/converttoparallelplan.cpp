@@ -92,6 +92,22 @@ struct ActionDataForParallelisation
     return *factsThatCanBeModifiedPtr;
   }
 
+  bool hasAContradictionWithAnEffect(const std::set<FactOptional>& pFactsOpt)
+  {
+    auto* effectPtr = getWorldStateModificationAtStartWithoutParameterPtr();
+    if (effectPtr != nullptr && effectPtr->hasAContradictionWith(pFactsOpt))
+      return true;
+
+    effectPtr = getWorldStateModificationWithoutParameterPtr();
+    if (effectPtr != nullptr && effectPtr->hasAContradictionWith(pFactsOpt))
+      return true;
+
+    effectPtr = getPotentialWorldStateModificationWithoutParameterPtr();
+    if (effectPtr != nullptr && effectPtr->hasAContradictionWith(pFactsOpt))
+      return true;
+    return false;
+  }
+
   bool canBeInParallel(ActionDataForParallelisation& pOther)
   {
     const auto& effectFacts = getAllOptFactsThatCanBeModified();
@@ -104,7 +120,10 @@ struct ActionDataForParallelisation
     if (conditionPtr != nullptr && conditionPtr->hasAContradictionWith(otherEffectFacts))
       return false;
 
-    return true;
+    if (hasAContradictionWithAnEffect(otherEffectFacts))
+      return false;
+
+    return !pOther.hasAContradictionWithAnEffect(effectFacts);
   }
 
   bool canBeInParallelOfList(std::list<ActionDataForParallelisation>& pOthers)

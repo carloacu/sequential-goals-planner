@@ -664,6 +664,36 @@ void WorldStateModificationNode::_forAllInstruction(const std::function<void (co
   }
 }
 
+
+bool WorldStateModificationNode::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
+                                                       std::list<Parameter>* pParametersPtr) const
+{
+  if (nodeType == WorldStateModificationNodeType::AND)
+  {
+    if (leftOperand && leftOperand->hasAContradictionWith(pFactsOpt, pParametersPtr))
+      return true;
+    if (rightOperand && rightOperand->hasAContradictionWith(pFactsOpt, pParametersPtr))
+      return true;
+  }
+  else if ((nodeType == WorldStateModificationNodeType::ASSIGN ||
+            nodeType == WorldStateModificationNodeType::INCREASE ||
+            nodeType == WorldStateModificationNodeType::DECREASE ||
+            nodeType == WorldStateModificationNodeType::MULTIPLY)  && leftOperand)
+  {
+    auto* leftFactPtr = toWmFact(*leftOperand);
+    if (leftFactPtr != nullptr)
+      for (const auto& currFactOpt : pFactsOpt)
+        if (leftFactPtr->factOptional.fact.areEqualWithoutFluentConsideration(currFactOpt.fact))
+          return true;
+  }
+  else if (nodeType == WorldStateModificationNodeType::FOR_ALL && rightOperand)
+  {
+    auto parameters = addParameter(pParametersPtr, parameterOpt);
+    return rightOperand->hasAContradictionWith(pFactsOpt, &parameters);
+  }
+  return false;
+}
+
 bool WorldStateModificationFact::operator==(const WorldStateModification& pOther) const
 {
   auto* otherFactPtr = toWmFact(pOther);
@@ -675,6 +705,13 @@ std::optional<Entity> WorldStateModificationFact::getFluent(const SetOfFacts& pS
 {
   return pSetOfFact.getFactFluent(factOptional.fact);
 }
+
+bool WorldStateModificationFact::hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
+                                                       std::list<Parameter>* pParametersPtr) const
+{
+  return factOptional.hasAContradictionWith(pFactsOpt, pParametersPtr, false);
+}
+
 
 std::unique_ptr<WorldStateModificationNumber> WorldStateModificationNumber::create(const std::string& pStr)
 {

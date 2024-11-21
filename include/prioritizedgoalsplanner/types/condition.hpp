@@ -153,7 +153,8 @@ struct PRIORITIZEDGOALSPLANNER_API Condition
                                            const SetOfDerivedPredicates* pDerivedPredicatesPtr = nullptr) const = 0;
 
   virtual bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                                     bool pIsWrappingExpressionNegated = false) const = 0;
+                                     bool pIsWrappingExpressionNegated = false,
+                                     std::list<Parameter>* pParametersPtr = nullptr) const = 0;
 
   std::set<FactOptional> getAllOptFacts() const;
 
@@ -251,7 +252,8 @@ struct PRIORITIZEDGOALSPLANNER_API ConditionNode : public Condition
                                    const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
 
   bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                             bool pIsWrappingExpressionNegated) const override;
+                             bool pIsWrappingExpressionNegated,
+                             std::list<Parameter>* pParametersPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return this; }
   ConditionNode* fcNodePtr() override { return this; }
@@ -318,7 +320,8 @@ struct PRIORITIZEDGOALSPLANNER_API ConditionExists : public Condition
                                    bool pInvert,
                                    const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
   bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                             bool pIsWrappingExpressionNegated) const override;
+                             bool pIsWrappingExpressionNegated,
+                             std::list<Parameter>* pParametersPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
@@ -385,7 +388,8 @@ struct PRIORITIZEDGOALSPLANNER_API ConditionNot : public Condition
                                    bool pInvert,
                                    const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
   bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                             bool pIsWrappingExpressionNegated) const override;
+                             bool pIsWrappingExpressionNegated,
+                             std::list<Parameter>* pParametersPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
@@ -448,7 +452,8 @@ struct PRIORITIZEDGOALSPLANNER_API ConditionFact : public Condition
                                    bool pInvert,
                                    const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
   bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
-                             bool pIsWrappingExpressionNegated) const override;
+                             bool pIsWrappingExpressionNegated,
+                             std::list<Parameter>* pParametersPtr) const override;
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }
@@ -507,7 +512,7 @@ struct PRIORITIZEDGOALSPLANNER_API ConditionNumber : public Condition
   std::unique_ptr<Condition> clone(const std::map<Parameter, Entity>* pConditionParametersToArgumentPtr,
                                    bool pInvert,
                                    const SetOfDerivedPredicates* pDerivedPredicatesPtr) const override;
-  bool hasAContradictionWith(const std::set<FactOptional>&, bool) const override { return false; }
+  bool hasAContradictionWith(const std::set<FactOptional>&, bool, std::list<Parameter>*) const override { return false; }
 
   const ConditionNode* fcNodePtr() const override { return nullptr; }
   ConditionNode* fcNodePtr() override { return nullptr; }

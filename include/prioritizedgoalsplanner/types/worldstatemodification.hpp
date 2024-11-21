@@ -156,6 +156,9 @@ struct PRIORITIZEDGOALSPLANNER_API WorldStateModification
    * @return A copy of this object with arguments filling.
    */
   virtual std::unique_ptr<WorldStateModification> clone(const std::map<Parameter, Entity>* pParametersToArgumentPtr) const = 0;
+
+  virtual bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
+                                     std::list<Parameter>* pParametersPtr = nullptr) const = 0;
 };
 
 

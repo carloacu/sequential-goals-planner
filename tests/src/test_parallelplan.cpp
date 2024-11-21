@@ -179,6 +179,25 @@ void _goalsToDoInParallel()
   EXPECT_EQ("", _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
 }
 
+void _2goalsInParallel()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+
+  pgp::Ontology ontology;
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
+                                                      _fact_b, ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
+
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
+  _setGoalsForAPriority(problem, {_goal(_fact_a, ontology), _goal(_fact_b, ontology)});
+  EXPECT_EQ("action1, action2", _parallelPlanStr(problem, domain, _now));
+}
+
 
 void _goalsToDoInParallelWith2Goals()
 {
@@ -214,6 +233,32 @@ void _goalsToDoInParallelWith2Goals()
             "01: (action2) [1]\n", _parallelPlanPddl(problem2, domain, _now));
 }
 
+
+void _goalsToDoInParallelWithConflitingEffects()
+{
+  const std::string action1 = "action1";
+  const std::string action2 = "action2";
+
+  pgp::Ontology ontology;
+  ontology.types = pgp::SetOfTypes::fromPddl("entity");
+  ontology.constants = pgp::SetOfEntities::fromPddl("v1 v2 - entity", ontology.types);
+  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+                                                      _fact_b + "\n" +
+                                                      _fact_c, ontology.types);
+
+  std::map<std::string, pgp::Action> actions;
+  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a + "=v1 & " + _fact_b, ontology)));
+  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_a + "=v2 & " + _fact_c, ontology)));
+
+  pgp::Domain domain(std::move(actions), ontology);
+  pgp::Problem problem;
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology), _goal(_fact_c, ontology)});
+
+  EXPECT_EQ("action1\n"
+            "action2", _parallelPlanStr(problem, domain, _now));
+}
+
+
 }
 
 
@@ -221,5 +266,7 @@ void _goalsToDoInParallelWith2Goals()
 TEST(Planner, test_parallelPlan)
 {
   _goalsToDoInParallel();
+  _2goalsInParallel();
   _goalsToDoInParallelWith2Goals();
+  _goalsToDoInParallelWithConflitingEffects();
 }

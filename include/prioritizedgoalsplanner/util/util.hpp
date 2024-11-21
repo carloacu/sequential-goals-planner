@@ -84,8 +84,15 @@ void split(std::vector<std::string>& pStrs,
            const std::string& pSeparator);
 
 
+PRIORITIZEDGOALSPLANNER_API
+std::list<Parameter> addParameter(const std::list<Parameter>* pParametersPtr,
+                                  const std::optional<Parameter>& pParameterOpt);
+
+PRIORITIZEDGOALSPLANNER_API
 void ltrim(std::string& s);
+PRIORITIZEDGOALSPLANNER_API
 void rtrim(std::string& s);
+PRIORITIZEDGOALSPLANNER_API
 void trim(std::string& s);
 
 
@@ -139,7 +146,6 @@ std::list<T> intersectTwoLists(const std::list<T>& pList1,
   }
   return intersectionList;
 }
-
 
 
 }

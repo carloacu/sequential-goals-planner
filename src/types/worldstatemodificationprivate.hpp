@@ -125,6 +125,10 @@ struct WorldStateModificationNode : public WorldStateModification
     return res;
   }
 
+  bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
+                             std::list<Parameter>* pParametersPtr) const override;
+
+
   WorldStateModificationNodeType nodeType;
   std::unique_ptr<WorldStateModification> leftOperand;
   std::unique_ptr<WorldStateModification> rightOperand;
@@ -240,6 +244,9 @@ struct WorldStateModificationFact : public WorldStateModification
     return res;    return res;
   }
 
+  bool hasAContradictionWith(const std::set<FactOptional>& pFactsOpt,
+                             std::list<Parameter>* pParametersPtr) const override;
+
   FactOptional factOptional;
 
 private:
@@ -305,6 +312,9 @@ struct WorldStateModificationNumber : public WorldStateModification
   {
     return std::make_unique<WorldStateModificationNumber>(_nb);
   }
+
+  bool hasAContradictionWith(const std::set<FactOptional>&,
+                             std::list<Parameter>*) const override { return false; }
 
   const Number& getNb() const { return _nb; }
 

@@ -296,8 +296,8 @@ bool Fact::areEqualWithoutAnArgConsideration(const Fact& pFact,
 }
 
 
-bool Fact::areEqualWithoutAnArgAndFluentConsideration(const Fact& pFact,
-                                                      const std::string& pArgToIgnore) const
+bool Fact::areEqualWithoutArgsAndFluentConsideration(const Fact& pFact,
+                                                     const std::list<Parameter>* pParametersToIgnorePtr) const
 {
   if (pFact._name != _name ||
       pFact._arguments.size() != _arguments.size())
@@ -307,9 +307,27 @@ bool Fact::areEqualWithoutAnArgAndFluentConsideration(const Fact& pFact,
   auto itOtherParam = pFact._arguments.begin();
   while (itParam != _arguments.end())
   {
-    if (*itParam != *itOtherParam && !itParam->isAnyValue() && !itOtherParam->isAnyValue() &&
-        itParam->value != pArgToIgnore)
-      return false;
+    if (*itParam != *itOtherParam && !itParam->isAnyValue() && !itOtherParam->isAnyValue())
+    {
+      if (pParametersToIgnorePtr != nullptr)
+      {
+        bool found = false;
+        for (auto& currParam : *pParametersToIgnorePtr)
+        {
+          if (currParam.name == itParam->value)
+          {
+            found = true;
+            break;
+          }
+        }
+        if (!found)
+          return false;
+      }
+      else
+      {
+        return false;
+      }
+    }
     ++itParam;
     ++itOtherParam;
   }

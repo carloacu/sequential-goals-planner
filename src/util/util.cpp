@@ -265,6 +265,17 @@ void split(std::vector<std::string>& pStrs,
 }
 
 
+std::list<Parameter> addParameter(const std::list<Parameter>* pParametersPtr,
+                                  const std::optional<Parameter>& pParameterOpt)
+{
+  std::list<Parameter> parameters;
+  if (pParametersPtr != nullptr)
+    parameters.insert(parameters.end(), pParametersPtr->begin(), pParametersPtr->end());
+  if (pParameterOpt)
+    parameters.emplace_back(*pParameterOpt);
+  return parameters;
+}
+
 // trim from start (in place)
 void ltrim(std::string& s)
 {
