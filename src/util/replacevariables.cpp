@@ -1,7 +1,7 @@
-#include <prioritizedgoalsplanner/util/replacevariables.hpp>
-#include <prioritizedgoalsplanner/util/arithmeticevaluator.hpp>
+#include <orderedgoalsplanner/util/replacevariables.hpp>
+#include <orderedgoalsplanner/util/arithmeticevaluator.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 

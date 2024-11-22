@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/ontology.hpp>
-#include <prioritizedgoalsplanner/types/problem.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 
-using namespace pgp;
+using namespace ogp;
 
-void _setGoalsForAPriority(pgp::Problem& pProblem,
-                           const std::vector<pgp::Goal>& pGoals,
+void _setGoalsForAPriority(ogp::Problem& pProblem,
+                           const std::vector<ogp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = pgp::GoalStack::defaultPriority)
+                           int pPriority = ogp::GoalStack::defaultPriority)
 {
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }
@@ -36,12 +36,12 @@ TEST(Tool, test_goalsCache)
   const std::string action3 = "action3";
   const std::string action4 = "action4";
 
-  pgp::Ontology ontology;
-  ontology.types = pgp::SetOfTypes::fromPddl("e1 e2 - entity\n"
+  ogp::Ontology ontology;
+  ontology.types = ogp::SetOfTypes::fromPddl("e1 e2 - entity\n"
                                             "result_type");
-  ontology.constants = pgp::SetOfEntities::fromPddl("a b - entity\n"
+  ontology.constants = ogp::SetOfEntities::fromPddl("a b - entity\n"
                                                    "r1 r2 - result_type", ontology.types);
-  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b(?e - entity) - result_type\n"
                                                      "fact_c\n"
                                                      "fact_d\n"
@@ -50,45 +50,45 @@ TEST(Tool, test_goalsCache)
                                                      "fact_h",
                                                      ontology.types);
 
-  std::map<std::string, pgp::Action> actions;
+  std::map<std::string, ogp::Action> actions;
 
   {
-    std::vector<pgp::Parameter> parameters1(1, pgp::Parameter::fromStr("?e - e1", ontology.types));
-    pgp::Action actionObj1(pgp::strToCondition("fact_d", ontology, {}, parameters1),
-                          pgp::strToWsModification("fact_d & not(fact_a) & assign(fact_b(?e), r1)", ontology, {}, parameters1));
+    std::vector<ogp::Parameter> parameters1(1, ogp::Parameter::fromStr("?e - e1", ontology.types));
+    ogp::Action actionObj1(ogp::strToCondition("fact_d", ontology, {}, parameters1),
+                          ogp::strToWsModification("fact_d & not(fact_a) & assign(fact_b(?e), r1)", ontology, {}, parameters1));
     actionObj1.parameters = std::move(parameters1);
     actions.emplace(action1, actionObj1);
   }
 
   {
-    pgp::Action actionObj2(pgp::strToCondition("fact_c", ontology, {}, {}),
-                          pgp::strToWsModification("fact_d", ontology, {}, {}));
+    ogp::Action actionObj2(ogp::strToCondition("fact_c", ontology, {}, {}),
+                          ogp::strToWsModification("fact_d", ontology, {}, {}));
     actions.emplace(action2, actionObj2);
   }
 
   {
-    pgp::Action actionObj3({},
-                          pgp::strToWsModification("fact_c", ontology, {}, {}));
+    ogp::Action actionObj3({},
+                          ogp::strToWsModification("fact_c", ontology, {}, {}));
     actions.emplace(action3, actionObj3);
   }
 
   {
-    pgp::Action actionObj4(pgp::strToCondition("fact_h", ontology, {}, {}),
-                          pgp::strToWsModification("fact_a", ontology, {}, {}));
+    ogp::Action actionObj4(ogp::strToCondition("fact_h", ontology, {}, {}),
+                          ogp::strToWsModification("fact_a", ontology, {}, {}));
     actions.emplace(action4, actionObj4);
   }
 
   SetOfEvents setOfEvents;
   std::vector<Parameter> eventParameters{Parameter::fromStr("?e - entity", ontology.types)};
   {
-    pgp::Event event(pgp::strToCondition("fact_a", ontology, {}, eventParameters),
-                    pgp::strToWsModification("forall(?e - entity, when(fact_f(?e), set(fact_b(?e), fact_e(?e))))", ontology, {}, eventParameters));
+    ogp::Event event(ogp::strToCondition("fact_a", ontology, {}, eventParameters),
+                    ogp::strToWsModification("forall(?e - entity, when(fact_f(?e), set(fact_b(?e), fact_e(?e))))", ontology, {}, eventParameters));
     event.parameters = std::move(eventParameters);
     setOfEvents.add(event);
   }
   {
-    pgp::Event event(pgp::strToCondition("fact_d", ontology, {}, eventParameters),
-                    pgp::strToWsModification("fact_h", ontology, {}, eventParameters));
+    ogp::Event event(ogp::strToCondition("fact_d", ontology, {}, eventParameters),
+                    ogp::strToWsModification("fact_h", ontology, {}, eventParameters));
     event.parameters = std::move(eventParameters);
     setOfEvents.add(event);
   }
@@ -98,12 +98,12 @@ TEST(Tool, test_goalsCache)
 
   Problem problem;
   auto& entities = problem.entities;
-  entities = pgp::SetOfEntities::fromPddl("ent - entity\n"
+  entities = ogp::SetOfEntities::fromPddl("ent - entity\n"
                                          "sub_ent1 - e1\n"
                                          "sub_ent2 - e2", ontology.types);
 
   {
-    _setGoalsForAPriority(problem, {pgp::Goal::fromStr("fact_d", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("fact_d", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: fact_d\n"
               "---------------------------\n"
@@ -113,7 +113,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {pgp::Goal::fromStr("=(fact_b(ent), r2)", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("=(fact_b(ent), r2)", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: fact_b(ent)=r2\n"
               "---------------------------\n"
@@ -123,7 +123,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {pgp::Goal::fromStr("!fact_c", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("!fact_c", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("", problem.goalStack.printGoalsCache());
     EXPECT_EQ("", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
@@ -131,7 +131,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {pgp::Goal::fromStr("not(=(fact_b(ent), r1))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(ent), r1))", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(ent)=r1\n"
               "---------------------------\n"
@@ -141,7 +141,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {pgp::Goal::fromStr("not(=(fact_b(sub_ent1), r1))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent1), r1))", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(sub_ent1)=r1\n"
               "---------------------------\n"
@@ -152,7 +152,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {pgp::Goal::fromStr("not(=(fact_b(sub_ent2), r1))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent2), r1))", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(sub_ent2)=r1\n"
               "---------------------------\n"
@@ -162,7 +162,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {pgp::Goal::fromStr("not(=(fact_b(sub_ent1), r2))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent1), r2))", domainOntology, entities)});
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(sub_ent1)=r2\n"
               "---------------------------\n"

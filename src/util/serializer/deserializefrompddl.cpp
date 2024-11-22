@@ -1,12 +1,12 @@
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include <memory>
-#include <prioritizedgoalsplanner/types/axiom.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/types/axiom.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/problem.hpp>
 #include "../../types/expressionParsed.hpp"
 #include "../../types/worldstatemodificationprivate.hpp"
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -872,7 +872,7 @@ Domain pddlToDomain(const std::string& pStr,
                     const std::map<std::string, Domain>& pPreviousDomains)
 {
   std::string domainName = "";
-  pgp::Ontology ontology;
+  ogp::Ontology ontology;
   std::map<ActionId, Action> actions;
   std::map<SetOfEventsId, SetOfEvents> idToSetOfEvents;
   SetOfConstFacts timelessFacts;
@@ -939,16 +939,16 @@ Domain pddlToDomain(const std::string& pStr,
         }
         else if (token == ":predicates")
         {
-          ontology.predicates.addAll(pgp::SetOfPredicates::fromPddl(pStr, pos, ontology.types));
+          ontology.predicates.addAll(ogp::SetOfPredicates::fromPddl(pStr, pos, ontology.types));
         }
         else if (token == ":functions")
         {
           auto numberType = ontology.types.nameToType("number");
-          ontology.predicates.addAll(pgp::SetOfPredicates::fromPddl(pStr, pos, ontology.types, numberType));
+          ontology.predicates.addAll(ogp::SetOfPredicates::fromPddl(pStr, pos, ontology.types, numberType));
         }
         else if (token == ":timeless")
         {
-          timelessFacts = pgp::SetOfConstFacts::fromPddl(pStr, pos, ontology, {});
+          timelessFacts = ogp::SetOfConstFacts::fromPddl(pStr, pos, ontology, {});
         }
         else if (token == ":axiom")
         {
@@ -1065,7 +1065,7 @@ DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
           const auto& entities = res.problemPtr->entities;
 
           auto expressionParsed = ExpressionParsed::fromPddl(pStr, pos, false);
-          if (expressionParsed.name == "and" && expressionParsed.tags.count("__PRIORITIZED") > 0)
+          if (expressionParsed.name == "and" && expressionParsed.tags.count("__ORDERED") > 0)
           {
             for (auto& currGoalExpParsed : expressionParsed.arguments)
             {

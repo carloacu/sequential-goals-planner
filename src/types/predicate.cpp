@@ -1,10 +1,10 @@
-#include <prioritizedgoalsplanner/types/predicate.hpp>
+#include <orderedgoalsplanner/types/predicate.hpp>
 #include <stdexcept>
-#include <prioritizedgoalsplanner/types/setoftypes.hpp>
+#include <orderedgoalsplanner/types/setoftypes.hpp>
 #include "expressionParsed.hpp"
 
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -97,4 +97,4 @@ std::string Predicate::toStr() const
  }
 
 
-} // !pgp
+} // !ogp

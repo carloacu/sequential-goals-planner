@@ -1,14 +1,14 @@
-#include <prioritizedgoalsplanner/types/goalstack.hpp>
+#include <orderedgoalsplanner/types/goalstack.hpp>
 #include <map>
 #include <sstream>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
-#include <prioritizedgoalsplanner/types/setofevents.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
-#include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <orderedgoalsplanner/types/setofevents.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/lookforanactionoutputinfos.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 const int GoalStack::defaultPriority = 10;
 
@@ -46,7 +46,7 @@ bool GoalStack::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlanne
   if (pGoalsToAdd != nullptr && !pGoalsToAdd->empty())
     goalChanged = _addGoals(*pGoalsToAdd, pWorldState, pNow) || goalChanged;
   if (pGoalsToAddInCurrentPriority != nullptr && !pGoalsToAddInCurrentPriority->empty())
-    goalChanged = _addGoals(std::map<int, std::vector<pgp::Goal>>{{currentPriority, *pGoalsToAddInCurrentPriority}}, pWorldState, pNow) || goalChanged;
+    goalChanged = _addGoals(std::map<int, std::vector<ogp::Goal>>{{currentPriority, *pGoalsToAddInCurrentPriority}}, pWorldState, pNow) || goalChanged;
 
   if (goalChanged)
   {
@@ -516,4 +516,4 @@ bool GoalStack::_removeNoStackableGoals(const WorldState& pWorldState,
 
 
 
-} // !pgp
+} // !ogp

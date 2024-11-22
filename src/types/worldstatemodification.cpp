@@ -1,12 +1,12 @@
-#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/ontology.hpp>
-#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <orderedgoalsplanner/types/worldstatemodification.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/types/worldstate.hpp>
 #include "expressionParsed.hpp"
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 #include "worldstatemodificationprivate.hpp"
 
-namespace pgp
+namespace ogp
 {
 
 void Successions::add(const Successions& pSuccessions)
@@ -78,4 +78,4 @@ std::unique_ptr<WorldStateModification> WorldStateModification::createByConcaten
 }
 
 
-} // !pgp
+} // !ogp

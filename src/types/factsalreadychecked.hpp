@@ -1,10 +1,10 @@
-#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_FACTSALREADYCHECKED_HPP
-#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_FACTSALREADYCHECKED_HPP
+#ifndef INCLUDE_ORDEREDGOALSPLANNER_TYPES_FACTSALREADYCHECKED_HPP
+#define INCLUDE_ORDEREDGOALSPLANNER_TYPES_FACTSALREADYCHECKED_HPP
 
 #include <set>
-#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <orderedgoalsplanner/types/fact.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 struct FactsAlreadyChecked
@@ -20,7 +20,7 @@ struct FactsAlreadyChecked
 };
 
 
-} // !pgp
+} // !ogp
 
 
-#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_FACTSALREADYCHECKED_HPP
+#endif // INCLUDE_ORDEREDGOALSPLANNER_TYPES_FACTSALREADYCHECKED_HPP

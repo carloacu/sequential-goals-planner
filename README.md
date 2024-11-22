@@ -1,4 +1,4 @@
-# Contextual Planner
+# Ordered Goals Planner
 
 
 ## Description
@@ -9,7 +9,7 @@ Each pieces of goals inside the `and` function with this c tag `__PRIORITIZED` i
 Example:
 ```lisp
   (:goal
-    (and ;; __PRIORITIZED
+    (and ;; __ORDERED
       (at-object box1 locationC)
       (at robot1 locationA)
     )
@@ -23,7 +23,7 @@ Even if the plan for satisfying the first goal is chosen in consideration of hel
 The plannification part is highly inspirated from the PDDL language.<br/>
 https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language
 
-A Kotlin version for Android is also available here https://github.com/carloacu/contextualplanner-android
+A Kotlin version for Android (that needs to be updated) is also available here https://github.com/carloacu/contextualplanner-android
 
 
 ## Build
@@ -38,7 +38,7 @@ If you want to build in debug with the tests you can do
 
 
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_CONTEXTUAL_PLANNER_TESTS=ON ./ && make -C build -j4
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_ORDERED_GOALS_PLANNER_TESTS=ON ./ && make -C build -j4
 ```
 
 
@@ -49,7 +49,7 @@ There is a PDDL example in `data/simple`.
 After the compilation you can test the planner by doing
 
 ```bash
-./build/bin/contextualplanner -d data/simple/domain.pddl -p data/simple/problem.pddl
+./build/bin/oderedgoalsplanner -d data/simple/domain.pddl -p data/simple/problem.pddl
 ```
 
 The output should be:
@@ -128,21 +128,21 @@ The improvements for chatbot and social robotics are:
 ## Code documentation
 
 
-[Here](include/contextualplanner/contextualplanner.hpp) are the documented headers of the main functions.
+[Here](include/orderedgoalsplanner/orderedgoalsplanner.hpp) are the documented headers of the main functions.
 
 ### Types
 
 Here are the types providec by this library:
 
- * [Action](include/contextualplanner/types/action.hpp): Axiomatic thing that the bot can do.
- * [Domain](include/contextualplanner/types/domain.hpp): Set of all the actions that the bot can do.
- * [Expression](include/contextualplanner/types/expression.hpp): Expression for making arithmetic comparisons between facts.
- * [Fact](include/contextualplanner/types/fact.hpp): Axiomatic knowledge that can be contained in the world.
- * [Goal](include/contextualplanner/types/goal.hpp): A characteristic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
- * [Historical](include/contextualplanner/types/historical.hpp): Container of the actions already done.
- * [Problem](include/contextualplanner/types/historical.hpp): Current world, goal for the world and historical of actions done.
- * [SetOfFacts](include/contextualplanner/types/setoffacts.hpp): Container of a set of fact modifications to apply in the world.
- * [WorldModification](include/contextualplanner/types/worldmodification.hpp): Specification of a modification of the world.
+ * [Action](include/orderedgoalsplanner/types/action.hpp): Axiomatic thing that the bot can do.
+ * [Domain](include/orderedgoalsplanner/types/domain.hpp): Set of all the actions that the bot can do.
+ * [Expression](include/orderedgoalsplanner/types/expression.hpp): Expression for making arithmetic comparisons between facts.
+ * [Fact](include/orderedgoalsplanner/types/fact.hpp): Axiomatic knowledge that can be contained in the world.
+ * [Goal](include/orderedgoalsplanner/types/goal.hpp): A characteristic that the world should have. It is the motivation of the bot for doing actions to respect this characteristic of the world.
+ * [Historical](include/orderedgoalsplanner/types/historical.hpp): Container of the actions already done.
+ * [Problem](include/orderedgoalsplanner/types/historical.hpp): Current world, goal for the world and historical of actions done.
+ * [SetOfFacts](include/orderedgoalsplanner/types/setoffacts.hpp): Container of a set of fact modifications to apply in the world.
+ * [WorldModification](include/orderedgoalsplanner/types/worldmodification.hpp): Specification of a modification of the world.
 
 
 
@@ -155,8 +155,8 @@ Here is an example with only one action to do:
 #include <map>
 #include <memory>
 #include <assert.h>
-#include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/orderedgoalsplanner.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 
 void planningDummyExample()
@@ -170,28 +170,28 @@ void planningDummyExample()
   // Current clock to set to different functions
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(userIsGreeted, ontology.types);
+  ogp::Ontology ontology;
+  ontology.predicates = ogp::SetOfPredicates::fromStr(userIsGreeted, ontology.types);
 
   // Initialize the domain with an action
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::strToWsModification(userIsGreeted, ontology, {}, {})));
-  cp::Domain domain(actions, ontology);
+  std::map<ogp::ActionId, ogp::Action> actions;
+  actions.emplace(sayHi, ogp::Action({}, ogp::strToWsModification(userIsGreeted, ontology, {}, {})));
+  ogp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy
-  cp::Problem problem;
-  problem.goalStack.setGoals({cp::Goal::fromStr(userIsGreeted, ontology, {})}, problem.worldState, now);
+  ogp::Problem problem;
+  problem.goalStack.setGoals({ogp::Goal::fromStr(userIsGreeted, ontology, {})}, problem.worldState, now);
 
   // Look for an action to do
-  auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult1 = ogp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(!planResult1.empty());
   const auto& firstActionInPlan = planResult1.front();
   assert(sayHi == firstActionInPlan.actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, firstActionInPlan, now);
+  ogp::notifyActionDone(problem, domain, firstActionInPlan, now);
 
   // Look for the next action to do
-  auto planResult2 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult2 = ogp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(planResult2.empty()); // No action found
 }
 ```
@@ -204,8 +204,8 @@ Here is an example with two actions to do and with the usage of preconditions:
 #include <map>
 #include <memory>
 #include <assert.h>
-#include <contextualplanner/contextualplanner.hpp>
-#include <contextualplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/orderedgoalsplanner.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 
 void planningExampleWithAPreconditionSolve()
@@ -221,39 +221,39 @@ void planningExampleWithAPreconditionSolve()
   // Current clock to set to different functions
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
 
-  cp::Ontology ontology;
-  ontology.predicates = cp::SetOfPredicates::fromStr(userIsGreeted + "\n" +
-                                                     proposedOurHelpToUser, ontology.types);
+  ogp::Ontology ontology;
+  ontology.predicates = ogp::SetOfPredicates::fromStr(userIsGreeted + "\n" +
+                                                      proposedOurHelpToUser, ontology.types);
 
   // Initialize the domain with a set of actions
-  std::map<cp::ActionId, cp::Action> actions;
-  actions.emplace(sayHi, cp::Action({}, cp::strToWsModification(userIsGreeted, ontology, {}, {})));
-  actions.emplace(askHowICanHelp, cp::Action(cp::strToCondition(userIsGreeted, ontology, {}, {}),
-                                             cp::strToWsModification(proposedOurHelpToUser, ontology, {}, {})));
-  cp::Domain domain(actions, ontology);
+  std::map<ogp::ActionId, ogp::Action> actions;
+  actions.emplace(sayHi, ogp::Action({}, ogp::strToWsModification(userIsGreeted, ontology, {}, {})));
+  actions.emplace(askHowICanHelp, ogp::Action(ogp::strToCondition(userIsGreeted, ontology, {}, {}),
+                                              ogp::strToWsModification(proposedOurHelpToUser, ontology, {}, {})));
+  ogp::Domain domain(actions, ontology);
 
   // Initialize the problem with the goal to satisfy
-  cp::Problem problem;
-  problem.goalStack.setGoals({cp::Goal::fromStr(proposedOurHelpToUser, ontology, {})}, problem.worldState, now);
+  ogp::Problem problem;
+  problem.goalStack.setGoals({ogp::Goal::fromStr(proposedOurHelpToUser, ontology, {})}, problem.worldState, now);
 
   // Look for an action to do
-  auto planResult1 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult1 = ogp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(!planResult1.empty());
   const auto& firstActionInPlan1 = planResult1.front();
   assert(sayHi == firstActionInPlan1.actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, firstActionInPlan1, now);
+  ogp::notifyActionDone(problem, domain, firstActionInPlan1, now);
 
   // Look for the next action to do
-  auto planResult2 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult2 = ogp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(!planResult2.empty());
   const auto& firstActionInPlan2 = planResult2.front();
   assert(askHowICanHelp == firstActionInPlan2.actionInvocation.actionId); // The action found is "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  cp::notifyActionDone(problem, domain, firstActionInPlan2, now);
+  ogp::notifyActionDone(problem, domain, firstActionInPlan2, now);
 
   // Look for the next action to do
-  auto planResult3 = cp::planForMoreImportantGoalPossible(problem, domain, true, now);
+  auto planResult3 = ogp::planForMoreImportantGoalPossible(problem, domain, true, now);
   assert(planResult3.empty()); // No action found
 }
 ```

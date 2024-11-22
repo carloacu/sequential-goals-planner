@@ -1,8 +1,8 @@
-#include <prioritizedgoalsplanner/util/arithmeticevaluator.hpp>
+#include <orderedgoalsplanner/util/arithmeticevaluator.hpp>
 #include <string>
 #include <sstream>
 
-namespace pgp
+namespace ogp
 {
 
 class ArithmeticEvaluator

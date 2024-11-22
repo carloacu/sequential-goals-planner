@@ -1,10 +1,10 @@
 #include "expressionParsed.hpp"
 #include <stdexcept>
-#include <prioritizedgoalsplanner/types/factoptional.hpp>
-#include <prioritizedgoalsplanner/types/ontology.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/factoptional.hpp>
+#include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 namespace
@@ -433,4 +433,4 @@ bool ExpressionParsed::isEndOfTokenSeparator(char pChar)
 }
 
 
-} // !pgp
+} // !ogp

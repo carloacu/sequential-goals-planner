@@ -1,5 +1,5 @@
 #include "plannerusingexternaldata.hpp"
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
 std::string PlannerUsingExternalData::dataPath = "";
 
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   if (PlannerUsingExternalData::dataPath.empty())
     throw std::runtime_error("--dataPath option is missing. (For ex do: --dataPath ../../data/)");
 
-  pgp::PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS = true;
+  ogp::ORDEREDGOALSPLANNER_DEBUG_FOR_TESTS = true;
   ::testing::InitGoogleTest(&argc, argv);
   int res = RUN_ALL_TESTS();
   return res;

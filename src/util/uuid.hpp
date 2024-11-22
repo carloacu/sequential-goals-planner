@@ -1,14 +1,14 @@
-#ifndef PRIORITIZEDGOALSPLANNER_SRC_UTIL_UUID_HPP
-#define PRIORITIZEDGOALSPLANNER_SRC_UTIL_UUID_HPP
+#ifndef ORDEREDGOALSPLANNER_SRC_UTIL_UUID_HPP
+#define ORDEREDGOALSPLANNER_SRC_UTIL_UUID_HPP
 
 #include <string>
 
-namespace pgp
+namespace ogp
 {
 
 std::string generateUuid();
 
-} // End of namespace pgp
+} // End of namespace ogp
 
 
-#endif // PRIORITIZEDGOALSPLANNER_SRC_UTIL_UUID_HPP
+#endif // ORDEREDGOALSPLANNER_SRC_UTIL_UUID_HPP

@@ -1,17 +1,17 @@
-#include <prioritizedgoalsplanner/types/derivedpredicate.hpp>
-#include <prioritizedgoalsplanner/types/setofentities.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/types/derivedpredicate.hpp>
+#include <orderedgoalsplanner/types/setofentities.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 DerivedPredicate::DerivedPredicate(const Predicate& pPredicate,
                                    const std::string& pConditionStr,
-                                   const pgp::Ontology& pOntology)
+                                   const ogp::Ontology& pOntology)
   : predicate(pPredicate),
     condition()
 {
-  std::vector<pgp::Parameter> parameters;
+  std::vector<ogp::Parameter> parameters;
   for (const auto& currParam : pPredicate.parameters)
     if (currParam.isAParameterToFill())
       parameters.emplace_back(currParam);
@@ -35,4 +35,4 @@ void DerivedPredicate::operator=(const DerivedPredicate& pDerivedPredicate)
 }
 
 
-} // !pgp
+} // !ogp

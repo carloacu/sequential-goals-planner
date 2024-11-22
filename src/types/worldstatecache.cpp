@@ -1,10 +1,10 @@
 #include "worldstatecache.hpp"
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/worldstate.hpp>
 #include "factsalreadychecked.hpp"
 
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -142,7 +142,7 @@ void WorldStateCache::_feedAccessibleFactsFromDeduction(const WorldStateModifica
   std::vector<Fact> removableFactsToAddWithAnyValues;
 
   const auto& setOfFacts = _worldState.factsMapping();
-  pEffect.iterateOverAllAccessibleFacts([&](const pgp::FactOptional& pFactOpt) {
+  pEffect.iterateOverAllAccessibleFacts([&](const ogp::FactOptional& pFactOpt) {
     if (!pFactOpt.isFactNegated)
     {
       if (_worldState.facts().count(pFactOpt.fact) == 0 &&
@@ -243,4 +243,4 @@ void WorldStateCache::_feedAccessibleFactsFromNotFact(const Fact& pFact,
 }
 
 
-} // !pgp
+} // !ogp

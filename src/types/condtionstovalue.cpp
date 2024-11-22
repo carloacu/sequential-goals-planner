@@ -1,8 +1,8 @@
-#include <prioritizedgoalsplanner/types/condtionstovalue.hpp>
-#include <prioritizedgoalsplanner/types/condition.hpp>
-#include <prioritizedgoalsplanner/types/factoptional.hpp>
+#include <orderedgoalsplanner/types/condtionstovalue.hpp>
+#include <orderedgoalsplanner/types/condition.hpp>
+#include <orderedgoalsplanner/types/factoptional.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 
@@ -38,5 +38,5 @@ void ConditionsToValue::erase(const std::string& pValue)
 
 
 
-} // !pgp
+} // !ogp
 

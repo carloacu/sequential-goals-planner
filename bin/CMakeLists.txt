@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(prioritized_goals_planner_bin)
+project(ordered_goals_planner_bin)
 
 include_directories(".")
 
 
-if(NOT PRIORITIZEDGOALSPLANNER_FOUND)
-  find_package(prioritized_goals_planner_lib)
+if(NOT ORDEREDGOALSPLANNER_FOUND)
+  find_package(ordered_goals_planner_lib)
 endif()
 
 
 add_executable(
-  prioritized_goals_planner
+  ordered_goals_planner
 
   src/main.cpp
 )
 
 
-target_link_libraries(prioritized_goals_planner
-  ${PRIORITIZEDGOALSPLANNER_LIBRARIES}
+target_link_libraries(ordered_goals_planner
+  ${ORDEREDGOALSPLANNER_LIBRARIES}
 )

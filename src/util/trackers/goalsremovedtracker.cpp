@@ -1,8 +1,8 @@
-#include <prioritizedgoalsplanner/util/trackers/goalsremovedtracker.hpp>
-#include <prioritizedgoalsplanner/types/goalstack.hpp>
+#include <orderedgoalsplanner/util/trackers/goalsremovedtracker.hpp>
+#include <orderedgoalsplanner/types/goalstack.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 
@@ -36,5 +36,5 @@ GoalsRemovedTracker::~GoalsRemovedTracker()
 
 
 
-} // !pgp
+} // !ogp
 

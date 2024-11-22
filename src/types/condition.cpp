@@ -1,12 +1,12 @@
-#include <prioritizedgoalsplanner/types/condition.hpp>
+#include <orderedgoalsplanner/types/condition.hpp>
 #include <optional>
-#include <prioritizedgoalsplanner/types/ontology.hpp>
-#include <prioritizedgoalsplanner/types/setofderivedpredicates.hpp>
-#include <prioritizedgoalsplanner/types/worldstate.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/types/setofderivedpredicates.hpp>
+#include <orderedgoalsplanner/types/worldstate.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -1190,4 +1190,4 @@ std::unique_ptr<Condition> ConditionNumber::clone(const std::map<Parameter, Enti
 }
 
 
-} // !pgp
+} // !ogp

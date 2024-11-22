@@ -1,5 +1,5 @@
-#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_EXPRESSION_PARSED_HPP
-#define INCLUDE_PRIORITIZEDGOALSPLANNER_EXPRESSION_PARSED_HPP
+#ifndef INCLUDE_ORDEREDGOALSPLANNER_EXPRESSION_PARSED_HPP
+#define INCLUDE_ORDEREDGOALSPLANNER_EXPRESSION_PARSED_HPP
 
 #include <list>
 #include <memory>
@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace pgp
+namespace ogp
 {
 struct FactOptional;
 struct Ontology;
@@ -70,7 +70,7 @@ struct ExpressionParsed
 };
 
 
-} // !pgp
+} // !ogp
 
 
-#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_EXPRESSION_PARSED_HPP
+#endif // INCLUDE_ORDEREDGOALSPLANNER_EXPRESSION_PARSED_HPP

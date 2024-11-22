@@ -1,14 +1,14 @@
-#ifndef PRIORITIZEDGOALSPLANNER_SRC_ALGO_NOTIFYACTIONDONE_HPP
-#define PRIORITIZEDGOALSPLANNER_SRC_ALGO_NOTIFYACTIONDONE_HPP
+#ifndef ORDEREDGOALSPLANNER_SRC_ALGO_NOTIFYACTIONDONE_HPP
+#define ORDEREDGOALSPLANNER_SRC_ALGO_NOTIFYACTIONDONE_HPP
 
 
 #include <chrono>
 #include <map>
 #include <memory>
 #include <vector>
-#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <orderedgoalsplanner/util/alias.hpp>
 
-namespace pgp
+namespace ogp
 {
 struct Action;
 struct ActionInvocationWithGoal;
@@ -56,7 +56,7 @@ void updateProblemForNextPotentialPlannerResultWithAction(
     LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
 
-} // End of namespace pgp
+} // End of namespace ogp
 
 
-#endif // PRIORITIZEDGOALSPLANNER_SRC_ALGO_NOTIFYACTIONDONE_HPP
+#endif // ORDEREDGOALSPLANNER_SRC_ALGO_NOTIFYACTIONDONE_HPP

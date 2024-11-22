@@ -1,7 +1,7 @@
-#include <prioritizedgoalsplanner/types/type.hpp>
+#include <orderedgoalsplanner/types/type.hpp>
 #include <stdexcept>
 
-namespace pgp
+namespace ogp
 {
 
 Type::Type(const std::string& pName,
@@ -74,4 +74,4 @@ std::shared_ptr<Type> Type::getSmallerType(const std::shared_ptr<Type>& pType1,
 }
 
 
-} // !pgp
+} // !ogp

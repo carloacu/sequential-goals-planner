@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <prioritizedgoalsplanner/util/arithmeticevaluator.hpp>
+#include <orderedgoalsplanner/util/arithmeticevaluator.hpp>
 
-using namespace pgp;
+using namespace ogp;
 
 TEST(Tool, test_arithmeticEvaluator)
 { 

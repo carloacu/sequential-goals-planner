@@ -1,11 +1,11 @@
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/condition.hpp>
-#include <prioritizedgoalsplanner/types/worldstate.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/condition.hpp>
+#include <orderedgoalsplanner/types/worldstate.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 #include "../util/uuid.hpp"
 #include "expressionParsed.hpp"
 
-namespace pgp
+namespace ogp
 {
 const SetOfEventsId Domain::setOfEventsIdFromConstructor = "soe_from_constructor";
 
@@ -169,7 +169,7 @@ void _updateActionsPredecessors(
  * @param[in] pSatisfiedConditionPtr Condition that is already satisfied.
  * @return True if the world state modification can do some modification in the world.
  */
-bool _canWmDoSomething(const std::unique_ptr<pgp::WorldStateModification>& pWorldStateModification,
+bool _canWmDoSomething(const std::unique_ptr<ogp::WorldStateModification>& pWorldStateModification,
                        const std::unique_ptr<Condition>& pSatisfiedConditionPtr)
 {
   if (!pWorldStateModification)
@@ -525,4 +525,4 @@ void Domain::_updateSuccessions()
 
 
 
-} // !pgp
+} // !ogp

@@ -1,7 +1,7 @@
-#include <prioritizedgoalsplanner/types/factoptional.hpp>
+#include <orderedgoalsplanner/types/factoptional.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 FactOptional::FactOptional(const Fact& pFact,
@@ -133,4 +133,4 @@ void FactOptional::_simplify()
 
 
 
-} // !pgp
+} // !ogp

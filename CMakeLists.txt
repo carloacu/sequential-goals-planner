@@ -1,4 +1,4 @@
-project(prioritizedgoalsplanner)
+project(orderedgoalsplanner)
 cmake_minimum_required(VERSION 3.8)
 
 option(
@@ -8,57 +8,62 @@ option(
 )
 
 
-include(prioritizedgoalsplanner-config.cmake)
+include(orderedgoalsplanner-config.cmake)
 
 # Making a lib
-set(CONTEXTUAL_PLANNER_HPPS
-    include/prioritizedgoalsplanner/types/action.hpp
-    include/prioritizedgoalsplanner/types/actioninvocation.hpp
-    include/prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp
-    include/prioritizedgoalsplanner/types/axiom.hpp
-    include/prioritizedgoalsplanner/types/condition.hpp
-    include/prioritizedgoalsplanner/types/derivedpredicate.hpp
-    include/prioritizedgoalsplanner/types/domain.hpp
-    include/prioritizedgoalsplanner/types/entity.hpp
-    include/prioritizedgoalsplanner/types/event.hpp
-    include/prioritizedgoalsplanner/types/fact.hpp
-    include/prioritizedgoalsplanner/types/factoptional.hpp
-    include/prioritizedgoalsplanner/types/goal.hpp
-    include/prioritizedgoalsplanner/types/goalstack.hpp
-    include/prioritizedgoalsplanner/types/historical.hpp
-    include/prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp
-    include/prioritizedgoalsplanner/types/factstovalue.hpp
-    include/prioritizedgoalsplanner/types/ontology.hpp
-    include/prioritizedgoalsplanner/types/parameter.hpp
-    include/prioritizedgoalsplanner/types/predicate.hpp
-    include/prioritizedgoalsplanner/types/problem.hpp
-    include/prioritizedgoalsplanner/types/problemmodification.hpp
-    include/prioritizedgoalsplanner/types/setofentities.hpp
-    include/prioritizedgoalsplanner/types/setofevents.hpp
-    include/prioritizedgoalsplanner/types/setoffacts.hpp
-    include/prioritizedgoalsplanner/types/setofpredicates.hpp
-    include/prioritizedgoalsplanner/types/setofderivedpredicates.hpp
-    include/prioritizedgoalsplanner/types/setoftypes.hpp
-    include/prioritizedgoalsplanner/types/setofconstfacts.hpp
-    include/prioritizedgoalsplanner/types/type.hpp
-    include/prioritizedgoalsplanner/types/worldstate.hpp
-    include/prioritizedgoalsplanner/types/worldstatemodification.hpp
-    include/prioritizedgoalsplanner/util/exportsymbols/macro.hpp
-    include/prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp
-    include/prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp
-    include/prioritizedgoalsplanner/util/trackers/goalsremovedtracker.hpp
-    include/prioritizedgoalsplanner/util/api.hpp
-    include/prioritizedgoalsplanner/util/alias.hpp
-    include/prioritizedgoalsplanner/util/arithmeticevaluator.hpp
-    include/prioritizedgoalsplanner/util/print.hpp
-    include/prioritizedgoalsplanner/util/observableunsafe.hpp
-    include/prioritizedgoalsplanner/util/replacevariables.hpp
-    include/prioritizedgoalsplanner/util/util.hpp
-    include/prioritizedgoalsplanner/prioritizedgoalsplanner.hpp
+set(ORDERED_GOALS_PLANNER_HPPS
+    include/orderedgoalsplanner/types/action.hpp
+    include/orderedgoalsplanner/types/actioninvocation.hpp
+    include/orderedgoalsplanner/types/actioninvocationwithgoal.hpp
+    include/orderedgoalsplanner/types/actionstodoinparallel.hpp
+    include/orderedgoalsplanner/types/axiom.hpp
+    include/orderedgoalsplanner/types/condition.hpp
+    include/orderedgoalsplanner/types/condtionstovalue.hpp
+    include/orderedgoalsplanner/types/derivedpredicate.hpp
+    include/orderedgoalsplanner/types/domain.hpp
+    include/orderedgoalsplanner/types/entity.hpp
+    include/orderedgoalsplanner/types/event.hpp
+    include/orderedgoalsplanner/types/fact.hpp
+    include/orderedgoalsplanner/types/factoptional.hpp
+    include/orderedgoalsplanner/types/goal.hpp
+    include/orderedgoalsplanner/types/goalstack.hpp
+    include/orderedgoalsplanner/types/historical.hpp
+    include/orderedgoalsplanner/types/lookforanactionoutputinfos.hpp
+    include/orderedgoalsplanner/types/factstovalue.hpp
+    include/orderedgoalsplanner/types/ontology.hpp
+    include/orderedgoalsplanner/types/parameter.hpp
+    include/orderedgoalsplanner/types/predicate.hpp
+    include/orderedgoalsplanner/types/problem.hpp
+    include/orderedgoalsplanner/types/problemmodification.hpp
+    include/orderedgoalsplanner/types/setofconstfacts.hpp
+    include/orderedgoalsplanner/types/setofderivedpredicates.hpp
+    include/orderedgoalsplanner/types/setofentities.hpp
+    include/orderedgoalsplanner/types/setofevents.hpp
+    include/orderedgoalsplanner/types/setoffacts.hpp
+    include/orderedgoalsplanner/types/setofpredicates.hpp
+    include/orderedgoalsplanner/types/setofderivedpredicates.hpp
+    include/orderedgoalsplanner/types/setoftypes.hpp
+    include/orderedgoalsplanner/types/setofconstfacts.hpp
+    include/orderedgoalsplanner/types/type.hpp
+    include/orderedgoalsplanner/types/worldstate.hpp
+    include/orderedgoalsplanner/types/worldstatemodification.hpp
+    include/orderedgoalsplanner/util/exportsymbols/macro.hpp
+    include/orderedgoalsplanner/util/serializer/deserializefrompddl.hpp
+    include/orderedgoalsplanner/util/serializer/serializeinpddl.hpp
+    include/orderedgoalsplanner/util/trackers/goalsremovedtracker.hpp
+    include/orderedgoalsplanner/util/api.hpp
+    include/orderedgoalsplanner/util/alias.hpp
+    include/orderedgoalsplanner/util/arithmeticevaluator.hpp
+    include/orderedgoalsplanner/util/continueorbreak.hpp
+    include/orderedgoalsplanner/util/print.hpp
+    include/orderedgoalsplanner/util/observableunsafe.hpp
+    include/orderedgoalsplanner/util/replacevariables.hpp
+    include/orderedgoalsplanner/util/util.hpp
+    include/orderedgoalsplanner/orderedgoalsplanner.hpp
 )
 
 
-set(CONTEXTUAL_PLANNER_SRCS
+set(ORDERED_GOALS_PLANNER_SRCS
     src/algo/converttoparallelplan.hpp
     src/algo/converttoparallelplan.cpp
     src/algo/notifyactiondone.hpp
@@ -68,6 +73,7 @@ set(CONTEXTUAL_PLANNER_SRCS
     src/types/actioninvocationwithgoal.cpp
     src/types/axiom.cpp
     src/types/condition.cpp
+    src/types/condtionstovalue.cpp
     src/types/derivedpredicate.cpp
     src/types/domain.cpp
     src/types/entity.cpp
@@ -109,49 +115,41 @@ set(CONTEXTUAL_PLANNER_SRCS
     src/util/util.cpp
     src/util/uuid.hpp
     src/util/uuid.cpp
-    src/prioritizedgoalsplanner.cpp
+    src/orderedgoalsplanner.cpp
 )
 
 
 include_directories(include)
 
 
-add_library(prioritized_goals_planner_lib SHARED
-  ${CONTEXTUAL_PLANNER_HPPS}
-  ${CONTEXTUAL_PLANNER_SRCS}
-  include/prioritizedgoalsplanner/types/setofderivedpredicates.hpp
-  src/types/setofderivedpredicates.cpp
-  src/types/axiom.cpp
-  include/prioritizedgoalsplanner/types/setofconstfacts.hpp
-  include/prioritizedgoalsplanner/types/condtionstovalue.hpp
-  src/types/condtionstovalue.cpp
-  include/prioritizedgoalsplanner/util/continueorbreak.hpp
-  include/prioritizedgoalsplanner/types/actionstodoinparallel.hpp
+add_library(ordered_goals_planner_lib SHARED
+  ${ORDERED_GOALS_PLANNER_HPPS}
+  ${ORDERED_GOALS_PLANNER_SRCS}
 )
-target_compile_features(prioritized_goals_planner_lib PRIVATE cxx_std_14)
+target_compile_features(ordered_goals_planner_lib PRIVATE cxx_std_14)
 
-target_include_directories(prioritized_goals_planner_lib PUBLIC
+target_include_directories(ordered_goals_planner_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 # Create a proper installed package that can be included.
-install(TARGETS prioritized_goals_planner_lib
-    EXPORT prioritized_goals_planner_libTargets
+install(TARGETS ordered_goals_planner_lib
+    EXPORT ordered_goals_planner_lib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-install(DIRECTORY include/prioritizedgoalsplanner DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(EXPORT prioritized_goals_planner_libTargets
-    FILE prioritized_goals_planner_libTargets.cmake
-    NAMESPACE pgp::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/prioritized_goals_planner
+install(DIRECTORY include/orderedgoalsplanner DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(EXPORT ordered_goals_planner_lib
+    FILE ordered_goals_planner_libTargets.cmake
+    NAMESPACE ogp::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ordered_goals_planner
 )
 
 add_subdirectory(bin)
 
 
-if (BUILD_CONTEXTUAL_PLANNER_TESTS)
+if (BUILD_ORDERED_GOALS_PLANNER_TESTS)
    add_subdirectory(tests)
 endif()

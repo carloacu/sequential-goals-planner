@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
-#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/orderedgoalsplanner.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace
 {
-const std::map<pgp::SetOfEventsId, pgp::SetOfEvents> _emptySetOfEvents;
+const std::map<ogp::SetOfEventsId, ogp::SetOfEvents> _emptySetOfEvents;
 const std::string _sep = ", ";
 const std::unique_ptr<std::chrono::steady_clock::time_point> _now = {};
 
@@ -17,97 +17,97 @@ const std::string _fact_f = "fact_f";
 const std::string _fact_g = "fact_g";
 
 
-static const std::vector<pgp::Parameter> _emptyParameters;
+static const std::vector<ogp::Parameter> _emptyParameters;
 
 
-pgp::Fact _fact(const std::string& pStr,
-               const pgp::Ontology& pOntology,
-               const std::vector<pgp::Parameter>& pParameters = {}) {
-  return pgp::Fact(pStr, false, pOntology, {}, pParameters);
+ogp::Fact _fact(const std::string& pStr,
+               const ogp::Ontology& pOntology,
+               const std::vector<ogp::Parameter>& pParameters = {}) {
+  return ogp::Fact(pStr, false, pOntology, {}, pParameters);
 }
 
-pgp::Parameter _parameter(const std::string& pStr,
-                         const pgp::Ontology& pOntology) {
-  return pgp::Parameter::fromStr(pStr, pOntology.types);
+ogp::Parameter _parameter(const std::string& pStr,
+                         const ogp::Ontology& pOntology) {
+  return ogp::Parameter::fromStr(pStr, pOntology.types);
 }
 
-pgp::Goal _goal(const std::string& pStr,
-               const pgp::Ontology& pOntology,
+ogp::Goal _goal(const std::string& pStr,
+               const ogp::Ontology& pOntology,
                int pMaxTimeToKeepInactive = -1,
                const std::string& pGoalGroupId = "") {
-  return pgp::Goal::fromStr(pStr, pOntology, {}, pMaxTimeToKeepInactive, pGoalGroupId);
+  return ogp::Goal::fromStr(pStr, pOntology, {}, pMaxTimeToKeepInactive, pGoalGroupId);
 }
 
-std::unique_ptr<pgp::Condition> _condition_fromStr(const std::string& pConditionStr,
-                                                  const pgp::Ontology& pOntology,
-                                                  const std::vector<pgp::Parameter>& pParameters = {}) {
-  return pgp::strToCondition(pConditionStr, pOntology, {}, pParameters);
+std::unique_ptr<ogp::Condition> _condition_fromStr(const std::string& pConditionStr,
+                                                  const ogp::Ontology& pOntology,
+                                                  const std::vector<ogp::Parameter>& pParameters = {}) {
+  return ogp::strToCondition(pConditionStr, pOntology, {}, pParameters);
 }
 
-std::unique_ptr<pgp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr,
-                                                                            const pgp::Ontology& pOntology,
-                                                                            const std::vector<pgp::Parameter>& pParameters = {}) {
-  return pgp::strToWsModification(pStr, pOntology, {}, pParameters);
+std::unique_ptr<ogp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr,
+                                                                            const ogp::Ontology& pOntology,
+                                                                            const std::vector<ogp::Parameter>& pParameters = {}) {
+  return ogp::strToWsModification(pStr, pOntology, {}, pParameters);
 }
 
-void _setGoalsForAPriority(pgp::Problem& pProblem,
-                           const std::vector<pgp::Goal>& pGoals,
+void _setGoalsForAPriority(ogp::Problem& pProblem,
+                           const std::vector<ogp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = pgp::GoalStack::defaultPriority)
+                           int pPriority = ogp::GoalStack::defaultPriority)
 {
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }
 
 
-void _addFact(pgp::WorldState& pWorldState,
+void _addFact(ogp::WorldState& pWorldState,
               const std::string& pFactStr,
-              pgp::GoalStack& pGoalStack,
-              const pgp::Ontology& pOntology,
-              const std::map<pgp::SetOfEventsId, pgp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
+              ogp::GoalStack& pGoalStack,
+              const ogp::Ontology& pOntology,
+              const std::map<ogp::SetOfEventsId, ogp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, pgp::SetOfEntities(), pNow);
+  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, ogp::SetOfEntities(), pNow);
 }
 
-pgp::ActionInvocationWithGoal _lookForAnActionToDo(pgp::Problem& pProblem,
-                                                  const pgp::Domain& pDomain,
+ogp::ActionInvocationWithGoal _lookForAnActionToDo(ogp::Problem& pProblem,
+                                                  const ogp::Domain& pDomain,
                                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                  const pgp::Historical* pGlobalHistorical = nullptr)
+                                                  const ogp::Historical* pGlobalHistorical = nullptr)
 {
-  auto plan = pgp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
+  auto plan = ogp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
     return plan.front();
-  return pgp::ActionInvocationWithGoal("", std::map<pgp::Parameter, pgp::Entity>(), {}, 0);
+  return ogp::ActionInvocationWithGoal("", std::map<ogp::Parameter, ogp::Entity>(), {}, 0);
 }
 
 
 std::string _lookForAnActionToDoInParallelThenNotifyToStr(
-    pgp::Problem& pProblem,
-    const pgp::Domain& pDomain,
+    ogp::Problem& pProblem,
+    const ogp::Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  auto actionsToDoInParallel = pgp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
+  auto actionsToDoInParallel = ogp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
   for (auto& currAction : actionsToDoInParallel.actions)
   {
     notifyActionStarted(pProblem, pDomain, currAction, pNow);
     notifyActionDone(pProblem, pDomain, currAction, pNow);
   }
-  return pgp::planToStr(actionsToDoInParallel.actions);
+  return ogp::planToStr(actionsToDoInParallel.actions);
 }
 
-std::string _parallelPlanStr(pgp::Problem& pProblem,
-                             const pgp::Domain& pDomain,
+std::string _parallelPlanStr(ogp::Problem& pProblem,
+                             const ogp::Domain& pDomain,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                             pgp::Historical* pGlobalHistorical = nullptr)
+                             ogp::Historical* pGlobalHistorical = nullptr)
 {
-  return pgp::parallelPlanToStr(pgp::parallelPlanForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical));
+  return ogp::parallelPlanToStr(ogp::parallelPlanForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical));
 }
 
-std::string _parallelPlanPddl(pgp::Problem& pProblem,
-                              const pgp::Domain& pDomain,
+std::string _parallelPlanPddl(ogp::Problem& pProblem,
+                              const ogp::Domain& pDomain,
                               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                              pgp::Historical* pGlobalHistorical = nullptr)
+                              ogp::Historical* pGlobalHistorical = nullptr)
 {
-  return pgp::parallelPlanToPddl(pgp::parallelPlanForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), pDomain);
+  return ogp::parallelPlanToPddl(ogp::parallelPlanForEveryGoals(pProblem, pDomain, pNow, pGlobalHistorical), pDomain);
 }
 
 
@@ -121,10 +121,10 @@ void _goalsToDoInParallel()
   const std::string action6 = "action6";
   const std::string action7 = "action7";
 
-  pgp::Ontology ontology;
-  ontology.types = pgp::SetOfTypes::fromPddl("entity");
-  ontology.constants = pgp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
-  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ogp::Ontology ontology;
+  ontology.types = ogp::SetOfTypes::fromPddl("entity");
+  ontology.constants = ogp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
+  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                      _fact_b + "\n" +
                                                      _fact_c + "\n" +
                                                      _fact_d + "\n" +
@@ -132,40 +132,40 @@ void _goalsToDoInParallel()
                                                      _fact_f + "\n" +
                                                      _fact_g, ontology.types);
 
-  std::map<std::string, pgp::Action> actions;
-  std::vector<pgp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  pgp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
+  std::map<std::string, ogp::Action> actions;
+  std::vector<ogp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
+  ogp::Action actionObj1({}, _worldStateModification_fromStr(_fact_a + "=?obj", ontology, act1Parameters));
   actionObj1.parameters = std::move(act1Parameters);
   actions.emplace(action1, actionObj1);
 
-  pgp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
+  ogp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
-  pgp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
+  ogp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
-  pgp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
+  ogp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
                         _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
   actions.emplace(action4, actionObj4);
 
-  pgp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
+  ogp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action5, actionObj5);
 
-  pgp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d + " & " + _fact_g, ontology),
+  ogp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d + " & " + _fact_g, ontology),
                         _worldStateModification_fromStr(_fact_e, ontology));
   actions.emplace(action6, actionObj6);
 
-  pgp::Action actionObj7(_condition_fromStr(_fact_f, ontology),
+  ogp::Action actionObj7(_condition_fromStr(_fact_f, ontology),
                         _worldStateModification_fromStr(_fact_g, ontology));
   actions.emplace(action7, actionObj7);
 
-  pgp::Domain domain(std::move(actions), ontology);
+  ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
 
-  pgp::Problem problem;
+  ogp::Problem problem;
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
   _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
 
@@ -184,16 +184,16 @@ void _2actionsInParallel()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  pgp::Ontology ontology;
-  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  ogp::Ontology ontology;
+  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                       _fact_b, ontology.types);
 
-  std::map<std::string, pgp::Action> actions;
-  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
-  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
+  std::map<std::string, ogp::Action> actions;
+  actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, ogp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
 
-  pgp::Domain domain(std::move(actions), ontology);
-  pgp::Problem problem;
+  ogp::Domain domain(std::move(actions), ontology);
+  ogp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a + " & " + _fact_b, ontology)});
   EXPECT_EQ("action1, action2", _parallelPlanStr(problem, domain, _now));
 }
@@ -204,16 +204,16 @@ void _2actionsNotInParallelBecauseFrom2DifferentSkills()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  pgp::Ontology ontology;
-  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  ogp::Ontology ontology;
+  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                       _fact_b, ontology.types);
 
-  std::map<std::string, pgp::Action> actions;
-  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
-  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
+  std::map<std::string, ogp::Action> actions;
+  actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, ogp::Action({}, _worldStateModification_fromStr(_fact_b, ontology)));
 
-  pgp::Domain domain(std::move(actions), ontology);
-  pgp::Problem problem;
+  ogp::Domain domain(std::move(actions), ontology);
+  ogp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a, ontology), _goal(_fact_b, ontology)});
   EXPECT_EQ("action1\n"
             "action2", _parallelPlanStr(problem, domain, _now));
@@ -227,21 +227,21 @@ void _moreThan2GoalsInParallel()
   const std::string action3 = "action3";
   const std::string action4 = "action4";
 
-  pgp::Ontology ontology;
-  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + "\n" +
+  ogp::Ontology ontology;
+  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
                                                       _fact_b + "\n" +
                                                       _fact_c + "\n" +
                                                       _fact_d, ontology.types);
 
-  std::map<std::string, pgp::Action> actions;
-  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
-  actions.emplace(action2, pgp::Action(_condition_fromStr(_fact_a, ontology),
+  std::map<std::string, ogp::Action> actions;
+  actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
+  actions.emplace(action2, ogp::Action(_condition_fromStr(_fact_a, ontology),
                                        _worldStateModification_fromStr(_fact_b, ontology)));
-  actions.emplace(action3, pgp::Action({}, _worldStateModification_fromStr(_fact_c, ontology)));
-  actions.emplace(action4, pgp::Action({}, _worldStateModification_fromStr(_fact_d, ontology)));
+  actions.emplace(action3, ogp::Action({}, _worldStateModification_fromStr(_fact_c, ontology)));
+  actions.emplace(action4, ogp::Action({}, _worldStateModification_fromStr(_fact_d, ontology)));
 
-  pgp::Domain domain(std::move(actions), ontology);
-  pgp::Problem problem;
+  ogp::Domain domain(std::move(actions), ontology);
+  ogp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_a + " & " + _fact_b + " & " + _fact_c + " & " + _fact_d, ontology)});
   auto problem2 = problem;
 
@@ -260,19 +260,19 @@ void _goalsToDoInParallelWithConflitingEffects()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  pgp::Ontology ontology;
-  ontology.types = pgp::SetOfTypes::fromPddl("entity");
-  ontology.constants = pgp::SetOfEntities::fromPddl("v1 v2 - entity", ontology.types);
-  ontology.predicates = pgp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
+  ogp::Ontology ontology;
+  ontology.types = ogp::SetOfTypes::fromPddl("entity");
+  ontology.constants = ogp::SetOfEntities::fromPddl("v1 v2 - entity", ontology.types);
+  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
                                                       _fact_b + "\n" +
                                                       _fact_c, ontology.types);
 
-  std::map<std::string, pgp::Action> actions;
-  actions.emplace(action1, pgp::Action({}, _worldStateModification_fromStr(_fact_a + "=v1 & " + _fact_b, ontology)));
-  actions.emplace(action2, pgp::Action({}, _worldStateModification_fromStr(_fact_a + "=v2 & " + _fact_c, ontology)));
+  std::map<std::string, ogp::Action> actions;
+  actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a + "=v1 & " + _fact_b, ontology)));
+  actions.emplace(action2, ogp::Action({}, _worldStateModification_fromStr(_fact_a + "=v2 & " + _fact_c, ontology)));
 
-  pgp::Domain domain(std::move(actions), ontology);
-  pgp::Problem problem;
+  ogp::Domain domain(std::move(actions), ontology);
+  ogp::Problem problem;
   _setGoalsForAPriority(problem, {_goal(_fact_b + " & " + _fact_c, ontology)});
 
   EXPECT_EQ("action1\n"

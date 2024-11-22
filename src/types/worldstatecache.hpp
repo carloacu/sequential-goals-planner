@@ -1,16 +1,16 @@
-#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATECACHE_HPP
-#define INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATECACHE_HPP
+#ifndef INCLUDE_ORDEREDGOALSPLANNER_TYPES_WORLDSTATECACHE_HPP
+#define INCLUDE_ORDEREDGOALSPLANNER_TYPES_WORLDSTATECACHE_HPP
 
 #include <map>
 #include <memory>
 #include <set>
-#include <prioritizedgoalsplanner/types/fact.hpp>
-#include <prioritizedgoalsplanner/types/factstovalue.hpp>
-#include <prioritizedgoalsplanner/types/setoffacts.hpp>
-#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <orderedgoalsplanner/types/fact.hpp>
+#include <orderedgoalsplanner/types/factstovalue.hpp>
+#include <orderedgoalsplanner/types/setoffacts.hpp>
+#include <orderedgoalsplanner/util/alias.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 struct Domain;
 struct Event;
@@ -19,7 +19,7 @@ struct WorldState;
 struct WorldStateModification;
 
 
-struct PRIORITIZEDGOALSPLANNER_API WorldStateCache
+struct ORDEREDGOALSPLANNER_API WorldStateCache
 {
   /// Construct a world state.
   WorldStateCache(const WorldState& pWorldState);
@@ -110,7 +110,7 @@ private:
                                        FactsAlreadyChecked& pFactsAlreadychecked);
 };
 
-} // !pgp
+} // !ogp
 
 
-#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_TYPES_WORLDSTATECACHE_HPP
+#endif // INCLUDE_ORDEREDGOALSPLANNER_TYPES_WORLDSTATECACHE_HPP

@@ -1,7 +1,7 @@
-#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 ActionInvocationWithGoal::ActionInvocationWithGoal(const std::string& pActionId,
@@ -43,4 +43,4 @@ void ActionInvocationWithGoal::operator=(const ActionInvocationWithGoal& pOther)
 }
 
 
-} // !pgp
+} // !ogp

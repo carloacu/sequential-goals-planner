@@ -1,7 +1,7 @@
-#include <prioritizedgoalsplanner/types/historical.hpp>
+#include <orderedgoalsplanner/types/historical.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 
@@ -65,4 +65,4 @@ std::size_t Historical::_getNbOfTimeAnActionHasAlreadyBeenDone(const ActionId& p
 }
 
 
-} // !pgp
+} // !ogp

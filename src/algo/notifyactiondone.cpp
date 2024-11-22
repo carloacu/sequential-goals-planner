@@ -1,11 +1,11 @@
 #include "notifyactiondone.hpp"
-#include <prioritizedgoalsplanner/types/action.hpp>
-#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/problem.hpp>
-#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <orderedgoalsplanner/types/action.hpp>
+#include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/types/worldstate.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 void notifyActionInvocationDone(Problem& pProblem,
@@ -82,4 +82,4 @@ void updateProblemForNextPotentialPlannerResultWithAction(
 }
 
 
-} // End of namespace pgp
+} // End of namespace ogp

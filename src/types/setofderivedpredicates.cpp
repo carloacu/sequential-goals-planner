@@ -1,8 +1,8 @@
-#include <prioritizedgoalsplanner/types/setofderivedpredicates.hpp>
-#include <prioritizedgoalsplanner/types/derivedpredicate.hpp>
+#include <orderedgoalsplanner/types/setofderivedpredicates.hpp>
+#include <orderedgoalsplanner/types/derivedpredicate.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 SetOfDerivedPredicates::SetOfDerivedPredicates()
@@ -42,4 +42,4 @@ std::unique_ptr<Condition> SetOfDerivedPredicates::optFactToConditionPtr(const F
   return {};
 }
 
-} // !pgp
+} // !ogp

@@ -1,19 +1,19 @@
 #include <gtest/gtest.h>
-#include <prioritizedgoalsplanner/types/entity.hpp>
-#include <prioritizedgoalsplanner/types/parameter.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/entity.hpp>
+#include <orderedgoalsplanner/types/parameter.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
-using namespace pgp;
+using namespace ogp;
 
 namespace
 {
 
-pgp::Parameter _parameter(const std::string& pStr) {
-  return pgp::Parameter(pStr, {});
+ogp::Parameter _parameter(const std::string& pStr) {
+  return ogp::Parameter(pStr, {});
 }
 
-pgp::Entity _entity(const std::string& pStr) {
-  return pgp::Entity(pStr, {});
+ogp::Entity _entity(const std::string& pStr) {
+  return ogp::Entity(pStr, {});
 }
 
 std::string _toStr(const std::list<std::map<Parameter, Entity>>& pParams)
@@ -36,9 +36,9 @@ std::string _toStr(const std::list<std::map<Parameter, Entity>>& pParams)
   return res;
 }
 
-std::string _unfoldMapWithSet(const std::map<Parameter, std::set<pgp::Entity>>& pInMap)
+std::string _unfoldMapWithSet(const std::map<Parameter, std::set<ogp::Entity>>& pInMap)
 {
-  std::list<std::map<Parameter, pgp::Entity>> res;
+  std::list<std::map<Parameter, ogp::Entity>> res;
   unfoldMapWithSet(res, pInMap);
   return _toStr(res);
 }
@@ -68,12 +68,12 @@ void test_autoIncrementOfVersion()
   };
   auto incrementAddIdAndReturnValue = [&](const std::string& pId)
   {
-    auto newId = pgp::incrementLastNumberUntilAConditionIsSatisfied(pId, isIdOkForInsertion);
+    auto newId = ogp::incrementLastNumberUntilAConditionIsSatisfied(pId, isIdOkForInsertion);
     ids.insert(newId);
     return newId;
   };
 
-  EXPECT_EQ("", pgp::incrementLastNumberUntilAConditionIsSatisfied("", isIdOkForInsertion));
+  EXPECT_EQ("", ogp::incrementLastNumberUntilAConditionIsSatisfied("", isIdOkForInsertion));
   EXPECT_EQ("dede", incrementAddIdAndReturnValue("dede"));
   EXPECT_EQ("dede_2", incrementAddIdAndReturnValue("dede"));
   EXPECT_EQ("dede_3", incrementAddIdAndReturnValue("dede"));

@@ -1,10 +1,10 @@
-#include <prioritizedgoalsplanner/util/print.hpp>
+#include <orderedgoalsplanner/util/print.hpp>
 #include <sstream>
 #include <iomanip>
-#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
+#include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 namespace

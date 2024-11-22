@@ -1,17 +1,17 @@
 #include "converttoparallelplan.hpp"
 #include <list>
 #include <set>
-#include <prioritizedgoalsplanner/types/action.hpp>
-#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
-#include <prioritizedgoalsplanner/types/actionstodoinparallel.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/lookforanactionoutputinfos.hpp>
-#include <prioritizedgoalsplanner/types/problem.hpp>
-#include <prioritizedgoalsplanner/types/worldstate.hpp>
-#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
+#include <orderedgoalsplanner/types/action.hpp>
+#include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <orderedgoalsplanner/types/actionstodoinparallel.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/lookforanactionoutputinfos.hpp>
+#include <orderedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/types/worldstate.hpp>
+#include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 #include "notifyactiondone.hpp"
 
-namespace pgp
+namespace ogp
 {
 
 namespace
@@ -144,7 +144,7 @@ struct ActionDataForParallelisation
 };
 
 
-std::list<pgp::Goal> _checkSatisfiedGoals(
+std::list<ogp::Goal> _checkSatisfiedGoals(
     Problem& pProblem,
     const Domain& pDomain,
     std::list<std::list<ActionDataForParallelisation>>::iterator pCurrItInPlan,
@@ -152,7 +152,7 @@ std::list<pgp::Goal> _checkSatisfiedGoals(
     const ActionDataForParallelisation* pActionToSkipPtr,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
-  std::list<pgp::Goal> res;
+  std::list<ogp::Goal> res;
   auto& setOfEvents = pDomain.getSetOfEvents();
   const auto& ontology = pDomain.getOntology();
 
@@ -307,4 +307,4 @@ std::list<ActionsToDoInParallel> toParallelPlan
 
 
 
-} // End of namespace pgp
+} // End of namespace ogp

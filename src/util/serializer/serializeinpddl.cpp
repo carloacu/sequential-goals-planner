@@ -1,10 +1,10 @@
-#include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/util/serializer/serializeinpddl.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/problem.hpp>
 #include "../../types/worldstatemodificationprivate.hpp"
 
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -457,7 +457,7 @@ std::string problemToPddl(const Problem& pProblem,
     }
     else
     {
-      res += std::string(subIdentation, ' ') + "(and ;; __PRIORITIZED\n";
+      res += std::string(subIdentation, ' ') + "(and ;; __ORDERED\n";
       for (auto itGoalsGroup = goals.end(); itGoalsGroup != goals.begin(); )
       {
         --itGoalsGroup;

@@ -1,10 +1,10 @@
-#include <prioritizedgoalsplanner/types/setofpredicates.hpp>
+#include <orderedgoalsplanner/types/setofpredicates.hpp>
 #include <vector>
-#include <prioritizedgoalsplanner/types/setoftypes.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/setoftypes.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace pgp
+namespace ogp
 {
 
 SetOfPredicates::SetOfPredicates()
@@ -18,7 +18,7 @@ SetOfPredicates SetOfPredicates::fromStr(const std::string& pStr,
 {
   SetOfPredicates res;
   std::vector<std::string> lineSplitted;
-  pgp::split(lineSplitted, pStr, "\n");
+  ogp::split(lineSplitted, pStr, "\n");
   for (auto& currLine : lineSplitted)
     if (!currLine.empty())
       res.addPredicate(Predicate(currLine, false, pSetOfTypes));
@@ -126,4 +126,4 @@ bool SetOfPredicates::hasPredicateOfPddlType(PredicatePddlType pTypeFilter) cons
 }
 
 
-} // !pgp
+} // !ogp

@@ -1,12 +1,12 @@
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 #include <cctype> // For isdigit()
 #include <sstream>
-#include <prioritizedgoalsplanner/types/entity.hpp>
-#include <prioritizedgoalsplanner/types/parameter.hpp>
+#include <orderedgoalsplanner/types/entity.hpp>
+#include <orderedgoalsplanner/types/parameter.hpp>
 
-namespace pgp
+namespace ogp
 {
-bool PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS = false;  // Define the variable and initialize it
+bool ORDEREDGOALSPLANNER_DEBUG_FOR_TESTS = false;  // Define the variable and initialize it
 
 namespace
 {

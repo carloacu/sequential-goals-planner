@@ -1,7 +1,7 @@
-#include <prioritizedgoalsplanner/types/setofevents.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/setofevents.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 SetOfEvents::SetOfEvents(const Event& pEvent)
@@ -57,4 +57,4 @@ void SetOfEvents::remove(const EventId& pEventId)
 }
 
 
-} // !pgp
+} // !ogp

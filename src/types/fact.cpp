@@ -1,17 +1,17 @@
-#include <prioritizedgoalsplanner/types/fact.hpp>
+#include <orderedgoalsplanner/types/fact.hpp>
 #include <algorithm>
 #include <memory>
 #include <assert.h>
 #include <optional>
 #include <stdexcept>
-#include <prioritizedgoalsplanner/types/factoptional.hpp>
-#include <prioritizedgoalsplanner/types/ontology.hpp>
-#include <prioritizedgoalsplanner/types/parameter.hpp>
-#include <prioritizedgoalsplanner/types/setoffacts.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/factoptional.hpp>
+#include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/types/parameter.hpp>
+#include <orderedgoalsplanner/types/setoffacts.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace pgp
+namespace ogp
 {
 namespace {
 
@@ -821,7 +821,7 @@ std::string Fact::factSignature() const
   if (_factSignature != "")
     return _factSignature;
 
-  if (PRIORITIZEDGOALSPLANNER_DEBUG_FOR_TESTS)
+  if (ORDEREDGOALSPLANNER_DEBUG_FOR_TESTS)
     throw std::runtime_error("_factSignature is not set");
   return generateFactSignature();
 }
@@ -1083,4 +1083,4 @@ void Fact::_finalizeInisilizationAndValidityChecks(const Ontology& pOntology,
 
 
 
-} // !pgp
+} // !ogp

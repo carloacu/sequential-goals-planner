@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(prioritized_goals_planner_tests)
+project(ordered_goals_planner_tests)
 
 include_directories(".")
 
-if(NOT PRIORITIZEDGOALSPLANNER_FOUND)
-  find_package(prioritized_goals_planner_lib)
+if(NOT ORDEREDGOALSPLANNER_FOUND)
+  find_package(ordered_goals_planner_lib)
 endif()
 
 enable_testing()
@@ -13,7 +13,7 @@ find_package(GTest REQUIRED)
 
 
 add_executable(
-  prioritized_goals_planner_tests
+  ordered_goals_planner_tests
 
   src/plannerusingexternaldata.hpp
 
@@ -39,12 +39,12 @@ add_executable(
 )
 
 
-target_link_libraries(prioritized_goals_planner_tests
+target_link_libraries(ordered_goals_planner_tests
   ${GTEST_LIBRARIES}
-  ${PRIORITIZEDGOALSPLANNER_LIBRARIES}
+  ${ORDEREDGOALSPLANNER_LIBRARIES}
 )
 
 add_test(
-  NAME prioritized_goals_planner_tests
-  COMMAND prioritized_goals_planner_tests
+  NAME ordered_goals_planner_tests
+  COMMAND ordered_goals_planner_tests
 )

@@ -1,11 +1,11 @@
-#include <prioritizedgoalsplanner/types/setoftypes.hpp>
+#include <orderedgoalsplanner/types/setoftypes.hpp>
 #include <stdexcept>
 #include <sstream>
 #include <vector>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -62,13 +62,13 @@ void SetOfTypes::addType(const std::string& pTypeToAdd,
 void SetOfTypes::addTypesFromPddl(const std::string& pStr)
 {
   std::vector<std::string> lineSplitted;
-  pgp::split(lineSplitted, pStr, "\n");
+  ogp::split(lineSplitted, pStr, "\n");
 
   for (auto& currLine : lineSplitted)
   {
     _removeAfterSemicolon(currLine);
     std::vector<std::string> typeWithParentType;
-    pgp::split(typeWithParentType, currLine, "-");
+    ogp::split(typeWithParentType, currLine, "-");
 
     if (typeWithParentType.empty())
       continue;
@@ -83,7 +83,7 @@ void SetOfTypes::addTypesFromPddl(const std::string& pStr)
 
     auto typesStrs = typeWithParentType[0];
     std::vector<std::string> types;
-    pgp::split(types, typesStrs, " ");
+    ogp::split(types, typesStrs, " ");
     for (auto& currType : types)
       if (!currType.empty())
         addType(currType, parentType);
@@ -137,4 +137,4 @@ bool SetOfTypes::empty() const
 }
 
 
-} // !pgp
+} // !ogp

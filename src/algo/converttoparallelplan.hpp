@@ -1,13 +1,13 @@
-#ifndef PRIORITIZEDGOALSPLANNER_SRC_ALGO_CONVERTTOPARALLELPLAN_HPP
-#define PRIORITIZEDGOALSPLANNER_SRC_ALGO_CONVERTTOPARALLELPLAN_HPP
+#ifndef ORDEREDGOALSPLANNER_SRC_ALGO_CONVERTTOPARALLELPLAN_HPP
+#define ORDEREDGOALSPLANNER_SRC_ALGO_CONVERTTOPARALLELPLAN_HPP
 
 #include <chrono>
 #include <list>
 #include <map>
 #include <memory>
-#include <prioritizedgoalsplanner/util/alias.hpp>
+#include <orderedgoalsplanner/util/alias.hpp>
 
-namespace pgp
+namespace ogp
 {
 struct ActionInvocationWithGoal;
 struct ActionsToDoInParallel;
@@ -25,7 +25,7 @@ std::list<ActionsToDoInParallel> toParallelPlan
  std::list<Goal>& pGoals,
  const std::unique_ptr<std::chrono::_V2::steady_clock::time_point>& pNow);
 
-} // End of namespace pgp
+} // End of namespace ogp
 
 
-#endif // PRIORITIZEDGOALSPLANNER_SRC_ALGO_CONVERTTOPARALLELPLAN_HPP
+#endif // ORDEREDGOALSPLANNER_SRC_ALGO_CONVERTTOPARALLELPLAN_HPP

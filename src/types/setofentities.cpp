@@ -1,9 +1,9 @@
-#include <prioritizedgoalsplanner/types/setofentities.hpp>
+#include <orderedgoalsplanner/types/setofentities.hpp>
 #include <vector>
-#include <prioritizedgoalsplanner/util/util.hpp>
-#include <prioritizedgoalsplanner/types/setoftypes.hpp>
-#include <prioritizedgoalsplanner/types/type.hpp>
-namespace pgp
+#include <orderedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/setoftypes.hpp>
+#include <orderedgoalsplanner/types/type.hpp>
+namespace ogp
 {
 
 SetOfEntities::SetOfEntities()
@@ -34,11 +34,11 @@ void SetOfEntities::addAllFromPddl(const std::string& pStr,
                                    const SetOfTypes& pSetOfTypes)
 {
   std::vector<std::string> lineSplitted;
-  pgp::split(lineSplitted, pStr, "\n");
+  ogp::split(lineSplitted, pStr, "\n");
   for (auto& currLine : lineSplitted)
   {
     std::vector<std::string> entitiesWithType;
-    pgp::split(entitiesWithType, currLine, "-");
+    ogp::split(entitiesWithType, currLine, "-");
 
     if (entitiesWithType.empty())
       continue;
@@ -58,7 +58,7 @@ void SetOfEntities::addAllFromPddl(const std::string& pStr,
 
     auto entitiesStr = entitiesWithType[0];
     std::vector<std::string> entitiesStrs;
-    pgp::split(entitiesStrs, entitiesStr, " ");
+    ogp::split(entitiesStrs, entitiesStr, " ");
     for (auto& currEntity : entitiesStrs)
       if (!currEntity.empty())
         add(Entity(currEntity, type));
@@ -112,4 +112,4 @@ std::string SetOfEntities::toStr(std::size_t pIdentation) const
 }
 
 
-} // !pgp
+} // !ogp

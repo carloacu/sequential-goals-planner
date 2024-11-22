@@ -1,10 +1,10 @@
-#include <prioritizedgoalsplanner/types/factstovalue.hpp>
+#include <orderedgoalsplanner/types/factstovalue.hpp>
 #include <stdexcept>
-#include <prioritizedgoalsplanner/types/fact.hpp>
-#include <prioritizedgoalsplanner/util/alias.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/fact.hpp>
+#include <orderedgoalsplanner/util/alias.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -358,5 +358,5 @@ const std::list<std::string>* FactsToValue::_findAnExactCall(
 }
 
 
-} // !pgp
+} // !ogp
 

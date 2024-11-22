@@ -1,9 +1,9 @@
-#include <prioritizedgoalsplanner/types/axiom.hpp>
-#include <prioritizedgoalsplanner/types/event.hpp>
-#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/types/axiom.hpp>
+#include <orderedgoalsplanner/types/event.hpp>
+#include <orderedgoalsplanner/types/worldstatemodification.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 Axiom::Axiom(std::unique_ptr<Condition> pContext,
@@ -33,4 +33,4 @@ std::list<Event> Axiom::toEvents(const Ontology& pOntology,
 }
 
 
-} // !pgp
+} // !ogp

@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-#include <prioritizedgoalsplanner/types/action.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/ontology.hpp>
-#include <prioritizedgoalsplanner/types/setoffacts.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/types/action.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/types/setoffacts.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 
-using namespace pgp;
+using namespace ogp;
 
 namespace
 {
@@ -19,14 +19,14 @@ void _test_actionSuccessions()
   const std::string action4 = "action4";
   const std::string action5 = "action5";
 
-  std::map<std::string, pgp::Action> actions;
+  std::map<std::string, ogp::Action> actions;
 
-  pgp::Ontology ontology;
-  ontology.types = pgp::SetOfTypes::fromPddl("e1 e2 - entity\n"
+  ogp::Ontology ontology;
+  ontology.types = ogp::SetOfTypes::fromPddl("e1 e2 - entity\n"
                                             "resource");
-  ontology.constants = pgp::SetOfEntities::fromPddl("a - entity\n"
+  ontology.constants = ogp::SetOfEntities::fromPddl("a - entity\n"
                                                    "moves - resource", ontology.types);
-  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b(?e - entity)\n"
                                                      "fact_c\n"
                                                      "fact_d\n"
@@ -37,41 +37,41 @@ void _test_actionSuccessions()
                                                      ontology.types);
 
   {
-    std::vector<pgp::Parameter> parameters1(1, pgp::Parameter::fromStr("?e - e1", ontology.types));
-    pgp::Action actionObj1(pgp::strToCondition("not(locked(moves)) & fact_f", ontology, {}, parameters1),
-                          pgp::strToWsModification("not(locked(moves)) & fact_f & not(fact_a) & fact_b(?e)", ontology, {}, parameters1));
+    std::vector<ogp::Parameter> parameters1(1, ogp::Parameter::fromStr("?e - e1", ontology.types));
+    ogp::Action actionObj1(ogp::strToCondition("not(locked(moves)) & fact_f", ontology, {}, parameters1),
+                          ogp::strToWsModification("not(locked(moves)) & fact_f & not(fact_a) & fact_b(?e)", ontology, {}, parameters1));
     actionObj1.parameters = std::move(parameters1);
     actions.emplace(action1, actionObj1);
   }
 
   {
-    std::vector<pgp::Parameter> parameters2(1, pgp::Parameter::fromStr("?e - e1", ontology.types));
-    pgp::Action actionObj2(pgp::strToCondition("not(locked(moves)) & fact_b(?e) & fact_f", ontology, {}, parameters2),
-                          pgp::strToWsModification("not(locked(moves)) & fact_c", ontology, {}, parameters2));
+    std::vector<ogp::Parameter> parameters2(1, ogp::Parameter::fromStr("?e - e1", ontology.types));
+    ogp::Action actionObj2(ogp::strToCondition("not(locked(moves)) & fact_b(?e) & fact_f", ontology, {}, parameters2),
+                          ogp::strToWsModification("not(locked(moves)) & fact_c", ontology, {}, parameters2));
     actionObj2.parameters = std::move(parameters2);
     actions.emplace(action2, actionObj2);
   }
 
   {
-    std::vector<pgp::Parameter> parameters3(1, pgp::Parameter::fromStr("?e - e2", ontology.types));
-    pgp::Action actionObj3(pgp::strToCondition("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters3),
-                          pgp::strToWsModification("not(locked(moves)) & fact_d", ontology, {}, parameters3));
+    std::vector<ogp::Parameter> parameters3(1, ogp::Parameter::fromStr("?e - e2", ontology.types));
+    ogp::Action actionObj3(ogp::strToCondition("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters3),
+                          ogp::strToWsModification("not(locked(moves)) & fact_d", ontology, {}, parameters3));
     actionObj3.parameters = std::move(parameters3);
     actions.emplace(action3, actionObj3);
   }
 
   {
-    std::vector<pgp::Parameter> parameters4{pgp::Parameter::fromStr("?e1 - entity", ontology.types), pgp::Parameter::fromStr("?e2 - entity", ontology.types)};
-    pgp::Action actionObj4(pgp::strToCondition("not(locked(moves)) & not(fact_a) & fact_h(?e1)", ontology, {}, parameters4),
-                          pgp::strToWsModification("not(locked(moves)) & fact_e & fact_h(?e2)", ontology, {}, parameters4));
+    std::vector<ogp::Parameter> parameters4{ogp::Parameter::fromStr("?e1 - entity", ontology.types), ogp::Parameter::fromStr("?e2 - entity", ontology.types)};
+    ogp::Action actionObj4(ogp::strToCondition("not(locked(moves)) & not(fact_a) & fact_h(?e1)", ontology, {}, parameters4),
+                          ogp::strToWsModification("not(locked(moves)) & fact_e & fact_h(?e2)", ontology, {}, parameters4));
     actionObj4.parameters = std::move(parameters4);
     actions.emplace(action4, actionObj4);
   }
 
   {
-    std::vector<pgp::Parameter> parameters5(1, pgp::Parameter::fromStr("?e - entity", ontology.types));
-    pgp::Action actionObj5(pgp::strToCondition("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters5),
-                          pgp::strToWsModification("not(locked(moves)) & fact_d", ontology, {}, parameters5));
+    std::vector<ogp::Parameter> parameters5(1, ogp::Parameter::fromStr("?e - entity", ontology.types));
+    ogp::Action actionObj5(ogp::strToCondition("not(locked(moves)) & fact_b(?e)", ontology, {}, parameters5),
+                          ogp::strToWsModification("not(locked(moves)) & fact_d", ontology, {}, parameters5));
     actionObj5.parameters = std::move(parameters5);
     actions.emplace(action5, actionObj5);
   }
@@ -117,30 +117,30 @@ void _test_notActionSuccessions()
   const std::string action1 = "action1";
   const std::string action2 = "action2";
 
-  std::map<std::string, pgp::Action> actions;
+  std::map<std::string, ogp::Action> actions;
 
-  pgp::Ontology ontology;
-  ontology.types = pgp::SetOfTypes::fromPddl("entity\n"
+  ogp::Ontology ontology;
+  ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
                                             "location");
-  ontology.constants = pgp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
-  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+  ontology.constants = ogp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b(?e - entity)\n"
                                                      "fact_c(?e - entity) - location\n"
                                                      "fact_d - location",
                                                      ontology.types);
 
   {
-    pgp::Action actionObj1({},
-                          pgp::strToWsModification("fact_a & assign(fact_c(e1), fact_d())", ontology, {}, {}));
+    ogp::Action actionObj1({},
+                          ogp::strToWsModification("fact_a & assign(fact_c(e1), fact_d())", ontology, {}, {}));
     actions.emplace(action1, actionObj1);
   }
 
   {
-    std::vector<pgp::Parameter> parameters2{
-      pgp::Parameter::fromStr("?e - entity", ontology.types),
-          pgp::Parameter::fromStr("?l - location", ontology.types)};
-    pgp::Action actionObj2(pgp::strToCondition("fact_a", ontology, {}, parameters2),
-                          pgp::strToWsModification("fact_a & fact_b(?e) & fact_c(e1)=?l", ontology, {}, parameters2));
+    std::vector<ogp::Parameter> parameters2{
+      ogp::Parameter::fromStr("?e - entity", ontology.types),
+          ogp::Parameter::fromStr("?l - location", ontology.types)};
+    ogp::Action actionObj2(ogp::strToCondition("fact_a", ontology, {}, parameters2),
+                          ogp::strToWsModification("fact_a & fact_b(?e) & fact_c(e1)=?l", ontology, {}, parameters2));
     actionObj2.parameters = std::move(parameters2);
     actions.emplace(action2, actionObj2);
   }
@@ -165,33 +165,33 @@ void _test_impossibleSuccessions()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  std::map<std::string, pgp::Action> actions;
-  pgp::Ontology ontology;
-  pgp::SetOfConstFacts timelessFacts;
-  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+  std::map<std::string, ogp::Action> actions;
+  ogp::Ontology ontology;
+  ogp::SetOfConstFacts timelessFacts;
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a\n"
                                                      "fact_b\n"
                                                      "fact_c\n"
                                                      "fact_d",
                                                      ontology.types);
-  timelessFacts.add(pgp::Fact("fact_d", false, ontology, {}, {}));
+  timelessFacts.add(ogp::Fact("fact_d", false, ontology, {}, {}));
 
   {
-    pgp::Action actionObj1({},
-                          pgp::strToWsModification("fact_a & fact_b", ontology, {}, {}));
+    ogp::Action actionObj1({},
+                          ogp::strToWsModification("fact_a & fact_b", ontology, {}, {}));
     actions.emplace(action1, actionObj1);
   }
 
   {
-    pgp::Action actionObj2(pgp::strToCondition("fact_a & not(fact_b)", ontology, {}, {}),
-                          pgp::strToWsModification("fact_c", ontology, {}, {}));
+    ogp::Action actionObj2(ogp::strToCondition("fact_a & not(fact_b)", ontology, {}, {}),
+                          ogp::strToWsModification("fact_c", ontology, {}, {}));
     actions.emplace(action2, actionObj2);
   }
 
   // Do not consider action that can never be true
 
   {
-    pgp::Action actionObj3(pgp::strToCondition("fact_a & !fact_d", ontology, {}, {}),
-                          pgp::strToWsModification("fact_c", ontology, {}, {}));
+    ogp::Action actionObj3(ogp::strToCondition("fact_a & !fact_d", ontology, {}, {}),
+                          ogp::strToWsModification("fact_c", ontology, {}, {}));
     actions.emplace(action3, actionObj3);
   }
 
@@ -217,29 +217,29 @@ void _test_implySuccessions()
   const std::string action2 = "action2";
   const std::string action3 = "action3";
 
-  std::map<std::string, pgp::Action> actions;
-  pgp::Ontology ontology;
-  pgp::SetOfConstFacts timelessFacts;
-  ontology.predicates = pgp::SetOfPredicates::fromStr("fact_a\n"
+  std::map<std::string, ogp::Action> actions;
+  ogp::Ontology ontology;
+  ogp::SetOfConstFacts timelessFacts;
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a\n"
                                                       "fact_b\n"
                                                       "fact_c",
                                                       ontology.types);
 
   {
-    pgp::Action actionObj1({},
-                          pgp::strToWsModification("fact_a", ontology, {}, {}));
+    ogp::Action actionObj1({},
+                          ogp::strToWsModification("fact_a", ontology, {}, {}));
     actions.emplace(action1, actionObj1);
   }
 
   {
-    pgp::Action actionObj2(pgp::strToCondition("imply(fact_a, fact_b)", ontology, {}, {}),
-                          pgp::strToWsModification("fact_c", ontology, {}, {}));
+    ogp::Action actionObj2(ogp::strToCondition("imply(fact_a, fact_b)", ontology, {}, {}),
+                          ogp::strToWsModification("fact_c", ontology, {}, {}));
     actions.emplace(action2, actionObj2);
   }
 
   {
-    pgp::Action actionObj3(pgp::strToCondition("imply(fact_b, fact_a)", ontology, {}, {}),
-                          pgp::strToWsModification("fact_c", ontology, {}, {}));
+    ogp::Action actionObj3(ogp::strToCondition("imply(fact_b, fact_a)", ontology, {}, {}),
+                          ogp::strToWsModification("fact_c", ontology, {}, {}));
     actions.emplace(action3, actionObj3);
   }
 

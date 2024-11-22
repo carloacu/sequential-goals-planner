@@ -1,11 +1,11 @@
-#include <prioritizedgoalsplanner/types/goal.hpp>
+#include <orderedgoalsplanner/types/goal.hpp>
 #include <assert.h>
-#include <prioritizedgoalsplanner/types/condtionstovalue.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
-#include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
+#include <orderedgoalsplanner/types/condtionstovalue.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/util/serializer/serializeinpddl.hpp>
 
-namespace pgp
+namespace ogp
 {
 const std::string Goal::persistFunctionName = "persist";
 const std::string Goal::oneStepTowardsFunctionName = "oneStepTowards";
@@ -312,4 +312,4 @@ bool Goal::canDeductionSatisfyThisGoal(const ActionId& pDeductionId) const
 
 
 
-} // !pgp
+} // !ogp

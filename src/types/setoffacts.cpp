@@ -1,11 +1,11 @@
-#include <prioritizedgoalsplanner/types/setoffacts.hpp>
+#include <orderedgoalsplanner/types/setoffacts.hpp>
 #include <stdexcept>
-#include <prioritizedgoalsplanner/types/fact.hpp>
-#include <prioritizedgoalsplanner/util/alias.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/fact.hpp>
+#include <orderedgoalsplanner/util/alias.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 #include "expressionParsed.hpp"
 
-namespace pgp
+namespace ogp
 {
 namespace
 {
@@ -342,7 +342,7 @@ typename SetOfFacts::SetOfFactIterator SetOfFacts::find(const Fact& pFact,
   return SetOfFactIterator(exactMatchPtr);
 }
 
-std::optional<Entity> SetOfFacts::getFactFluent(const pgp::Fact& pFact) const
+std::optional<Entity> SetOfFacts::getFactFluent(const ogp::Fact& pFact) const
 {
   auto factMatchingInWs = find(pFact, true);
   for (const auto& currFact : factMatchingInWs)
@@ -417,5 +417,5 @@ const std::list<Fact>* SetOfFacts::_findAnExactCall(
 
 
 
-} // !pgp
+} // !ogp
 

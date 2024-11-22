@@ -1,8 +1,8 @@
-#include <prioritizedgoalsplanner/types/problemmodification.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/problemmodification.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 bool ProblemModification::operator==(const ProblemModification& pOther) const
@@ -35,4 +35,4 @@ std::set<FactOptional> ProblemModification::getAllOptFactsThatCanBeModified() co
   return res;
 }
 
-} // !pgp
+} // !ogp

@@ -1,12 +1,12 @@
-#ifndef INCLUDE_PRIORITIZEDGOALSPLANNER_SRC_WORLDSTATEMODIFICATIONPRIVATE_HPP
-#define INCLUDE_PRIORITIZEDGOALSPLANNER_SRC_WORLDSTATEMODIFICATIONPRIVATE_HPP
+#ifndef INCLUDE_ORDEREDGOALSPLANNER_SRC_WORLDSTATEMODIFICATIONPRIVATE_HPP
+#define INCLUDE_ORDEREDGOALSPLANNER_SRC_WORLDSTATEMODIFICATIONPRIVATE_HPP
 
 #include <memory>
 #include <optional>
-#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/worldstatemodification.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 enum class WorldStateModificationNodeType
@@ -51,7 +51,7 @@ struct WorldStateModificationNode : public WorldStateModification
         (rightOperand && rightOperand->hasFact(pFact));
   }
 
-  bool hasFactOptional(const pgp::FactOptional& FactOptional) const override
+  bool hasFactOptional(const ogp::FactOptional& FactOptional) const override
   {
     return (leftOperand && leftOperand->hasFactOptional(FactOptional)) ||
         (rightOperand && rightOperand->hasFactOptional(FactOptional));
@@ -152,12 +152,12 @@ struct WorldStateModificationFact : public WorldStateModification
 
   std::string toStr(bool pPrintAnyFluent) const override { return factOptional.toStr(nullptr, pPrintAnyFluent); }
 
-  bool hasFact(const pgp::Fact& pFact) const override
+  bool hasFact(const ogp::Fact& pFact) const override
   {
     return factOptional.fact == pFact;
   }
 
-  bool hasFactOptional(const pgp::FactOptional& FactOptional) const override
+  bool hasFactOptional(const ogp::FactOptional& FactOptional) const override
   {
     return factOptional == FactOptional;
   }
@@ -267,8 +267,8 @@ struct WorldStateModificationNumber : public WorldStateModification
 
   std::string toStr(bool) const override;
 
-  bool hasFact(const pgp::Fact&) const override { return false; }
-  bool hasFactOptional(const pgp::FactOptional&) const override { return false; }
+  bool hasFact(const ogp::Fact&) const override { return false; }
+  bool hasFactOptional(const ogp::FactOptional&) const override { return false; }
   bool isOnlyASetOfFacts() const override { return false; }
 
   void replaceArgument(const Entity&,
@@ -329,7 +329,7 @@ const WorldStateModificationFact* toWmFact(const WorldStateModification& pOther)
 const WorldStateModificationNumber* toWmNumber(const WorldStateModification& pOther);
 
 
-} // !pgp
+} // !ogp
 
 
-#endif // INCLUDE_PRIORITIZEDGOALSPLANNER_SRC_WORLDSTATEMODIFICATIONPRIVATE_HPP
+#endif // INCLUDE_ORDEREDGOALSPLANNER_SRC_WORLDSTATEMODIFICATIONPRIVATE_HPP

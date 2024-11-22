@@ -1,9 +1,9 @@
-#include <prioritizedgoalsplanner/types/actioninvocation.hpp>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/entity.hpp>
-#include <prioritizedgoalsplanner/types/parameter.hpp>
+#include <orderedgoalsplanner/types/actioninvocation.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/entity.hpp>
+#include <orderedgoalsplanner/types/parameter.hpp>
 
-namespace pgp
+namespace ogp
 {
 
 ActionInvocation::ActionInvocation(const std::string& pActionId,
@@ -73,4 +73,4 @@ std::string ActionInvocation::toPddl(const Domain& pDomain) const
 }
 
 
-} // !pgp
+} // !ogp

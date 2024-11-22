@@ -1,15 +1,15 @@
-#include <prioritizedgoalsplanner/types/worldstate.hpp>
+#include <orderedgoalsplanner/types/worldstate.hpp>
 #include <list>
-#include <prioritizedgoalsplanner/types/goalstack.hpp>
-#include <prioritizedgoalsplanner/types/actioninvocationwithgoal.hpp>
-#include <prioritizedgoalsplanner/types/setoffacts.hpp>
-#include <prioritizedgoalsplanner/types/setofevents.hpp>
-#include <prioritizedgoalsplanner/types/worldstatemodification.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/types/goalstack.hpp>
+#include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <orderedgoalsplanner/types/setoffacts.hpp>
+#include <orderedgoalsplanner/types/setofevents.hpp>
+#include <orderedgoalsplanner/types/worldstatemodification.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include "worldstatecache.hpp"
 
-namespace pgp
+namespace ogp
 {
 
 namespace
@@ -203,7 +203,7 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
              (!currFact.isValueNegated() && currExistingFact.isValueNegated())))
         {
           WhatChanged subWhatChanged;
-          _removeFacts(subWhatChanged, std::vector<pgp::Fact>{currExistingFact}, pGoalStack, pNow);
+          _removeFacts(subWhatChanged, std::vector<ogp::Fact>{currExistingFact}, pGoalStack, pNow);
           bool goalChanged = false;
           _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfEvents,
                              pOntology, pEntities, pNow);
@@ -648,4 +648,4 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
 }
 
 
-} // !pgp
+} // !ogp

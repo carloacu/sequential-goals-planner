@@ -1,11 +1,11 @@
-#include <prioritizedgoalsplanner/types/parameter.hpp>
+#include <orderedgoalsplanner/types/parameter.hpp>
 #include <vector>
-#include <prioritizedgoalsplanner/types/entity.hpp>
-#include <prioritizedgoalsplanner/types/setoftypes.hpp>
-#include <prioritizedgoalsplanner/util/util.hpp>
+#include <orderedgoalsplanner/types/entity.hpp>
+#include <orderedgoalsplanner/types/setoftypes.hpp>
+#include <orderedgoalsplanner/util/util.hpp>
 
 
-namespace pgp
+namespace ogp
 {
 
 
@@ -44,7 +44,7 @@ Parameter Parameter::fromStr(const std::string& pStr,
                              const SetOfTypes& pSetOfTypes)
 {
   std::vector<std::string> nameWithType;
-  pgp::split(nameWithType, pStr, "-");
+  ogp::split(nameWithType, pStr, "-");
 
   if (nameWithType.empty())
     throw std::runtime_error("\"" + pStr + "\" is not a valid entity");
@@ -88,4 +88,4 @@ bool Parameter::isAParameterToFill() const
 
 
 
-} // !pgp
+} // !ogp

@@ -1,14 +1,14 @@
 #include "plannerusingexternaldata.hpp"
 #include <gtest/gtest.h>
 #include <fstream>
-#include <prioritizedgoalsplanner/types/domain.hpp>
-#include <prioritizedgoalsplanner/types/problem.hpp>
-#include <prioritizedgoalsplanner/util/serializer/deserializefrompddl.hpp>
-#include <prioritizedgoalsplanner/util/serializer/serializeinpddl.hpp>
-#include <prioritizedgoalsplanner/prioritizedgoalsplanner.hpp>
+#include <orderedgoalsplanner/types/domain.hpp>
+#include <orderedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include <orderedgoalsplanner/util/serializer/serializeinpddl.hpp>
+#include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 
 
-using namespace pgp;
+using namespace ogp;
 
 namespace
 {
@@ -62,16 +62,16 @@ void _test_dataDirectory(const std::string& pDataPath,
   auto directory = pDataPath + "/" + pProblemDirectory;
 
   auto domainContent = _getFileContent(directory + "/domain.pddl");
-  std::map<std::string, pgp::Domain> loadedDomains;
-  auto domain = pgp::pddlToDomain(domainContent, loadedDomains);
+  std::map<std::string, ogp::Domain> loadedDomains;
+  auto domain = ogp::pddlToDomain(domainContent, loadedDomains);
   loadedDomains.emplace(domain.getName(), std::move(domain));
 
   auto problemContent = _getFileContent(directory + "/problem.pddl");
-  pgp::DomainAndProblemPtrs domainAndProblemPtrs = pgp::pddlToProblem(problemContent, loadedDomains);
+  ogp::DomainAndProblemPtrs domainAndProblemPtrs = ogp::pddlToProblem(problemContent, loadedDomains);
   auto& problem = *domainAndProblemPtrs.problemPtr;
 
   std::string expected = _getFileContentWithoutComments(directory + "/problem_plan_result.pddl");
-  std::string actualPlan = pgp::planToPddl(pgp::planForEveryGoals(problem, domain, {}), domain);
+  std::string actualPlan = ogp::planToPddl(ogp::planForEveryGoals(problem, domain, {}), domain);
   EXPECT_EQ(expected, actualPlan);
 }
 
@@ -85,7 +85,7 @@ TEST_F(PlannerUsingExternalData, test_problemsInData_simple)
 }
 
 
-TEST_F(PlannerUsingExternalData, test_problemsInData_prioritized_goals)
+TEST_F(PlannerUsingExternalData, test_problemsInData_ordered_goals)
 {
-  _test_dataDirectory(PlannerUsingExternalData::dataPath, "prioritized_goals");
+  _test_dataDirectory(PlannerUsingExternalData::dataPath, "ordered_goals");
 }
