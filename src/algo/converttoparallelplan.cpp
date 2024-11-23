@@ -5,10 +5,11 @@
 #include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
 #include <orderedgoalsplanner/types/actionstodoinparallel.hpp>
 #include <orderedgoalsplanner/types/domain.hpp>
-#include <orderedgoalsplanner/types/lookforanactionoutputinfos.hpp>
+#include <orderedgoalsplanner/types/parallelplan.hpp>
 #include <orderedgoalsplanner/types/problem.hpp>
 #include <orderedgoalsplanner/types/worldstate.hpp>
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
+#include "actiondataforparallelisation.hpp"
 #include "notifyactiondone.hpp"
 
 namespace ogp
@@ -16,184 +17,6 @@ namespace ogp
 
 namespace
 {
-
-struct ActionDataForParallelisation
-{
-  ActionDataForParallelisation(const Action& pAction, ActionInvocationWithGoal&& pActionInvWithGoal)
-    : action(pAction),
-      actionInvWithGoal(std::move(pActionInvWithGoal)),
-      conditionWithParameterFilled()
-  {
-  }
-
-  const Condition* getConditionWithoutParameterPtr()
-  {
-    if (!action.precondition)
-      return nullptr;
-    if (actionInvWithGoal.actionInvocation.parameters.empty())
-      return &*action.precondition;
-    if (!conditionWithParameterFilled)
-      conditionWithParameterFilled = action.precondition->clone(&actionInvWithGoal.actionInvocation.parameters);
-    return &*conditionWithParameterFilled;
-  }
-
-  const WorldStateModification* getWorldStateModificationAtStartWithoutParameterPtr()
-  {
-    if (!action.effect.worldStateModificationAtStart)
-      return nullptr;
-    if (actionInvWithGoal.actionInvocation.parameters.empty())
-      return &*action.effect.worldStateModificationAtStart;
-    if (!worldStateModificationAtStartWithParameterFilled)
-      worldStateModificationAtStartWithParameterFilled = action.effect.worldStateModificationAtStart->clone(&actionInvWithGoal.actionInvocation.parameters);
-    return &*worldStateModificationAtStartWithParameterFilled;
-  }
-
-  const WorldStateModification* getWorldStateModificationWithoutParameterPtr()
-  {
-    if (!action.effect.worldStateModification)
-      return nullptr;
-    if (actionInvWithGoal.actionInvocation.parameters.empty())
-      return &*action.effect.worldStateModification;
-    if (!worldStateModificationWithParameterFilled)
-      worldStateModificationWithParameterFilled = action.effect.worldStateModification->clone(&actionInvWithGoal.actionInvocation.parameters);
-    return &*worldStateModificationWithParameterFilled;
-  }
-
-  const WorldStateModification* getPotentialWorldStateModificationWithoutParameterPtr()
-  {
-    if (!action.effect.potentialWorldStateModification)
-      return nullptr;
-    if (actionInvWithGoal.actionInvocation.parameters.empty())
-      return &*action.effect.potentialWorldStateModification;
-    if (!potentialWorldStateModificationWithParameterFilled)
-      potentialWorldStateModificationWithParameterFilled = action.effect.potentialWorldStateModification->clone(&actionInvWithGoal.actionInvocation.parameters);
-    return &*potentialWorldStateModificationWithParameterFilled;
-  }
-
-  const std::set<FactOptional>& getAllOptFactsThatCanBeModified()
-  {
-    if (!factsThatCanBeModifiedPtr)
-    {
-      factsThatCanBeModifiedPtr = std::make_unique<std::set<FactOptional>>();
-      auto addWmToRes = [&](const WorldStateModification* pWmPtr)
-      {
-        if (pWmPtr)
-        {
-          pWmPtr->forAllThatCanBeModified([&](const FactOptional& pFactOptional) {
-              factsThatCanBeModifiedPtr->insert(pFactOptional);
-              return ContinueOrBreak::CONTINUE;
-          });
-        }
-      };
-      addWmToRes(getWorldStateModificationAtStartWithoutParameterPtr());
-      addWmToRes(getWorldStateModificationWithoutParameterPtr());
-      addWmToRes(getPotentialWorldStateModificationWithoutParameterPtr());
-    }
-    return *factsThatCanBeModifiedPtr;
-  }
-
-  bool hasAContradictionWithAnEffect(const std::set<FactOptional>& pFactsOpt)
-  {
-    auto* effectPtr = getWorldStateModificationAtStartWithoutParameterPtr();
-    if (effectPtr != nullptr && effectPtr->hasAContradictionWith(pFactsOpt))
-      return true;
-
-    effectPtr = getWorldStateModificationWithoutParameterPtr();
-    if (effectPtr != nullptr && effectPtr->hasAContradictionWith(pFactsOpt))
-      return true;
-
-    effectPtr = getPotentialWorldStateModificationWithoutParameterPtr();
-    if (effectPtr != nullptr && effectPtr->hasAContradictionWith(pFactsOpt))
-      return true;
-    return false;
-  }
-
-  bool canBeInParallel(ActionDataForParallelisation& pOther)
-  {
-    const auto& effectFacts = getAllOptFactsThatCanBeModified();
-    auto* otherConditionPtr = pOther.getConditionWithoutParameterPtr();
-    if (otherConditionPtr != nullptr && otherConditionPtr->hasAContradictionWith(effectFacts))
-      return false;
-
-    const auto& otherEffectFacts = pOther.getAllOptFactsThatCanBeModified();
-    auto* conditionPtr = getConditionWithoutParameterPtr();
-    if (conditionPtr != nullptr && conditionPtr->hasAContradictionWith(otherEffectFacts))
-      return false;
-
-    if (hasAContradictionWithAnEffect(otherEffectFacts))
-      return false;
-
-    return !pOther.hasAContradictionWithAnEffect(effectFacts);
-  }
-
-  bool canBeInParallelOfList(std::list<ActionDataForParallelisation>& pOthers)
-  {
-    for (auto& currOther : pOthers)
-      if (!canBeInParallel(currOther))
-        return false;
-    return true;
-  }
-
-  const Action& action;
-  ActionInvocationWithGoal actionInvWithGoal;
-  std::unique_ptr<Condition> conditionWithParameterFilled;
-  std::unique_ptr<WorldStateModification> worldStateModificationAtStartWithParameterFilled;
-  std::unique_ptr<WorldStateModification> worldStateModificationWithParameterFilled;
-  std::unique_ptr<WorldStateModification> potentialWorldStateModificationWithParameterFilled;
-  std::unique_ptr<std::set<FactOptional>> factsThatCanBeModifiedPtr;
-};
-
-
-std::list<ogp::Goal> _checkSatisfiedGoals(
-    Problem& pProblem,
-    const Domain& pDomain,
-    std::list<std::list<ActionDataForParallelisation>>::iterator pCurrItInPlan,
-    std::list<std::list<ActionDataForParallelisation>>& pPlan,
-    const ActionDataForParallelisation* pActionToSkipPtr,
-    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
-{
-  std::list<ogp::Goal> res;
-  auto& setOfEvents = pDomain.getSetOfEvents();
-  const auto& ontology = pDomain.getOntology();
-
-  LookForAnActionOutputInfos lookForAnActionOutputInfos;
-
-  ++pCurrItInPlan;
-  while (pCurrItInPlan != pPlan.end())
-  {
-    std::list<ActionDataForParallelisation*> actionsInParallel;
-    for (auto& currAction : *pCurrItInPlan)
-    {
-      if (&currAction == pActionToSkipPtr)
-        continue;
-
-      const auto* conditionPtr = currAction.getConditionWithoutParameterPtr();
-      if (conditionPtr != nullptr && !conditionPtr->isTrue(pProblem.worldState))
-        return {};
-
-      auto* worldStateModificationAtStartWithoutParameterPtr = currAction.getWorldStateModificationAtStartWithoutParameterPtr();
-      if (worldStateModificationAtStartWithoutParameterPtr != nullptr)
-        pProblem.worldState.modify(worldStateModificationAtStartWithoutParameterPtr, pProblem.goalStack, setOfEvents, ontology, pProblem.entities, pNow);
-      actionsInParallel.emplace_back(&currAction);
-
-      const auto* worldStateModificationWithoutParameterPtr = currAction.getWorldStateModificationWithoutParameterPtr();
-      if (worldStateModificationWithoutParameterPtr != nullptr)
-        pProblem.worldState.modify(worldStateModificationWithoutParameterPtr, pProblem.goalStack, setOfEvents, ontology, pProblem.entities, pNow);
-
-      const auto* potentialWorldStateModificationWithoutParameterPtr = currAction.getPotentialWorldStateModificationWithoutParameterPtr();
-      if (potentialWorldStateModificationWithoutParameterPtr != nullptr)
-        pProblem.worldState.modify(potentialWorldStateModificationWithoutParameterPtr, pProblem.goalStack, setOfEvents, ontology, pProblem.entities, pNow);
-
-      pProblem.goalStack.notifyActionDone(currAction.actionInvWithGoal, pNow,
-                                          &currAction.action.effect.goalsToAdd,
-                                          &currAction.action.effect.goalsToAddInCurrentPriority, pProblem.worldState, &lookForAnActionOutputInfos);
-    }
-    ++pCurrItInPlan;
-  }
-
-  lookForAnActionOutputInfos.moveGoalsDone(res);
-  return res;
-}
 
 void _notifyActionsDoneAndRemoveCorrespondingGoals(std::list<Goal>& pGoals,
                                                    const std::list<ActionDataForParallelisation>& pActions,
@@ -210,12 +33,10 @@ void _notifyActionsDoneAndRemoveCorrespondingGoals(std::list<Goal>& pGoals,
     pGoals.remove(currGoal);
 }
 
-
 }
 
 
-
-std::list<ActionsToDoInParallel> toParallelPlan
+ParallelPan toParallelPlan
 (std::list<ActionInvocationWithGoal>& pSequentialPlan,
  bool pParalleliseOnyFirstStep,
  Problem& pProblem,
@@ -225,6 +46,8 @@ std::list<ActionsToDoInParallel> toParallelPlan
 {
   const auto& actions = pDomain.actions();
   std::list<std::list<ActionDataForParallelisation>> currentRes;
+  ParallelPan res;
+  res.goals = pGoals;
 
   // Connvert list of actions to a list of list of actions
   while (!pSequentialPlan.empty())
@@ -274,7 +97,9 @@ std::list<ActionsToDoInParallel> toParallelPlan
             auto remainingGoals = pGoals;
             _notifyActionsDoneAndRemoveCorrespondingGoals(remainingGoals, *itPlanStep, tmpProblem, pDomain, pNow);
 
-            auto goalsCand = _checkSatisfiedGoals(tmpProblem, pDomain, itPlanStep, currentRes, &actionInvocationCand, pNow);
+            auto itNextInPlan = itPlanStep;
+            ++itNextInPlan;
+            auto goalsCand = extractSatisfiedGoals(tmpProblem, pDomain, itNextInPlan, currentRes, &actionInvocationCand, pNow);
             if (goalsCand == remainingGoals)
             {
               notifyActionStarted(pProblem, pDomain, actionInvocationCand.actionInvWithGoal, pNow);
@@ -293,14 +118,13 @@ std::list<ActionsToDoInParallel> toParallelPlan
     _notifyActionsDoneAndRemoveCorrespondingGoals(pGoals, *itPlanStep, pProblem, pDomain, pNow);
   }
 
-  std::list<ActionsToDoInParallel> res;
   for (auto& currResStep : currentRes)
   {
     ActionsToDoInParallel subRes;
     for (auto& currActionTmpData : currResStep)
       subRes.actions.emplace_back(std::move(currActionTmpData.actionInvWithGoal));
     if (!subRes.actions.empty())
-      res.emplace_back(std::move(subRes));
+      res.actionsToDoInParallel.emplace_back(std::move(subRes));
   }
   return res;
 }

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
+#include <orderedgoalsplanner/types/parallelplan.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace

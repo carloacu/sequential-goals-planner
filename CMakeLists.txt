@@ -32,6 +32,7 @@ set(ORDERED_GOALS_PLANNER_HPPS
     include/orderedgoalsplanner/types/factstovalue.hpp
     include/orderedgoalsplanner/types/ontology.hpp
     include/orderedgoalsplanner/types/parameter.hpp
+    include/orderedgoalsplanner/types/parallelplan.hpp
     include/orderedgoalsplanner/types/predicate.hpp
     include/orderedgoalsplanner/types/problem.hpp
     include/orderedgoalsplanner/types/problemmodification.hpp
@@ -64,6 +65,8 @@ set(ORDERED_GOALS_PLANNER_HPPS
 
 
 set(ORDERED_GOALS_PLANNER_SRCS
+    src/algo/actiondataforparallelisation.hpp
+    src/algo/actiondataforparallelisation.cpp
     src/algo/converttoparallelplan.hpp
     src/algo/converttoparallelplan.cpp
     src/algo/notifyactiondone.hpp

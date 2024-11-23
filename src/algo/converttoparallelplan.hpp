@@ -10,14 +10,14 @@
 namespace ogp
 {
 struct ActionInvocationWithGoal;
-struct ActionsToDoInParallel;
 struct Domain;
 struct Goal;
+struct ParallelPan;
 struct Problem;
 struct WorldState;
 
 
-std::list<ActionsToDoInParallel> toParallelPlan
+ParallelPan toParallelPlan
 (std::list<ActionInvocationWithGoal>& pSequentialPlan,
  bool pParalleliseOnyFirstStep,
  Problem& pProblem,

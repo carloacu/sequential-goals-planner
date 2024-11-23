@@ -11,7 +11,6 @@ namespace ogp
 
 struct ORDEREDGOALSPLANNER_API ActionsToDoInParallel
 {
-
   std::list<ActionInvocationWithGoal> actions;
 };
 

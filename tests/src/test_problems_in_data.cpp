@@ -70,7 +70,7 @@ void _test_dataDirectory(const std::string& pDataPath,
   ogp::DomainAndProblemPtrs domainAndProblemPtrs = ogp::pddlToProblem(problemContent, loadedDomains);
   auto& problem = *domainAndProblemPtrs.problemPtr;
 
-  std::string expected = _getFileContentWithoutComments(directory + "/problem_plan_result.pddl");
+  std::string expected = _getFileContentWithoutComments(directory + "/problem.plan");
   std::string actualPlan = ogp::planToPddl(ogp::planForEveryGoals(problem, domain, {}), domain);
   EXPECT_EQ(expected, actualPlan);
 }

@@ -13,6 +13,7 @@
 
 namespace ogp
 {
+struct ParallelPan;
 
 
 /**
@@ -104,7 +105,7 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
     std::list<Goal>* pGoalsDonePtr = nullptr);
 
 ORDEREDGOALSPLANNER_API
-std::list<ActionsToDoInParallel> parallelPlanForEveryGoals(
+ParallelPan parallelPlanForEveryGoals(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -121,14 +122,14 @@ std::string planToStr(const std::list<ActionInvocationWithGoal>& pPlan,
                       const std::string& pSep = ", ");
 
 ORDEREDGOALSPLANNER_API
-std::string parallelPlanToStr(const std::list<ActionsToDoInParallel>& pPlan);
+std::string parallelPlanToStr(const ParallelPan& pPlan);
 
 ORDEREDGOALSPLANNER_API
 std::string planToPddl(const std::list<ActionInvocationWithGoal>& pPlan,
                        const Domain& pDomain);
 
 ORDEREDGOALSPLANNER_API
-std::string parallelPlanToPddl(const std::list<ActionsToDoInParallel>& pPlan,
+std::string parallelPlanToPddl(const ParallelPan& pPlan,
                                const Domain& pDomain);
 /**
  * @brief Convert a list of goals to a string.
@@ -139,6 +140,14 @@ std::string parallelPlanToPddl(const std::list<ActionsToDoInParallel>& pPlan,
 ORDEREDGOALSPLANNER_API
 std::string goalsToStr(const std::list<Goal>& pGoals,
                        const std::string& pSep = ", ");
+
+
+/// Check that the plan is valid and no actions are done for nothing
+ORDEREDGOALSPLANNER_API
+bool evaluate
+(ParallelPan& pPlan,
+ Problem& pProblem,
+ const Domain& pDomain);
 
 } // !ogp
 

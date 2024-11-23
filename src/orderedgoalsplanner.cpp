@@ -2,10 +2,12 @@
 #include <algorithm>
 #include <iomanip>
 #include <optional>
+#include <orderedgoalsplanner/types/parallelplan.hpp>
 #include <orderedgoalsplanner/types/setofevents.hpp>
 #include <orderedgoalsplanner/util/util.hpp>
 #include "types/factsalreadychecked.hpp"
 #include "types/treeofalreadydonepaths.hpp"
+#include "algo/actiondataforparallelisation.hpp"
 #include "algo/converttoparallelplan.hpp"
 #include "algo/notifyactiondone.hpp"
 
@@ -1067,8 +1069,8 @@ ActionsToDoInParallel actionsToDoInParallelNow(
   auto problemForPlanResolution = pProblem;
   auto sequentialPlan = planForEveryGoals(problemForPlanResolution, pDomain, pNow, pGlobalHistorical, &goalsDone);
   auto parallelPlan = toParallelPlan(sequentialPlan, true, pProblem, pDomain, goalsDone, pNow);
-  if (!parallelPlan.empty())
-    return parallelPlan.front();
+  if (!parallelPlan.actionsToDoInParallel.empty())
+    return parallelPlan.actionsToDoInParallel.front();
   return {};
 }
 
@@ -1162,7 +1164,7 @@ std::list<ActionInvocationWithGoal> planForEveryGoals(
 }
 
 
-std::list<ActionsToDoInParallel> parallelPlanForEveryGoals(
+ParallelPan parallelPlanForEveryGoals(
     Problem& pProblem,
     const Domain& pDomain,
     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
@@ -1195,10 +1197,10 @@ std::string planToStr(const std::list<ActionInvocationWithGoal>& pPlan,
 }
 
 
-std::string parallelPlanToStr(const std::list<ActionsToDoInParallel>& pPlan)
+std::string parallelPlanToStr(const ParallelPan& pPlan)
 {
   std::string res;
-  for (const auto& currAcctionsInParallel : pPlan)
+  for (const auto& currAcctionsInParallel : pPlan.actionsToDoInParallel)
   {
     if (!res.empty())
       res += "\n";
@@ -1230,12 +1232,12 @@ std::string planToPddl(const std::list<ActionInvocationWithGoal>& pPlan,
 }
 
 
-std::string parallelPlanToPddl(const std::list<ActionsToDoInParallel>& pPlan,
+std::string parallelPlanToPddl(const ParallelPan& pPlan,
                                const Domain& pDomain)
 {
   std::size_t step = 0;
   std::string res;
-  for (const auto& currActionsToDoInParallel : pPlan)
+  for (const auto& currActionsToDoInParallel : pPlan.actionsToDoInParallel)
   {
     std::stringstream ssBeginOfStep;
     ssBeginOfStep << std::setw(2) << std::setfill('0') << step << ": ";
@@ -1265,6 +1267,37 @@ std::string goalsToStr(const std::list<Goal>& pGoals,
     res += currGoal.toStr();
   }
   return res;
+}
+
+
+bool evaluate
+(ParallelPan& pPlan,
+ Problem& pProblem,
+ const Domain& pDomain)
+{
+  std::list<std::list<ActionDataForParallelisation>> planWithCache;
+  const auto& actions = pDomain.actions();
+
+  for (auto& currActionsInParallel : pPlan.actionsToDoInParallel)
+  {
+    std::list<ActionDataForParallelisation> actionInASubList;
+    for (auto& currAction : currActionsInParallel.actions)
+    {
+      auto itAction = actions.find(currAction.actionInvocation.actionId);
+      if (itAction == actions.end())
+        throw std::runtime_error("ActionId \"" + currAction.actionInvocation.actionId + "\" not found in algorithm to manaage parralelisation");
+      actionInASubList.emplace_back(itAction->second, std::move(currAction));
+    }
+    if (!actionInASubList.empty())
+      planWithCache.emplace_back(std::move(actionInASubList));
+  }
+
+  std::unique_ptr<std::chrono::steady_clock::time_point> now;
+  pProblem.goalStack.refreshIfNeeded(pDomain);
+  pProblem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(pProblem.worldState, now);
+  auto itBegin = planWithCache.begin();
+  auto goals = extractSatisfiedGoals(pProblem, pDomain, itBegin, planWithCache, nullptr, now);
+  return goals == pPlan.goals;
 }
 
 
