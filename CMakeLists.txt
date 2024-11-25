@@ -91,6 +91,7 @@ set(ORDERED_GOALS_PLANNER_SRCS
     src/types/historical.cpp
     src/types/lookforanactionoutputinfos.cpp
     src/types/factstovalue.cpp
+    src/types/parallelplan.cpp
     src/types/parameter.cpp
     src/types/predicate.cpp
     src/types/problemmodification.cpp

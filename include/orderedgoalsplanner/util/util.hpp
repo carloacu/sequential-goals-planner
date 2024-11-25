@@ -14,7 +14,9 @@
 
 namespace ogp
 {
+struct ActionsToDoInParallel;
 struct Entity;
+struct Goal;
 struct Parameter;
 
 

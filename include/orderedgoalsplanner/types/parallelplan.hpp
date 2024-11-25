@@ -14,8 +14,9 @@ struct ORDEREDGOALSPLANNER_API ParallelPan
   /// Ordered list of actions set to do in parallel
   std::list<ActionsToDoInParallel> actionsToDoInParallel;
 
-  /// Goals that the plan satisfies
-  std::list<Goal> goals;
+  std::list<Goal> extractSatisiedGoals() const;
+
+  std::size_t cost() const;
 };
 
 

@@ -1292,12 +1292,14 @@ bool evaluate
       planWithCache.emplace_back(std::move(actionInASubList));
   }
 
+  auto expectedGoalsSatisfied = pPlan.extractSatisiedGoals();
+
   std::unique_ptr<std::chrono::steady_clock::time_point> now;
   pProblem.goalStack.refreshIfNeeded(pDomain);
   pProblem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(pProblem.worldState, now);
   auto itBegin = planWithCache.begin();
   auto goals = extractSatisfiedGoals(pProblem, pDomain, itBegin, planWithCache, nullptr, now);
-  return goals == pPlan.goals;
+  return goals == expectedGoalsSatisfied;
 }
 
 

@@ -46,8 +46,6 @@ ParallelPan toParallelPlan
 {
   const auto& actions = pDomain.actions();
   std::list<std::list<ActionDataForParallelisation>> currentRes;
-  ParallelPan res;
-  res.goals = pGoals;
 
   // Connvert list of actions to a list of list of actions
   while (!pSequentialPlan.empty())
@@ -118,6 +116,7 @@ ParallelPan toParallelPlan
     _notifyActionsDoneAndRemoveCorrespondingGoals(pGoals, *itPlanStep, pProblem, pDomain, pNow);
   }
 
+  ParallelPan res;
   for (auto& currResStep : currentRes)
   {
     ActionsToDoInParallel subRes;
