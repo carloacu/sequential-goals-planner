@@ -17,8 +17,15 @@ const int GoalStack::defaultPriority = 10;
 GoalStack::GoalStack(const GoalStack& pOther)
   : onGoalsChanged(),
     _goals(pOther._goals),
-    _currentGoalPtr(pOther._currentGoalPtr)
+    _currentGoalPtr(nullptr)
 {
+}
+
+GoalStack& GoalStack::operator=(const GoalStack& pOther)
+{
+  _goals = pOther._goals;
+  _currentGoalPtr = nullptr;
+  return *this;
 }
 
 

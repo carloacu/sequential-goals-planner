@@ -28,6 +28,7 @@ struct ORDEREDGOALSPLANNER_API GoalStack
   GoalStack() = default;
   /// Construct a problem from another problem.
   GoalStack(const GoalStack& pOther);
+  GoalStack& operator=(const GoalStack& pOther);
 
   /**
    * @brief Notify that an action has been done.
