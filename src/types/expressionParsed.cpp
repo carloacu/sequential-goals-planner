@@ -76,13 +76,7 @@ FactOptional ExpressionParsed::toFact(const Ontology& pOntology,
     factName = name;
   }
 
-  FactOptional res(isFactNegated, factName, argumentStrs, value, isValueNegated, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing);
-  if (value == Fact::undefinedValue.value && !res.isFactNegated)
-  {
-    res.isFactNegated = true;
-    res.fact.setFluentValue(Entity::anyEntityValue());
-  }
-  return res;
+  return FactOptional(isFactNegated, factName, argumentStrs, value, isValueNegated, pOntology, pEntities, pParameters, pIsOkIfFluentIsMissing);
 }
 
 

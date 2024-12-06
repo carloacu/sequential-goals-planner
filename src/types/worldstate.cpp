@@ -64,13 +64,13 @@ void WorldState::operator=(const WorldState& pOther)
 }
 
 
-void WorldState::addFactsFromPddl(const std::string& pStr,
-                                  std::size_t& pPos,
-                                  const Ontology& pOntology,
-                                  const SetOfEntities& pEntities,
-                                  bool pCanFactsBeRemoved)
+void WorldState::modifyFactsFromPddl(const std::string& pStr,
+                                     std::size_t& pPos,
+                                     const Ontology& pOntology,
+                                     const SetOfEntities& pEntities,
+                                     bool pCanFactsBeRemoved)
 {
-  _factsMapping.addFactsFromPddl(pStr, pPos, pOntology, pEntities, pCanFactsBeRemoved);
+  _factsMapping.modifyFactsFromPddl(pStr, pPos, pOntology, pEntities, pCanFactsBeRemoved);
   _cache = std::make_unique<WorldStateCache>(*this);
 }
 

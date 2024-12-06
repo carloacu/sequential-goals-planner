@@ -97,14 +97,27 @@ Fact::Fact(const std::string& pStr,
     auto expressionParsed = pStrPddlFormated ?
         ExpressionParsed::fromPddl(pStr, pos, false) :
         ExpressionParsed::fromStr(pStr, pos);
-    if (!pStrPddlFormated && !expressionParsed.name.empty() && expressionParsed.name[0] == '!')
+    if (!pStrPddlFormated)
     {
-      if (pIsFactNegatedPtr != nullptr)
-         *pIsFactNegatedPtr = true;
-      _name = expressionParsed.name.substr(1, expressionParsed.name.size() - 1);
+      if (!expressionParsed.name.empty() && expressionParsed.name[0] == '!')
+      {
+        if (pIsFactNegatedPtr != nullptr)
+           *pIsFactNegatedPtr = true;
+        _name = expressionParsed.name.substr(1, expressionParsed.name.size() - 1);
+      }
+      else
+      {
+        _name = expressionParsed.name;
+      }
     }
     else
     {
+      if (expressionParsed.name == "not" && expressionParsed.arguments.size() == 1)
+      {
+        if (pIsFactNegatedPtr != nullptr)
+           *pIsFactNegatedPtr = true;
+        expressionParsed = expressionParsed.arguments.back().clone();
+      }
       _name = expressionParsed.name;
     }
 
@@ -112,7 +125,17 @@ Fact::Fact(const std::string& pStr,
     auto* expressionParsedForArgumentsPtr = &expressionParsed;
     if (_name == "=" && expressionParsed.arguments.size() == 2)
     {
-      _fluent.emplace(Entity::fromUsage(expressionParsed.arguments.back().name, pOntology, pEntities, pParameters));
+      auto fluentStr = expressionParsed.arguments.back().name;
+      if (fluentStr == undefinedValue.value)
+      {
+        if (pIsFactNegatedPtr != nullptr)
+           *pIsFactNegatedPtr = true;
+        _fluent.emplace(Entity::createAnyEntity());
+      }
+      else
+      {
+        _fluent.emplace(Entity::fromUsage(fluentStr, pOntology, pEntities, pParameters));
+      }
       expressionParsedForArgumentsPtr = &expressionParsed.arguments.front();
       _name = expressionParsedForArgumentsPtr->name;
     }

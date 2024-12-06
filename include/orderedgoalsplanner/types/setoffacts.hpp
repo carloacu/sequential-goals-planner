@@ -31,11 +31,11 @@ struct ORDEREDGOALSPLANNER_API SetOfFacts
 
   std::string toPddl(std::size_t pIdentation, bool pPrintTimeLessFactsToo) const;
 
-  void addFactsFromPddl(const std::string& pStr,
-                        std::size_t& pPos,
-                        const Ontology& pOntology,
-                        const SetOfEntities& pEntities,
-                        bool pCanFactsBeRemoved = true);
+  void modifyFactsFromPddl(const std::string& pStr,
+                           std::size_t& pPos,
+                           const Ontology& pOntology,
+                           const SetOfEntities& pEntities,
+                           bool pCanFactsBeRemoved = true);
 
   void add(const Fact& pFact,
            bool pCanBeRemoved = true);

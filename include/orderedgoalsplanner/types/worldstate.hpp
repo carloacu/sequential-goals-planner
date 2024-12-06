@@ -41,11 +41,11 @@ struct ORDEREDGOALSPLANNER_API WorldState
 
   void operator=(const WorldState& pOther);
 
-  void addFactsFromPddl(const std::string& pStr,
-                        std::size_t& pPos,
-                        const Ontology& pOntology,
-                        const SetOfEntities& pEntities,
-                        bool pCanFactsBeRemoved = true);
+  void modifyFactsFromPddl(const std::string& pStr,
+                           std::size_t& pPos,
+                           const Ontology& pOntology,
+                           const SetOfEntities& pEntities,
+                           bool pCanFactsBeRemoved = true);
 
   /**
    * @brief Notify that an action has been done.

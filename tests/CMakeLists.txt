@@ -37,6 +37,7 @@ add_executable(
   src/main.cpp
   src/test_goalscache.cpp
   src/test_parallelplan.cpp
+  src/test_worldstate.cpp
 )
 
 
