@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 #include <orderedgoalsplanner/types/parallelplan.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace
@@ -8,6 +9,7 @@ namespace
 const std::map<ogp::SetOfEventsId, ogp::SetOfEvents> _emptySetOfEvents;
 const std::string _sep = ", ";
 const std::unique_ptr<std::chrono::steady_clock::time_point> _now = {};
+const ogp::SetOfCallbacks _emptyCallbacks;
 
 const std::string _fact_a = "fact_a";
 const std::string _fact_b = "fact_b";
@@ -66,7 +68,7 @@ void _addFact(ogp::WorldState& pWorldState,
               const ogp::Ontology& pOntology,
               const std::map<ogp::SetOfEventsId, ogp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, ogp::SetOfEntities(), pNow);
+  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, _emptyCallbacks, pOntology, ogp::SetOfEntities(), pNow);
 }
 
 ogp::ActionInvocationWithGoal _lookForAnActionToDo(ogp::Problem& pProblem,
@@ -89,8 +91,8 @@ std::string _lookForAnActionToDoInParallelThenNotifyToStr(
   auto actionsToDoInParallel = ogp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
   for (auto& currAction : actionsToDoInParallel.actions)
   {
-    notifyActionStarted(pProblem, pDomain, currAction, pNow);
-    notifyActionDone(pProblem, pDomain, currAction, pNow);
+    notifyActionStarted(pProblem, pDomain, _emptyCallbacks, currAction, pNow);
+    notifyActionDone(pProblem, pDomain, _emptyCallbacks, currAction, pNow);
   }
   return ogp::planToStr(actionsToDoInParallel.actions);
 }

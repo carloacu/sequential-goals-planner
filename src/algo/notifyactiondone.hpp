@@ -20,12 +20,14 @@ struct LookForAnActionOutputInfos;
 struct SetOfEvents;
 struct WorldStateModification;
 struct Ontology;
+struct SetOfCallbacks;
 struct SetOfEntities;
 
 
 void notifyActionInvocationDone(Problem& pProblem,
                                 bool& pGoalChanged,
                                 const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                                const SetOfCallbacks& pCallbacks,
                                 const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                 const std::unique_ptr<WorldStateModification>& pEffect,
                                 const Ontology& pOntology,

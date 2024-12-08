@@ -17,16 +17,19 @@ add_executable(
 
   src/plannerusingexternaldata.hpp
 
-  src/test_goalscache.cpp
-  src/test_planner.cpp
+  src/test_arithmeticevaluator.cpp
+  src/test_callbacks.cpp
   src/test_evaluate.cpp
   src/test_facttoconditions.cpp
+  src/test_goalscache.cpp
+  src/test_planner.cpp
   src/test_plannerWithSingleType.cpp
   src/test_ontology.cpp
+  src/test_parallelplan.cpp
   src/test_pddl_serialization.cpp
   src/test_setoffacts.cpp
-  src/test_arithmeticevaluator.cpp
   src/test_successionscache.cpp
+  src/test_worldstate.cpp
   src/docexamples/test_planningDummyExample.hpp
   src/docexamples/test_planningDummyExample.cpp
   src/docexamples/test_planningExampleWithAPreconditionSolve.hpp
@@ -35,9 +38,6 @@ add_executable(
   src/test_pddl_serialization.cpp
   src/test_problems_in_data.cpp
   src/main.cpp
-  src/test_goalscache.cpp
-  src/test_parallelplan.cpp
-  src/test_worldstate.cpp
 )
 
 

@@ -3,12 +3,15 @@
 #include <orderedgoalsplanner/types/fact.hpp>
 #include <orderedgoalsplanner/types/goalstack.hpp>
 #include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/types/setofevents.hpp>
 #include <orderedgoalsplanner/types/worldstate.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace
 {
+const ogp::SetOfCallbacks _emptyCallbacks;
+
 std::map<ogp::Parameter, std::set<ogp::Entity>> _toParameterMap(const std::vector<ogp::Parameter>& pParameters)
 {
   std::map<ogp::Parameter, std::set<ogp::Entity>> res;
@@ -258,7 +261,7 @@ void _test_checkConditionWithOntology()
   ogp::WorldState worldState;
   ogp::GoalStack goalStack;
   std::map<ogp::SetOfEventsId, ogp::SetOfEvents> setOfEvents;
-  worldState.addFact(ogp::Fact::fromStr("pred_name(toto)", ontology, {}, {}), goalStack, setOfEvents, ontology, {}, {});
+  worldState.addFact(ogp::Fact::fromStr("pred_name(toto)", ontology, {}, {}), goalStack, setOfEvents, _emptyCallbacks, ontology, {}, {});
   EXPECT_FALSE(ogp::strToCondition("pred_name(titi)", ontology, {}, {})->isTrue(worldState));
 
   {

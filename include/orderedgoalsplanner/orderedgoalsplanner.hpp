@@ -66,6 +66,7 @@ ActionsToDoInParallel actionsToDoInParallelNow(
 ORDEREDGOALSPLANNER_API
 void notifyActionStarted(Problem& pProblem,
                          const Domain& pDomain,
+                         const SetOfCallbacks& pCallbacks,
                          const ActionInvocationWithGoal& pActionInvocationWithGoal,
                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
@@ -79,6 +80,7 @@ void notifyActionStarted(Problem& pProblem,
 ORDEREDGOALSPLANNER_API
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
+                      const SetOfCallbacks& pCallbacks,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                       LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr = nullptr);

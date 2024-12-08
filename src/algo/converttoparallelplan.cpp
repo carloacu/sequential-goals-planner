@@ -7,6 +7,7 @@
 #include <orderedgoalsplanner/types/domain.hpp>
 #include <orderedgoalsplanner/types/parallelplan.hpp>
 #include <orderedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/types/worldstate.hpp>
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 #include "actiondataforparallelisation.hpp"
@@ -22,11 +23,12 @@ void _notifyActionsDoneAndRemoveCorrespondingGoals(std::list<Goal>& pGoals,
                                                    const std::list<ActionDataForParallelisation>& pActions,
                                                    Problem& pProblem,
                                                    const Domain& pDomain,
+                                                   const SetOfCallbacks& pCallbacks,
                                                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   LookForAnActionOutputInfos lookForAnActionOutputInfos;
   for (auto& currActionTmpData : pActions)
-    notifyActionDone(pProblem, pDomain, currActionTmpData.actionInvWithGoal, pNow, &lookForAnActionOutputInfos);
+    notifyActionDone(pProblem, pDomain, pCallbacks, currActionTmpData.actionInvWithGoal, pNow, &lookForAnActionOutputInfos);
   std::list<Goal> goalsSatisfied;
   lookForAnActionOutputInfos.moveGoalsDone(goalsSatisfied);
   for (auto& currGoal : goalsSatisfied)
@@ -46,6 +48,7 @@ ParallelPan toParallelPlan
 {
   const auto& actions = pDomain.actions();
   std::list<std::list<ActionDataForParallelisation>> currentRes;
+  const SetOfCallbacks callbacks;
 
   // Connvert list of actions to a list of list of actions
   while (!pSequentialPlan.empty())
@@ -65,7 +68,7 @@ ParallelPan toParallelPlan
     const Goal* goalPtr = nullptr;
     for (ActionDataForParallelisation& currActionTmpData : *itPlanStep)
     {
-      notifyActionStarted(pProblem, pDomain, currActionTmpData.actionInvWithGoal, pNow);
+      notifyActionStarted(pProblem, pDomain, callbacks, currActionTmpData.actionInvWithGoal, pNow);
       if (goalPtr == nullptr && currActionTmpData.actionInvWithGoal.fromGoal)
         goalPtr = &*currActionTmpData.actionInvWithGoal.fromGoal;
     }
@@ -90,17 +93,17 @@ ParallelPan toParallelPlan
               conditionWithoutParameterPtr->isTrue(pProblem.worldState))
           {
             auto tmpProblem = pProblem;
-            notifyActionStarted(tmpProblem, pDomain, actionInvocationCand.actionInvWithGoal, pNow);
-            notifyActionDone(tmpProblem, pDomain, actionInvocationCand.actionInvWithGoal, pNow);
+            notifyActionStarted(tmpProblem, pDomain, callbacks, actionInvocationCand.actionInvWithGoal, pNow);
+            notifyActionDone(tmpProblem, pDomain, callbacks, actionInvocationCand.actionInvWithGoal, pNow);
             auto remainingGoals = pGoals;
-            _notifyActionsDoneAndRemoveCorrespondingGoals(remainingGoals, *itPlanStep, tmpProblem, pDomain, pNow);
+            _notifyActionsDoneAndRemoveCorrespondingGoals(remainingGoals, *itPlanStep, tmpProblem, pDomain, callbacks, pNow);
 
             auto itNextInPlan = itPlanStep;
             ++itNextInPlan;
             auto goalsCand = extractSatisfiedGoals(tmpProblem, pDomain, itNextInPlan, currentRes, &actionInvocationCand, pNow);
             if (goalsCand == remainingGoals)
             {
-              notifyActionStarted(pProblem, pDomain, actionInvocationCand.actionInvWithGoal, pNow);
+              notifyActionStarted(pProblem, pDomain, callbacks, actionInvocationCand.actionInvWithGoal, pNow);
               itPlanStep->emplace_back(std::move(actionInvocationCand));
               itPlanStepCandidate = currentRes.erase(itPlanStepCandidate);
               continue;
@@ -113,7 +116,7 @@ ParallelPan toParallelPlan
 
     if (pParalleliseOnyFirstStep)
       break;
-    _notifyActionsDoneAndRemoveCorrespondingGoals(pGoals, *itPlanStep, pProblem, pDomain, pNow);
+    _notifyActionsDoneAndRemoveCorrespondingGoals(pGoals, *itPlanStep, pProblem, pDomain, callbacks, pNow);
   }
 
   ParallelPan res;

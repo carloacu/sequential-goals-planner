@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 #include <orderedgoalsplanner/types/parallelplan.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 namespace
 {
 const std::unique_ptr<std::chrono::steady_clock::time_point> _now = {};
 const std::map<ogp::SetOfEventsId, ogp::SetOfEvents> _emptySetOfEvents;
+const ogp::SetOfCallbacks _emptyCallbacks;
 
 const std::string _fact_a = "fact_a";
 const std::string _fact_b = "fact_b";
@@ -24,7 +26,7 @@ void _addFact(ogp::WorldState& pWorldState,
               const ogp::Ontology& pOntology,
               const std::map<ogp::SetOfEventsId, ogp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, ogp::SetOfEntities(), pNow);
+  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, _emptyCallbacks, pOntology, ogp::SetOfEntities(), pNow);
 }
 
 void _removeFact(ogp::WorldState& pWorldState,
@@ -33,7 +35,7 @@ void _removeFact(ogp::WorldState& pWorldState,
                  const ogp::Ontology& pOntology,
                  const std::map<ogp::SetOfEventsId, ogp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.removeFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, ogp::SetOfEntities(), pNow);
+  pWorldState.removeFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, _emptyCallbacks, pOntology, ogp::SetOfEntities(), pNow);
 }
 
 
@@ -137,8 +139,8 @@ void _testEvaluateWithFirstActionAlreadyDone()
   // Apply first action
   for (auto& currAction : parallelPlan.actionsToDoInParallel.front().actions)
   {
-    ogp::notifyActionStarted(problem, domain, currAction, _now);
-    ogp::notifyActionDone(problem, domain, currAction, _now);
+    ogp::notifyActionStarted(problem, domain, _emptyCallbacks, currAction, _now);
+    ogp::notifyActionDone(problem, domain, _emptyCallbacks, currAction, _now);
     break;
   }
 
@@ -176,8 +178,8 @@ void _testEvaluateWithOneOfFirstActionAlreadyDone()
   // Apply first action
   for (auto& currAction : parallelPlan.actionsToDoInParallel.front().actions)
   {
-    ogp::notifyActionStarted(problem, domain, currAction, _now);
-    ogp::notifyActionDone(problem, domain, currAction, _now);
+    ogp::notifyActionStarted(problem, domain, _emptyCallbacks, currAction, _now);
+    ogp::notifyActionDone(problem, domain, _emptyCallbacks, currAction, _now);
     break;
   }
 

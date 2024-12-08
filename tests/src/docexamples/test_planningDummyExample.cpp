@@ -3,6 +3,7 @@
 #include <memory>
 #include <assert.h>
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 
 
@@ -35,7 +36,8 @@ void planningDummyExample()
   const auto& firstActionInPlan = planResult1.front();
   assert(sayHi == firstActionInPlan.actionInvocation.actionId); // The action found is "say_hi", because it is needed to satisfy the preconditions of "ask_how_I_can_help"
   // When the action is finished we notify the planner
-  ogp::notifyActionDone(problem, domain, firstActionInPlan, now);
+  ogp::SetOfCallbacks setOfCallbacks;
+  ogp::notifyActionDone(problem, domain, setOfCallbacks, firstActionInPlan, now);
 
   // Look for the next action to do
   auto planResult2 = ogp::planForMoreImportantGoalPossible(problem, domain, true, now);

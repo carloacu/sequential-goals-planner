@@ -9,6 +9,7 @@ namespace ogp
 using ActionId = std::string;
 using SetOfEventsId = std::string;
 using EventId = std::string;
+using CallbackId = std::string;
 
 using FullEventId = std::string;
 

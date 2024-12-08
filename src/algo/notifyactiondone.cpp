@@ -3,6 +3,7 @@
 #include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
 #include <orderedgoalsplanner/types/domain.hpp>
 #include <orderedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/types/worldstate.hpp>
 
 namespace ogp
@@ -11,6 +12,7 @@ namespace ogp
 void notifyActionInvocationDone(Problem& pProblem,
                                 bool& pGoalChanged,
                                 const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                                const SetOfCallbacks& pCallbacks,
                                 const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                                 const std::unique_ptr<WorldStateModification>& pEffect,
                                 const Ontology& pOntology,
@@ -22,7 +24,7 @@ void notifyActionInvocationDone(Problem& pProblem,
   pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInvocation.actionId);
 
   pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pGoalChanged, pProblem.goalStack,
-                                       pSetOfEvents, pOntology, pProblem.entities, pNow);
+                                       pSetOfEvents, pCallbacks, pOntology, pProblem.entities, pNow);
 
   pGoalChanged = pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pNow, pGoalsToAdd,
                                                      pGoalsToAddInCurrentPriority, pProblem.worldState, pLookForAnActionOutputInfosPtr) || pGoalChanged;
@@ -61,14 +63,15 @@ void updateProblemForNextPotentialPlannerResultWithAction(
   if (pGlobalHistorical != nullptr)
     pGlobalHistorical->notifyActionDone(pOneStepOfPlannerResult.actionInvocation.actionId);
   auto& setOfEvents = pDomain.getSetOfEvents();
+  const SetOfCallbacks callbacks;
 
   const auto& ontology = pDomain.getOntology();
   if (pOneStepAction.effect.worldStateModificationAtStart)
     pProblem.worldState.modify(&*pOneStepAction.effect.worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
-                               ontology, pProblem.entities, pNow);
+                               callbacks, ontology, pProblem.entities, pNow);
 
-  notifyActionInvocationDone(pProblem, pGoalChanged, setOfEvents, pOneStepOfPlannerResult, pOneStepAction.effect.worldStateModification,
-                             ontology, pNow,
+  notifyActionInvocationDone(pProblem, pGoalChanged, setOfEvents, callbacks, pOneStepOfPlannerResult,
+                             pOneStepAction.effect.worldStateModification, ontology, pNow,
                              &pOneStepAction.effect.goalsToAdd, &pOneStepAction.effect.goalsToAddInCurrentPriority,
                              pLookForAnActionOutputInfosPtr);
 
@@ -77,7 +80,7 @@ void updateProblemForNextPotentialPlannerResultWithAction(
     auto potentialEffect = pOneStepAction.effect.potentialWorldStateModification->clone(&pOneStepOfPlannerResult.actionInvocation.parameters);
     if (potentialEffect)
       pProblem.worldState.modify(&*potentialEffect, pProblem.goalStack, setOfEvents,
-                                 ontology, pProblem.entities, pNow);
+                                 callbacks, ontology, pProblem.entities, pNow);
   }
 }
 

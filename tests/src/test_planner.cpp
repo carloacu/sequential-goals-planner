@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 #include <orderedgoalsplanner/types/predicate.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/types/setofconstfacts.hpp>
 #include <orderedgoalsplanner/types/setofevents.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
@@ -17,6 +18,7 @@ const std::map<ogp::SetOfEventsId, ogp::SetOfEvents> _emptySetOfEvents;
 const std::string _fact_a = "fact_a";
 const std::string _fact_b = "fact_b";
 const std::string _fact_c = "fact_c";
+const ogp::SetOfCallbacks _emptyCallbacks;
 
 
 void _setGoalsForAPriority(ogp::Problem& pProblem,
@@ -47,8 +49,8 @@ ogp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
   if (!plan.empty())
   {
     auto& firstActionInPlan = plan.front();
-    notifyActionStarted(pProblem, pDomain, firstActionInPlan, pNow);
-    notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
+    notifyActionStarted(pProblem, pDomain, _emptyCallbacks, firstActionInPlan, pNow);
+    notifyActionDone(pProblem, pDomain, _emptyCallbacks, firstActionInPlan, pNow);
     return firstActionInPlan;
   }
   return ogp::ActionInvocationWithGoal("", std::map<ogp::Parameter, ogp::Entity>(), {}, 0);
@@ -81,7 +83,7 @@ void _simplest_plan_possible()
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("pred_b", ontology, entities)});
   problem.worldState.addFact(ogp::Fact("pred_a(toto)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
 
   EXPECT_EQ("action1(?pa -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -115,7 +117,7 @@ void _wrong_condition_type()
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("pred_b", ontology, entities)});
   problem.worldState.addFact(ogp::Fact("pred_a(titi)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
 
   EXPECT_EQ("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
@@ -144,7 +146,7 @@ void _number_type()
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("pred_b", ontology, entities)});
   EXPECT_EQ("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
   problem.worldState.addFact(ogp::Fact("pred_a(toto)=10", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
 
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("pred_b", ontology, entities)});
   EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -217,7 +219,7 @@ void _planWithActionThenEventWithAssign()
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("pred_d=v", ontology, entities)});
   problem.worldState.addFact(ogp::Fact("pred_b(toto)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   EXPECT_EQ(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -258,9 +260,9 @@ void _fluentEqualityInPrecoditionOfAnAction()
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("pred_d(lol_val)", ontology, entities)});
   problem.worldState.addFact(ogp::Fact("pred_b(toto)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("pred_c(lol_val)=v", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   EXPECT_EQ(action1 + "(?e -> toto)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -295,7 +297,7 @@ void _testIncrementOfVariables()
 
   std::string initFactsStr = "numberOfQuestion=0 & maxNumberOfQuestions=3";
   ogp::Problem problem;
-  problem.worldState.modify(&*ogp::strToWsModification(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
+  problem.worldState.modify(&*ogp::strToWsModification(initFactsStr, ontology, entities, {}), problem.goalStack, _emptySetOfEvents, _emptyCallbacks, ontology, entities, _now);
   assert(ogp::strToCondition(initFactsStr, ontology, entities, {})->isTrue(problem.worldState));
   assert(!actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -314,9 +316,9 @@ void _testIncrementOfVariables()
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
     problem.worldState.modify(&*itAction->second.effect.worldStateModification, problem.goalStack,
-                              _emptySetOfEvents, ontology, entities, _now);
+                              _emptySetOfEvents, _emptyCallbacks, ontology, entities, _now);
     problem.worldState.modify(&*ogp::strToWsModification("!ask_all_the_questions", ontology, entities, {}),
-                              problem.goalStack, _emptySetOfEvents, ontology, entities, _now);
+                              problem.goalStack, _emptySetOfEvents, _emptyCallbacks, ontology, entities, _now);
   }
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(!actionSayQuestionBilan.precondition->isTrue(problem.worldState));
@@ -327,12 +329,12 @@ void _testIncrementOfVariables()
   auto itAction = domain.actions().find(actionToDo);
   assert(itAction != domain.actions().end());
   problem.worldState.modify(&*itAction->second.effect.worldStateModification, problem.goalStack,
-                            _emptySetOfEvents, ontology, entities, _now);
+                            _emptySetOfEvents, _emptyCallbacks, ontology, entities, _now);
   EXPECT_EQ(action_sayQuestionBilan, _lookForAnActionToDo(problem, domain).actionInvocation.toStr());
   assert(actionFinishToActActions.precondition->isTrue(problem.worldState));
   assert(actionSayQuestionBilan.precondition->isTrue(problem.worldState));
   problem.worldState.modify(&*actionSayQuestionBilan.effect.worldStateModification, problem.goalStack,
-                            _emptySetOfEvents, ontology, entities, _now);
+                            _emptySetOfEvents, _emptyCallbacks, ontology, entities, _now);
 }
 
 
@@ -358,7 +360,7 @@ void _actionWithParametersInPreconditionsAndEffects()
 
   ogp::Problem problem;
   problem.worldState.addFact(ogp::Fact("isEngaged(1)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
 
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("isHappy(1)", ontology, entities)});
   const auto& plan = ogp::planForEveryGoals(problem, domain, _now);
@@ -402,7 +404,7 @@ void _testQuiz()
 
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("finished_to_ask_questions", ontology, entities)});
   auto& setOfEventsMap = domain.getSetOfEvents();
-  problem.worldState.modify(&*initFacts, problem.goalStack, setOfEventsMap, {}, {}, _now);
+  problem.worldState.modify(&*initFacts, problem.goalStack, setOfEventsMap, _emptyCallbacks, {}, {}, _now);
   for (std::size_t i = 0; i < 3; ++i)
   {
     auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
@@ -414,7 +416,7 @@ void _testQuiz()
     auto itAction = domain.actions().find(actionToDo);
     assert(itAction != domain.actions().end());
     problem.worldState.modify(&*itAction->second.effect.worldStateModification,
-                              problem.goalStack, setOfEventsMap, {}, {}, _now);
+                              problem.goalStack, setOfEventsMap, _emptyCallbacks, {}, {}, _now);
   }
 
   auto actionToDo = _lookForAnActionToDo(problem, domain).actionInvocation.toStr();
@@ -473,17 +475,17 @@ void _doNextActionThatBringsToTheSmallerCost()
   ogp::Problem problem;
   auto& entities = problem.entities;
   problem.worldState.addFact(ogp::Fact("objectGrabable(obj1)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("objectGrabable(obj2)", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("locationOfRobot(me)=livingRoom", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("grab(me)=obj2", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("locationOfObject(obj2)=livingRoom", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("locationOfObject(obj1)=kitchen", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   auto secondProblem = problem;
   auto thirdProblem = problem;
   auto fourthProblem = problem;
@@ -542,7 +544,7 @@ void _satisfyGoalWithSuperiorOperator()
   ogp::Problem problem(&timelessFacts.setOfFacts());
   auto& entities = problem.entities;
   problem.worldState.addFact(ogp::Fact("fact_a=10", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("fact_a>50", ontology, entities)});
 
   EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -574,11 +576,11 @@ void _parameterToFillFromConditionOfFirstAction()
   ogp::Problem problem;
   auto& entities = problem.entities;
   problem.worldState.addFact(ogp::Fact("locationOfRobot=czLocation", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("declaredLocationOfChargingZone(cz)=czLocation", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   problem.worldState.addFact(ogp::Fact("batteryLevel=40", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("batteryLevel=100", ontology, entities)});
 
   EXPECT_EQ(action1 + "(?cz -> cz)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
@@ -607,7 +609,7 @@ void _planToMove()
   ogp::Problem problem;
   auto& entities = problem.entities;
   problem.worldState.addFact(ogp::Fact("locationOf(bottle)=loc1", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
-                             ontology, entities, _now);
+                             _emptyCallbacks, ontology, entities, _now);
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("locationOfRobot=loc1", ontology, entities)});
 
   EXPECT_EQ(action1 + "(?o -> bottle)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());

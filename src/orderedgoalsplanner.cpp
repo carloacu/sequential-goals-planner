@@ -1077,6 +1077,7 @@ ActionsToDoInParallel actionsToDoInParallelNow(
 
 void notifyActionStarted(Problem& pProblem,
                          const Domain& pDomain,
+                         const SetOfCallbacks& pCallbacks,
                          const ActionInvocationWithGoal& pActionInvocationWithGoal,
                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
@@ -1091,7 +1092,7 @@ void notifyActionStarted(Problem& pProblem,
       const auto& ontology = pDomain.getOntology();
       if (worldStateModificationAtStart)
         pProblem.worldState.modify(&*worldStateModificationAtStart, pProblem.goalStack, setOfEvents,
-                                   ontology, pProblem.entities, pNow);
+                                   pCallbacks, ontology, pProblem.entities, pNow);
     }
   }
 }
@@ -1099,6 +1100,7 @@ void notifyActionStarted(Problem& pProblem,
 
 void notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
+                      const SetOfCallbacks& pCallbacks,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                       LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr)
@@ -1110,8 +1112,8 @@ void notifyActionDone(Problem& pProblem,
     auto& setOfEvents = pDomain.getSetOfEvents();
     bool goalChanged = false;
     const auto& ontology = pDomain.getOntology();
-    notifyActionInvocationDone(pProblem, goalChanged, setOfEvents, pOnStepOfPlannerResult, itAction->second.effect.worldStateModification,
-                               ontology, pNow,
+    notifyActionInvocationDone(pProblem, goalChanged, setOfEvents, pCallbacks, pOnStepOfPlannerResult,
+                               itAction->second.effect.worldStateModification, ontology, pNow,
                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                                pLookForAnActionOutputInfosPtr);
   }

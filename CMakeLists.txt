@@ -18,6 +18,7 @@ set(ORDERED_GOALS_PLANNER_HPPS
     include/orderedgoalsplanner/types/actionstodoinparallel.hpp
     include/orderedgoalsplanner/types/axiom.hpp
     include/orderedgoalsplanner/types/condition.hpp
+    include/orderedgoalsplanner/types/conditiontocallback.hpp
     include/orderedgoalsplanner/types/condtionstovalue.hpp
     include/orderedgoalsplanner/types/derivedpredicate.hpp
     include/orderedgoalsplanner/types/domain.hpp
@@ -44,6 +45,7 @@ set(ORDERED_GOALS_PLANNER_HPPS
     include/orderedgoalsplanner/types/setofpredicates.hpp
     include/orderedgoalsplanner/types/setofderivedpredicates.hpp
     include/orderedgoalsplanner/types/setoftypes.hpp
+    include/orderedgoalsplanner/types/setofcallbacks.hpp
     include/orderedgoalsplanner/types/setofconstfacts.hpp
     include/orderedgoalsplanner/types/type.hpp
     include/orderedgoalsplanner/types/worldstate.hpp
@@ -95,6 +97,7 @@ set(ORDERED_GOALS_PLANNER_SRCS
     src/types/parameter.cpp
     src/types/predicate.cpp
     src/types/problemmodification.cpp
+    src/types/setofcallbacks.cpp
     src/types/setofentities.cpp
     src/types/setofevents.cpp
     src/types/setoffacts.cpp

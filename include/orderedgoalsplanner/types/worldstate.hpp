@@ -16,11 +16,13 @@
 
 namespace ogp
 {
+struct ConditionToCallback;
 struct Domain;
 struct Goal;
 struct GoalStack;
 struct Event;
 struct ActionInvocationWithGoal;
+struct SetOfCallbacks;
 struct SetOfEvents;
 struct WorldStateModification;
 struct WorldStateCache;
@@ -62,6 +64,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
                         bool& pGoalChanged,
                         GoalStack& pGoalStack,
                         const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                        const SetOfCallbacks& pCallbacks,
                         const Ontology& pOntology,
                         const SetOfEntities& pEntities,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -87,6 +90,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
   bool addFact(const Fact& pFact,
                GoalStack& pGoalStack,
                const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+               const SetOfCallbacks& pCallbacks,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -103,6 +107,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
   bool addFacts(const FACTS& pFacts,
                 GoalStack& pGoalStack,
                 const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                const SetOfCallbacks& pCallbacks,
                 const Ontology& pOntology,
                 const SetOfEntities& pEntities,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -121,6 +126,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
   bool removeFact(const Fact& pFact,
                   GoalStack& pGoalStack,
                   const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                  const SetOfCallbacks& pCallbacks,
                   const Ontology& pOntology,
                   const SetOfEntities& pEntities,
                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -137,6 +143,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
   bool removeFacts(const FACTS& pFacts,
                    GoalStack& pGoalStack,
                    const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                   const SetOfCallbacks& pCallbacks,
                    const Ontology& pOntology,
                    const SetOfEntities& pEntities,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -152,6 +159,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
   bool modify(const WorldStateModification* pWsModifPtr,
               GoalStack& pGoalStack,
               const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+              const SetOfCallbacks& pCallbacks,
               const Ontology& pOntology,
               const SetOfEntities& pEntities,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -167,6 +175,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
   void setFacts(const std::set<Fact>& pFacts,
                 GoalStack& pGoalStack,
                 const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                const SetOfCallbacks& pCallbacks,
                 const Ontology& pOntology,
                 const SetOfEntities& pEntities,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -295,6 +304,7 @@ private:
                  const FACTS& pFacts,
                  GoalStack& pGoalStack,
                  const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                 const SetOfCallbacks& pCallbacks,
                  const Ontology& pOntology,
                  const SetOfEntities& pEntities,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -330,6 +340,7 @@ private:
                const WorldStateModification* pWsModifPtr,
                GoalStack& pGoalStack,
                const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+               const SetOfCallbacks& pCallbacks,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
@@ -351,9 +362,15 @@ private:
                         const FactsToValue::ConstMapOfFactIterator& pEventIds,
                         const std::map<EventId, Event>& pEvents,
                         const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                        const SetOfCallbacks& pCallbacks,
                         const Ontology& pOntology,
                         const SetOfEntities& pEntities,
                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+
+  void _tryToCallCallbacks(std::set<CallbackId>& pCallbackAlreadyCalled,
+                           const WhatChanged& pWhatChanged,
+                           const FactsToValue::ConstMapOfFactIterator& pCallbackIds,
+                           const std::map<CallbackId, ConditionToCallback>& pCallbacks);
 
   /**
    * @brief Do events and raise the observables if some facts or goals changed.
@@ -368,6 +385,7 @@ private:
                           bool& pGoalChanged,
                           GoalStack& pGoalStack,
                           const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                          const SetOfCallbacks& pCallbacks,
                           const Ontology& pOntology,
                           const SetOfEntities& pEntities,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);

@@ -3,6 +3,7 @@
 #include <orderedgoalsplanner/types/domain.hpp>
 #include <orderedgoalsplanner/types/problem.hpp>
 #include <orderedgoalsplanner/types/lookforanactionoutputinfos.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 
 namespace ogp
 {
@@ -141,6 +142,7 @@ std::list<Goal> extractSatisfiedGoals(
 {
   std::list<Goal> res;
   auto& setOfEvents = pDomain.getSetOfEvents();
+  const SetOfCallbacks callbacks;
   const auto& ontology = pDomain.getOntology();
   LookForAnActionOutputInfos lookForAnActionOutputInfos;
   while (pCurrItInPlan != pPlan.end())
@@ -157,18 +159,21 @@ std::list<Goal> extractSatisfiedGoals(
 
       auto* worldStateModificationAtStartWithoutParameterPtr = currAction.getWorldStateModificationAtStartWithoutParameterPtr();
       if (worldStateModificationAtStartWithoutParameterPtr != nullptr)
-        pProblem.worldState.modify(worldStateModificationAtStartWithoutParameterPtr, pProblem.goalStack, setOfEvents, ontology, pProblem.entities, pNow);
+        pProblem.worldState.modify(worldStateModificationAtStartWithoutParameterPtr, pProblem.goalStack, setOfEvents,
+                                   callbacks, ontology, pProblem.entities, pNow);
       actionsInParallel.emplace_back(&currAction);
 
       bool somethingChanged = false;
 
       const auto* worldStateModificationWithoutParameterPtr = currAction.getWorldStateModificationWithoutParameterPtr();
       if (worldStateModificationWithoutParameterPtr != nullptr)
-        somethingChanged = pProblem.worldState.modify(worldStateModificationWithoutParameterPtr, pProblem.goalStack, setOfEvents, ontology, pProblem.entities, pNow);
+        somethingChanged = pProblem.worldState.modify(worldStateModificationWithoutParameterPtr, pProblem.goalStack, setOfEvents,
+                                                      callbacks, ontology, pProblem.entities, pNow);
 
       const auto* potentialWorldStateModificationWithoutParameterPtr = currAction.getPotentialWorldStateModificationWithoutParameterPtr();
       if (potentialWorldStateModificationWithoutParameterPtr != nullptr)
-        somethingChanged = pProblem.worldState.modify(potentialWorldStateModificationWithoutParameterPtr, pProblem.goalStack, setOfEvents, ontology, pProblem.entities, pNow) || somethingChanged;
+        somethingChanged = pProblem.worldState.modify(potentialWorldStateModificationWithoutParameterPtr, pProblem.goalStack, setOfEvents,
+                                                      callbacks, ontology, pProblem.entities, pNow) || somethingChanged;
 
       if (!somethingChanged)
         return {};

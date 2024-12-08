@@ -2,6 +2,7 @@
 #include <orderedgoalsplanner/orderedgoalsplanner.hpp>
 #include <orderedgoalsplanner/types/axiom.hpp>
 #include <orderedgoalsplanner/types/predicate.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/types/setofevents.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include <orderedgoalsplanner/util/trackers/goalsremovedtracker.hpp>
@@ -12,6 +13,7 @@ namespace
 const std::map<ogp::SetOfEventsId, ogp::SetOfEvents> _emptySetOfEvents;
 const std::string _sep = ", ";
 const std::unique_ptr<std::chrono::steady_clock::time_point> _now = {};
+const ogp::SetOfCallbacks _emptyCallbacks;
 
 const std::string _fact_a = "fact_a";
 const std::string _fact_b = "fact_b";
@@ -187,7 +189,7 @@ void _setFacts(ogp::WorldState& pWorldState,
   std::set<ogp::Fact> facts;
   for (auto& currFactStr : pFactStrs)
     facts.emplace(currFactStr, false, pOntology, ogp::SetOfEntities(), std::vector<ogp::Parameter>());
-  pWorldState.setFacts(facts, pGoalStack, pSetOfEvents, pOntology, ogp::SetOfEntities(), _now);
+  pWorldState.setFacts(facts, pGoalStack, pSetOfEvents, _emptyCallbacks, pOntology, ogp::SetOfEntities(), _now);
 }
 
 void _addFact(ogp::WorldState& pWorldState,
@@ -196,7 +198,7 @@ void _addFact(ogp::WorldState& pWorldState,
               const ogp::Ontology& pOntology,
               const std::map<ogp::SetOfEventsId, ogp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, ogp::SetOfEntities(), pNow);
+  pWorldState.addFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, _emptyCallbacks, pOntology, ogp::SetOfEntities(), pNow);
 }
 
 void _removeFact(ogp::WorldState& pWorldState,
@@ -205,7 +207,7 @@ void _removeFact(ogp::WorldState& pWorldState,
                  const ogp::Ontology& pOntology,
                  const std::map<ogp::SetOfEventsId, ogp::SetOfEvents>& pSetOfEvents = _emptySetOfEvents,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {}) {
-  pWorldState.removeFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, pOntology, ogp::SetOfEntities(), pNow);
+  pWorldState.removeFact(_fact(pFactStr, pOntology), pGoalStack, pSetOfEvents, _emptyCallbacks, pOntology, ogp::SetOfEntities(), pNow);
 }
 
 bool _hasFact(ogp::WorldState& pWorldState,
@@ -310,8 +312,8 @@ ogp::ActionInvocationWithGoal _lookForAnActionToDoThenNotify(
   if (!plan.empty())
   {
     auto& firstActionInPlan = plan.front();
-    notifyActionStarted(pProblem, pDomain, firstActionInPlan, pNow);
-    notifyActionDone(pProblem, pDomain, firstActionInPlan, pNow);
+    notifyActionStarted(pProblem, pDomain, _emptyCallbacks, firstActionInPlan, pNow);
+    notifyActionDone(pProblem, pDomain, _emptyCallbacks, firstActionInPlan, pNow);
     return firstActionInPlan;
   }
   return ogp::ActionInvocationWithGoal("", std::map<ogp::Parameter, ogp::Entity>(), {}, 0);
@@ -326,8 +328,8 @@ std::string _lookForAnActionToDoInParallelThenNotifyToStr(
   auto actionsToDoInParallel = ogp::actionsToDoInParallelNow(pProblem, pDomain, pNow);
   for (auto& currAction : actionsToDoInParallel.actions)
   {
-    notifyActionStarted(pProblem, pDomain, currAction, pNow);
-    notifyActionDone(pProblem, pDomain, currAction, pNow);
+    notifyActionStarted(pProblem, pDomain, _emptyCallbacks, currAction, pNow);
+    notifyActionDone(pProblem, pDomain, _emptyCallbacks, currAction, pNow);
   }
   return ogp::planToStr(actionsToDoInParallel.actions);
 }
@@ -496,25 +498,25 @@ void _test_checkCondition()
   ogp::WorldState worldState;
   ogp::GoalStack goalStack;
   std::map<ogp::SetOfEventsId, ogp::SetOfEvents> setOfEvents;
-  worldState.addFact(_fact("a=c", ontology), goalStack, setOfEvents, {}, {}, {});
+  worldState.addFact(_fact("a=c", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
   EXPECT_FALSE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
   EXPECT_EQ(1, worldState.facts().size());
-  worldState.addFact(_fact("a!=c", ontology), goalStack, setOfEvents, {}, {}, {});
+  worldState.addFact(_fact("a!=c", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(1, worldState.facts().size());
   EXPECT_FALSE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
   EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
-  worldState.addFact(_fact("a!=b", ontology), goalStack, setOfEvents, {}, {}, {});
+  worldState.addFact(_fact("a!=b", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(2, worldState.facts().size());
   EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
   EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
-  worldState.addFact(_fact("a=d", ontology), goalStack, setOfEvents, {}, {}, {});
+  worldState.addFact(_fact("a=d", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(1, worldState.facts().size());
   EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
   EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
   EXPECT_TRUE(_condition_fromStr("a=d", ontology)->isTrue(worldState));
   EXPECT_FALSE(_condition_fromStr("a!=d", ontology)->isTrue(worldState));
-  worldState.addFact(_fact("a!=c", ontology), goalStack, setOfEvents, {}, {}, {});
+  worldState.addFact(_fact("a!=c", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(1, worldState.facts().size());
   EXPECT_TRUE(_condition_fromStr("a=d", ontology)->isTrue(worldState));
 }
@@ -1138,7 +1140,7 @@ void _checkNotInAPrecondition()
   _setGoalsForAPriority(problem, {_fact_greeted}, ontology);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   problem.worldState.modify(&*_worldStateModification_fromStr(_fact_checkedIn, ontology), problem.goalStack,
-                            _emptySetOfEvents, {}, {}, _now);
+                            _emptySetOfEvents, _emptyCallbacks, {}, {}, _now);
   EXPECT_EQ(std::string(), _lookForAnActionToDoConstStr(problem, domain));
 }
 
@@ -1217,7 +1219,7 @@ void _addGoalEvenForEmptyAction()
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
   EXPECT_TRUE(problem.goalStack.goals().empty());
-  ogp::notifyActionDone(problem, domain, ogp::ActionInvocationWithGoal(action1, std::map<ogp::Parameter, ogp::Entity>(), {}, 0), {});
+  ogp::notifyActionDone(problem, domain, _emptyCallbacks, ogp::ActionInvocationWithGoal(action1, std::map<ogp::Parameter, ogp::Entity>(), {}, 0), {});
   EXPECT_FALSE(problem.goalStack.goals().empty());
 }
 
@@ -2081,7 +2083,7 @@ void _testGoalUnderPersist()
     EXPECT_EQ(action2, plannerResult.actionInvocation.actionId);
 
     now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now() + std::chrono::minutes(5));
-    ogp::notifyActionDone(problem, domain, plannerResult, now);
+    ogp::notifyActionDone(problem, domain, _emptyCallbacks, plannerResult, now);
 
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId); // Not action1 because it was inactive for too long

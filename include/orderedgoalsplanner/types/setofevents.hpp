@@ -39,9 +39,9 @@ struct ORDEREDGOALSPLANNER_API SetOfEvents
   /// Links to point to event identifiers.
   struct EventLinks
   {
-    /// Map of fact conditions to event idntifiers.
+    /// Map of fact conditions to event identifiers.
     FactsToValue conditionToEvents{};
-    /// Map of negated fact conditions to event idntifiers.
+    /// Map of negated fact conditions to event identifiers.
     FactsToValue notConditionToEvents{};
 
     bool empty() const { return conditionToEvents.empty() && notConditionToEvents.empty(); }
