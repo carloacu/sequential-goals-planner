@@ -176,6 +176,39 @@ void _test_callbacks()
   problem.worldState.addFact(fact2, problem.goalStack, setOfEventsMap, callbacks, ontology, ogp::SetOfEntities(), _now);
   EXPECT_EQ(1, nbOfCallback2);
   EXPECT_EQ(0, nbOfCallback1);
+  nbOfCallback1 = 0;
+  nbOfCallback2 = 0;
+
+  {
+    std::size_t pos = 0;
+    problem.worldState.modifyFactsFromPddl("(= (fact_a) v1)", pos, problem.goalStack, setOfEventsMap, callbacks, ontology, ogp::SetOfEntities(), _now);
+  }
+  EXPECT_EQ(1, nbOfCallback1);
+  EXPECT_EQ(0, nbOfCallback2);
+  {
+    std::size_t pos = 0;
+    problem.worldState.modifyFactsFromPddl("(= (fact_a) v2)", pos, problem.goalStack, setOfEventsMap, callbacks, ontology, ogp::SetOfEntities(), _now);
+  }
+  EXPECT_EQ(1, nbOfCallback1);
+  EXPECT_EQ(1, nbOfCallback2);
+  {
+    std::size_t pos = 0;
+    problem.worldState.modifyFactsFromPddl("(= (fact_c e_a2) e_b1)", pos, problem.goalStack, setOfEventsMap, callbacks, ontology, ogp::SetOfEntities(), _now);
+  }
+  EXPECT_EQ(1, nbOfCallback1);
+  EXPECT_EQ(1, nbOfCallback2);
+  {
+    std::size_t pos = 0;
+    problem.worldState.modifyFactsFromPddl("(= (fact_a) v1)", pos, problem.goalStack, setOfEventsMap, callbacks, ontology, ogp::SetOfEntities(), _now);
+  }
+  EXPECT_EQ(2, nbOfCallback1);
+  EXPECT_EQ(1, nbOfCallback2);
+  {
+    std::size_t pos = 0;
+    problem.worldState.modifyFactsFromPddl("(= (fact_c e_a2) e_b2)\n(= (fact_a) v2)", pos, problem.goalStack, setOfEventsMap, callbacks, ontology, ogp::SetOfEntities(), _now);
+  }
+  EXPECT_EQ(2, nbOfCallback1);
+  EXPECT_EQ(2, nbOfCallback2);
 }
 
 

@@ -61,7 +61,18 @@ SetOfFacts SetOfFacts::fromPddl(const std::string& pStr,
                                 bool pCanFactsBeRemoved)
 {
   SetOfFacts res;
-  res.modifyFactsFromPddl(pStr, pPos, pOntology, pEntities, pCanFactsBeRemoved);
+  auto strSize = pStr.size();
+  ExpressionParsed::skipSpaces(pStr, pPos);
+
+  while (pPos < strSize && pStr[pPos] != ')')
+  {
+    bool isFactNegated = false;
+    Fact fact(pStr, true, pOntology, pEntities, {}, &isFactNegated, pPos, &pPos);
+    if (isFactNegated)
+      res.erase(fact);
+    else
+      res.add(fact, pCanFactsBeRemoved);
+  }
   return res;
 }
 
@@ -83,26 +94,6 @@ std::string SetOfFacts::toPddl(std::size_t pIdentation, bool pPrintTimeLessFacts
   return res;
 }
 
-
-void SetOfFacts::modifyFactsFromPddl(const std::string& pStr,
-                                     std::size_t& pPos,
-                                     const Ontology& pOntology,
-                                     const SetOfEntities& pEntities,
-                                     bool pCanFactsBeRemoved)
-{
-  auto strSize = pStr.size();
-  ExpressionParsed::skipSpaces(pStr, pPos);
-
-  while (pPos < strSize && pStr[pPos] != ')')
-  {
-    bool isFactNegated = false;
-    Fact fact(pStr, true, pOntology, pEntities, {}, &isFactNegated, pPos, &pPos);
-    if (isFactNegated)
-      erase(fact);
-    else
-      add(fact, pCanFactsBeRemoved);
-  }
-}
 
 
 void SetOfFacts::add(const Fact& pFact,

@@ -1,9 +1,29 @@
 #include <gtest/gtest.h>
+#include <orderedgoalsplanner/types/goalstack.hpp>
 #include <orderedgoalsplanner/types/ontology.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
+#include <orderedgoalsplanner/types/setofevents.hpp>
 #include <orderedgoalsplanner/types/setofpredicates.hpp>
 #include <orderedgoalsplanner/types/worldstate.hpp>
 
 using namespace ogp;
+
+namespace
+{
+
+void _modifyFactsFromPddl(ogp::WorldState& pWorldstate,
+                          const std::string& pStr,
+                          const ogp::Ontology& pOntology,
+                          const SetOfEntities& pEntities)
+{
+  std::size_t pos = 0;
+  GoalStack goalStack;
+  const std::map<SetOfEventsId, SetOfEvents> setOfEvents;
+  const SetOfCallbacks callbacks;
+  pWorldstate.modifyFactsFromPddl(pStr, pos, goalStack, setOfEvents, callbacks,
+                                  pOntology, pEntities, {});
+}
+}
 
 
 TEST(Tool, test_wordstate)
@@ -26,39 +46,18 @@ TEST(Tool, test_wordstate)
   auto entities = ogp::SetOfEntities::fromPddl("toto - type1\n"
                                                "titi - type2", ontology.types);
 
-  {
-    std::size_t pos = 0;
-    worldstate.modifyFactsFromPddl("(pred_a toto)\n(pred_b)", pos, ontology, entities);
-  }
+  _modifyFactsFromPddl(worldstate, "(pred_a toto)\n(pred_b)", ontology, entities);
   EXPECT_EQ("(pred_a toto)\n(pred_b)", worldstate.factsMapping().toPddl(0, true));
-  {
-    std::size_t pos = 0;
-    worldstate.modifyFactsFromPddl("(= (pred_d titi) 4)\n(pred_a ent_a)", pos, ontology, entities);
-  }
+  _modifyFactsFromPddl(worldstate, "(= (pred_d titi) 4)\n(pred_a ent_a)", ontology, entities);
   EXPECT_EQ("(pred_a ent_a)\n(pred_a toto)\n(pred_b)\n(= (pred_d titi) 4)", worldstate.factsMapping().toPddl(0, true));
-  {
-    std::size_t pos = 0;
-    worldstate.modifyFactsFromPddl("(= (pred_d titi) undefined)\n(pred_a titi)\n(not (pred_a toto))", pos, ontology, entities);
-  }
+  _modifyFactsFromPddl(worldstate, "(= (pred_d titi) undefined)\n(pred_a titi)\n(not (pred_a toto))", ontology, entities);
   EXPECT_EQ("(pred_a ent_a)\n(pred_a titi)\n(pred_b)", worldstate.factsMapping().toPddl(0, true));
-  {
-    std::size_t pos = 0;
-    worldstate.modifyFactsFromPddl("(not (pred_a titi))", pos, ontology, entities);
-  }
+  _modifyFactsFromPddl(worldstate, "(not (pred_a titi))", ontology, entities);
   EXPECT_EQ("(pred_a ent_a)\n(pred_b)", worldstate.factsMapping().toPddl(0, true));
-  {
-    std::size_t pos = 0;
-    worldstate.modifyFactsFromPddl("(= (pred_e ent_b) toto)\n(pred_b)", pos, ontology, entities);
-  }
+  _modifyFactsFromPddl(worldstate, "(= (pred_e ent_b) toto)\n(pred_b)", ontology, entities);
   EXPECT_EQ("(pred_a ent_a)\n(pred_b)\n(= (pred_e ent_b) toto)", worldstate.factsMapping().toPddl(0, true));
-  {
-    std::size_t pos = 0;
-    worldstate.modifyFactsFromPddl("(= (pred_e ent_b) undefined)", pos, ontology, entities);
-  }
+  _modifyFactsFromPddl(worldstate, "(= (pred_e ent_b) undefined)", ontology, entities);
   EXPECT_EQ("(pred_a ent_a)\n(pred_b)", worldstate.factsMapping().toPddl(0, true));
-  {
-    std::size_t pos = 0;
-    worldstate.modifyFactsFromPddl("(= (pred_e ent_b) undefined)", pos, ontology, entities);
-  }
+  _modifyFactsFromPddl(worldstate, "(= (pred_e ent_b) undefined)", ontology, entities);
   EXPECT_EQ("(pred_a ent_a)\n(pred_b)", worldstate.factsMapping().toPddl(0, true));
 }

@@ -8,6 +8,7 @@
 #include <orderedgoalsplanner/types/worldstatemodification.hpp>
 #include <orderedgoalsplanner/util/util.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
+#include "expressionParsed.hpp"
 #include "worldstatecache.hpp"
 
 namespace ogp
@@ -65,14 +66,36 @@ void WorldState::operator=(const WorldState& pOther)
 }
 
 
-void WorldState::modifyFactsFromPddl(const std::string& pStr,
+bool WorldState::modifyFactsFromPddl(const std::string& pStr,
                                      std::size_t& pPos,
+                                     GoalStack& pGoalStack,
+                                     const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                                     const SetOfCallbacks& pCallbacks,
                                      const Ontology& pOntology,
                                      const SetOfEntities& pEntities,
+                                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                      bool pCanFactsBeRemoved)
 {
-  _factsMapping.modifyFactsFromPddl(pStr, pPos, pOntology, pEntities, pCanFactsBeRemoved);
-  _cache = std::make_unique<WorldStateCache>(*this);
+  auto strSize = pStr.size();
+  ExpressionParsed::skipSpaces(pStr, pPos);
+  WhatChanged whatChanged;
+
+  while (pPos < strSize && pStr[pPos] != ')')
+  {
+    bool isFactNegated = false;
+    Fact fact(pStr, true, pOntology, pEntities, {}, &isFactNegated, pPos, &pPos);
+    if (isFactNegated)
+      _removeAFact(whatChanged, fact);
+    else
+      _addAFact(whatChanged, fact, pGoalStack, pSetOfEvents, pCallbacks,
+                pOntology, pEntities, pNow, pCanFactsBeRemoved);
+  }
+
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+  bool goalChanged = false;
+  _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
+                     pOntology, pEntities, pNow);
+  return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
 
@@ -86,17 +109,18 @@ void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlann
                                   const SetOfEntities& pEntities,
                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
+  const bool canFactsBeRemoved = true;
   WhatChanged whatChanged;
   if (pEffect)
   {
     if (pOnStepOfPlannerResult.actionInvocation.parameters.empty())
     {
-      _modify(whatChanged, &*pEffect, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
+      _modify(whatChanged, &*pEffect, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
     }
     else
     {
       auto effect = pEffect->clone(&pOnStepOfPlannerResult.actionInvocation.parameters);
-      _modify(whatChanged, &*effect, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
+      _modify(whatChanged, &*effect, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
     }
   }
 
@@ -111,10 +135,11 @@ bool WorldState::addFact(const Fact& pFact,
                          const SetOfCallbacks& pCallbacks,
                          const Ontology& pOntology,
                          const SetOfEntities& pEntities,
-                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                         bool pCanFactsBeRemoved)
 {
   return addFacts(std::vector<Fact>{pFact}, pGoalStack, pSetOfEvents, pCallbacks,
-                  pOntology, pEntities, pNow);
+                  pOntology, pEntities, pNow, pCanFactsBeRemoved);
 }
 
 template<typename FACTS>
@@ -124,18 +149,20 @@ bool WorldState::addFacts(const FACTS& pFacts,
                           const SetOfCallbacks& pCallbacks,
                           const Ontology& pOntology,
                           const SetOfEntities& pEntities,
-                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                          bool pCanFactsBeRemoved)
 {
   WhatChanged whatChanged;
-  _addFacts(whatChanged, pFacts, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
+  _addFacts(whatChanged, pFacts, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, pCanFactsBeRemoved);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
                      pOntology, pEntities, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
 }
 
-template bool WorldState::addFacts<std::set<Fact>>(const std::set<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
-template bool WorldState::addFacts<std::vector<Fact>>(const std::vector<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template bool WorldState::addFacts<std::set<Fact>>(const std::set<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&, bool);
+template bool WorldState::addFacts<std::vector<Fact>>(const std::vector<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&, bool);
 
 bool WorldState::hasFact(const Fact& pFact) const
 {
@@ -163,7 +190,8 @@ bool WorldState::removeFacts(const FACTS& pFacts,
                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   WhatChanged whatChanged;
-  _removeFacts(whatChanged, pFacts, pGoalStack, pNow);
+  _removeFacts(whatChanged, pFacts);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
@@ -178,78 +206,87 @@ void WorldState::_addFacts(WhatChanged& pWhatChanged,
                            const SetOfCallbacks& pCallbacks,
                            const Ontology& pOntology,
                            const SetOfEntities& pEntities,
-                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                           bool pCanFactsBeRemoved)
 {
   for (const auto& currFact : pFacts)
-  {
-    if (currFact.isPunctual())
-    {
-      pWhatChanged.punctualFacts.insert(currFact);
-      continue;
-    }
-    if (_factsMapping.facts().count(currFact) > 0)
-      continue;
-    bool skipThisFact = false;
-
-    // Remove existing facts if needed
-    bool aFactWasRemoved = false;
-    do
-    {
-      aFactWasRemoved = false;
-      auto currFactMatchInWs = _factsMapping.find(currFact, true);
-      for (auto itExistingFact = currFactMatchInWs.begin(); itExistingFact != currFactMatchInWs.end(); )
-      {
-        const auto& currExistingFact = *itExistingFact;
-
-        if (currFact.isValueNegated() && !currExistingFact.isValueNegated() && currFact.fluent() != currExistingFact.fluent())
-          skipThisFact = true;
-
-        if (currFact.arguments() == currExistingFact.arguments() &&
-            ((!currFact.isValueNegated() && !currExistingFact.isValueNegated() && currFact.fluent() != currExistingFact.fluent()) ||
-             (currFact.isValueNegated() && !currExistingFact.isValueNegated() && currFact.fluent() == currExistingFact.fluent()) ||
-             (!currFact.isValueNegated() && currExistingFact.isValueNegated())))
-        {
-          WhatChanged subWhatChanged;
-          _removeFacts(subWhatChanged, std::vector<ogp::Fact>{currExistingFact}, pGoalStack, pNow);
-          bool goalChanged = false;
-          _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
-                             pOntology, pEntities, pNow);
-          aFactWasRemoved = true;
-          break;
-        }
-
-        if (skipThisFact)
-          break;
-        ++itExistingFact;
-      }
-      if (skipThisFact)
-        continue;
-    }
-    while (aFactWasRemoved);
-
-    if (!skipThisFact)
-    {
-      pWhatChanged.addedFacts.insert(currFact);
-      _factsMapping.add(currFact);
-      _cache->notifyAboutANewFact(currFact);
-    }
-  }
-  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+    _addAFact(pWhatChanged, currFact, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, pCanFactsBeRemoved);
 }
 
-template void WorldState::_addFacts<std::set<Fact>>(WhatChanged&, const std::set<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
-template void WorldState::_addFacts<std::vector<Fact>>(WhatChanged&, const std::vector<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&);
+template void WorldState::_addFacts<std::set<Fact>>(WhatChanged&, const std::set<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&, bool);
+template void WorldState::_addFacts<std::vector<Fact>>(WhatChanged&, const std::vector<Fact>&, GoalStack&, const std::map<SetOfEventsId, SetOfEvents>&, const SetOfCallbacks&, const Ontology&, const SetOfEntities&, const std::unique_ptr<std::chrono::steady_clock::time_point>&, bool);
 
+
+void WorldState::_addAFact(WhatChanged& pWhatChanged,
+                          const Fact& pFact,
+                          GoalStack& pGoalStack,
+                          const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                          const SetOfCallbacks& pCallbacks,
+                          const Ontology& pOntology,
+                          const SetOfEntities& pEntities,
+                          const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                          bool pCanFactsBeRemoved)
+{
+  if (pFact.isPunctual())
+  {
+    pWhatChanged.punctualFacts.insert(pFact);
+    return;
+  }
+  if (_factsMapping.facts().count(pFact) > 0)
+    return;
+  bool skipThisFact = false;
+
+  // Remove existing facts if needed
+  bool aFactWasRemoved = false;
+  do
+  {
+    aFactWasRemoved = false;
+    auto factMatchInWs = _factsMapping.find(pFact, true);
+    for (auto itExistingFact = factMatchInWs.begin(); itExistingFact != factMatchInWs.end(); )
+    {
+      const auto& currExistingFact = *itExistingFact;
+
+      if (pFact.isValueNegated() && !currExistingFact.isValueNegated() && pFact.fluent() != currExistingFact.fluent())
+        skipThisFact = true;
+
+      if (pFact.arguments() == currExistingFact.arguments() &&
+          ((!pFact.isValueNegated() && !currExistingFact.isValueNegated() && pFact.fluent() != currExistingFact.fluent()) ||
+           (pFact.isValueNegated() && !currExistingFact.isValueNegated() && pFact.fluent() == currExistingFact.fluent()) ||
+           (!pFact.isValueNegated() && currExistingFact.isValueNegated())))
+      {
+        WhatChanged subWhatChanged;
+        _removeFacts(subWhatChanged, std::vector<ogp::Fact>{currExistingFact});
+        pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+        bool goalChanged = false;
+        _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
+                           pOntology, pEntities, pNow);
+        aFactWasRemoved = true;
+        break;
+      }
+
+      if (skipThisFact)
+        break;
+      ++itExistingFact;
+    }
+    if (skipThisFact)
+      continue;
+  }
+  while (aFactWasRemoved);
+
+  if (!skipThisFact)
+  {
+    pWhatChanged.addedFacts.insert(pFact);
+    _factsMapping.add(pFact, pCanFactsBeRemoved);
+    _cache->notifyAboutANewFact(pFact);
+  }
+}
 
 template<typename FACTS>
 void WorldState::_removeFacts(WhatChanged& pWhatChanged,
-                              const FACTS& pFacts,
-                              GoalStack& pGoalStack,
-                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                              const FACTS& pFacts)
 {
   for (const auto& currFact : pFacts)
     _removeAFact(pWhatChanged, currFact);
-  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
 }
 
 
@@ -268,7 +305,8 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
                          const SetOfCallbacks& pCallbacks,
                          const Ontology& pOntology,
                          const SetOfEntities& pEntities,
-                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                         const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                         bool pCanFactsBeRemoved)
 {
   if (pWsModifPtr == nullptr)
     return;
@@ -284,8 +322,9 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
       factsToAdd.emplace_back(pFactOptional.fact);
   }, _factsMapping);
 
-  _addFacts(pWhatChanged, factsToAdd, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
-  _removeFacts(pWhatChanged, factsToRemove, pGoalStack, pNow);
+  _addFacts(pWhatChanged, factsToAdd, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, pCanFactsBeRemoved);
+  _removeFacts(pWhatChanged, factsToRemove);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
 }
 
 
@@ -295,10 +334,11 @@ bool WorldState::modify(const WorldStateModification* pWsModifPtr,
                         const SetOfCallbacks& pCallbacks,
                         const Ontology& pOntology,
                         const SetOfEntities& pEntities,
-                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                        bool pCanFactsBeRemoved)
 {
   WhatChanged whatChanged;
-  _modify(whatChanged, pWsModifPtr, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
+  _modify(whatChanged, pWsModifPtr, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, pCanFactsBeRemoved);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
                      pOntology, pEntities, pNow);
@@ -536,6 +576,7 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
                                   const SetOfEntities& pEntities,
                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
+  const bool canFactsBeRemoved = true;
   bool somethingChanged = false;
   for (const auto& currEventId : pEventIds)
   {
@@ -564,7 +605,7 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
                 for (const auto& currParamsPoss : parametersToValuePoss)
                 {
                   auto factsToModify = currEvent.factsToModify->clone(&currParamsPoss);
-                  _modify(pWhatChanged, &*factsToModify, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
+                  _modify(pWhatChanged, &*factsToModify, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
                 }
               }
               else
@@ -580,13 +621,13 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
                   }, optFactPtr->fact, parametersToValues);
                   for (auto& currFactToRemove : factsToRemove)
                     _modify(pWhatChanged, &*strToWsModification("!" + currFactToRemove->toStr(), pOntology, pEntities, {}), // Optimize to construct WorldStateModification without passing by a string
-                            pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
+                            pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
                 }
               }
             }
             else
             {
-              _modify(pWhatChanged, &*currEvent.factsToModify, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
+              _modify(pWhatChanged, &*currEvent.factsToModify, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
             }
           }
           if (pGoalStack.addGoals(currEvent.goalsToAdd, *this, pNow))

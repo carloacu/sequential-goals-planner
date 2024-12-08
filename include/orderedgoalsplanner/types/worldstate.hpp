@@ -43,10 +43,14 @@ struct ORDEREDGOALSPLANNER_API WorldState
 
   void operator=(const WorldState& pOther);
 
-  void modifyFactsFromPddl(const std::string& pStr,
+  bool modifyFactsFromPddl(const std::string& pStr,
                            std::size_t& pPos,
+                           GoalStack& pGoalStack,
+                           const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                           const SetOfCallbacks& pCallbacks,
                            const Ontology& pOntology,
                            const SetOfEntities& pEntities,
+                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                            bool pCanFactsBeRemoved = true);
 
   /**
@@ -93,7 +97,8 @@ struct ORDEREDGOALSPLANNER_API WorldState
                const SetOfCallbacks& pCallbacks,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
-               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+               bool pCanFactsBeRemoved = true);
 
   /**
    * @brief Add several facts.
@@ -110,7 +115,8 @@ struct ORDEREDGOALSPLANNER_API WorldState
                 const SetOfCallbacks& pCallbacks,
                 const Ontology& pOntology,
                 const SetOfEntities& pEntities,
-                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                bool pCanFactsBeRemoved = true);
 
   /// Check if the world has a fact or the negation of the fact.
   bool hasFact(const Fact& pFact) const;
@@ -162,7 +168,8 @@ struct ORDEREDGOALSPLANNER_API WorldState
               const SetOfCallbacks& pCallbacks,
               const Ontology& pOntology,
               const SetOfEntities& pEntities,
-              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+              bool pCanFactsBeRemoved = true);
 
   /**
    * @brief Set the facts of the world.
@@ -307,22 +314,28 @@ private:
                  const SetOfCallbacks& pCallbacks,
                  const Ontology& pOntology,
                  const SetOfEntities& pEntities,
-                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                 bool pCanFactsBeRemoved);
+
+  void _addAFact(WhatChanged& pWhatChanged,
+                 const Fact& pFact,
+                 GoalStack& pGoalStack,
+                 const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                 const SetOfCallbacks& pCallbacks,
+                 const Ontology& pOntology,
+                 const SetOfEntities& pEntities,
+                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+                 bool pCanFactsBeRemoved);
 
   /**
    * @brief Remove facts without event deduction and raising a notification.
    * @param[out] pWhatChanged Get what changed.
    * @param[in] pFacts Facts to remove.
-   * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
-   * For example the current goal of the stack can be satisfied now and so maybe it should be removed from the goal stack.
-   * @param[in] pNow Current time.
    * @return True if some facts were removed, false otherwise.
    */
   template<typename FACTS>
   void _removeFacts(WhatChanged& pWhatChanged,
-                    const FACTS& pFacts,
-                    GoalStack& pGoalStack,
-                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+                    const FACTS& pFacts);
 
   void _removeAFact(WhatChanged& pWhatChanged,
                     const Fact& pFact);
@@ -343,7 +356,8 @@ private:
                const SetOfCallbacks& pCallbacks,
                const Ontology& pOntology,
                const SetOfEntities& pEntities,
-               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+               const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
+               bool pCanFactsBeRemoved);
 
   /**
    * @brief Try to apply some events according to what changed in the world state.

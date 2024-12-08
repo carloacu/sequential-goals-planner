@@ -3,6 +3,7 @@
 #include <orderedgoalsplanner/types/axiom.hpp>
 #include <orderedgoalsplanner/types/domain.hpp>
 #include <orderedgoalsplanner/types/problem.hpp>
+#include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include "../../types/expressionParsed.hpp"
 #include "../../types/worldstatemodificationprivate.hpp"
 
@@ -1051,7 +1052,11 @@ DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
           if (!res.domainPtr)
             throw std::runtime_error("problem init are defined before the domain.");
           const auto& ontology = res.domainPtr->getOntology();
-          res.problemPtr->worldState.modifyFactsFromPddl(pStr, pos, ontology, res.problemPtr->entities);
+          auto& setOfEventsMap = res.domainPtr->getSetOfEvents();
+          const SetOfCallbacks callbacks;
+          res.problemPtr->worldState.modifyFactsFromPddl(pStr, pos, res.problemPtr->goalStack,
+                                                         setOfEventsMap, callbacks,
+                                                         ontology, res.problemPtr->entities, {});
         }
         else if (token == ":goal")
         {
