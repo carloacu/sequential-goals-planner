@@ -50,6 +50,17 @@ void _test_pddlSerializationParts()
 
   {
     std::size_t pos = 0;
+    EXPECT_THROW(ogp::Fact::fromPddl("(battery-amount toto)", ontology, {}, {}, pos, &pos), std::runtime_error);
+  }
+
+  {
+    std::size_t pos = 0;
+    ogp::Fact fact = ogp::Fact::fromPddl("(battery-amount toto)", ontology, {}, {}, pos, &pos, true);
+    EXPECT_EQ("(battery-amount toto)", fact.toPddl(false));
+  }
+
+  {
+    std::size_t pos = 0;
     std::unique_ptr<ogp::WorldStateModification> ws = ogp::pddlToWsModification("(decrease (battery-amount toto) 4)", pos, ontology, {}, {});
     if (!ws)
       ASSERT_TRUE(false);

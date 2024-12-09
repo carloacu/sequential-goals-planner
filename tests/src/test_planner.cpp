@@ -147,6 +147,7 @@ void _number_type()
   EXPECT_EQ("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
   problem.worldState.addFact(ogp::Fact("pred_a(toto)=10", false, ontology, entities, {}), problem.goalStack, setOfEventsMap,
                              _emptyCallbacks, ontology, entities, _now);
+  EXPECT_EQ("10", problem.worldState.factsMapping().getFactFluent(ogp::Fact::fromPddl("(pred_a toto)", ontology, entities, {}, 0, nullptr, true))->value);
 
   _setGoalsForAPriority(problem, {ogp::Goal::fromStr("pred_b", ontology, entities)});
   EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());

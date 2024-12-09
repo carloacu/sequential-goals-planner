@@ -83,7 +83,8 @@ Fact::Fact(const std::string& pStr,
            const std::vector<Parameter>& pParameters,
            bool* pIsFactNegatedPtr,
            std::size_t pBeginPos,
-           std::size_t* pResPos)
+           std::size_t* pResPos,
+           bool pIsOkIfFluentIsMissing)
   : predicate("_not_set", pStrPddlFormated, pOntology.types),
     _name(),
     _arguments(),
@@ -149,7 +150,7 @@ Fact::Fact(const std::string& pStr,
 
 
     predicate = pOntology.predicates.nameToPredicate(_name);
-    _finalizeInisilizationAndValidityChecks(pOntology, pEntities, false);
+    _finalizeInisilizationAndValidityChecks(pOntology, pEntities, pIsOkIfFluentIsMissing);
     _resetFactSignatureCache();
     if (pResPos != nullptr)
     {
@@ -618,13 +619,14 @@ Fact Fact::fromStr(const std::string& pStr,
 
 
 Fact Fact::fromPddl(const std::string& pStr,
-                   const Ontology& pOntology,
-                   const SetOfEntities& pEntities,
-                   const std::vector<Parameter>& pParameters,
-                   std::size_t pBeginPos,
-                   std::size_t* pResPos)
+                    const Ontology& pOntology,
+                    const SetOfEntities& pEntities,
+                    const std::vector<Parameter>& pParameters,
+                    std::size_t pBeginPos,
+                    std::size_t* pResPos,
+                    bool pIsOkIfFluentIsMissing)
 {
-  return Fact(pStr, true, pOntology, pEntities, pParameters, nullptr, pBeginPos, pResPos);
+  return Fact(pStr, true, pOntology, pEntities, pParameters, nullptr, pBeginPos, pResPos, pIsOkIfFluentIsMissing);
 }
 
 

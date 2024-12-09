@@ -35,7 +35,8 @@ struct ORDEREDGOALSPLANNER_API Fact
        const std::vector<Parameter>& pParameters,
        bool* pIsFactNegatedPtr = nullptr,
        std::size_t pBeginPos = 0,
-       std::size_t* pResPos = nullptr);
+       std::size_t* pResPos = nullptr,
+       bool pIsOkIfFluentIsMissing = false);
 
   Fact(const std::string& pName,
        const std::vector<std::string>& pArgumentStrs,
@@ -185,7 +186,8 @@ struct ORDEREDGOALSPLANNER_API Fact
                        const SetOfEntities& pEntities,
                        const std::vector<Parameter>& pParameters,
                        std::size_t pBeginPos = 0,
-                       std::size_t* pResPos = nullptr);
+                       std::size_t* pResPos = nullptr,
+                       bool pIsOkIfFluentIsMissing = false);
 
   /**
    * @brief Set "any value" to all of the specified arguments.
