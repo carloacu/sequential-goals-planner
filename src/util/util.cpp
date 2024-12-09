@@ -122,10 +122,30 @@ std::string numberToString(const Number& num) {
 
 
 bool isNumber(const std::string& str) {
-    for (char const &c : str)
-        if (!std::isdigit(c))
-          return false;
-    return !str.empty(); // Ensure it's not an empty string
+    if (str.empty()) return false; // Empty strings are not numbers
+
+    size_t i = 0;
+    if (str[i] == '-' || str[i] == '+') {
+        ++i; // Skip the sign character
+    }
+
+    bool hasDigits = false;
+    bool hasDecimalPoint = false;
+
+    for (; i < str.size(); ++i) {
+        if (std::isdigit(str[i])) {
+            hasDigits = true; // Found at least one digit
+        } else if (str[i] == '.') {
+            if (hasDecimalPoint) {
+                return false; // Multiple decimal points are invalid
+            }
+            hasDecimalPoint = true;
+        } else {
+            return false; // Invalid character
+        }
+    }
+
+    return hasDigits; // Valid if there's at least one digit
 }
 
 void unfoldMapWithSet(std::list<std::map<Parameter, Entity>>& pOutMap,

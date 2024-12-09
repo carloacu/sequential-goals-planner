@@ -50,6 +50,12 @@ void _test_pddlSerializationParts()
 
   {
     std::size_t pos = 0;
+    ogp::Fact fact = ogp::Fact::fromPddl("(= (battery-amount toto) 3.1)", ontology, {}, {}, pos, &pos);
+    EXPECT_EQ("(= (battery-amount toto) 3.1)", fact.toPddl(false));
+  }
+
+  {
+    std::size_t pos = 0;
     EXPECT_THROW(ogp::Fact::fromPddl("(battery-amount toto)", ontology, {}, {}, pos, &pos), std::runtime_error);
   }
 
