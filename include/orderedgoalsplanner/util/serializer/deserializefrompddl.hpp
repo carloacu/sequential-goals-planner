@@ -16,6 +16,7 @@ struct Parameter;
 struct SetOfEntities;
 struct WorldStateModification;
 struct Problem;
+struct SetOfTypes;
 
 
 struct DomainAndProblemPtrs
@@ -66,6 +67,11 @@ std::unique_ptr<WorldStateModification> strToWsModification(const std::string& p
                                                              const Ontology& pOntology,
                                                              const SetOfEntities& pEntities,
                                                              const std::vector<Parameter>& pParameters);
+
+
+std::vector<Parameter> pddlToParameters(const std::string& pStr,
+                                        const SetOfTypes& pSetOfTypes);
+
 
 } // End of namespace ogp
 

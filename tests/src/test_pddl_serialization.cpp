@@ -81,6 +81,15 @@ void _test_pddlSerializationParts()
     EXPECT_EQ("forall(?e - entity, when(pred_a(?e), pred_c(?e)))", ws->toStr());
   }
 
+  {
+    std::size_t pos = 0;
+    auto parameters = ogp::pddlToParameters("(?e - entity)", ontology.types);
+    std::unique_ptr<ogp::WorldStateModification> ws = ogp::pddlToWsModification("(pred_c ?e)", pos, ontology, {}, parameters);
+    if (!ws)
+      ASSERT_TRUE(false);
+    EXPECT_EQ("pred_c(?e)", ws->toStr());
+  }
+
 }
 
 

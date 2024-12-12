@@ -1190,5 +1190,13 @@ std::unique_ptr<WorldStateModification> strToWsModification(const std::string& p
 }
 
 
+std::vector<Parameter> pddlToParameters(const std::string& pStr,
+                                        const SetOfTypes& pSetOfTypes)
+{
+  std::size_t pos = 0;
+  return _pddlToParameters(pStr, pos, pSetOfTypes);
+}
+
+
 
 }
