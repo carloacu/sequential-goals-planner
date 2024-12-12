@@ -99,27 +99,27 @@ bool WorldState::modifyFactsFromPddl(const std::string& pStr,
 }
 
 
-void WorldState::notifyActionDone(const ActionInvocationWithGoal& pOnStepOfPlannerResult,
-                                  const std::unique_ptr<WorldStateModification>& pEffect,
-                                  bool& pGoalChanged,
-                                  GoalStack& pGoalStack,
-                                  const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
-                                  const SetOfCallbacks& pCallbacks,
-                                  const Ontology& pOntology,
-                                  const SetOfEntities& pEntities,
-                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
+void WorldState::applyEffect(const std::map<Parameter, Entity>& pParameters,
+                             const std::unique_ptr<WorldStateModification>& pEffect,
+                             bool& pGoalChanged,
+                             GoalStack& pGoalStack,
+                             const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                             const SetOfCallbacks& pCallbacks,
+                             const Ontology& pOntology,
+                             const SetOfEntities& pEntities,
+                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   const bool canFactsBeRemoved = true;
   WhatChanged whatChanged;
   if (pEffect)
   {
-    if (pOnStepOfPlannerResult.actionInvocation.parameters.empty())
+    if (pParameters.empty())
     {
       _modify(whatChanged, &*pEffect, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
     }
     else
     {
-      auto effect = pEffect->clone(&pOnStepOfPlannerResult.actionInvocation.parameters);
+      auto effect = pEffect->clone(&pParameters);
       _modify(whatChanged, &*effect, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
     }
   }

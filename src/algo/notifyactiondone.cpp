@@ -23,11 +23,13 @@ void notifyActionInvocationDone(Problem& pProblem,
 {
   pProblem.historical.notifyActionDone(pOnStepOfPlannerResult.actionInvocation.actionId);
 
-  pProblem.worldState.notifyActionDone(pOnStepOfPlannerResult, pEffect, pGoalChanged, pProblem.goalStack,
-                                       pSetOfEvents, pCallbacks, pOntology, pProblem.entities, pNow);
+  pProblem.worldState.applyEffect(pOnStepOfPlannerResult.actionInvocation.parameters, pEffect,
+                                  pGoalChanged, pProblem.goalStack, pSetOfEvents, pCallbacks,
+                                  pOntology, pProblem.entities, pNow);
 
   pGoalChanged = pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pNow, pGoalsToAdd,
-                                                     pGoalsToAddInCurrentPriority, pProblem.worldState, pLookForAnActionOutputInfosPtr) || pGoalChanged;
+                                                     pGoalsToAddInCurrentPriority, pProblem.worldState,
+                                                     pLookForAnActionOutputInfosPtr) || pGoalChanged;
 }
 
 

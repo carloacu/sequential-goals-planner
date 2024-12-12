@@ -55,7 +55,7 @@ struct ORDEREDGOALSPLANNER_API WorldState
 
   /**
    * @brief Notify that an action has been done.
-   * @param[in] pOneStepOfPlannerResult Planner result step that motivated this action.
+   * @param[in] pParameters Effect parameters.
    * @param[in] pEffect Effect of the done action.
    * @param[out] pGoalChanged Set to true if the goal stack changed.
    * @param[out] pGoalStack Goal stacks that need to be refreshed.<br/>
@@ -63,15 +63,15 @@ struct ORDEREDGOALSPLANNER_API WorldState
    * @param[in] pSetOfEvents events to apply indirect modifications according to the events.
    * @param[in] pNow Current time.
    */
-  void notifyActionDone(const ActionInvocationWithGoal& pOneStepOfPlannerResult,
-                        const std::unique_ptr<WorldStateModification>& pEffect,
-                        bool& pGoalChanged,
-                        GoalStack& pGoalStack,
-                        const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
-                        const SetOfCallbacks& pCallbacks,
-                        const Ontology& pOntology,
-                        const SetOfEntities& pEntities,
-                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void applyEffect(const std::map<Parameter, Entity>& pParameters,
+                   const std::unique_ptr<WorldStateModification>& pEffect,
+                   bool& pGoalChanged,
+                   GoalStack& pGoalStack,
+                   const std::map<SetOfEventsId, SetOfEvents>& pSetOfEvents,
+                   const SetOfCallbacks& pCallbacks,
+                   const Ontology& pOntology,
+                   const SetOfEntities& pEntities,
+                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
   /// Be notified when facts changed.
