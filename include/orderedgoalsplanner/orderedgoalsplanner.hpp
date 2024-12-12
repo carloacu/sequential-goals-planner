@@ -76,9 +76,10 @@ void notifyActionStarted(Problem& pProblem,
  * @param[in] pDomain Domain of the planner.
  * @param[in] pOnStepOfPlannerResult Planner result step that motivated this action.
  * @param[in] pNow Current time.
+ * @return True if the action was found, False otherwise.
  */
 ORDEREDGOALSPLANNER_API
-void notifyActionDone(Problem& pProblem,
+bool notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
                       const SetOfCallbacks& pCallbacks,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,

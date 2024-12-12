@@ -1098,7 +1098,7 @@ void notifyActionStarted(Problem& pProblem,
 }
 
 
-void notifyActionDone(Problem& pProblem,
+bool notifyActionDone(Problem& pProblem,
                       const Domain& pDomain,
                       const SetOfCallbacks& pCallbacks,
                       const ActionInvocationWithGoal& pOnStepOfPlannerResult,
@@ -1116,7 +1116,9 @@ void notifyActionDone(Problem& pProblem,
                                itAction->second.effect.worldStateModification, ontology, pNow,
                                &itAction->second.effect.goalsToAdd, &itAction->second.effect.goalsToAddInCurrentPriority,
                                pLookForAnActionOutputInfosPtr);
+    return true;
   }
+  return false;
 }
 
 
