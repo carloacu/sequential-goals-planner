@@ -278,12 +278,13 @@ struct ORDEREDGOALSPLANNER_API Fact
 
   bool isCompleteWithAnyValueFluent() const;
 
+
   Predicate predicate;
 
   /// Constant defining the "undefined" special value.
-  const static Entity undefinedValue;
+  static const Entity& getUndefinedValue();
   /// Prefix to detect a punctual fact. (= fact that is considered punctually but not stored in the world)
-  static std::string punctualPrefix;
+  static const std::string& getPunctualPrefix();
 
 private:
   /// Name of the fact.

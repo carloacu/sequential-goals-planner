@@ -7,8 +7,6 @@
 
 namespace ogp
 {
-const SetOfEventsId Domain::setOfEventsIdFromConstructor = "soe_from_constructor";
-
 namespace
 {
 static const SetOfFacts _emptySetOfFact;
@@ -228,7 +226,7 @@ Domain::Domain(const std::map<ActionId, Action>& pActions,
     _addAction(currAction.first, currAction.second);
 
   if (!pSetOfEvents.empty())
-    _setOfEvents.emplace(setOfEventsIdFromConstructor, pSetOfEvents);
+    _setOfEvents.emplace(getSetOfEventsIdFromConstructor(), pSetOfEvents);
 
   _updateSuccessions();
 }
@@ -520,7 +518,13 @@ void Domain::_updateSuccessions()
                                actionTmpData, eventTmpData);
   }
 
+}
 
+
+const std::string& Domain::getSetOfEventsIdFromConstructor()
+{
+  static const std::string setOfEventsIdFromConstructor = "soe_from_constructor";
+  return setOfEventsIdFromConstructor;
 }
 
 

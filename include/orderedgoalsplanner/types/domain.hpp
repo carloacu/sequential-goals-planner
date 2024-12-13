@@ -104,8 +104,6 @@ struct ORDEREDGOALSPLANNER_API Domain
 
   const std::string& getName() const { return _name; }
 
-  static const SetOfEventsId setOfEventsIdFromConstructor;
-
   const Ontology& getOntology() const { return _ontology; }
 
   const std::map<ActionId, Action>& getActions() const { return _actions; }
@@ -117,6 +115,8 @@ struct ORDEREDGOALSPLANNER_API Domain
   void addRequirement(const std::string& pRequirement);
 
   const std::set<std::string>& requirements() const { return _requirements; }
+
+  static const std::string& getSetOfEventsIdFromConstructor();
 
 private:
   /// Universal unique identifier regenerated each time this object is modified.

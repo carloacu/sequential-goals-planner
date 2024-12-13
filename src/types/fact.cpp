@@ -73,9 +73,6 @@ bool _isInside(const Entity& pEntity,
 
 }
 
-const Entity Fact::undefinedValue = Entity("undefined", {});
-std::string Fact::punctualPrefix = "~punctual~";
-
 Fact::Fact(const std::string& pStr,
            bool pStrPddlFormated,
            const Ontology& pOntology,
@@ -127,7 +124,7 @@ Fact::Fact(const std::string& pStr,
     if (_name == "=" && expressionParsed.arguments.size() == 2)
     {
       auto fluentStr = expressionParsed.arguments.back().name;
-      if (fluentStr == undefinedValue.value)
+      if (fluentStr == getUndefinedValue().value)
       {
         if (pIsFactNegatedPtr != nullptr)
            *pIsFactNegatedPtr = true;
@@ -449,6 +446,7 @@ bool Fact::doesFactEffectOfSuccessorGiveAnInterestForSuccessor(const Fact& pFact
 
 bool Fact::isPunctual() const
 {
+  const auto& punctualPrefix = getPunctualPrefix();
   return _name.compare(0, punctualPrefix.size(), punctualPrefix) == 0;
 }
 
@@ -1045,6 +1043,18 @@ bool Fact::isCompleteWithAnyValueFluent() const
     return true;
   }
   return false;
+}
+
+const Entity& Fact::getUndefinedValue()
+{
+  static const auto undefinedValue = Entity("undefined", {});
+  return undefinedValue;
+}
+
+const std::string& Fact::getPunctualPrefix()
+{
+  static const std::string punctualPrefix = "~punctual~";
+  return punctualPrefix;
 }
 
 

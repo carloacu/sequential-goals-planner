@@ -22,11 +22,11 @@ const std::string _fact_d = "fact_d";
 const std::string _fact_e = "fact_e";
 const std::string _fact_f = "fact_f";
 const std::string _fact_g = "fact_g";
-const std::string _fact_punctual_p1 = ogp::Fact::punctualPrefix + "fact_p1";
-const std::string _fact_punctual_p2 = ogp::Fact::punctualPrefix + "fact_p2";
-const std::string _fact_punctual_p3 = ogp::Fact::punctualPrefix + "fact_p3";
-const std::string _fact_punctual_p4 = ogp::Fact::punctualPrefix + "fact_p4";
-const std::string _fact_punctual_p5 = ogp::Fact::punctualPrefix + "fact_p5";
+const std::string _fact_punctual_p1 = ogp::Fact::getPunctualPrefix() + "fact_p1";
+const std::string _fact_punctual_p2 = ogp::Fact::getPunctualPrefix() + "fact_p2";
+const std::string _fact_punctual_p3 = ogp::Fact::getPunctualPrefix() + "fact_p3";
+const std::string _fact_punctual_p4 = ogp::Fact::getPunctualPrefix() + "fact_p4";
+const std::string _fact_punctual_p5 = ogp::Fact::getPunctualPrefix() + "fact_p5";
 const std::string _fact_advertised = "advertised";
 const std::string _fact_beginOfConversation = "begin_of_conversation";
 const std::string _fact_presented = "presented";
@@ -42,8 +42,8 @@ const std::string _fact_engagedWithUser = "engaged_with_user";
 const std::string _fact_userSatisfied = "user_satisfied";
 const std::string _fact_robotLearntABehavior = "robot_learnt_a_behavior";
 const std::string _fact_headTouched = "head_touched";
-const std::string _fact_punctual_headTouched = ogp::Fact::punctualPrefix + "head_touched";
-const std::string _fact_punctual_checkedIn = ogp::Fact::punctualPrefix + "checked_in";
+const std::string _fact_punctual_headTouched = ogp::Fact::getPunctualPrefix() + "head_touched";
+const std::string _fact_punctual_checkedIn = ogp::Fact::getPunctualPrefix() + "checked_in";
 
 const std::string _action_presentation = "presentation";
 const std::string _action_askQuestion1 = "ask_question_1";
@@ -102,7 +102,7 @@ void _setGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<std::string>& pGoalStrs,
                            const ogp::Ontology& pOntology,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = ogp::GoalStack::defaultPriority)
+                           int pPriority = ogp::GoalStack::getDefaultPriority())
 {
   std::vector<ogp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
@@ -114,7 +114,7 @@ void _setGoalsForAPriority(ogp::Problem& pProblem,
 void _setGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = ogp::GoalStack::defaultPriority)
+                           int pPriority = ogp::GoalStack::getDefaultPriority())
 {
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }
@@ -163,7 +163,7 @@ void _addGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<std::string>& pGoalStrs,
                            const ogp::Ontology& pOntology,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = ogp::GoalStack::defaultPriority)
+                           int pPriority = ogp::GoalStack::getDefaultPriority())
 {
   std::vector<ogp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
@@ -175,7 +175,7 @@ void _addGoalsForAPriority(ogp::Problem& pProblem,
 void _addGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = ogp::GoalStack::defaultPriority)
+                           int pPriority = ogp::GoalStack::getDefaultPriority())
 {
   pProblem.goalStack.addGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }
@@ -1173,7 +1173,7 @@ void _checkActionHasAFact()
 
   ogp::ProblemModification effect(_worldStateModification_fromStr(_fact_a + " & !" + _fact_b, ontology));
   effect.potentialWorldStateModification = _worldStateModification_fromStr(_fact_c, ontology);
-  effect.goalsToAdd[ogp::GoalStack::defaultPriority] = {_goal(_fact_d, ontology)};
+  effect.goalsToAdd[ogp::GoalStack::getDefaultPriority()] = {_goal(_fact_d, ontology)};
   const ogp::Action action(_condition_fromStr(_fact_e, ontology),
                           effect,
                           _condition_fromStr(_fact_f, ontology));
@@ -1950,7 +1950,7 @@ void _checkEventThatAddAGoal()
   ogp::SetOfEvents setOfEvents;
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_a, ontology),
                             _worldStateModification_fromStr(_fact_b, ontology),
-                            _emptyParameters, {{ogp::GoalStack::defaultPriority, {_goal(_fact_e, ontology)}}}));
+                            _emptyParameters, {{ogp::GoalStack::getDefaultPriority(), {_goal(_fact_e, ontology)}}}));
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_b, ontology),
                             _worldStateModification_fromStr(_fact_c, ontology)));
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -1978,7 +1978,7 @@ void _testGetNotSatisfiedGoals()
                                                      _fact_d, ontology.types);
 
   ogp::Problem problem;
-  _addGoalsForAPriority(problem, {goal1}, ontology, {}, ogp::GoalStack::defaultPriority + 1);
+  _addGoalsForAPriority(problem, {goal1}, ontology, {}, ogp::GoalStack::getDefaultPriority() + 1);
   _addGoalsForAPriority(problem, {goal2, goal3, goal4}, ontology);
 
   EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3 + ", " + goal4, ogp::printGoals(problem.goalStack.goals()));
@@ -2019,66 +2019,66 @@ void _testGoalUnderPersist()
 
   {
     ogp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::defaultPriority + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::defaultPriority + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::defaultPriority + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
     _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
     EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, ogp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain));
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
-    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, ogp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
-    _addGoalsForAPriority(problem, {_fact_c}, ontology, now, ogp::GoalStack::defaultPriority + 2);
+    _addGoalsForAPriority(problem, {_fact_c}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
-    problem.goalStack.pushBackGoal({_goal("persist(!" + _fact_e + ")", ontology)}, problem.worldState, now, ogp::GoalStack::defaultPriority + 2);
-    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, ogp::GoalStack::defaultPriority + 2);
+    problem.goalStack.pushBackGoal({_goal("persist(!" + _fact_e + ")", ontology)}, problem.worldState, now, ogp::GoalStack::getDefaultPriority() + 2);
+    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
     problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 1)}, now, ogp::GoalStack::defaultPriority);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 1)}, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain, now));
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain, now));
 
     _removeFact(problem.worldState, _fact_c, problem.goalStack, ontology);
-    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, ogp::GoalStack::defaultPriority + 2);
+    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, ogp::GoalStack::getDefaultPriority() + 2);
     auto plannerResult = _lookForAnActionToDo(problem, domain, now);
     EXPECT_EQ(action2, plannerResult.actionInvocation.actionId);
 
@@ -2176,8 +2176,8 @@ void _infrenceLinksFromManyEventsSets()
   actions.emplace(action2, ogp::Action({}, _worldStateModification_fromStr(_fact_c, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
-  EXPECT_TRUE(ogp::GoalStack::defaultPriority >= 1);
-  auto lowPriority = ogp::GoalStack::defaultPriority - 1;
+  EXPECT_TRUE(ogp::GoalStack::getDefaultPriority() >= 1);
+  auto lowPriority = ogp::GoalStack::getDefaultPriority() - 1;
   domain.addSetOfEvents(ogp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
                                   {}, _emptyParameters,
                                   {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology)}}}));
@@ -2190,7 +2190,7 @@ void _infrenceLinksFromManyEventsSets()
                                _worldStateModification_fromStr(_fact_b + "&" + _fact_punctual_p2, ontology)));
     setOfEvents2.add(ogp::Event(_condition_fromStr(_fact_b, ontology),
                                {}, _emptyParameters,
-                               {{ogp::GoalStack::defaultPriority, {_goal("oneStepTowards(" + _fact_c + ")", ontology)}}}));
+                               {{ogp::GoalStack::getDefaultPriority(), {_goal("oneStepTowards(" + _fact_c + ")", ontology)}}}));
     domain.addSetOfEvents(setOfEvents2);
   }
 

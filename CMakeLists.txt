@@ -129,7 +129,7 @@ set(ORDERED_GOALS_PLANNER_SRCS
 include_directories(include)
 
 
-add_library(ordered_goals_planner_lib SHARED
+add_library(ordered_goals_planner_lib STATIC
   ${ORDERED_GOALS_PLANNER_HPPS}
   ${ORDERED_GOALS_PLANNER_SRCS}
 )

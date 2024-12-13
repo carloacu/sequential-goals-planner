@@ -7,17 +7,6 @@
 
 namespace ogp
 {
-const std::string Goal::persistFunctionName = "persist";
-const std::string Goal::oneStepTowardsFunctionName = "oneStepTowards";
-namespace
-{
-const std::string _persistPrefix = Goal::persistFunctionName + "(";
-const std::size_t _persistPrefixSize = _persistPrefix.size();
-
-const std::string _oneStepTowardsPrefix = Goal::oneStepTowardsFunctionName + "(";
-const std::size_t _oneStepTowardsPrefixSize = _oneStepTowardsPrefix.size();
-}
-
 
 Goal::Goal(std::unique_ptr<Condition> pObjective,
            bool pIsPersistentIfSkipped,
@@ -134,9 +123,9 @@ std::string Goal::toStr() const
 {
   auto res = _objective->toStr();
   if (_oneStepTowards)
-    res = oneStepTowardsFunctionName + "(" + res + ")";
+    res = getOneStepTowardsFunctionName() + "(" + res + ")";
   if (_isPersistentIfSkipped)
-    res = persistFunctionName + "(" + res + ")";
+    res = getPersistFunctionName() + "(" + res + ")";
   return res;
 }
 
@@ -308,6 +297,19 @@ bool Goal::canEventSatisfyThisGoal(const ActionId& pFullEventId) const
 bool Goal::canDeductionSatisfyThisGoal(const ActionId& pDeductionId) const
 {
   return canActionSatisfyThisGoal(pDeductionId) || canEventSatisfyThisGoal(pDeductionId);
+}
+
+
+const std::string& Goal::getPersistFunctionName()
+{
+  static const std::string persistFunctionName = "persist";
+  return persistFunctionName;
+}
+
+const std::string& Goal::getOneStepTowardsFunctionName()
+{
+  static const std::string oneStepTowardsFunctionName = "oneStepTowards";
+  return oneStepTowardsFunctionName;
 }
 
 

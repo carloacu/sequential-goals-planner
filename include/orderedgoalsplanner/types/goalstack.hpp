@@ -73,7 +73,7 @@ struct ORDEREDGOALSPLANNER_API GoalStack
                                             LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /// Default priority.
-  static const int defaultPriority;
+  static int getDefaultPriority() { return 10; }
 
   /**
    * @brief Set the goals.
@@ -95,7 +95,7 @@ struct ORDEREDGOALSPLANNER_API GoalStack
   void setGoals(const std::vector<Goal>& pGoals,
                 const WorldState& pWorldState,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                int pPriority = defaultPriority);
+                int pPriority = getDefaultPriority());
 
   /**
    * @brief Add some goals.
@@ -119,7 +119,7 @@ struct ORDEREDGOALSPLANNER_API GoalStack
   bool addGoals(const std::vector<Goal>& pGoals,
                 const WorldState& pWorldState,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                int pPriority = defaultPriority);
+                int pPriority = getDefaultPriority());
 
   /**
    * @brief Add a goal in front of the existing goals that have the same level of priority.
@@ -131,7 +131,7 @@ struct ORDEREDGOALSPLANNER_API GoalStack
   void pushFrontGoal(const Goal& pGoal,
                      const WorldState& pWorldState,
                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                     int pPriority = defaultPriority);
+                     int pPriority = getDefaultPriority());
 
   /**
    * @brief Add a goal on bottom of the existing goals that have the same level of priority.
@@ -143,7 +143,7 @@ struct ORDEREDGOALSPLANNER_API GoalStack
   void pushBackGoal(const Goal& pGoal,
                     const WorldState& pWorldState,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
-                    int pPriority = defaultPriority);
+                    int pPriority = getDefaultPriority());
 
   /**
    * @brief Change the priority of a goal.

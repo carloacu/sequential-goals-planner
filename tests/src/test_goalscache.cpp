@@ -10,7 +10,7 @@ using namespace ogp;
 void _setGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                           int pPriority = ogp::GoalStack::defaultPriority)
+                           int pPriority = ogp::GoalStack::getDefaultPriority())
 {
   pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
 }

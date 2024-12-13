@@ -105,9 +105,9 @@ struct ORDEREDGOALSPLANNER_API Goal
   const std::set<FullEventId>& getEventsPredecessors() const { return _cacheOfEventsPredecessors; }
 
   /// Persist function name.
-  static const std::string persistFunctionName;
+  static const std::string& getPersistFunctionName();
   /// OneStepTowards function name.
-  static const std::string oneStepTowardsFunctionName;
+  static const std::string& getOneStepTowardsFunctionName();
 
 private:
   /// Condition that the world should satify in the world.

@@ -127,7 +127,7 @@ std::unique_ptr<Condition> _expressionParsedToCondition(const ExpressionParsed& 
         rightOperandExp.arguments.empty() &&
         !rightOperandExp.followingExpression && rightOperandExp.value == "")
     {
-      if (rightOperandExp.name == Fact::undefinedValue.value)
+      if (rightOperandExp.name == Fact::getUndefinedValue().value)
       {
         leftFactPtr->factOptional.isFactNegated = true;
         leftFactPtr->factOptional.fact.setFluentValue(Entity::anyEntityValue());
@@ -309,7 +309,7 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
         rightOperandExp.arguments.empty() &&
         !rightOperandExp.followingExpression && rightOperandExp.value == "")
     {
-      if (rightOperandExp.name == Fact::undefinedValue.value)
+      if (rightOperandExp.name == Fact::getUndefinedValue().value)
       {
         leftFactPtr->factOptional.isFactNegated = true;
         leftFactPtr->factOptional.fact.setFluentValue(Entity::anyEntityValue());
@@ -955,13 +955,13 @@ Domain pddlToDomain(const std::string& pStr,
         {
           auto axiom = _pddlToAxiom(pStr, pos, ontology);
           for (auto& currEvent : axiom.toEvents(ontology, {}))
-            idToSetOfEvents[Domain::setOfEventsIdFromConstructor].add(currEvent, "from_axiom");
+            idToSetOfEvents[Domain::getSetOfEventsIdFromConstructor()].add(currEvent, "from_axiom");
         }
         else if (token == ":event")
         {
           auto eventName = ExpressionParsed::parseToken(pStr, pos);
           auto event = _pddlToEvent(pStr, pos, ontology);
-          idToSetOfEvents[Domain::setOfEventsIdFromConstructor].add(event, eventName);
+          idToSetOfEvents[Domain::getSetOfEventsIdFromConstructor()].add(event, eventName);
         }
         else if (token == ":action")
         {

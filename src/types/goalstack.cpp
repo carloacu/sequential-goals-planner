@@ -10,9 +10,6 @@
 
 namespace ogp
 {
-const int GoalStack::defaultPriority = 10;
-
-
 
 GoalStack::GoalStack(const GoalStack& pOther)
   : onGoalsChanged(),
