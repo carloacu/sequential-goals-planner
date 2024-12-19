@@ -386,7 +386,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
         applyNewParams(pParentParameters, newParentParameters);
 
         // Check that the new fact pattern is not already satisfied
-        if (!pContext.problem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &pParentParameters,
+        if (!pContext.problem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, true, &pParentParameters,
                                                                                    pTmpParentParametersPtr, nullptr))
           return PossibleEffect::SATISFIED;
         return PossibleEffect::SATISFIED_BUT_DOES_NOT_MODIFY_THE_WORLD;
@@ -592,7 +592,8 @@ bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
           return false;
         foundSomethingThatMatched = true;
 
-        newParamValues.insert(*parentParamValue);
+        if (!parentParamValue->isAParameterToFill())
+          newParamValues.insert(*parentParamValue);
         return !newParamValues.empty();
       }, pContext.problem.worldState, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
 
@@ -617,7 +618,7 @@ bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
       return false;
   applyNewParams(cpParentParameters, newParameters);
 
-  if (pContext.problem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, &cpParentParameters, pParametersToModifyInPlacePtr, nullptr))
+  if (pContext.problem.worldState.isOptionalFactSatisfiedInASpecificContext(pFactOptional, {}, {}, true, &cpParentParameters, pParametersToModifyInPlacePtr, nullptr))
     return false;
 
   if (pParametersToModifyInPlacePtr != nullptr)

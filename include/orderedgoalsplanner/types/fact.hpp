@@ -209,6 +209,7 @@ struct ORDEREDGOALSPLANNER_API Fact
   bool isInOtherFacts(const std::set<Fact>& pOtherFacts,
                       bool pParametersAreForTheFact,
                       std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                      bool pCheckAllPossibilities,
                       const std::map<Parameter, std::set<Entity>>* pParametersPtr,
                       std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr = nullptr,
                       bool* pTriedToModifyParametersPtr = nullptr) const;
@@ -226,6 +227,7 @@ struct ORDEREDGOALSPLANNER_API Fact
   bool isInOtherFactsMap(const SetOfFacts& pOtherFacts,
                          bool pParametersAreForTheFact,
                          std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                         bool pCheckAllPossibilities,
                          const std::map<Parameter, std::set<Entity>>* pParametersPtr,
                          std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr = nullptr,
                          bool* pTriedToModifyParametersPtr = nullptr) const;
@@ -234,20 +236,16 @@ struct ORDEREDGOALSPLANNER_API Fact
    * @brief Does the fact matches the other fact.
    * @param[in] pOtherFact The other facts.
    * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the other fact.
-   * @param[out] pNewParametersPtr New parameter possibilities corresponding of the found match.
+   * @param[out] pNewParameters New parameter possibilities corresponding of the found match.
    * @param[in] pParametersPtr Already known parameters.
    * @param[in, out] pParametersToModifyInPlacePtr Parameters to modify in place.
-   * @param[in] pTriedToModifyParametersPtr True if pNewParametersPtr is nullptr and this function wanted to add new parameters.
-   * @param[in] pIgnoreFluents If we should ignore the fluents.
    * @return True if the fact matches the other fact.
    */
   bool isInOtherFact(const Fact& pOtherFact,
                      bool pParametersAreForTheFact,
-                     std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                     std::map<Parameter, std::set<Entity>>& pNewParameters,
                      const std::map<Parameter, std::set<Entity>>* pParametersPtr,
-                     std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
-                     bool* pTriedToModifyParametersPtr = nullptr,
-                     bool pIgnoreFluents = false) const;
+                     std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr) const;
 
   /**
    * @brief Replace, in the arguments of this fact, a fact by another fact.
@@ -297,6 +295,11 @@ private:
   bool _isFluentNegated;
   std::string _factSignature;
 
+  bool _updateParameters(std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                         std::map<Parameter, std::set<Entity>>& pNewPotentialParameters,
+                         bool pCheckAllPossibilities,
+                         const std::map<Parameter, std::set<Entity>>* pParametersPtr,
+                         bool* pTriedToModifyParametersPtr) const;
   void _resetFactSignatureCache();
 
   void _finalizeInisilizationAndValidityChecks(const Ontology& pOntology,

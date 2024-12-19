@@ -438,6 +438,7 @@ bool WorldState::isOptionalFactSatisfied(const FactOptional& pFactOptional) cons
 bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& pFactOptional,
                                                            const std::set<Fact>& pPunctualFacts,
                                                            const std::set<Fact>& pRemovedFacts,
+                                                           bool pCheckAllPossibilities,
                                                            std::map<Parameter, std::set<Entity>>* pParametersToPossibleArgumentsPtr,
                                                            std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                                                            bool* pCanBecomeTruePtr) const
@@ -448,7 +449,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
   std::map<Parameter, std::set<Entity>> newParameters;
   if (pFactOptional.isFactNegated)
   {
-    bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pParametersToPossibleArgumentsPtr, pParametersToModifyInPlacePtr);
+    bool res = pFactOptional.fact.isInOtherFacts(pRemovedFacts, true, &newParameters, pCheckAllPossibilities, pParametersToPossibleArgumentsPtr, pParametersToModifyInPlacePtr);
     if (res)
     {
       if (pParametersToPossibleArgumentsPtr != nullptr)
@@ -500,7 +501,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
     }
 
     bool triedToMidfyParameters = false;
-    if (pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, nullptr, pParametersToPossibleArgumentsPtr, nullptr, &triedToMidfyParameters))
+    if (pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, nullptr, pCheckAllPossibilities, pParametersToPossibleArgumentsPtr, nullptr, &triedToMidfyParameters))
     {
       if (pCanBecomeTruePtr != nullptr && triedToMidfyParameters)
         *pCanBecomeTruePtr = true;
@@ -509,7 +510,7 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
     return true;
   }
 
-  auto res = pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, &newParameters, pParametersToPossibleArgumentsPtr);
+  auto res = pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, &newParameters, pCheckAllPossibilities, pParametersToPossibleArgumentsPtr);
   if (pParametersToPossibleArgumentsPtr != nullptr)
     applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
   return res;

@@ -656,43 +656,83 @@ bool Fact::replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToR
 bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
                           bool pParametersAreForTheFact,
                           std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                          bool pCheckAllPossibilities,
                           const std::map<Parameter, std::set<Entity>>* pParametersPtr,
                           std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                           bool* pTriedToModifyParametersPtr) const
 {
   bool res = false;
+  std::map<Parameter, std::set<Entity>> newPotentialParameters;
   for (const auto& currOtherFact : pOtherFacts)
-    if (isInOtherFact(currOtherFact, pParametersAreForTheFact, pNewParametersPtr, pParametersPtr,
-                 pParametersToModifyInPlacePtr, pTriedToModifyParametersPtr))
+    if (isInOtherFact(currOtherFact, pParametersAreForTheFact, newPotentialParameters,
+                      pParametersPtr, pParametersToModifyInPlacePtr))
       res = true;
-  return res;
+
+  if (res)
+    return _updateParameters(pNewParametersPtr, newPotentialParameters, pCheckAllPossibilities, pParametersPtr, pTriedToModifyParametersPtr);
+  return false;
 }
 
 
 bool Fact::isInOtherFactsMap(const SetOfFacts& pOtherFacts,
                              bool pParametersAreForTheFact,
                              std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                             bool pCheckAllPossibilities,
                              const std::map<Parameter, std::set<Entity>>* pParametersPtr,
                              std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                              bool* pTriedToModifyParametersPtr) const
 {
   bool res = false;
   auto otherFactsThatMatched = pOtherFacts.find(*this);
+  std::map<Parameter, std::set<Entity>> newPotentialParameters;
   for (const auto& currOtherFact : otherFactsThatMatched)
-    if (isInOtherFact(currOtherFact, pParametersAreForTheFact, pNewParametersPtr, pParametersPtr,
-                      pParametersToModifyInPlacePtr, pTriedToModifyParametersPtr))
+    if (isInOtherFact(currOtherFact, pParametersAreForTheFact, newPotentialParameters,
+                      pParametersPtr, pParametersToModifyInPlacePtr))
       res = true;
-  return res;
+
+  if (res)
+    return _updateParameters(pNewParametersPtr, newPotentialParameters, pCheckAllPossibilities, pParametersPtr, pTriedToModifyParametersPtr);
+  return false;
+}
+
+
+bool Fact::_updateParameters(std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                             std::map<Parameter, std::set<Entity>>& pNewPotentialParameters,
+                             bool pCheckAllPossibilities,
+                             const std::map<Parameter, std::set<Entity>>* pParametersPtr,
+                             bool* pTriedToModifyParametersPtr) const
+{
+  if (pCheckAllPossibilities && pParametersPtr != nullptr && pNewPotentialParameters != *pParametersPtr)
+    return false;
+
+  if (!pNewPotentialParameters.empty())
+  {
+    if (pNewParametersPtr != nullptr)
+    {
+      if (pNewParametersPtr->empty())
+      {
+        *pNewParametersPtr = std::move(pNewPotentialParameters);
+      }
+      else
+      {
+        for (auto& currNewPotParam : pNewPotentialParameters)
+          (*pNewParametersPtr)[currNewPotParam.first].insert(currNewPotParam.second.begin(), currNewPotParam.second.end());
+      }
+    }
+    else if (pTriedToModifyParametersPtr != nullptr)
+    {
+      *pTriedToModifyParametersPtr = true;
+    }
+  }
+  return true;
 }
 
 
 bool Fact::isInOtherFact(const Fact& pOtherFact,
                          bool pParametersAreForTheFact,
-                         std::map<Parameter, std::set<Entity>>* pNewParametersPtr,
+                         std::map<Parameter, std::set<Entity>>& pNewParameters,
                          const std::map<Parameter, std::set<Entity>>* pParametersPtr,
-                         std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
-                         bool* pTriedToModifyParametersPtr,
-                         bool pIgnoreFluents) const
+                         std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr) const
 {
   if (pOtherFact._name != _name ||
       pOtherFact._arguments.size() != _arguments.size())
@@ -711,12 +751,10 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       if (itParam != pParametersPtr->end() &&
           (!pValueToLookFor.type || !itParam->first.type || pValueToLookFor.type->isA(*itParam->first.type)))
       {
-        if (!itParam->second.empty())
-          return itParam->second.size() == 1 && itParam->second.count(pValueToLookFor) > 0;
-        if (pNewParametersPtr != nullptr)
-          newPotentialParameters[pFactValue.toParameter()].insert(pValueToLookFor);
-        else if (pTriedToModifyParametersPtr != nullptr)
-          *pTriedToModifyParametersPtr = true;
+        if (!itParam->second.empty() && itParam->second.count(pValueToLookFor) == 0)
+          return false;
+
+        newPotentialParameters[pFactValue.toParameter()].insert(pValueToLookFor);
         return true;
       }
     }
@@ -726,8 +764,8 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
       auto itParam = pParametersToModifyInPlacePtr->find(pFactValue.toParameter());
       if (itParam != pParametersToModifyInPlacePtr->end())
       {
-        if (!itParam->second.empty())
-          return itParam->second.size() == 1 && itParam->second.count(pValueToLookFor) > 0;
+        if (!itParam->second.empty() && itParam->second.count(pValueToLookFor) == 0)
+          return false;
         newParametersInPlace[pFactValue.toParameter()].insert(pValueToLookFor);
         return true;
       }
@@ -754,7 +792,7 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
   }
 
   std::optional<bool> resOpt;
-  if (pIgnoreFluents || (!_fluent && !pOtherFact._fluent))
+  if (!_fluent && !pOtherFact._fluent)
   {
     resOpt.emplace(pOtherFact._isFluentNegated == _isFluentNegated);
   }
@@ -777,16 +815,16 @@ bool Fact::isInOtherFact(const Fact& pOtherFact,
 
   if (*resOpt)
   {
-    if (pNewParametersPtr != nullptr & !newPotentialParameters.empty())
+    if (!newPotentialParameters.empty())
     {
-      if (pNewParametersPtr->empty())
+      if (pNewParameters.empty())
       {
-        *pNewParametersPtr = std::move(newPotentialParameters);
+        pNewParameters = std::move(newPotentialParameters);
       }
       else
       {
         for (auto& currNewPotParam : newPotentialParameters)
-          (*pNewParametersPtr)[currNewPotParam.first].insert(currNewPotParam.second.begin(), currNewPotParam.second.end());
+          pNewParameters[currNewPotParam.first].insert(currNewPotParam.second.begin(), currNewPotParam.second.end());
       }
     }
 

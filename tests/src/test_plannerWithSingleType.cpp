@@ -64,37 +64,37 @@ static const std::vector<ogp::Parameter> _emptyParameters;
 
 
 ogp::Fact _fact(const std::string& pStr,
-               const ogp::Ontology& pOntology,
-               const std::vector<ogp::Parameter>& pParameters = {}) {
+                const ogp::Ontology& pOntology,
+                const std::vector<ogp::Parameter>& pParameters = {}) {
   return ogp::Fact(pStr, false, pOntology, {}, pParameters);
 }
 
 ogp::Parameter _parameter(const std::string& pStr,
-                         const ogp::Ontology& pOntology) {
+                          const ogp::Ontology& pOntology) {
   return ogp::Parameter::fromStr(pStr, pOntology.types);
 }
 
 ogp::Entity _entityDeclaration(const std::string& pStr,
-                              const ogp::Ontology& pOntology) {
+                               const ogp::Ontology& pOntology) {
   return ogp::Entity::fromDeclaration(pStr, pOntology.types);
 }
 
 ogp::Goal _goal(const std::string& pStr,
-               const ogp::Ontology& pOntology,
-               int pMaxTimeToKeepInactive = -1,
-               const std::string& pGoalGroupId = "") {
+                const ogp::Ontology& pOntology,
+                int pMaxTimeToKeepInactive = -1,
+                const std::string& pGoalGroupId = "") {
   return ogp::Goal::fromStr(pStr, pOntology, {}, pMaxTimeToKeepInactive, pGoalGroupId);
 }
 
 std::unique_ptr<ogp::Condition> _condition_fromStr(const std::string& pConditionStr,
-                                                  const ogp::Ontology& pOntology,
-                                                  const std::vector<ogp::Parameter>& pParameters = {}) {
+                                                   const ogp::Ontology& pOntology,
+                                                   const std::vector<ogp::Parameter>& pParameters = {}) {
   return ogp::strToCondition(pConditionStr, pOntology, {}, pParameters);
 }
 
 std::unique_ptr<ogp::WorldStateModification> _worldStateModification_fromStr(const std::string& pStr,
-                                                                            const ogp::Ontology& pOntology,
-                                                                            const std::vector<ogp::Parameter>& pParameters = {}) {
+                                                                             const ogp::Ontology& pOntology,
+                                                                             const std::vector<ogp::Parameter>& pParameters = {}) {
   return ogp::strToWsModification(pStr, pOntology, {}, pParameters);
 }
 
@@ -265,9 +265,9 @@ std::string _getGoalsDoneDuringAPlannificationConst(const ogp::Problem& pProblem
 }
 
 ogp::ActionInvocationWithGoal _lookForAnActionToDo(ogp::Problem& pProblem,
-                                                  const ogp::Domain& pDomain,
-                                                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                  const ogp::Historical* pGlobalHistorical = nullptr)
+                                                   const ogp::Domain& pDomain,
+                                                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                                   const ogp::Historical* pGlobalHistorical = nullptr)
 {
   auto plan = ogp::planForMoreImportantGoalPossible(pProblem, pDomain, true, pNow, pGlobalHistorical);
   if (!plan.empty())
@@ -276,9 +276,9 @@ ogp::ActionInvocationWithGoal _lookForAnActionToDo(ogp::Problem& pProblem,
 }
 
 ogp::ActionInvocationWithGoal _lookForAnActionToDoConst(const ogp::Problem& pProblem,
-                                                       const ogp::Domain& pDomain,
-                                                       const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
-                                                       const ogp::Historical* pGlobalHistorical = nullptr)
+                                                        const ogp::Domain& pDomain,
+                                                        const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
+                                                        const ogp::Historical* pGlobalHistorical = nullptr)
 {
   auto problem = pProblem;
   auto plan = ogp::planForMoreImportantGoalPossible(problem, pDomain, true, pNow, pGlobalHistorical);
@@ -348,9 +348,9 @@ void _test_goalToStr()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr("a\n"
-                                                     "b\n"
-                                                     "condition\n"
-                                                     "goal_name", ontology.types);
+                                                      "b\n"
+                                                      "condition\n"
+                                                      "goal_name", ontology.types);
 
   EXPECT_EQ("persist(a & b)", _goal("persist(a & b)", ontology).toStr());
   EXPECT_EQ("imply(condition, goal_name)", _goal("imply(condition, goal_name)", ontology).toStr());
@@ -374,36 +374,36 @@ void _test_conditionParameters()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("location\n"
-                                           "entity\n"
-                                           "robot - physical_object");
+                                             "entity\n"
+                                             "robot - physical_object");
   ontology.constants = ogp::SetOfEntities::fromPddl("me self - robot\n"
-                                                  "pen - physical_object\n"
-                                                  "entrance kitchen - location", ontology.types);
+                                                    "pen - physical_object\n"
+                                                    "entrance kitchen - location", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
-                                                     "grab(?r - robot, ?e - entity)\n"
-                                                     "sf\n"
-                                                     "ent - entity\n"
-                                                     "n1 - number\n"
-                                                     "n2 - number\n"
-                                                     "a\n"
-                                                     "b\n"
-                                                     "loc - number\n"
-                                                     "at(?po - physical_object, ?l - location)\n"
-                                                     "distance(?po - physical_object, ?l - location) - number", ontology.types);
+                                                      "grab(?r - robot, ?e - entity)\n"
+                                                      "sf\n"
+                                                      "ent - entity\n"
+                                                      "n1 - number\n"
+                                                      "n2 - number\n"
+                                                      "a\n"
+                                                      "b\n"
+                                                      "loc - number\n"
+                                                      "at(?po - physical_object, ?l - location)\n"
+                                                      "distance(?po - physical_object, ?l - location) - number", ontology.types);
 
   ASSERT_FALSE(_condition_fromStr("", ontology).operator bool());
   std::vector<ogp::Parameter> parameters = {_parameter("?target - location", ontology), _parameter("?object - entity", ontology)};
   std::map<ogp::Parameter, ogp::Entity> parametersToEntities = {{_parameter("?target - location", ontology), _entityDeclaration("kitchen - location", ontology)}, {_parameter("?object - location", ontology), _entityDeclaration("chair - entity", ontology)}};
   EXPECT_EQ("location(me)=kitchen & grab(me, chair)",
-                         _condition_fromStr("location(me)=?target & grab(me, ?object)", ontology, parameters)->clone(&parametersToEntities)->toStr());
+            _condition_fromStr("location(me)=?target & grab(me, ?object)", ontology, parameters)->clone(&parametersToEntities)->toStr());
   EXPECT_EQ("location(me)=kitchen & grab(me, chair)",
-                         _condition_fromStr("and(location(me)=?target, grab(me, ?object))", ontology, parameters)->clone(&parametersToEntities)->toStr());
+            _condition_fromStr("and(location(me)=?target, grab(me, ?object))", ontology, parameters)->clone(&parametersToEntities)->toStr());
   EXPECT_EQ("location(me)=kitchen & grab(me, chair) & sf",
-                         _condition_fromStr("and(location(me)=?target, grab(me, ?object), sf)", ontology, parameters)->clone(&parametersToEntities)->toStr());
+            _condition_fromStr("and(location(me)=?target, grab(me, ?object), sf)", ontology, parameters)->clone(&parametersToEntities)->toStr());
   EXPECT_EQ("location(me)=kitchen | grab(me, chair) | sf",
-                         _condition_fromStr("location(me)=?target | grab(me, ?object) | sf", ontology, parameters)->clone(&parametersToEntities)->toStr());
+            _condition_fromStr("location(me)=?target | grab(me, ?object) | sf", ontology, parameters)->clone(&parametersToEntities)->toStr());
   EXPECT_EQ("location(me)=kitchen | grab(me, chair) | sf",
-                         _condition_fromStr("or(location(me)=?target, grab(me, ?object), sf)", ontology, parameters)->clone(&parametersToEntities)->toStr());
+            _condition_fromStr("or(location(me)=?target, grab(me, ?object), sf)", ontology, parameters)->clone(&parametersToEntities)->toStr());
   EXPECT_EQ("equals(n1, n2 + 3)", _condition_fromStr("equals(n1, n2 + 3)", ontology)->toStr());
   EXPECT_EQ("!sf", _condition_fromStr("!sf", ontology)->toStr());
   EXPECT_EQ("!sf", _condition_fromStr("not(sf)", ontology)->toStr());
@@ -430,19 +430,19 @@ void _test_wsModificationToStr()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("location\n"
-                                           "entity\n"
-                                           "robot - physical_object");
+                                             "entity\n"
+                                             "robot - physical_object");
   ontology.constants = ogp::SetOfEntities::fromPddl("me - robot\n"
-                                                  "sweets - entity\n"
-                                                  "target - location", ontology.types);
+                                                    "sweets - entity\n"
+                                                    "target - location", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
-                                                     "locationEntity(?e - entity) - location\n"
-                                                     "checkPointLocation - location\n"
-                                                     "grab(?e - entity)\n"
-                                                     "is_near(?e - entity, ?r - robot)\n"
-                                                     "a\n"
-                                                     "n1 - number\n"
-                                                     "n2 - number", ontology.types);
+                                                      "locationEntity(?e - entity) - location\n"
+                                                      "checkPointLocation - location\n"
+                                                      "grab(?e - entity)\n"
+                                                      "is_near(?e - entity, ?r - robot)\n"
+                                                      "a\n"
+                                                      "n1 - number\n"
+                                                      "n2 - number", ontology.types);
 
   ASSERT_FALSE(_worldStateModification_fromStr("", ontology).operator bool());
   EXPECT_EQ("location(me)=target", _worldStateModification_fromStr("location(me)=target", ontology)->toStr());
@@ -470,17 +470,17 @@ void _test_invertCondition()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("location\n"
-                                           "entity\n"
-                                           "robot - physical_object");
+                                             "entity\n"
+                                             "robot - physical_object");
   ontology.constants = ogp::SetOfEntities::fromPddl("me self - robot\n"
-                                                  "chair - entity\n"
-                                                  "pen - physical_object\n"
-                                                  "kitchen entrance - location", ontology.types);
+                                                    "chair - entity\n"
+                                                    "pen - physical_object\n"
+                                                    "kitchen entrance - location", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?r - robot) - location\n"
-                                                     "locationEntity(?e - entity) - location\n"
-                                                     "grab(?r - robot, ?e - entity)\n"
-                                                     "distance(?po - physical_object, ?l - location) - number\n"
-                                                     "se", ontology.types);
+                                                      "locationEntity(?e - entity) - location\n"
+                                                      "grab(?r - robot, ?e - entity)\n"
+                                                      "distance(?po - physical_object, ?l - location) - number\n"
+                                                      "se", ontology.types);
 
   EXPECT_EQ("!location(me)=kitchen | grab(me, chair) | !se", _condition_fromStr("location(me)=kitchen & !grab(me, chair) & se)", ontology)->clone(nullptr, true)->toStr());
   EXPECT_EQ("!location(me)=kitchen & !grab(me, chair) & se", _condition_fromStr("location(me)=kitchen | grab(me, chair) | !se", ontology)->clone(nullptr, true)->toStr());
@@ -526,8 +526,8 @@ void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_advertised + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_checkedIn, ontology.types);
   ogp::GoalStack goalStack;
   ogp::WorldState worldState;
   EXPECT_EQ(0u, goalStack.goals().size());
@@ -544,7 +544,7 @@ void _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_checkedIn, ontology.types);
   ogp::GoalStack goalStack;
   ogp::WorldState worldState;
   EXPECT_EQ(0u, goalStack.goals().size());
@@ -561,7 +561,7 @@ void _noPreconditionGoalImmediatlyReached()
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_goodBoy, ogp::Action({},
-                                              _worldStateModification_fromStr("be_happy", ontology)));
+                                               _worldStateModification_fromStr("be_happy", ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -581,7 +581,7 @@ void _removeGoalWhenItIsSatisfiedByAnAction()
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_goodBoy, ogp::Action({},
-                                              _worldStateModification_fromStr("be_happy", ontology)));
+                                               _worldStateModification_fromStr("be_happy", ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -602,7 +602,7 @@ void _removeAnAction()
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_goodBoy, ogp::Action({},
-                                              _worldStateModification_fromStr("be_happy", ontology)));
+                                               _worldStateModification_fromStr("be_happy", ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -618,8 +618,8 @@ void _removeSomeGoals()
   const std::string goalGroupId = "greetAndCheckIn";
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr("be_happy\n"
-                                                     "checked_in\n"
-                                                     "greeted", ontology.types);
+                                                      "checked_in\n"
+                                                      "greeted", ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr("greeted", ontology)));
@@ -653,10 +653,10 @@ void _notifyGoalRemovedWhenItIsImmediatlyRemoved()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e, ontology.types);
 
   ogp::Problem problem;
   ogp::GoalsRemovedTracker goalsRemovedTracker(problem.goalStack);
@@ -701,16 +701,16 @@ void _handlePreconditionWithNegatedFacts()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_userSatisfied, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_userSatisfied, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
-                                            _worldStateModification_fromStr(_fact_greeted, ontology)));
+                                             _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_joke, ogp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
-                                           _worldStateModification_fromStr(_fact_userSatisfied, ontology)));
+                                            _worldStateModification_fromStr(_fact_userSatisfied, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_userSatisfied, ontology),
-                                              _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -728,16 +728,16 @@ void _testWithNegatedAccessibleFacts()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e, ontology.types);
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action(_condition_fromStr(_fact_e + " & !" + _fact_b, ontology),
-                                      _worldStateModification_fromStr("!" + _fact_c, ontology)));
+                                       _worldStateModification_fromStr("!" + _fact_c, ontology)));
   actions.emplace(action2, ogp::Action({}, _worldStateModification_fromStr("!" + _fact_b, ontology)));
   actions.emplace(action3, ogp::Action(_condition_fromStr(_fact_a + " & !" + _fact_c, ontology),
-                                      _worldStateModification_fromStr(_fact_d, ontology)));
+                                       _worldStateModification_fromStr(_fact_d, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -752,12 +752,12 @@ void _noPlanWithALengthOf2()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_greeted, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -772,15 +772,15 @@ void _noPlanWithALengthOf3()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkIn, ogp::Action(_condition_fromStr(_fact_greeted, ontology),
-                                              _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -795,14 +795,14 @@ void _2preconditions()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -817,14 +817,14 @@ void _2Goals()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -839,14 +839,14 @@ void _2UnrelatedGoals()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -862,13 +862,13 @@ void _impossibleGoal()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -883,22 +883,22 @@ void _privigelizeTheActionsThatHaveManyPreferedInContext()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_hasQrCode + "\n" +
-                                                     _fact_hasCheckInPasword + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_hasQrCode + "\n" +
+                                                      _fact_hasCheckInPasword + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_checkInWithQrCode, ogp::Action(_condition_fromStr(_fact_hasQrCode, ontology),
-                                                        _worldStateModification_fromStr(_fact_checkedIn, ontology),
-                                                        _condition_fromStr(_fact_hasQrCode, ontology)));
+                                                         _worldStateModification_fromStr(_fact_checkedIn, ontology),
+                                                         _condition_fromStr(_fact_hasQrCode, ontology)));
   actions.emplace(_action_checkInWithPassword, ogp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
-                                                          _worldStateModification_fromStr(_fact_checkedIn, ontology),
-                                                          _condition_fromStr(_fact_hasCheckInPasword, ontology)));
+                                                           _worldStateModification_fromStr(_fact_checkedIn, ontology),
+                                                           _condition_fromStr(_fact_hasCheckInPasword, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -925,19 +925,19 @@ void _preconditionThatCannotBeSolved()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_hasQrCode + "\n" +
-                                                     _fact_hasCheckInPasword + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_hasQrCode + "\n" +
+                                                      _fact_hasCheckInPasword + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkInWithQrCode, ogp::Action(_condition_fromStr(_fact_hasQrCode, ontology),
-                                                        _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+                                                         _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_checkInWithPassword, ogp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
-                                                          _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+                                                           _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -950,21 +950,21 @@ void _preferInContext()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_hasQrCode + "\n" +
-                                                     _fact_hasCheckInPasword + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_hasQrCode + "\n" +
+                                                      _fact_hasCheckInPasword + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkInWithQrCode, ogp::Action({},
-                                                        _worldStateModification_fromStr(_fact_checkedIn, ontology),
-                                                        _condition_fromStr(_fact_hasQrCode, ontology)));
+                                                         _worldStateModification_fromStr(_fact_checkedIn, ontology),
+                                                         _condition_fromStr(_fact_hasQrCode, ontology)));
   actions.emplace(_action_checkInWithPassword, ogp::Action({},
-                                                          _worldStateModification_fromStr(_fact_checkedIn, ontology),
-                                                          _condition_fromStr(_fact_hasCheckInPasword, ontology)));
+                                                           _worldStateModification_fromStr(_fact_checkedIn, ontology),
+                                                           _condition_fromStr(_fact_hasCheckInPasword, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_greeted + " & " + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
@@ -999,8 +999,8 @@ void _preferInContext()
             _action_goodBoy, _solveStrConst(problem, actions, ontology));
 
   actions.emplace(_action_checkInWithRealPerson, ogp::Action({},
-                                                            _worldStateModification_fromStr(_fact_checkedIn, ontology),
-                                                            _condition_fromStr("!" + _fact_hasQrCode, ontology)));
+                                                             _worldStateModification_fromStr(_fact_checkedIn, ontology),
+                                                             _condition_fromStr("!" + _fact_hasQrCode, ontology)));
   _setFacts(problem.worldState, {}, problem.goalStack, ontology);
   EXPECT_EQ(_action_checkInWithRealPerson + _sep +
             _action_greet + _sep +
@@ -1012,19 +1012,19 @@ void _preferWhenPreconditionAreCloserToTheRealFacts()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_beginOfConversation + "\n" +
-                                                     _fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_presented, ontology.types);
+                                                      _fact_checkedIn + "\n" +
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_presented, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({},
-                                            _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology),
-                                            _condition_fromStr(_fact_beginOfConversation, ontology)));
+                                             _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology),
+                                             _condition_fromStr(_fact_beginOfConversation, ontology)));
   actions.emplace(_action_presentation, ogp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
@@ -1043,18 +1043,18 @@ void _avoidToDo2TimesTheSameActionIfPossble()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_presented, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_presented, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({},
-                                            _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology)));
+                                             _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology)));
   actions.emplace(_action_presentation, ogp::Action({},
-                                                   _worldStateModification_fromStr(_fact_presented, ontology)));
+                                                    _worldStateModification_fromStr(_fact_presented, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
@@ -1077,16 +1077,16 @@ void _takeHistoricalIntoAccount()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_presented, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_presented, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted + "&" + _fact_presented, ontology)));
   actions.emplace(_action_presentation, ogp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_presented + "&" + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {_fact_beHappy}, ontology);
@@ -1104,17 +1104,17 @@ void _goDoTheActionThatHaveTheMostPreferInContextValidated()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_advertised + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_is_close, ontology.types);
+                                                      _fact_advertised + "\n" +
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_is_close, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_advertise, ogp::Action({}, _worldStateModification_fromStr(_fact_advertised, ontology)));
   actions.emplace(_action_checkIn, ogp::Action(_condition_fromStr(_fact_is_close, ontology),
-                                              _worldStateModification_fromStr(_fact_checkedIn, ontology),
-                                              _condition_fromStr(_fact_is_close, ontology)));
+                                               _worldStateModification_fromStr(_fact_checkedIn, ontology),
+                                               _condition_fromStr(_fact_is_close, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_advertised + "&" + _fact_checkedIn, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -1128,12 +1128,12 @@ void _checkNotInAPrecondition()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_greeted, ontology.types);
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_greeted, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action(_condition_fromStr("!" + _fact_checkedIn, ontology),
-                                            _worldStateModification_fromStr(_fact_greeted, ontology)));
+                                             _worldStateModification_fromStr(_fact_greeted, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -1164,19 +1164,19 @@ void _checkActionHasAFact()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e + "\n" +
-                                                     _fact_f + "\n" +
-                                                     _fact_g, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e + "\n" +
+                                                      _fact_f + "\n" +
+                                                      _fact_g, ontology.types);
 
   ogp::ProblemModification effect(_worldStateModification_fromStr(_fact_a + " & !" + _fact_b, ontology));
   effect.potentialWorldStateModification = _worldStateModification_fromStr(_fact_c, ontology);
   effect.goalsToAdd[ogp::GoalStack::getDefaultPriority()] = {_goal(_fact_d, ontology)};
   const ogp::Action action(_condition_fromStr(_fact_e, ontology),
-                          effect,
-                          _condition_fromStr(_fact_f, ontology));
+                           effect,
+                           _condition_fromStr(_fact_f, ontology));
   EXPECT_TRUE(action.hasFact(_fact(_fact_a, ontology)));
   EXPECT_TRUE(action.hasFact(_fact(_fact_b, ontology)));
   EXPECT_TRUE(action.hasFact(_fact(_fact_c, ontology)));
@@ -1194,7 +1194,7 @@ void _precoditionEqualEffect()
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr(_fact_beHappy, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -1227,18 +1227,18 @@ void _circularDependencies()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_checkedIn + "\n" +
-                                                     _fact_hasCheckInPasword + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_checkedIn + "\n" +
+                                                      _fact_hasCheckInPasword + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
   actions.emplace(_action_checkIn, ogp::Action(_condition_fromStr(_fact_greeted, ontology),
-                                              _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace("check-in-pwd", ogp::Action(_condition_fromStr(_fact_hasCheckInPasword, ontology),
-                                             _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+                                              _worldStateModification_fromStr(_fact_checkedIn, ontology)));
   actions.emplace("inverse-of-check-in-pwd", ogp::Action(_condition_fromStr(_fact_checkedIn, ontology),
-                                                        _worldStateModification_fromStr(_fact_hasCheckInPasword, ontology)));
+                                                         _worldStateModification_fromStr(_fact_hasCheckInPasword, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -1251,13 +1251,13 @@ void _triggerActionThatRemoveAFact()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_beSad + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_beHappy, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_joke, ogp::Action(_condition_fromStr(_fact_beSad, ontology),
-                                           _worldStateModification_fromStr("!" + _fact_beSad, ontology)));
+                                            _worldStateModification_fromStr("!" + _fact_beSad, ontology)));
   actions.emplace(_action_goodBoy, ogp::Action(_condition_fromStr("!" + _fact_beSad, ontology),
-                                              _worldStateModification_fromStr(_fact_beHappy, ontology)));
+                                               _worldStateModification_fromStr(_fact_beHappy, ontology)));
 
   ogp::Historical historical;
   ogp::Problem problem;
@@ -1329,12 +1329,12 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
   ontology.types = ogp::SetOfTypes::fromPddl("human");
   ontology.constants = ogp::SetOfEntities::fromPddl("h1 h2 - human", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("isEngaged(?h - human)\n"
-                                                     "isHappy(?h - human)", ontology.types);
+                                                      "isHappy(?h - human)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> parameters(1, _parameter("?human - human", ontology));
   ogp::Action joke(_condition_fromStr("isEngaged(?human)", ontology, parameters),
-                  _worldStateModification_fromStr("isHappy(?human)", ontology, parameters));
+                   _worldStateModification_fromStr("isHappy(?human)", ontology, parameters));
   joke.parameters = std::move(parameters);
   actions.emplace(_action_joke, joke);
 
@@ -1350,24 +1350,24 @@ void _actionWithParametersInsideThePath()
   ontology.types = ogp::SetOfTypes::fromPddl("location");
   ontology.constants = ogp::SetOfEntities::fromPddl("entrance kitchen - location", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("place - location\n"
-                                                     "welcomePeople", ontology.types);
+                                                      "welcomePeople", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> navigateParameters(1, _parameter("?target - location", ontology));
   ogp::Action navigateAction({},
-                            _worldStateModification_fromStr("place=?target", ontology, navigateParameters));
+                             _worldStateModification_fromStr("place=?target", ontology, navigateParameters));
   navigateAction.parameters = std::move(navigateParameters);
   actions.emplace(_action_navigate, navigateAction);
 
   actions.emplace(_action_welcome,
                   ogp::Action(_condition_fromStr("place=entrance", ontology),
-                             _worldStateModification_fromStr("welcomePeople", ontology)));
+                              _worldStateModification_fromStr("welcomePeople", ontology)));
 
   ogp::Problem problem;
   _addFact(problem.worldState, "place=kitchen", problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)});
   EXPECT_EQ(_action_navigate + "(?target -> entrance)" + _sep +
-                         _action_welcome, _solveStr(problem, actions, ontology));
+            _action_welcome, _solveStr(problem, actions, ontology));
   EXPECT_TRUE(_hasFact(problem.worldState, "place=entrance", ontology));
   EXPECT_FALSE(_hasFact(problem.worldState, "place=kitchen", ontology));
 }
@@ -1403,7 +1403,7 @@ void _testPersistImplyGoal()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_checkedIn, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1421,7 +1421,7 @@ void _testImplyGoal()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_checkedIn, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1440,16 +1440,16 @@ void _checkPreviousBugAboutSelectingAnInappropriateAction()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
-                                                     _fact_userSatisfied + "\n" +
-                                                     _fact_robotLearntABehavior + "\n" +
-                                                     _fact_advertised, ontology.types);
+                                                      _fact_userSatisfied + "\n" +
+                                                      _fact_robotLearntABehavior + "\n" +
+                                                      _fact_advertised, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_askQuestion1, ogp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
-                                                   _worldStateModification_fromStr(_fact_userSatisfied, ontology),
-                                                   _condition_fromStr("!" + _fact_robotLearntABehavior, ontology)));
+                                                    _worldStateModification_fromStr(_fact_userSatisfied, ontology),
+                                                    _condition_fromStr("!" + _fact_robotLearntABehavior, ontology)));
   actions.emplace(_action_checkIn, ogp::Action({},
-                                              _worldStateModification_fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised, ontology)));
+                                               _worldStateModification_fromStr("!" + _fact_robotLearntABehavior + " & " + _fact_advertised, ontology)));
   ogp::Problem problem;
   _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack, ontology);
   _setGoalsForAPriority(problem, {"persist(" + _fact_userSatisfied + ")"}, ontology);
@@ -1463,15 +1463,15 @@ void _dontLinkActionWithPreferredInContext()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_engagedWithUser + "\n" +
-                                                     _fact_userSatisfied + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_userSatisfied + "\n" +
+                                                      _fact_checkedIn, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(_action_askQuestion1, ogp::Action({},
-                                                   _worldStateModification_fromStr(_fact_userSatisfied, ontology),
-                                                   _condition_fromStr(_fact_checkedIn, ontology)));
+                                                    _worldStateModification_fromStr(_fact_userSatisfied, ontology),
+                                                    _condition_fromStr(_fact_checkedIn, ontology)));
   actions.emplace(_action_checkIn, ogp::Action(_condition_fromStr(_fact_engagedWithUser, ontology),
-                                              _worldStateModification_fromStr(_fact_checkedIn, ontology)));
+                                               _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
   ogp::Problem problem;
   _setFacts(problem.worldState, {_fact_engagedWithUser}, problem.goalStack, ontology);
@@ -1484,8 +1484,8 @@ void _checkPriorities()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_checkedIn, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1503,9 +1503,9 @@ void _stackablePropertyOfGoals()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_checkedIn + "\n" +
-                                                     _fact_presented, ontology.types);
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_checkedIn + "\n" +
+                                                      _fact_presented, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1531,9 +1531,9 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_beHappy + "\n" +
-                                                     _fact_checkedIn + "\n" +
-                                                     _fact_presented, ontology.types);
+                                                      _fact_beHappy + "\n" +
+                                                      _fact_checkedIn + "\n" +
+                                                      _fact_presented, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1574,7 +1574,7 @@ void _checkMaxTimeToKeepInactiveForGoals()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_checkedIn, ontology.types);
 
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<ogp::ActionId, ogp::Action> actions;
@@ -1600,8 +1600,8 @@ void _changePriorityOfGoal()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_checkedIn + "\n" +
-                                                     _fact_userSatisfied, ontology.types);
+                                                      _fact_checkedIn + "\n" +
+                                                      _fact_userSatisfied, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1670,10 +1670,10 @@ void _factChangedNotification()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_greeted + "\n" +
-                                                     _fact_checkedIn + "\n" +
-                                                     _fact_userSatisfied + "\n" +
-                                                     _fact_punctual_p1 + "\n" +
-                                                     _fact_beginOfConversation, ontology.types);
+                                                      _fact_checkedIn + "\n" +
+                                                      _fact_userSatisfied + "\n" +
+                                                      _fact_punctual_p1 + "\n" +
+                                                      _fact_beginOfConversation, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_greet, ogp::Action({}, _worldStateModification_fromStr(_fact_greeted, ontology)));
@@ -1709,7 +1709,7 @@ void _factChangedNotification()
   EXPECT_EQ(_action_greet, plannerResult.actionInvocation.actionId);
   {
     std::map<ogp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
-                                    {_fact(_fact_greeted, ontology), true}};
+                                     {_fact(_fact_greeted, ontology), true}};
     EXPECT_EQ(res, factsChangedFromSubscription);
   }
   {
@@ -1730,8 +1730,8 @@ void _factChangedNotification()
   EXPECT_EQ(_action_checkIn, plannerResult.actionInvocation.actionId);
   {
     std::map<ogp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
-                                    {_fact(_fact_greeted, ontology), true},
-                                    {_fact(_fact_checkedIn, ontology), true}};
+                                     {_fact(_fact_greeted, ontology), true},
+                                     {_fact(_fact_checkedIn, ontology), true}};
     EXPECT_EQ(res, factsChangedFromSubscription);
   }
   {
@@ -1749,7 +1749,7 @@ void _factChangedNotification()
   _removeFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
   {
     std::map<ogp::Fact, bool> res = {{_fact(_fact_beginOfConversation, ontology), true},
-                                    {_fact(_fact_checkedIn, ontology), true}};
+                                     {_fact(_fact_checkedIn, ontology), true}};
     EXPECT_EQ(res, factsChangedFromSubscription);
   }
   {
@@ -1778,7 +1778,7 @@ void _checkEvents()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
-                                                     _fact_checkedIn, ontology.types);
+                                                      _fact_checkedIn, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
@@ -1788,8 +1788,8 @@ void _checkEvents()
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   // Event: if (_fact_headTouched) then remove(_fact_headTouched) and addGoal(_fact_checkedIn)
   domain.addSetOfEvents(ogp::Event(_condition_fromStr(_fact_headTouched, ontology),
-                                  _worldStateModification_fromStr("!" + _fact_headTouched, ontology),
-                                  _emptyParameters, {{{9, {_goal(_fact_checkedIn, ontology)}}}}));
+                                   _worldStateModification_fromStr("!" + _fact_headTouched, ontology),
+                                   _emptyParameters, {{{9, {_goal(_fact_checkedIn, ontology)}}}}));
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   auto& setOfEventsMap = domain.getSetOfEvents();
   _addFact(problem.worldState, _fact_headTouched, problem.goalStack, ontology, setOfEventsMap, _now);
@@ -1803,16 +1803,16 @@ void _checkEventsWithImply()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_headTouched + "\n" +
-                                                     _fact_checkedIn + "\n" +
-                                                     _fact_userWantsToCheckedIn, ontology.types);
+                                                      _fact_checkedIn + "\n" +
+                                                      _fact_userWantsToCheckedIn, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
   // Event: if (_fact_headTouched) then add(_fact_userWantsToCheckedIn) and remove(_fact_headTouched)
   ogp::Domain domain(std::move(actions), ontology,
-                    ogp::Event(_condition_fromStr(_fact_headTouched, ontology),
-                              _worldStateModification_fromStr(_fact_userWantsToCheckedIn + " & !" + _fact_headTouched, ontology)));
+                     ogp::Event(_condition_fromStr(_fact_headTouched, ontology),
+                                _worldStateModification_fromStr(_fact_userWantsToCheckedIn + " & !" + _fact_headTouched, ontology)));
 
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))", ontology)});
@@ -1828,15 +1828,15 @@ void _checkEventWithPunctualCondition()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
-                                                     _fact_userWantsToCheckedIn, ontology.types);
+                                                      _fact_userWantsToCheckedIn, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr("!" + _fact_userWantsToCheckedIn, ontology)));
 
   // Event: if (_fact_punctual_headTouched) then add(_fact_userWantsToCheckedIn)
   ogp::Domain domain(std::move(actions), ontology,
-                    ogp::Event(_condition_fromStr(_fact_punctual_headTouched, ontology),
-                              _worldStateModification_fromStr(_fact_userWantsToCheckedIn, ontology)));
+                     ogp::Event(_condition_fromStr(_fact_punctual_headTouched, ontology),
+                                _worldStateModification_fromStr(_fact_userWantsToCheckedIn, ontology)));
 
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
@@ -1852,17 +1852,17 @@ void _checkEventAtEndOfAPlan()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_punctual_headTouched + "\n" +
-                                                     _fact_userWantsToCheckedIn + "\n" +
-                                                     _fact_punctual_checkedIn, ontology.types);
+                                                      _fact_userWantsToCheckedIn + "\n" +
+                                                      _fact_punctual_checkedIn, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_punctual_checkedIn, ontology)));
 
   ogp::SetOfEvents setOfEvents;
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_punctual_headTouched, ontology),
-                            _worldStateModification_fromStr(_fact_userWantsToCheckedIn, ontology)));
+                             _worldStateModification_fromStr(_fact_userWantsToCheckedIn, ontology)));
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_punctual_checkedIn, ontology),
-                            _worldStateModification_fromStr("!" + _fact_userWantsToCheckedIn, ontology)));
+                             _worldStateModification_fromStr("!" + _fact_userWantsToCheckedIn, ontology)));
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   ogp::Problem problem;
@@ -1882,9 +1882,9 @@ void _checkEventInsideAPlan()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
@@ -1894,9 +1894,9 @@ void _checkEventInsideAPlan()
   {
     ogp::SetOfEvents setOfEvents;
     setOfEvents.add(ogp::Event(_condition_fromStr(_fact_a, ontology),
-                              _worldStateModification_fromStr(_fact_b, ontology)));
+                               _worldStateModification_fromStr(_fact_b, ontology)));
     setOfEvents.add(ogp::Event(_condition_fromStr(_fact_b + "&" + _fact_d, ontology),
-                              _worldStateModification_fromStr(_fact_c, ontology)));
+                               _worldStateModification_fromStr(_fact_c, ontology)));
     domain.addSetOfEvents(std::move(setOfEvents));
   }
 
@@ -1905,7 +1905,7 @@ void _checkEventInsideAPlan()
   EXPECT_EQ("", _solveStrConst(problem, domain));
 
   domain.addSetOfEvents(ogp::Event(_condition_fromStr(_fact_b, ontology),
-                                  _worldStateModification_fromStr(_fact_c, ontology)));
+                                   _worldStateModification_fromStr(_fact_c, ontology)));
 
   EXPECT_EQ(action1 + _sep + action2, _solveStrConst(problem, domain)); // check with a copy of the problem
   EXPECT_TRUE(!_hasFact(problem.worldState, _fact_a, ontology));
@@ -1930,29 +1930,29 @@ void _checkEventThatAddAGoal()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e + "\n" +
-                                                     _fact_f + "\n" +
-                                                     _fact_g, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e + "\n" +
+                                                      _fact_f + "\n" +
+                                                      _fact_g, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
   actions.emplace(action2, ogp::Action(_condition_fromStr(_fact_c, ontology),
-                                      _worldStateModification_fromStr(_fact_d, ontology)));
+                                       _worldStateModification_fromStr(_fact_d, ontology)));
   actions.emplace(action3, ogp::Action(_condition_fromStr(_fact_c + "&" + _fact_f, ontology),
-                                      _worldStateModification_fromStr(_fact_e, ontology)));
+                                       _worldStateModification_fromStr(_fact_e, ontology)));
   actions.emplace(action4, ogp::Action(_condition_fromStr(_fact_b, ontology),
-                                      _worldStateModification_fromStr(_fact_f, ontology)));
+                                       _worldStateModification_fromStr(_fact_f, ontology)));
   actions.emplace(action5, ogp::Action(_condition_fromStr(_fact_b, ontology),
-                                      _worldStateModification_fromStr(_fact_g, ontology)));
+                                       _worldStateModification_fromStr(_fact_g, ontology)));
   ogp::SetOfEvents setOfEvents;
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_a, ontology),
-                            _worldStateModification_fromStr(_fact_b, ontology),
-                            _emptyParameters, {{ogp::GoalStack::getDefaultPriority(), {_goal(_fact_e, ontology)}}}));
+                             _worldStateModification_fromStr(_fact_b, ontology),
+                             _emptyParameters, {{ogp::GoalStack::getDefaultPriority(), {_goal(_fact_e, ontology)}}}));
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_b, ontology),
-                            _worldStateModification_fromStr(_fact_c, ontology)));
+                             _worldStateModification_fromStr(_fact_c, ontology)));
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   ogp::Problem problem;
@@ -1973,9 +1973,9 @@ void _testGetNotSatisfiedGoals()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d, ontology.types);
 
   ogp::Problem problem;
   _addGoalsForAPriority(problem, {goal1}, ontology, {}, ogp::GoalStack::getDefaultPriority() + 1);
@@ -2006,10 +2006,10 @@ void _testGoalUnderPersist()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e, ontology.types);
 
   auto now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now());
   std::map<std::string, ogp::Action> actions;
@@ -2096,23 +2096,23 @@ void _checkLinkedEvents()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_userWantsToCheckedIn + "\n" +
-                                                     _fact_a + "\n" +
-                                                     _fact_punctual_p1 + "\n" +
-                                                     _fact_punctual_p2 + "\n" +
-                                                     _fact_punctual_p3 + "\n" +
-                                                     _fact_punctual_p4 + "\n" +
-                                                     _fact_punctual_p5 + "\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_a + "\n" +
+                                                      _fact_punctual_p1 + "\n" +
+                                                      _fact_punctual_p2 + "\n" +
+                                                      _fact_punctual_p3 + "\n" +
+                                                      _fact_punctual_p4 + "\n" +
+                                                      _fact_punctual_p5 + "\n" +
+                                                      _fact_e, ontology.types);
 
   ogp::SetOfEvents setOfEvents;
   ogp::Problem problem;
   _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
-                            _worldStateModification_fromStr(_fact_a, ontology)));
+                             _worldStateModification_fromStr(_fact_a, ontology)));
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_punctual_p5, ontology),
-                            _worldStateModification_fromStr(_fact_punctual_p2 + "&" + _fact_punctual_p3, ontology)));
+                             _worldStateModification_fromStr(_fact_punctual_p2 + "&" + _fact_punctual_p3, ontology)));
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_punctual_p4, ontology),
-                            _worldStateModification_fromStr(_fact_punctual_p5 + "&" + _fact_punctual_p1, ontology)));
+                             _worldStateModification_fromStr(_fact_punctual_p5 + "&" + _fact_punctual_p1, ontology)));
 
   std::map<ogp::SetOfEventsId, ogp::SetOfEvents> setOfEventsMap = {{"soe", setOfEvents}};
   EXPECT_FALSE(_hasFact(problem.worldState, _fact_a, ontology));
@@ -2126,10 +2126,10 @@ void _oneStepTowards()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_checkedIn + "\n" +
-                                                     _fact_greeted + "\n" +
-                                                     _fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_beHappy, ontology.types);
+                                                      _fact_greeted + "\n" +
+                                                      _fact_a + "\n" +
+                                                      _fact_b + "\n" +
+                                                      _fact_beHappy, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   ogp::ProblemModification greetPbModification;
@@ -2161,11 +2161,11 @@ void _infrenceLinksFromManyEventsSets()
 {
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_punctual_p2 + "\n" +
-                                                     _fact_punctual_p1, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_punctual_p2 + "\n" +
+                                                      _fact_punctual_p1, ontology.types);
 
   const std::string action1 = "action1";
   const std::string action2 = "action2";
@@ -2179,18 +2179,18 @@ void _infrenceLinksFromManyEventsSets()
   EXPECT_TRUE(ogp::GoalStack::getDefaultPriority() >= 1);
   auto lowPriority = ogp::GoalStack::getDefaultPriority() - 1;
   domain.addSetOfEvents(ogp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
-                                  {}, _emptyParameters,
-                                  {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology)}}}));
+                                   {}, _emptyParameters,
+                                   {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology)}}}));
   ogp::Problem problem;
   _setGoals(problem, {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology, 0)}}});
 
   {
     ogp::SetOfEvents setOfEvents2;
     setOfEvents2.add(ogp::Event(_condition_fromStr(_fact_punctual_p1, ontology),
-                               _worldStateModification_fromStr(_fact_b + "&" + _fact_punctual_p2, ontology)));
+                                _worldStateModification_fromStr(_fact_b + "&" + _fact_punctual_p2, ontology)));
     setOfEvents2.add(ogp::Event(_condition_fromStr(_fact_b, ontology),
-                               {}, _emptyParameters,
-                               {{ogp::GoalStack::getDefaultPriority(), {_goal("oneStepTowards(" + _fact_c + ")", ontology)}}}));
+                                {}, _emptyParameters,
+                                {{ogp::GoalStack::getDefaultPriority(), {_goal("oneStepTowards(" + _fact_c + ")", ontology)}}}));
     domain.addSetOfEvents(setOfEvents2);
   }
 
@@ -2211,7 +2211,7 @@ void _factValueModification()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("a b - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr("!" + _fact_b, ontology)));
@@ -2236,7 +2236,7 @@ void _removeGoaWhenAnActionFinishesByAddingNewGoals()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   ogp::ProblemModification wm(_worldStateModification_fromStr(_fact_a, ontology));
@@ -2270,9 +2270,9 @@ void _setWsModification()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "entity");
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me object - entity\n"
-                                                  "corridor kitchen - loc_type", ontology.types);
+                                                    "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?o - entity) - loc_type", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
@@ -2291,11 +2291,11 @@ void _forAllWsModification()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "entity");
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me object1 object2 - entity\n"
-                                                  "corridor kitchen - loc_type", ontology.types);
+                                                    "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
-                                                     "grab(?e - entity, ?o - entity)", ontology.types);
+                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
   const std::string action1 = "action1";
   std::map<std::string, ogp::Action> actions;
@@ -2317,11 +2317,11 @@ void _actionNavigationAndGrabObjectWithParameters()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "entity");
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me sweets - entity\n"
-                                                  "corridor kitchen - loc_type", ontology.types);
+                                                    "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
-                                                     "grab(?e - entity, ?o - entity)", ontology.types);
+                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
@@ -2331,7 +2331,7 @@ void _actionNavigationAndGrabObjectWithParameters()
 
   std::vector<ogp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   ogp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
-                        _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
+                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
@@ -2342,7 +2342,7 @@ void _actionNavigationAndGrabObjectWithParameters()
   EXPECT_EQ("kitchen", setOfFacts.getFactFluent(_fact("location(sweets)=*", ontology))->value);
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)",
-                         _solveStr(problem, actions, ontology));
+            _solveStr(problem, actions, ontology));
 }
 
 
@@ -2350,11 +2350,11 @@ void _actionNavigationAndGrabObjectWithParameters2()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "entity");
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me sweets - entity\n"
-                                                  "corridor kitchen - loc_type", ontology.types);
+                                                    "corridor kitchen - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
-                                                     "grab(?e - entity, ?o - entity)", ontology.types);
+                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
@@ -2364,7 +2364,7 @@ void _actionNavigationAndGrabObjectWithParameters2()
 
   std::vector<ogp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   ogp::Action grabAction(_condition_fromStr("equals(location(?object), location(me))", ontology, grabParameters),
-                        _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
+                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
@@ -2375,7 +2375,7 @@ void _actionNavigationAndGrabObjectWithParameters2()
   EXPECT_EQ("kitchen", setOfFacts.getFactFluent(_fact("location(sweets)=*", ontology))->value);
   _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)",
-                         _solveStr(problem, actions, ontology));
+            _solveStr(problem, actions, ontology));
 }
 
 
@@ -2386,11 +2386,11 @@ void _moveObject()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "entity");
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me sweets - entity\n"
-                                                  "corridor kitchen bedroom - loc_type", ontology.types);
+                                                    "corridor kitchen bedroom - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("location(?o - entity) - loc_type\n"
-                                                     "grab(?e - entity, ?o - entity)", ontology.types);
+                                                      "grab(?e - entity, ?o - entity)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
@@ -2400,13 +2400,13 @@ void _moveObject()
 
   std::vector<ogp::Parameter> nav2Parameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   ogp::Action navAction2(_condition_fromStr("grab(me, ?object)", ontology, nav2Parameters),
-                        _worldStateModification_fromStr("location(me)=?targetLocation & location(?object)=?targetLocation", ontology, nav2Parameters));
+                         _worldStateModification_fromStr("location(me)=?targetLocation & location(?object)=?targetLocation", ontology, nav2Parameters));
   navAction2.parameters = std::move(nav2Parameters);
   actions.emplace(actionNavigate2, navAction2);
 
   std::vector<ogp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   ogp::Action grabAction(_condition_fromStr("equals(location(me), location(?object))", ontology, grabParameters),
-                        _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
+                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
@@ -2424,14 +2424,14 @@ void _moveAndUngrabObject()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "robot\n"
-                                           "entity");
+                                             "robot\n"
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me - robot\n"
-                                                  "sweets - entity\n"
-                                                  "kitchen bedroom - loc_type", ontology.types);
+                                                    "sweets - entity\n"
+                                                    "kitchen bedroom - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
-                                                     "locationOfObj(?o - entity) - loc_type\n"
-                                                     "grab(?e - robot, ?o - entity)", ontology.types);
+                                                      "locationOfObj(?o - entity) - loc_type\n"
+                                                      "grab(?e - robot, ?o - entity)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
@@ -2441,7 +2441,7 @@ void _moveAndUngrabObject()
 
   std::vector<ogp::Parameter> grabParameters(1, _parameter("?object - entity", ontology));
   ogp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
-                        _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
+                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
@@ -2454,7 +2454,7 @@ void _moveAndUngrabObject()
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   ogp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
-                  _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
+                   _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -2480,26 +2480,26 @@ void _failToMoveAnUnknownObject()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "robot\n"
-                                           "entity");
+                                             "robot\n"
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me - robot\n"
-                                                  "sweets - entity\n"
-                                                  "kitchen bedroom - loc_type", ontology.types);
+                                                    "sweets - entity\n"
+                                                    "kitchen bedroom - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
-                                                     "locationOfObj(?o - entity) - loc_type\n"
-                                                     "grab(?e - robot, ?o - entity)\n"
-                                                     "charging(?r - robot)\n"
-                                                     "isLost", ontology.types);
+                                                      "locationOfObj(?o - entity) - loc_type\n"
+                                                      "grab(?e - robot, ?o - entity)\n"
+                                                      "charging(?r - robot)\n"
+                                                      "isLost", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> navParameters(1, _parameter("?targetLocation - loc_type", ontology));
   ogp::Action navAction(_condition_fromStr("!isLost & !charging(me)", ontology, navParameters),
-                       _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", ontology, navParameters));
+                        _worldStateModification_fromStr("locationOfRobot(me)=?targetLocation", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
   ogp::Action randomWalkAction(_condition_fromStr("!charging(me)", ontology),
-                              _worldStateModification_fromStr("!isLost", ontology));
+                               _worldStateModification_fromStr("!isLost", ontology));
   actions.emplace(actionRanomWalk, randomWalkAction);
 
   ogp::Action leavePodAction({}, _worldStateModification_fromStr("!charging(me)", ontology));
@@ -2507,13 +2507,13 @@ void _failToMoveAnUnknownObject()
 
   std::vector<ogp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
   ogp::Action whereIsObjectAction(_condition_fromStr("!locationOfObj(?object)=*", ontology, whereIsObjectParameters),
-                                 _worldStateModification_fromStr("locationOfObj(?object)=?aLocation", ontology, whereIsObjectParameters));
+                                  _worldStateModification_fromStr("locationOfObj(?object)=?aLocation", ontology, whereIsObjectParameters));
   whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
   std::vector<ogp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
   ogp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObj(?object))", ontology, grabParameters),
-                        _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
+                         _worldStateModification_fromStr("grab(me, ?object)", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
@@ -2525,7 +2525,7 @@ void _failToMoveAnUnknownObject()
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> eventParameters{_parameter("?targetLocation - loc_type", ontology), _parameter("?object - entity", ontology)};
   ogp::Event event(_condition_fromStr("locationOfRobot(me)=?targetLocation & grab(me, ?object)", ontology, eventParameters),
-                  _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
+                   _worldStateModification_fromStr("locationOfObj(?object)=?targetLocation", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -2554,27 +2554,27 @@ void _completeMovingObjectScenario()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "robot\n"
-                                           "entity");
+                                             "robot\n"
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me - robot\n"
-                                                  "sweets bottle - entity\n"
-                                                  "kitchen bedroom entrance - loc_type", ontology.types);
+                                                    "sweets bottle - entity\n"
+                                                    "kitchen bedroom entrance - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
-                                                     "locationOfObject(?o - entity) - loc_type\n"
-                                                     "grab(?e - robot) - entity\n"
-                                                     "pathIsBlocked\n"
-                                                     "lost(?r - robot)", ontology.types);
+                                                      "locationOfObject(?o - entity) - loc_type\n"
+                                                      "grab(?e - robot) - entity\n"
+                                                      "pathIsBlocked\n"
+                                                      "lost(?r - robot)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> navParameters{_parameter("?targetPlace - loc_type", ontology)};
   ogp::Action navAction(_condition_fromStr("!lost(me) & !pathIsBlocked", ontology, navParameters),
-                       _worldStateModification_fromStr("locationOfRobot(me)=?targetPlace", ontology, navParameters));
+                        _worldStateModification_fromStr("locationOfRobot(me)=?targetPlace", ontology, navParameters));
   navAction.parameters = std::move(navParameters);
   actions.emplace(_action_navigate, navAction);
 
   std::vector<ogp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
   ogp::Action grabAction(_condition_fromStr("equals(locationOfRobot(me), locationOfObject(?object)) & not(exists(?o - entity, grab(me)=?o))", ontology, grabParameters),
-                        _worldStateModification_fromStr("grab(me)=?object", ontology, grabParameters));
+                         _worldStateModification_fromStr("grab(me)=?object", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
@@ -2585,14 +2585,14 @@ void _completeMovingObjectScenario()
 
   std::vector<ogp::Parameter> whereIsObjectParameters{_parameter("?object - entity", ontology), _parameter("?aLocation - loc_type", ontology)};
   ogp::Action whereIsObjectAction(_condition_fromStr("!locationOfObject(?object)=*", ontology, whereIsObjectParameters),
-                                 _worldStateModification_fromStr("locationOfObject(?object)=?aLocation", ontology, whereIsObjectParameters));
+                                  _worldStateModification_fromStr("locationOfObject(?object)=?aLocation", ontology, whereIsObjectParameters));
   whereIsObjectAction.parameters = std::move(whereIsObjectParameters);
   actions.emplace(actionWhereIsObject, whereIsObjectAction);
 
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> eventParameters{_parameter("?object - entity", ontology), _parameter("?location - loc_type", ontology)};
   ogp::Event event(_condition_fromStr("locationOfRobot(me)=?location & grab(me)=?object", ontology, eventParameters),
-                  _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
+                   _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -2633,14 +2633,14 @@ void _moveAnObject()
 
   std::vector<ogp::Parameter> grabParameters{_parameter("?object - entity", ontology)};
   ogp::Action grabAction(_condition_fromStr("equals(locationOfRobot, locationOfObject(?object))", ontology, grabParameters),
-                        _worldStateModification_fromStr("grab=?object", ontology, grabParameters));
+                         _worldStateModification_fromStr("grab=?object", ontology, grabParameters));
   grabAction.parameters = std::move(grabParameters);
   actions.emplace(_action_grab, grabAction);
 
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> eventParameters{_parameter("?object - entity", ontology), _parameter("?location - loc_type", ontology)};
   ogp::Event event(_condition_fromStr("locationOfRobot=?location & grab=?object", ontology, eventParameters),
-                  _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
+                   _worldStateModification_fromStr("locationOfObject(?object)=?location", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -2686,37 +2686,37 @@ void _eventWithANegatedFactWithParameter()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "robot\n"
-                                           "entity");
+                                             "robot\n"
+                                             "entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("me - robot\n"
-                                                  "sweets bottle glass - entity", ontology.types);
+                                                    "sweets bottle glass - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("grab(?e - robot, ?e - entity)\n"
-                                                     "hasTwoHandles(?e - entity)\n"
-                                                     "grabLeftHand(?r - robot) - entity\n"
-                                                     "grabRightHand(?r - robot) - entity", ontology.types);
+                                                      "hasTwoHandles(?e - entity)\n"
+                                                      "grabLeftHand(?r - robot) - entity\n"
+                                                      "grabRightHand(?r - robot) - entity", ontology.types);
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> ungrabLeftParameters{_parameter("?object - entity", ontology)};
   ogp::Action ungrabLeftAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabLeftParameters),
-                              _worldStateModification_fromStr("!grabLeftHand(me)=?object", ontology, ungrabLeftParameters));
+                               _worldStateModification_fromStr("!grabLeftHand(me)=?object", ontology, ungrabLeftParameters));
   ungrabLeftAction.parameters = std::move(ungrabLeftParameters);
   actions.emplace(actionUngrabLeftHand, ungrabLeftAction);
 
   std::vector<ogp::Parameter> ungrabRightParameters{_parameter("?object - entity", ontology)};
   ogp::Action ungrabRightAction(_condition_fromStr("!hasTwoHandles(?object)", ontology, ungrabRightParameters),
-                               _worldStateModification_fromStr("!grabRightHand(me)=?object", ontology, ungrabRightParameters));
+                                _worldStateModification_fromStr("!grabRightHand(me)=?object", ontology, ungrabRightParameters));
   ungrabRightAction.parameters = std::move(ungrabRightParameters);
   actions.emplace(actionUngrabRightHand, ungrabRightAction);
 
   std::vector<ogp::Parameter> ungrabBothParameters{_parameter("?object - entity", ontology)};
   ogp::Action ungrabBothAction(_condition_fromStr("hasTwoHandles(?object)", ontology, ungrabBothParameters),
-                              _worldStateModification_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, ungrabBothParameters));
+                               _worldStateModification_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, ungrabBothParameters));
   ungrabBothAction.parameters = std::move(ungrabBothParameters);
   actions.emplace(actionUngrabBothHands, ungrabBothAction);
 
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
   ogp::Event event(_condition_fromStr("!grabLeftHand(me)=?object & !grabRightHand(me)=?object", ontology, eventParameters),
-                  _worldStateModification_fromStr("!grab(me, ?object)", ontology, eventParameters));
+                   _worldStateModification_fromStr("!grab(me, ?object)", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
@@ -2758,21 +2758,21 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({},
-                                      _worldStateModification_fromStr("!" + _fact_a, ontology),
-                                      _condition_fromStr(_fact_c + " & " + _fact_d, ontology)));
+                                       _worldStateModification_fromStr("!" + _fact_a, ontology),
+                                       _condition_fromStr(_fact_c + " & " + _fact_d, ontology)));
 
   actions.emplace(action2, ogp::Action(_condition_fromStr("!" + _fact_a + " & " + _fact_e, ontology),
-                                      _worldStateModification_fromStr(_fact_b, ontology)));
+                                       _worldStateModification_fromStr(_fact_b, ontology)));
 
   actions.emplace(action3, ogp::Action({},
-                                      _worldStateModification_fromStr(_fact_e, ontology)));
+                                       _worldStateModification_fromStr(_fact_e, ontology)));
 
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
@@ -2793,13 +2793,13 @@ void _useTwoTimesAnEvent()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("obj1 obj2 - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "(?e - entity)\n" +
-                                                     _fact_c + "(?e - entity)", ontology.types);
+                                                      _fact_b + "(?e - entity)\n" +
+                                                      _fact_c + "(?e - entity)", ontology.types);
 
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> eventParameters{_parameter("?object - entity", ontology)};
   ogp::Event event(_condition_fromStr(_fact_a + " & " + _fact_b + "(?object)", ontology, eventParameters),
-                  _worldStateModification_fromStr(_fact_c + "(?object)", ontology, eventParameters));
+                   _worldStateModification_fromStr(_fact_c + "(?object)", ontology, eventParameters));
   event.parameters = std::move(eventParameters);
   setOfEvents.add(event);
 
@@ -2825,11 +2825,11 @@ void _linkWithAnyValueInCondition()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("toto - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action(_condition_fromStr("!" + _fact_a + "=*", ontology),
-                                      _worldStateModification_fromStr(_fact_b, ontology)));
+                                       _worldStateModification_fromStr(_fact_b, ontology)));
 
   std::vector<ogp::Parameter> act2Parameters{_parameter("?aVal - entity", ontology)};
   ogp::Action act2({}, _worldStateModification_fromStr("!" + _fact_a + "=?aVal", ontology, act2Parameters));
@@ -2854,7 +2854,7 @@ void _removeAFactWithAnyValue()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("toto - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + " - entity", ontology.types);
+                                                      _fact_b + " - entity", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a + " & !" + _fact_b + "=*", ontology)));
@@ -2878,18 +2878,18 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("e1 e2 - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d, ontology.types);
 
   std::map<ogp::ActionId, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({},
-                                      _worldStateModification_fromStr(_fact_a + "(e1)", ontology),
-                                      _condition_fromStr(_fact_c, ontology)));
+                                       _worldStateModification_fromStr(_fact_a + "(e1)", ontology),
+                                       _condition_fromStr(_fact_c, ontology)));
   actions.emplace(action2, ogp::Action(_condition_fromStr(_fact_a + "(e2)", ontology),
-                                      _worldStateModification_fromStr(_fact_b, ontology)));
+                                       _worldStateModification_fromStr(_fact_b, ontology)));
   actions.emplace(action3, ogp::Action(_condition_fromStr(_fact_b, ontology),
-                                      _worldStateModification_fromStr(_fact_d, ontology)));
+                                       _worldStateModification_fromStr(_fact_d, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -2908,7 +2908,7 @@ void _checkPreferInContext()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology)));
@@ -2929,7 +2929,7 @@ void _checkPreferHighImportanceOfNotRepeatingIt()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   auto action1Obj = ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology), _condition_fromStr(_fact_b, ontology));
@@ -2957,21 +2957,21 @@ void _actionWithFactWithANegatedFact()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("a b - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({},
-                                      _worldStateModification_fromStr(_fact_a + "=a", ontology)));
+                                       _worldStateModification_fromStr(_fact_a + "=a", ontology)));
 
   actions.emplace(action2, ogp::Action(_condition_fromStr(_fact_a + "!=b & " + _fact_d, ontology),
-                                      _worldStateModification_fromStr(_fact_c, ontology)));
+                                       _worldStateModification_fromStr(_fact_c, ontology)));
 
   actions.emplace(action3, ogp::Action({},
-                                      _worldStateModification_fromStr(_fact_d, ontology),
-                                      _condition_fromStr(_fact_e, ontology)));
+                                       _worldStateModification_fromStr(_fact_d, ontology),
+                                       _condition_fromStr(_fact_e, ontology)));
 
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
@@ -2992,11 +2992,11 @@ void _negatedFactValueInWorldState()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("a b c - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action(_condition_fromStr(_fact_a + "!=b", ontology),
-                                      _worldStateModification_fromStr(_fact_b, ontology)));
+                                       _worldStateModification_fromStr(_fact_b, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   {
@@ -3039,11 +3039,11 @@ void _problemThatUseADomainThatChangedSinceLastUsage()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action(_condition_fromStr(_fact_a, ontology),
-                                      _worldStateModification_fromStr(_fact_b, ontology)));
+                                       _worldStateModification_fromStr(_fact_b, ontology)));
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
@@ -3051,7 +3051,7 @@ void _problemThatUseADomainThatChangedSinceLastUsage()
   EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain, _now)); // set problem cache about domain
 
   domain.addAction(action2, ogp::Action({},
-                                       _worldStateModification_fromStr(_fact_a, ontology)));
+                                        _worldStateModification_fromStr(_fact_a, ontology)));
 
   _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
   EXPECT_EQ(action2, _lookForAnActionToDoStr(problem, domain, _now)); // as domain as changed since last time the problem cache should be regenerated
@@ -3065,12 +3065,12 @@ void _checkFilterFactInCondition()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "location");
+                                             "location");
   ontology.constants = ogp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
-                                                  "loc1 loc2 - location", ontology.types);
+                                                    "loc1 loc2 - location", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?e - entity)\n" +
-                                                     _fact_b + "(?e - entity, ?l - location)\n" +
-                                                     _fact_c, ontology.types);
+                                                      _fact_b + "(?e - entity, ?l - location)\n" +
+                                                      _fact_c, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
 
@@ -3081,7 +3081,7 @@ void _checkFilterFactInCondition()
 
   std::vector<ogp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
   ogp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "(?obj)", ontology, act2Parameters),
-                        _worldStateModification_fromStr(_fact_c, ontology, act2Parameters));
+                         _worldStateModification_fromStr(_fact_c, ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
   ogp::Domain domain(std::move(actions), ontology);
@@ -3105,13 +3105,13 @@ void _checkFilterFactInConditionAndThenPropagate()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "location");
+                                             "location");
   ontology.constants = ogp::SetOfEntities::fromPddl("obj1 obj2 - entity\n"
-                                                  "loc1 loc2 - location", ontology.types);
+                                                    "loc1 loc2 - location", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "(?e - entity, ?l - location)\n" +
-                                                     _fact_c + "(?l - location)\n" +
-                                                     _fact_d + "(?l - location)", ontology.types);
+                                                      _fact_b + "(?e - entity, ?l - location)\n" +
+                                                      _fact_c + "(?l - location)\n" +
+                                                      _fact_d + "(?l - location)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
@@ -3121,13 +3121,13 @@ void _checkFilterFactInConditionAndThenPropagate()
 
   std::vector<ogp::Parameter> act2Parameters{_parameter("?obj - entity", ontology), _parameter("?loc - location", ontology)};
   ogp::Action actionObj2(_condition_fromStr(_fact_b + "(?obj, ?loc) & " + _fact_a + "=?obj", ontology, act2Parameters),
-                        _worldStateModification_fromStr(_fact_c + "(?loc)", ontology, act2Parameters));
+                         _worldStateModification_fromStr(_fact_c + "(?loc)", ontology, act2Parameters));
   actionObj2.parameters = std::move(act2Parameters);
   actions.emplace(action2, actionObj2);
 
   std::vector<ogp::Parameter> act3Parameters{_parameter("?loc - location", ontology)};
   ogp::Action actionObj3(_condition_fromStr(_fact_c + "(?loc)", ontology, act3Parameters),
-                        _worldStateModification_fromStr(_fact_d + "(?loc)", ontology, act3Parameters));
+                         _worldStateModification_fromStr(_fact_d + "(?loc)", ontology, act3Parameters));
   actionObj3.parameters = std::move(act3Parameters);
   actions.emplace(action3, actionObj3);
 
@@ -3151,7 +3151,7 @@ void _checkOutputValueOfLookForAnActionToDo()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b, ontology.types);
+                                                      _fact_b, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   actions.emplace(action1, ogp::Action({}, _worldStateModification_fromStr(_fact_a, ontology)));
@@ -3202,11 +3202,11 @@ void _hardProblemThatNeedsToBeSmart()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e + "\n" +
-                                                     _fact_f, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e + "\n" +
+                                                      _fact_f, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
@@ -3215,23 +3215,23 @@ void _hardProblemThatNeedsToBeSmart()
   actions.emplace(action1, actionObj1);
 
   ogp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
   ogp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
   ogp::Action actionObj4(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
-                        _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
+                         _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
   actions.emplace(action4, actionObj4);
 
   ogp::Action actionObj5(_condition_fromStr(_fact_a + "=val4", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action5, actionObj5);
 
   ogp::Action actionObj6(_condition_fromStr(_fact_b + " & !" + _fact_d, ontology),
-                        _worldStateModification_fromStr(_fact_e, ontology));
+                         _worldStateModification_fromStr(_fact_e, ontology));
   actions.emplace(action6, actionObj6);
 
   ogp::Domain domain(std::move(actions), ontology);
@@ -3264,11 +3264,11 @@ void _hardProblemThatNeedsToBeSmartWithAnEvent()
   ontology.types = ogp::SetOfTypes::fromPddl("entity");
   ontology.constants = ogp::SetOfEntities::fromPddl("val1 val2 val3 val4 - entity", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e + "\n" +
-                                                     _fact_f, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e + "\n" +
+                                                      _fact_f, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
@@ -3277,25 +3277,25 @@ void _hardProblemThatNeedsToBeSmartWithAnEvent()
   actions.emplace(action1, actionObj1);
 
   ogp::Action actionObj2(_condition_fromStr(_fact_a + "=val1", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
   ogp::Action actionObj3(_condition_fromStr(_fact_a + "=val2", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
   ogp::Action actionObj4(_condition_fromStr(_fact_a + "=val4", ontology),
-                        _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_b + " & " + _fact_c, ontology));
   actions.emplace(action4, actionObj4);
 
   ogp::Action actionObj5(_condition_fromStr(_fact_b + " & !" + _fact_d, ontology),
-                        _worldStateModification_fromStr(_fact_e, ontology));
+                         _worldStateModification_fromStr(_fact_e, ontology));
   actions.emplace(action5, actionObj5);
 
   ogp::SetOfEvents setOfEvents;
   {
     ogp::Event event1(_condition_fromStr(_fact_a + "=val3 & !" + _fact_c, ontology),
-                     _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
+                      _worldStateModification_fromStr("!" + _fact_d + " & " + _fact_f, ontology));
     setOfEvents.add(event1);
   }
 
@@ -3324,24 +3324,24 @@ void _checkOverallEffectDuringParallelisation()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c + "\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c + "\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   ogp::Action actionObj1(_condition_fromStr("!" + _fact_d, ontology),
-                        _worldStateModification_fromStr(_fact_a + " & !" + _fact_d, ontology));
+                         _worldStateModification_fromStr(_fact_a + " & !" + _fact_d, ontology));
   actionObj1.effect.worldStateModificationAtStart = _worldStateModification_fromStr(_fact_d + " & " + _fact_e, ontology);
   actions.emplace(action1, actionObj1);
 
   ogp::Action actionObj2(_condition_fromStr("!" + _fact_d, ontology),
-                        _worldStateModification_fromStr(_fact_b + " & !" + _fact_d, ontology));
+                         _worldStateModification_fromStr(_fact_b + " & !" + _fact_d, ontology));
   actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr(_fact_d, ontology);
   actions.emplace(action2, actionObj2);
 
   ogp::Action actionObj3(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
-                        _worldStateModification_fromStr(_fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
   ogp::Domain domain(std::move(actions), ontology);
@@ -3350,294 +3350,6 @@ void _checkOverallEffectDuringParallelisation()
 
   EXPECT_EQ(action1, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
   EXPECT_TRUE(_hasFact(problem.worldState, _fact_e, ontology));
-}
-
-void _checkSimpleExists()
-{
-  const std::string action1 = "action1";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("location");
-  ontology.constants = ogp::SetOfEntities::fromPddl("kitchen - location", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?l - location)\n" +
-                                                     _fact_b, ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  ogp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l))", ontology),
-                        _worldStateModification_fromStr(_fact_b, ontology));
-  actions.emplace(action1, actionObj1);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
-
-  EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-}
-
-
-void _checkExistsWithActionParameterInvolved()
-{
-  const std::string action1 = "action1";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "location");
-  ontology.constants = ogp::SetOfEntities::fromPddl("pen - entity\n"
-                                                  "kitchen - location", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?l - location, ?e - entity)\n" +
-                                                     _fact_b, ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  std::vector<ogp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
-  ogp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(?l, ?obj))", ontology, actionParameters),
-                        _worldStateModification_fromStr(_fact_b, ontology));
-  actionObj1.parameters = std::move(actionParameters);
-  actions.emplace(action1, actionObj1);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
-
-  EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(kitchen, pen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ(action1 + "(?obj -> pen)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-}
-
-
-void _checkExistsWithManyFactsInvolved()
-{
-  const std::string action1 = "action1";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "location\n"
-                                           "robot");
-  ontology.constants = ogp::SetOfEntities::fromPddl("self - robot\n"
-                                                  "bottle mouse pen - entity\n"
-                                                  "bedroom kitchen livingroom - location", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
-                                                     _fact_b + "(?e - entity, ?l - location)\n" +
-                                                     _fact_c, ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  std::vector<ogp::Parameter> actionParameters{_parameter("?obj - entity", ontology)};
-  ogp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, actionParameters),
-                        _worldStateModification_fromStr(_fact_c, ontology, actionParameters));
-  actionObj1.parameters = std::move(actionParameters);
-  actions.emplace(action1, actionObj1);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
-
-  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ(action1 + "(?obj -> bottle)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-}
-
-
-void _doAnActionToSatisfyAnExists()
-{
-  const std::string action1 = "action1";
-  const std::string action2 = "action2";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "location\n"
-                                           "robot");
-  ontology.constants = ogp::SetOfEntities::fromPddl("self - robot\n"
-                                                  "bottle mouse pen - entity\n"
-                                                  "bedroom kitchen livingroom - location", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
-                                                     _fact_b + "(?e - entity, ?l - location)\n" +
-                                                     _fact_c + "(?e - entity)", ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  std::vector<ogp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  ogp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
-                        _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
-  actionObj1.parameters = std::move(act1Parameters);
-  actions.emplace(action1, actionObj1);
-
-  std::vector<ogp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  ogp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
-  actionObj2.parameters = std::move(act2Parameters);
-  actions.emplace(action2, actionObj2);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c + "(mouse)", ontology)});
-
-  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ(action2 + "(?loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
-  EXPECT_EQ(action1 + "(?obj -> mouse)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-}
-
-
-void _checkForAllEffectAtStart()
-{
-  const std::string action1 = "action1";
-  const std::string action2 = "action2";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "location\n"
-                                           "robot");
-  ontology.constants = ogp::SetOfEntities::fromPddl("self - robot\n"
-                                                  "bottle mouse pen - entity\n"
-                                                  "bedroom entrance kitchen livingroom - location", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
-                                                     _fact_b + "(?e - entity, ?l - location)\n" +
-                                                     _fact_c + "(?e - entity)", ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  std::vector<ogp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  ogp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self, ?l) & " + _fact_b + "(?obj, ?l))", ontology, act1Parameters),
-                        _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
-  actionObj1.parameters = std::move(act1Parameters);
-  actions.emplace(action1, actionObj1);
-
-  std::vector<ogp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  ogp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self, ?loc)", ontology, act2Parameters));
-  actionObj2.effect.worldStateModificationAtStart = _worldStateModification_fromStr("forall(?l - location, when(" + _fact_a + "(self, ?l), not(" + _fact_a + "(self, ?l))))", ontology, act2Parameters);
-  actionObj2.parameters = std::move(act2Parameters);
-  actions.emplace(action2, actionObj2);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c + "(mouse)", ontology)});
-
-  _addFact(problem.worldState, _fact_a + "(self, entrance)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _addFact(problem.worldState, _fact_b + "(bottle, kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _addFact(problem.worldState, _fact_b + "(mouse, bedroom)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _addFact(problem.worldState, _fact_b + "(pen, livingroom)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_TRUE(_hasFact(problem.worldState, _fact_a + "(self, entrance)", ontology));
-  EXPECT_EQ(action2 + "(?loc -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
-  EXPECT_FALSE(_hasFact(problem.worldState, _fact_a + "(self, entrance)", ontology)); // removed by the effect at start of action2
-  EXPECT_EQ(action1 + "(?obj -> mouse)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-}
-
-
-void _existsWithValue()
-{
-  const std::string action1 = "action1";
-  const std::string action2 = "action2";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "location\n"
-                                           "robot");
-  ontology.constants = ogp::SetOfEntities::fromPddl("self - robot\n"
-                                                  "pen - entity\n"
-                                                  "livingroom - location", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?r - robot) - location\n" +
-                                                     _fact_b + "(?e - entity) - location\n" +
-                                                     _fact_c + "(?e - entity)", ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  std::vector<ogp::Parameter> act1Parameters{_parameter("?obj - entity", ontology)};
-  ogp::Action actionObj1(_condition_fromStr("exists(?l - location, " + _fact_a + "(self)=?l & " + _fact_b + "(?obj)=?l)", ontology, act1Parameters),
-                        _worldStateModification_fromStr(_fact_c + "(?obj)", ontology, act1Parameters));
-  actionObj1.parameters = std::move(act1Parameters);
-  actions.emplace(action1, actionObj1);
-
-  std::vector<ogp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  ogp::Action actionObj2({}, _worldStateModification_fromStr(_fact_a + "(self)=?loc", ontology, act2Parameters));
-  actionObj2.parameters = std::move(act2Parameters);
-  actions.emplace(action2, actionObj2);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c + "(pen)", ontology)});
-
-  _addFact(problem.worldState, _fact_b + "(pen)=livingroom", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ(action2 + "(?loc -> livingroom)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
-  EXPECT_EQ(action1 + "(?obj -> pen)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-}
-
-
-void _notExists()
-{
-  const std::string action1 = "action1";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("location\n"
-                                           "robot");
-  ontology.constants = ogp::SetOfEntities::fromPddl("self - robot\n"
-                                                  "kitchen - location", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
-                                                     _fact_b, ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  ogp::Action actionObj1(_condition_fromStr("not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
-                        _worldStateModification_fromStr(_fact_b, ontology));
-  actions.emplace(action1, actionObj1);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
-
-  EXPECT_EQ(action1, _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ("", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-}
-
-
-void _actionToSatisfyANotExists()
-{
-  const std::string action1 = "action1";
-  const std::string action2 = "action2";
-  const std::string action3 = "action3";
-
-  ogp::Ontology ontology;
-  ontology.types = ogp::SetOfTypes::fromPddl("location\n"
-                                           "robot\n"
-                                           "resource");
-  ontology.constants = ogp::SetOfEntities::fromPddl("self - robot\n"
-                                                  "kitchen - location\n"
-                                                  "spec_rec - resource", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?r - robot, ?l - location)\n" +
-                                                     _fact_b + "\n" +
-                                                     "busy(?r - resource)", ontology.types);
-
-  std::map<std::string, ogp::Action> actions;
-  ogp::Action actionObj1(_condition_fromStr("not(busy(spec_rec)) & not(exists(?l - location, " + _fact_a + "(self, ?l)))", ontology),
-                        _worldStateModification_fromStr("not(busy(spec_rec)) & " + _fact_b, ontology));
-  actions.emplace(action1, actionObj1);
-
-  std::vector<ogp::Parameter> act2Parameters{_parameter("?loc - location", ontology)};
-  ogp::Action actionObj2({}, _worldStateModification_fromStr("!" + _fact_a + "(self, ?loc)", ontology, act2Parameters));
-  actionObj2.parameters = std::move(act2Parameters);
-  actions.emplace(action2, actionObj2);
-
-  std::vector<ogp::Parameter> act3Parameters{_parameter("?r - resource", ontology)};
-  ogp::Action actionObj3({}, _worldStateModification_fromStr("not(busy(?r))", ontology, act3Parameters));
-  actionObj3.parameters = std::move(act3Parameters);
-  actions.emplace(action3, actionObj3);
-
-  ogp::Domain domain(std::move(actions), ontology);
-  auto& setOfEventsMap = domain.getSetOfEvents();
-  ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
-  _addFact(problem.worldState, "busy(spec_rec)", problem.goalStack, ontology, setOfEventsMap, _now);
-
-  EXPECT_EQ(action3 + "(?r -> spec_rec)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
-  _addFact(problem.worldState, _fact_a + "(self, kitchen)", problem.goalStack, ontology, setOfEventsMap, _now);
-  EXPECT_EQ(action2 + "(?loc -> kitchen)", _lookForAnActionToDo(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -3649,20 +3361,20 @@ void _orInCondition()
 
   ogp::Ontology ontology;
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "\n" +
-                                                     _fact_b + "\n" +
-                                                     _fact_c, ontology.types);
+                                                      _fact_b + "\n" +
+                                                      _fact_c, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   ogp::Action actionObj1(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
-                        _worldStateModification_fromStr(_fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action1, actionObj1);
 
   ogp::Action actionObj2(_condition_fromStr(_fact_a + " | " + _fact_b, ontology),
-                        _worldStateModification_fromStr(_fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action2, actionObj2);
 
   ogp::Action actionObj3(_condition_fromStr(_fact_a + " & " + _fact_b, ontology),
-                        _worldStateModification_fromStr(_fact_c, ontology));
+                         _worldStateModification_fromStr(_fact_c, ontology));
   actions.emplace(action3, actionObj3);
 
   ogp::Domain domain(std::move(actions), ontology);
@@ -3682,22 +3394,22 @@ void _axioms()
   ontology.types = ogp::SetOfTypes::fromPddl("object");
   ontology.constants = ogp::SetOfEntities::fromPddl("book titi - object", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?o - object)\n" +
-                                                     _fact_b + "(?o - object)\n" +
-                                                     _fact_c + "(?o - object)\n" +
-                                                     _fact_d + "(?o - object)\n" +
-                                                     _fact_e, ontology.types);
+                                                      _fact_b + "(?o - object)\n" +
+                                                      _fact_c + "(?o - object)\n" +
+                                                      _fact_d + "(?o - object)\n" +
+                                                      _fact_e, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> derPred1Parameters{_parameter("?o - object", ontology)};
   ogp::Axiom axiom(_condition_fromStr(_fact_a + "(?o)" + " & " + _fact_b + "(?o)", ontology, derPred1Parameters),
-                  _fact(_fact_c + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
+                   _fact(_fact_c + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : axiom.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
   std::vector<ogp::Parameter> derPred2Parameters{_parameter("?o - object", ontology)};
   ogp::Axiom derivedPredicate2(_condition_fromStr(_fact_a + "(?o)" + " | " + _fact_b + "(?o)", ontology, derPred2Parameters),
-                              _fact(_fact_d + "(?o)", ontology, derPred2Parameters), derPred2Parameters);
+                               _fact(_fact_d + "(?o)", ontology, derPred2Parameters), derPred2Parameters);
   for (auto& currEvent : derivedPredicate2.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
@@ -3782,11 +3494,11 @@ void _assignAFact()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
-                                                  "p1 p2 p3 - param", ontology.types);
+                                                    "p1 p2 p3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "(?p - param) - entity", ontology.types);
+                                                      _fact_b + "(?p - param) - entity", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -3813,12 +3525,12 @@ void _assignAFactToAction()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal - entity\n"
-                                                  "p1 p2 p3 - param", ontology.types);
+                                                    "p1 p2 p3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "(?p - param) - entity\n" +
-                                                     _fact_c, ontology.types);
+                                                      _fact_b + "(?p - param) - entity\n" +
+                                                      _fact_c, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -3826,7 +3538,7 @@ void _assignAFactToAction()
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
   actions.emplace(action2, ogp::Action(_condition_fromStr(_fact_a + "=valGoal", ontology),
-                                      _worldStateModification_fromStr(_fact_c, ontology)));
+                                       _worldStateModification_fromStr(_fact_c, ontology)));
 
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
@@ -3847,13 +3559,13 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "(?p - param) - entity\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d, ontology.types);
+                                                      _fact_b + "(?p - param) - entity\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -3862,7 +3574,7 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
   actions.emplace(action1, action1Obj);
   std::vector<ogp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
   ogp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
-                        _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
+                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
@@ -3891,13 +3603,13 @@ void _assignAFactThenCheckExistWithAnotherFact()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "(?p - param) - entity\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d, ontology.types);
+                                                      _fact_b + "(?p - param) - entity\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d, ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -3905,7 +3617,7 @@ void _assignAFactThenCheckExistWithAnotherFact()
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
   ogp::Action action2Obj(_condition_fromStr("exists(?pc - param, =(" + _fact_a + ", " + _fact_c + "(?pc)))", ontology),
-                        _worldStateModification_fromStr(_fact_d, ontology));
+                         _worldStateModification_fromStr(_fact_d, ontology));
   actions.emplace(action2, action2Obj);
 
   ogp::Domain domain(std::move(actions), ontology);
@@ -3931,25 +3643,25 @@ void _existWithEqualityInEvent()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
-                                                     _fact_b + "(?p - param)\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d + "(?p - param)", ontology.types);
+                                                      _fact_b + "(?p - param)\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d + "(?p - param)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
   ogp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
-                        _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
+                         _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
   ogp::Axiom derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_c + "(?pc), " + _fact_a + "(?o)))", ontology, derPred1Parameters),
-                              _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
+                               _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : derivedPredicate1.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
@@ -3984,25 +3696,25 @@ void _existWithEqualityInEvent_withEqualityInverted()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
-                                                     _fact_b + "(?p - param)\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d + "(?p - param)", ontology.types);
+                                                      _fact_b + "(?p - param)\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d + "(?p - param)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?o - param", ontology)};
   ogp::Action action1Obj(_condition_fromStr(_fact_b + "(?o)", ontology, action1Parameters),
-                        _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
+                         _worldStateModification_fromStr(_fact_d + "(?o)", ontology, action1Parameters));
   action1Obj.parameters = std::move(action1Parameters);
   actions.emplace(action1, action1Obj);
 
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> derPred1Parameters{_parameter("?o - param", ontology)};
   ogp::Axiom derivedPredicate1(_condition_fromStr("exists(?pc - param, =(" + _fact_a + "(?o), " + _fact_c + "(?pc)))", ontology, derPred1Parameters),
-                              _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
+                               _fact(_fact_b + "(?o)", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : derivedPredicate1.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
@@ -4039,14 +3751,14 @@ void _fixEventWithFluentInParameter()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
-                                                     _fact_b + "(?p - param) - entity\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d + "\n" +
-                                                     _fact_e + "(?p - param) - entity", ontology.types);
+                                                      _fact_b + "(?p - param) - entity\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d + "\n" +
+                                                      _fact_e + "(?p - param) - entity", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -4055,14 +3767,14 @@ void _fixEventWithFluentInParameter()
   actions.emplace(action1, action1Obj);
   std::vector<ogp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
   ogp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
-                        _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
+                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> derPred1Parameters{_parameter("?a - param", ontology), _parameter("?v - entity", ontology)};
   ogp::Axiom derivedPredicate1(_condition_fromStr(_fact_a + "(?a)=?v", ontology, derPred1Parameters),
-                              _fact(_fact_e + "(?a)=?v", ontology, derPred1Parameters), derPred1Parameters);
+                               _fact(_fact_e + "(?a)=?v", ontology, derPred1Parameters), derPred1Parameters);
   for (auto& currEvent : derivedPredicate1.toEvents(ontology, {}))
     setOfEvents.add(currEvent);
 
@@ -4105,16 +3817,16 @@ void _derivedPredicates()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 titi - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + "(?p - param) - entity\n" +
-                                                     _fact_b + "(?p - param) - entity\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d, ontology.types);
+                                                      _fact_b + "(?p - param) - entity\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d, ontology.types);
   ontology.derivedPredicates.addDerivedPredicate(
         ogp::DerivedPredicate(ogp::Predicate(_fact_e + "(?a - param) - entity", false, ontology.types),
-                             _fact_a + "(?a)=?entity", ontology));
+                              _fact_a + "(?a)=?entity", ontology));
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -4123,7 +3835,7 @@ void _derivedPredicates()
   actions.emplace(action1, action1Obj);
   std::vector<ogp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
   ogp::Action action2Obj(_condition_fromStr("=(" + _fact_e + "(titi), " + _fact_c + "(?pc))", ontology, action2Parameters),
-                        _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
+                         _worldStateModification_fromStr(_fact_d, ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
@@ -4161,13 +3873,13 @@ void _assignAFactTwoTimesInTheSamePlan()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 kitchen - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "(?p - param) - entity\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d + "(?p - param) - entity", ontology.types);
+                                                      _fact_b + "(?p - param) - entity\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d + "(?p - param) - entity", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -4177,7 +3889,7 @@ void _assignAFactTwoTimesInTheSamePlan()
 
   std::vector<ogp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
   ogp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
-                        _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", ontology, action2Parameters));
+                         _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
@@ -4207,15 +3919,15 @@ void _checkTwoTimesTheEqualityOfAFact()
 
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("entity\n"
-                                           "param");
+                                             "param");
   ontology.constants = ogp::SetOfEntities::fromPddl("aVal anotherVal valGoal v1 v2 v3 bedroom kitchen - entity\n"
-                                                  "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
+                                                    "p1 p2 p3 pc1 pc2 pc3 - param", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr(_fact_a + " - entity\n" +
-                                                     _fact_b + "(?p - param) - entity\n" +
-                                                     _fact_c + "(?p - param) - entity\n" +
-                                                     _fact_d + "(?p - param) - entity\n" +
-                                                     _fact_e + "(?p - entity) - entity\n" +
-                                                     _fact_f + " - entity", ontology.types);
+                                                      _fact_b + "(?p - param) - entity\n" +
+                                                      _fact_c + "(?p - param) - entity\n" +
+                                                      _fact_d + "(?p - param) - entity\n" +
+                                                      _fact_e + "(?p - entity) - entity\n" +
+                                                      _fact_f + " - entity", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> action1Parameters{_parameter("?p - param", ontology)};
@@ -4225,13 +3937,13 @@ void _checkTwoTimesTheEqualityOfAFact()
 
   std::vector<ogp::Parameter> action2Parameters{_parameter("?pc - param", ontology)};
   ogp::Action action2Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_c + "(?pc))", ontology, action2Parameters),
-                        _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", ontology, action2Parameters));
+                         _worldStateModification_fromStr("assign(" + _fact_a + ", " + _fact_d + "(?pc))", ontology, action2Parameters));
   action2Obj.parameters = std::move(action2Parameters);
   actions.emplace(action2, action2Obj);
 
   std::vector<ogp::Parameter> action3Parameters{_parameter("?tt - entity", ontology)};
   ogp::Action action3Obj(_condition_fromStr("=(" + _fact_a + ", " + _fact_e + "(?tt))", ontology, action3Parameters),
-                        _worldStateModification_fromStr("assign(" + _fact_f + ", ?tt)", ontology, action3Parameters));
+                         _worldStateModification_fromStr("assign(" + _fact_f + ", ?tt)", ontology, action3Parameters));
   action3Obj.parameters = std::move(action3Parameters);
   actions.emplace(action3, action3Obj);
 
@@ -4260,30 +3972,30 @@ void _eventToRemoveAFactWithoutFluent()
 {
   ogp::Ontology ontology;
   ontology.types = ogp::SetOfTypes::fromPddl("loc_type\n"
-                                           "robot");
+                                             "robot");
   ontology.constants = ogp::SetOfEntities::fromPddl("me - robot\n"
-                                                  "house1 house2 city anotherCity - loc_type", ontology.types);
+                                                    "house1 house2 city anotherCity - loc_type", ontology.types);
   ontology.predicates = ogp::SetOfPredicates::fromStr("locationOfRobot(?r - robot) - loc_type\n"
-                                                     "robotAt(?r - robot, ?l - loc_type)\n"
-                                                     "within(?l1 - loc_type) - loc_type", ontology.types);
+                                                      "robotAt(?r - robot, ?l - loc_type)\n"
+                                                      "within(?l1 - loc_type) - loc_type", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   ogp::SetOfEvents setOfEvents;
   std::vector<ogp::Parameter> inf1Parameters{_parameter("?l - loc_type", ontology)};
   ogp::Event event1(_condition_fromStr("locationOfRobot(me)=?l", ontology, inf1Parameters),
-                   _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf1Parameters));
+                    _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf1Parameters));
   event1.parameters = std::move(inf1Parameters);
   setOfEvents.add(event1);
 
   std::vector<ogp::Parameter> inf2Parameters{_parameter("?l - loc_type", ontology)};
   ogp::Event event2(_condition_fromStr("exists(?loc - loc_type, locationOfRobot(me)=?loc & within(?loc)=?l)", ontology, inf2Parameters),
-                   _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf2Parameters));
+                    _worldStateModification_fromStr("robotAt(me, ?l)", ontology, inf2Parameters));
   event2.parameters = std::move(inf2Parameters);
   setOfEvents.add(event2);
 
   std::vector<ogp::Parameter> inf3Parameters{_parameter("?l - loc_type", ontology)};
   ogp::Event event3(_condition_fromStr("!locationOfRobot(me)=?l", ontology, inf3Parameters),
-                   _worldStateModification_fromStr("forall(?ll - loc_type, robotAt(me, ?ll), !robotAt(me, ?ll))", ontology, inf3Parameters));
+                    _worldStateModification_fromStr("forall(?ll - loc_type, robotAt(me, ?ll), !robotAt(me, ?ll))", ontology, inf3Parameters));
   event3.parameters = std::move(inf3Parameters);
   setOfEvents.add(event3);
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
@@ -4409,14 +4121,6 @@ TEST(Planner, test_planWithSingleType)
   _hardProblemThatNeedsToBeSmart();
   _hardProblemThatNeedsToBeSmartWithAnEvent();
   _checkOverallEffectDuringParallelisation();
-  _checkSimpleExists();
-  _checkExistsWithActionParameterInvolved();
-  _checkExistsWithManyFactsInvolved();
-  _doAnActionToSatisfyAnExists();
-  _checkForAllEffectAtStart();
-  _existsWithValue();
-  _notExists();
-  _actionToSatisfyANotExists();
   _orInCondition();
   _axioms();
   _assignAnotherValueToSatisfyNotGoal();
