@@ -245,7 +245,8 @@ struct ORDEREDGOALSPLANNER_API Fact
                      bool pParametersAreForTheFact,
                      std::map<Parameter, std::set<Entity>>& pNewParameters,
                      const std::map<Parameter, std::set<Entity>>* pParametersPtr,
-                     std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr) const;
+                     std::map<Parameter, std::set<Entity>>& pNewParametersInPlace,
+                     const std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr) const;
 
   /**
    * @brief Replace, in the arguments of this fact, a fact by another fact.
@@ -300,6 +301,7 @@ private:
                          bool pCheckAllPossibilities,
                          const std::map<Parameter, std::set<Entity>>* pParametersPtr,
                          bool* pTriedToModifyParametersPtr) const;
+
   void _resetFactSignatureCache();
 
   void _finalizeInisilizationAndValidityChecks(const Ontology& pOntology,

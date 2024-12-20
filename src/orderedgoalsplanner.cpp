@@ -275,27 +275,6 @@ bool PotentialNextAction::isMoreImportantThan(const PotentialNextAction& pOther,
 }
 
 
-std::set<Entity> _paramTypenameToEntities(const std::string& pParamtypename,
-                                          const Domain& pDomain,
-                                          const Problem& pProblem)
-{
-  std::set<Entity> res;
-  auto* constantsPtr = pDomain.getOntology().constants.typeNameToEntities(pParamtypename);
-  if (constantsPtr != nullptr)
-    res = *constantsPtr;
-
-  auto* entitiesPtr = pProblem.entities.typeNameToEntities(pParamtypename);
-  if (entitiesPtr != nullptr)
-  {
-    if (res.empty())
-      res = *entitiesPtr;
-    else
-      res.insert(entitiesPtr->begin(), entitiesPtr->end());
-  }
-  return res;
-}
-
-
 bool _lookForAPossibleEffect(PotentialNextActionParametersWithTmpData& pParametersWithTmpData,
                              DataRelatedToOptimisation& pDataRelatedToOptimisation,
                              TreeOfAlreadyDonePath& pTreeOfAlreadyDonePath,
@@ -363,7 +342,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
             if (foundSomethingThatMatched && newParamValues.empty())
             {
               if (pParameter.type)
-                newParamValues = _paramTypenameToEntities(pParameter.type->name, pContext.domain, pContext.problem);
+                newParamValues = typenameToEntities(pParameter.type->name, ontology.constants, pContext.problem.entities);
               return !newParamValues.empty();
             }
           }
@@ -603,7 +582,7 @@ bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
       if (foundSomethingThatMatched && newParamValues.empty())
       {
         if (pParameter.type)
-          newParamValues = _paramTypenameToEntities(pParameter.type->name, pContext.domain, pContext.problem);
+          newParamValues = typenameToEntities(pParameter.type->name, ontology.constants, pContext.problem.entities);
         return !newParamValues.empty();
       }
     }
