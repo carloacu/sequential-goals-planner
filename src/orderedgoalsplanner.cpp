@@ -331,6 +331,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
                                 pWorldStateModificationPtr1, pWorldStateModificationPtr2,
                                 pContext, pFactsAlreadychecked, pFromDeductionId))
     {
+        const auto& ontology = pContext.domain.getOntology();
         auto fillParameter = [&](const Parameter& pParameter,
                                  std::set<Entity>& pParameterValues,
                                  std::map<Parameter, std::set<Entity>>& pNewParentParameters) -> bool
@@ -356,7 +357,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
               else
                 newParamValues.insert(*parentParamValue);
               return !newParamValues.empty();
-            }, pContext.problem.worldState, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersWithData.parameters);
+            }, pContext.problem.worldState, ontology.constants, pContext.problem.entities, pFactOptional.fact, pParentParameters, pTmpParentParametersPtr, parametersWithData.parameters);
 
 
             if (foundSomethingThatMatched && newParamValues.empty())
@@ -547,6 +548,7 @@ bool _doesConditionMatchAnOptionalFact(const std::map<Parameter, std::set<Entity
                                        const std::map<Parameter, std::set<Entity>>* pParametersToModifyInPlacePtr,
                                        const ResearchContext& pContext)
 {
+  const auto& ontology = pContext.domain.getOntology();
   const auto& objective = pContext.goal.objective();
   return objective.findConditionCandidateFromFactFromEffect(
         [&](const FactOptional& pConditionFactOptional)
@@ -562,7 +564,7 @@ bool _doesConditionMatchAnOptionalFact(const std::map<Parameter, std::set<Entity
         (pIsWrappingExpressionNegated && pFactOptional.isFactNegated != pConditionFactOptional.isFactNegated))
       return pConditionFactOptional.fact.areEqualExceptAnyValues(pFactOptional.fact, &pParameters, pParametersToModifyInPlacePtr);
     return false;
-  }, pContext.problem.worldState, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
+  }, pContext.problem.worldState, ontology.constants, pContext.problem.entities, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
 }
 
 
@@ -581,6 +583,7 @@ bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
     if (pParameterValues.empty() &&
         pFactOptional.fact.hasParameterOrFluent(pParameter))
     {
+      const auto& ontology = pContext.domain.getOntology();
       auto& newParamValues = pNewParameters[pParameter];
 
       bool foundSomethingThatMatched = false;
@@ -595,7 +598,7 @@ bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
         if (!parentParamValue->isAParameterToFill())
           newParamValues.insert(*parentParamValue);
         return !newParamValues.empty();
-      }, pContext.problem.worldState, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
+      }, pContext.problem.worldState, ontology.constants, pContext.problem.entities, pFactOptional.fact, pParameters, pParametersToModifyInPlacePtr, {});
 
       if (foundSomethingThatMatched && newParamValues.empty())
       {
@@ -909,6 +912,7 @@ ActionId _findFirstActionForAGoal(
   ResearchContext context(pGoal, pProblem, pDomain,
                           pGoal.getActionsPredecessors(), pGoal.getEventsPredecessors());
 
+  auto& ontology = pDomain.getOntology();
   auto& domainActions = pDomain.actions();
   for (const ActionId& currActionId : context.actionIds)
   {
@@ -931,7 +935,7 @@ ActionId _findFirstActionForAGoal(
         if (_lookForAPossibleEffect(newPotRes.parametersWithData, dataRelatedToOptimisation, *newTreePtr,
                                     action.effect.worldStateModification, action.effect.potentialWorldStateModification,
                                     context, factsAlreadyChecked, currActionId) &&
-            (!action.precondition || action.precondition->isTrue(pProblem.worldState, {}, {}, &newPotRes.parametersWithData.parameters)))
+            (!action.precondition || action.precondition->isTrue(pProblem.worldState, ontology.constants, pProblem.entities, {}, {}, &newPotRes.parametersWithData.parameters)))
         {
           while (true)
           {
@@ -1000,12 +1004,13 @@ bool _goalToPlanRec(
     auto* potActionPtr = pDomain.getActionPtr(potentialRes->actionInvocation.actionId);
     if (potActionPtr != nullptr)
     {
+      const auto& ontology = pDomain.getOntology();
       updateProblemForNextPotentialPlannerResultWithAction(problemForPlanCost, goalChanged,
                                                            *potentialRes, *potActionPtr,
                                                            pDomain, pNow, nullptr, nullptr);
       ActionPtrWithGoal previousAction(potActionPtr, pGoal);
       auto* previousActionPtr = nextInPlanCanBeAnEvent ? nullptr : &previousAction;
-      if (problemForPlanCost.worldState.isGoalSatisfied(pGoal) ||
+      if (problemForPlanCost.worldState.isGoalSatisfied(pGoal, ontology.constants, problemForPlanCost.entities) ||
           _goalToPlanRec(pActionInvocations, problemForPlanCost, pActionAlreadyInPlan,
                          pDomain, pTryToDoMoreOptimalSolution, pNow, nullptr, pGoal, pPriority, previousActionPtr))
       {
@@ -1030,6 +1035,7 @@ std::list<ActionInvocationWithGoal> _planForMoreImportantGoalPossible(Problem& p
                                                                      LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr,
                                                                      const ActionPtrWithGoal* pPreviousActionPtr)
 {
+  const auto& ontology = pDomain.getOntology();
   std::list<ActionInvocationWithGoal> res;
   pProblem.goalStack.refreshIfNeeded(pDomain);
   pProblem.goalStack.iterateOnGoalsAndRemoveNonPersistent(
@@ -1039,7 +1045,7 @@ std::list<ActionInvocationWithGoal> _planForMoreImportantGoalPossible(Problem& p
                                   pDomain, pTryToDoMoreOptimalSolution, pNow, pGlobalHistorical, pGoal, pPriority,
                                   pPreviousActionPtr);
           },
-        pProblem.worldState, pNow,
+        pProblem.worldState, ontology.constants, pProblem.entities, pNow,
         pLookForAnActionOutputInfosPtr);
   return res;
 }
@@ -1281,6 +1287,7 @@ bool evaluate
  const Domain& pDomain)
 {
   std::list<std::list<ActionDataForParallelisation>> planWithCache;
+  const auto& ontology = pDomain.getOntology();
   const auto& actions = pDomain.actions();
 
   for (auto& currActionsInParallel : pPlan.actionsToDoInParallel)
@@ -1301,7 +1308,7 @@ bool evaluate
 
   std::unique_ptr<std::chrono::steady_clock::time_point> now;
   pProblem.goalStack.refreshIfNeeded(pDomain);
-  pProblem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(pProblem.worldState, now);
+  pProblem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(pProblem.worldState, ontology.constants, pProblem.entities, now);
   auto itBegin = planWithCache.begin();
   auto goals = extractSatisfiedGoals(pProblem, pDomain, itBegin, planWithCache, nullptr, now);
   return goals == expectedGoalsSatisfied;

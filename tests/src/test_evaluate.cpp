@@ -65,10 +65,11 @@ std::unique_ptr<ogp::WorldStateModification> _worldStateModification_fromStr(con
 
 void _setGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
+                           const ogp::SetOfEntities& pConstants,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = ogp::GoalStack::getDefaultPriority())
 {
-  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
+  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pConstants, pProblem.entities, pNow, pPriority);
 }
 
 bool _evaluate(ogp::ParallelPan& pPlan,
@@ -98,7 +99,7 @@ void _testEvaluateWithPlanNotValidAnymore()
 
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_c,  problem.goalStack, ontology);
 
   auto copiedProblem = problem;
@@ -127,7 +128,7 @@ void _testEvaluateWithFirstActionAlreadyDone()
 
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
 
   auto copiedProblem = problem;
   auto parallelPlan = ogp::parallelPlanForEveryGoals(copiedProblem, domain, _now, nullptr);
@@ -166,7 +167,7 @@ void _testEvaluateWithOneOfFirstActionAlreadyDone()
 
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)}, ontology.constants);
 
   auto copiedProblem = problem;
   auto parallelPlan = ogp::parallelPlanForEveryGoals(copiedProblem, domain, _now, nullptr);
@@ -204,7 +205,7 @@ void _testAlreadySatisfiedGoal()
 
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
 
   auto copiedProblem = problem;
   auto parallelPlan = ogp::parallelPlanForEveryGoals(copiedProblem, domain, _now, nullptr);

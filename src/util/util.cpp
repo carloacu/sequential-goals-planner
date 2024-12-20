@@ -3,6 +3,7 @@
 #include <sstream>
 #include <orderedgoalsplanner/types/entity.hpp>
 #include <orderedgoalsplanner/types/parameter.hpp>
+#include <orderedgoalsplanner/types/setofentities.hpp>
 
 namespace ogp
 {
@@ -321,6 +322,19 @@ void trim(std::string& s)
     rtrim(s);
 }
 
+
+
+bool hasAnEntyTypeWihTypename(const std::string& pParamtypename,
+                             const SetOfEntities& pConstants,
+                             const SetOfEntities& pObjects)
+{
+  auto* constantsPtr = pConstants.typeNameToEntities(pParamtypename);
+  if (constantsPtr != nullptr && !constantsPtr->empty())
+    return true;
+
+  auto* entitiesPtr = pObjects.typeNameToEntities(pParamtypename);
+  return entitiesPtr != nullptr && !entitiesPtr->empty();
+}
 
 
 }

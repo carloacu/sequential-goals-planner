@@ -154,7 +154,7 @@ std::list<Goal> extractSatisfiedGoals(
         continue;
 
       const auto* conditionPtr = currAction.getConditionWithoutParameterPtr();
-      if (conditionPtr != nullptr && !conditionPtr->isTrue(pProblem.worldState))
+      if (conditionPtr != nullptr && !conditionPtr->isTrue(pProblem.worldState, ontology.constants, pProblem.entities))
         return {};
 
       auto* worldStateModificationAtStartWithoutParameterPtr = currAction.getWorldStateModificationAtStartWithoutParameterPtr();
@@ -180,7 +180,8 @@ std::list<Goal> extractSatisfiedGoals(
 
       pProblem.goalStack.notifyActionDone(currAction.actionInvWithGoal, pNow,
                                           &currAction.action.effect.goalsToAdd,
-                                          &currAction.action.effect.goalsToAddInCurrentPriority, pProblem.worldState, &lookForAnActionOutputInfos);
+                                          &currAction.action.effect.goalsToAddInCurrentPriority, pProblem.worldState,
+                                          ontology.constants, pProblem.entities, &lookForAnActionOutputInfos);
     }
     ++pCurrItInPlan;
   }

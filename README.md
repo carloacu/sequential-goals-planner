@@ -72,7 +72,7 @@ requirements:
 - [x] `:negative-preconditions`
 - [x] `:disjunctive-preconditions`
 - [x] `:equality`
-- [ ] `:existential-preconditions`
+- [x] `:existential-preconditions`
 - [ ] `:universal-preconditions`
 - [ ] `:quantified-preconditions`
 - [ ] `:conditional-effects`

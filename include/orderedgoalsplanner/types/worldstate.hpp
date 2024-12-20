@@ -243,7 +243,9 @@ struct ORDEREDGOALSPLANNER_API WorldState
    * @param[in] pGoal Goal to check.
    * @return True if the goal is satisfied.
    */
-  bool isGoalSatisfied(const Goal& pGoal) const;
+  bool isGoalSatisfied(const Goal& pGoal,
+                       const SetOfEntities& pConstants,
+                       const SetOfEntities& pObjects) const;
 
   /**
    * @brief Iterate over all matching facts without fluent consideration.
@@ -384,6 +386,8 @@ private:
 
   void _tryToCallCallbacks(std::set<CallbackId>& pCallbackAlreadyCalled,
                            const WhatChanged& pWhatChanged,
+                           const SetOfEntities& pConstants,
+                           const SetOfEntities& pObjects,
                            const FactsToValue::ConstMapOfFactIterator& pCallbackIds,
                            const std::map<CallbackId, ConditionToCallback>& pCallbacks);
 

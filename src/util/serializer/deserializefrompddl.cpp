@@ -1088,7 +1088,7 @@ DomainAndProblemPtrs pddlToProblem(const std::string& pStr,
             goals.emplace_back(std::move(*goalPtr));
           }
 
-          res.problemPtr->goalStack.addGoals(goals, worldState, {});
+          res.problemPtr->goalStack.addGoals(goals, worldState, ontology.constants, entities, {});
         }
         else if (token == ":constraints")
         {

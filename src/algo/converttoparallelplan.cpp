@@ -47,6 +47,7 @@ ParallelPan toParallelPlan
  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow)
 {
   const auto& actions = pDomain.actions();
+  const auto& ontology = pDomain.getOntology();
   std::list<std::list<ActionDataForParallelisation>> currentRes;
   const SetOfCallbacks callbacks;
 
@@ -90,7 +91,7 @@ ParallelPan toParallelPlan
         {
           const Condition* conditionWithoutParameterPtr = actionInvocationCand.getConditionWithoutParameterPtr();
           if (conditionWithoutParameterPtr == nullptr ||
-              conditionWithoutParameterPtr->isTrue(pProblem.worldState))
+              conditionWithoutParameterPtr->isTrue(pProblem.worldState, ontology.constants, pProblem.entities))
           {
             auto tmpProblem = pProblem;
             notifyActionStarted(tmpProblem, pDomain, callbacks, actionInvocationCand.actionInvWithGoal, pNow);

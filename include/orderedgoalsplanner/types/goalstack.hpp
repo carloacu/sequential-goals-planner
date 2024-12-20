@@ -45,6 +45,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
                         const std::map<int, std::vector<Goal>>* pGoalsToAdd,
                         const std::vector<Goal>* pGoalsToAddInCurrentPriority,
                         const WorldState& pWorldState,
+                        const SetOfEntities& pConstants,
+                        const SetOfEntities& pObjects,
                         LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /// Be notified when goals changed.
@@ -69,6 +71,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   void iterateOnGoalsAndRemoveNonPersistent(const std::function<bool (Goal&, int)>& pManageGoal,
                                             const WorldState& pWorldState,
+                                            const SetOfEntities& pConstants,
+                                            const SetOfEntities& pObjects,
                                             const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                             LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
@@ -83,6 +87,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   void setGoals(const std::map<int, std::vector<Goal>>& pGoals,
                 const WorldState& pWorldState,
+                const SetOfEntities& pConstants,
+                const SetOfEntities& pObjects,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -94,6 +100,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   void setGoals(const std::vector<Goal>& pGoals,
                 const WorldState& pWorldState,
+                const SetOfEntities& pConstants,
+                const SetOfEntities& pObjects,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                 int pPriority = getDefaultPriority());
 
@@ -106,6 +114,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   bool addGoals(const std::map<int, std::vector<Goal>>& pGoals,
                 const WorldState& pWorldState,
+                const SetOfEntities& pConstants,
+                const SetOfEntities& pObjects,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -118,6 +128,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   bool addGoals(const std::vector<Goal>& pGoals,
                 const WorldState& pWorldState,
+                const SetOfEntities& pConstants,
+                const SetOfEntities& pObjects,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                 int pPriority = getDefaultPriority());
 
@@ -130,6 +142,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   void pushFrontGoal(const Goal& pGoal,
                      const WorldState& pWorldState,
+                     const SetOfEntities& pConstants,
+                     const SetOfEntities& pObjects,
                      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                      int pPriority = getDefaultPriority());
 
@@ -142,6 +156,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   void pushBackGoal(const Goal& pGoal,
                     const WorldState& pWorldState,
+                    const SetOfEntities& pConstants,
+                    const SetOfEntities& pObjects,
                     const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                     int pPriority = getDefaultPriority());
 
@@ -157,6 +173,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
                           int pPriority,
                           bool pPushFrontOrBottomInCaseOfConflictWithAnotherGoal,
                           const WorldState& pWorldState,
+                          const SetOfEntities& pConstants,
+                          const SetOfEntities& pObjects,
                           const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -165,6 +183,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    * @param pNow Current time.
    */
   void clearGoals(const WorldState& pWorldState,
+                  const SetOfEntities& pConstants,
+                  const SetOfEntities& pObjects,
                   const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -176,6 +196,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    */
   bool removeGoals(const std::string& pGoalGroupId,
                    const WorldState& pWorldState,
+                   const SetOfEntities& pConstants,
+                   const SetOfEntities& pObjects,
                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
@@ -184,6 +206,8 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    * @param[in] pNow Current time.
    */
   void removeFirstGoalsThatAreAlreadySatisfied(const WorldState& pWorldState,
+                                               const SetOfEntities& pConstants,
+                                               const SetOfEntities& pObjects,
                                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /// Goals to satisfy.
@@ -195,7 +219,9 @@ struct ORDEREDGOALSPLANNER_API GoalStack
    * @param[in] pWorldState World state to consider.
    * @return Map of priority to not satisfied goals.
    */
-  std::map<int, std::vector<Goal>> getNotSatisfiedGoals(const WorldState& pWorldState) const;
+  std::map<int, std::vector<Goal>> getNotSatisfiedGoals(const WorldState& pWorldState,
+                                                        const SetOfEntities& pConstants,
+                                                        const SetOfEntities& pObjects) const;
 
   void refreshIfNeeded(const Domain& pDomain);
 
@@ -212,9 +238,10 @@ private:
   /// Current active goal.
   const Goal* _currentGoalPtr = nullptr;
 
-  void _removeNoStackableGoalsAndNotifyGoalsChanged(
-      const WorldState& pWorldState,
-      const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
+  void _removeNoStackableGoalsAndNotifyGoalsChanged(const WorldState& pWorldState,
+                                                    const SetOfEntities& pConstants,
+                                                    const SetOfEntities& pObjects,
+                                                    const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   /**
    * @brief Remove the first goals that are already satisfied.
@@ -224,6 +251,8 @@ private:
    * @return True, if the goal stack has changed.
    */
   bool _removeFirstGoalsThatAreAlreadySatisfied(const WorldState& pWorldState,
+                                                const SetOfEntities& pConstants,
+                                                const SetOfEntities& pObjects,
                                                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                                 LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
@@ -237,11 +266,15 @@ private:
    */
   bool _iterateOnGoalsAndRemoveNonPersistent(const std::function<bool (Goal&, int)>& pManageGoal,
                                              const WorldState& pWorldState,
+                                             const SetOfEntities& pConstants,
+                                             const SetOfEntities& pObjects,
                                              const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow,
                                              LookForAnActionOutputInfos* pLookForAnActionOutputInfosPtr);
 
   /// Get the priority of the goal in top of the stack.
-  int _getCurrentPriority(const WorldState& pWorldState) const;
+  int _getCurrentPriority(const WorldState& pWorldState,
+                          const SetOfEntities& pConstants,
+                          const SetOfEntities& pObjects) const;
 
 
   /**
@@ -251,6 +284,8 @@ private:
    * @return True, if the goal stack has changed.
    */
   bool _removeNoStackableGoals(const WorldState& pWorldState,
+                               const SetOfEntities& pConstants,
+                               const SetOfEntities& pObjects,
                                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
 
@@ -263,6 +298,8 @@ private:
    */
   bool _addGoals(const std::map<int, std::vector<Goal>>& pGoals,
                  const WorldState& pWorldState,
+                 const SetOfEntities& pConstants,
+                 const SetOfEntities& pObjects,
                  const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
   friend struct WorldState;

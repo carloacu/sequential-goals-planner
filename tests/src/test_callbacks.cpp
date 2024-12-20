@@ -54,10 +54,11 @@ std::unique_ptr<ogp::WorldStateModification> _worldStateModification_fromStr(con
 
 void _setGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
+                           const ogp::SetOfEntities& pConstants,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = ogp::GoalStack::getDefaultPriority())
 {
-  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
+  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pConstants, pProblem.entities, pNow, pPriority);
 }
 
 
@@ -157,7 +158,7 @@ void _test_callbacks()
   EXPECT_EQ(3, nbOfCallback1);
   nbOfCallback1 = 0;
 
-  _setGoalsForAPriority(problem, {_goal(_fact_c + "(e_a2)=e_b2", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_c + "(e_a2)=e_b2", ontology)}, ontology.constants);
   EXPECT_EQ(0, nbOfCallback1);
   EXPECT_EQ(action1, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, callbacks, _now));
   EXPECT_EQ(1, nbOfCallback1);

@@ -9,10 +9,11 @@ using namespace ogp;
 
 void _setGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
+                           const SetOfEntities& pConstants,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = ogp::GoalStack::getDefaultPriority())
 {
-  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
+  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pConstants, pProblem.entities, pNow, pPriority);
 }
 
 std::string _actionIdsToStr(const std::set<ActionId>& pActionIds)
@@ -103,7 +104,7 @@ TEST(Tool, test_goalsCache)
                                          "sub_ent2 - e2", ontology.types);
 
   {
-    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("fact_d", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("fact_d", domainOntology, entities)}, domainOntology.constants);
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: fact_d\n"
               "---------------------------\n"
@@ -113,7 +114,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("=(fact_b(ent), r2)", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("=(fact_b(ent), r2)", domainOntology, entities)}, domainOntology.constants);
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: fact_b(ent)=r2\n"
               "---------------------------\n"
@@ -123,7 +124,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("!fact_c", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("!fact_c", domainOntology, entities)}, domainOntology.constants);
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("", problem.goalStack.printGoalsCache());
     EXPECT_EQ("", _actionIdsToStr(problem.goalStack.getActionsPredecessors()));
@@ -131,7 +132,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(ent), r1))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(ent), r1))", domainOntology, entities)}, domainOntology.constants);
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(ent)=r1\n"
               "---------------------------\n"
@@ -141,7 +142,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent1), r1))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent1), r1))", domainOntology, entities)}, domainOntology.constants);
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(sub_ent1)=r1\n"
               "---------------------------\n"
@@ -152,7 +153,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent2), r1))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent2), r1))", domainOntology, entities)}, domainOntology.constants);
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(sub_ent2)=r1\n"
               "---------------------------\n"
@@ -162,7 +163,7 @@ TEST(Tool, test_goalsCache)
   }
 
   {
-    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent1), r2))", domainOntology, entities)});
+    _setGoalsForAPriority(problem, {ogp::Goal::fromStr("not(=(fact_b(sub_ent1), r2))", domainOntology, entities)}, domainOntology.constants);
     problem.goalStack.refreshIfNeeded(domain);
     EXPECT_EQ("goal: !fact_b(sub_ent1)=r2\n"
               "---------------------------\n"

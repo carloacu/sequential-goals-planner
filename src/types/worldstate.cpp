@@ -2,6 +2,7 @@
 #include <list>
 #include <orderedgoalsplanner/types/goalstack.hpp>
 #include <orderedgoalsplanner/types/actioninvocationwithgoal.hpp>
+#include <orderedgoalsplanner/types/ontology.hpp>
 #include <orderedgoalsplanner/types/setofcallbacks.hpp>
 #include <orderedgoalsplanner/types/setoffacts.hpp>
 #include <orderedgoalsplanner/types/setofevents.hpp>
@@ -91,7 +92,7 @@ bool WorldState::modifyFactsFromPddl(const std::string& pStr,
                 pOntology, pEntities, pNow, pCanFactsBeRemoved);
   }
 
-  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pOntology.constants, pEntities, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
                      pOntology, pEntities, pNow);
@@ -154,7 +155,7 @@ bool WorldState::addFacts(const FACTS& pFacts,
 {
   WhatChanged whatChanged;
   _addFacts(whatChanged, pFacts, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, pCanFactsBeRemoved);
-  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pOntology.constants, pEntities, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
                      pOntology, pEntities, pNow);
@@ -191,7 +192,7 @@ bool WorldState::removeFacts(const FACTS& pFacts,
 {
   WhatChanged whatChanged;
   _removeFacts(whatChanged, pFacts);
-  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pOntology.constants, pEntities, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow);
   return whatChanged.hasFactsToModifyInTheWorldForSure();
@@ -256,7 +257,7 @@ void WorldState::_addAFact(WhatChanged& pWhatChanged,
       {
         WhatChanged subWhatChanged;
         _removeFacts(subWhatChanged, std::vector<ogp::Fact>{currExistingFact});
-        pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+        pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pOntology.constants, pEntities, pNow);
         bool goalChanged = false;
         _notifyWhatChanged(subWhatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
                            pOntology, pEntities, pNow);
@@ -324,7 +325,7 @@ void WorldState::_modify(WhatChanged& pWhatChanged,
 
   _addFacts(pWhatChanged, factsToAdd, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, pCanFactsBeRemoved);
   _removeFacts(pWhatChanged, factsToRemove);
-  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pOntology.constants, pEntities, pNow);
 }
 
 
@@ -359,7 +360,7 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
     _factsMapping.add(currFact);
   _cache->clear();
   WhatChanged whatChanged;
-  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pNow);
+  pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pOntology.constants, pEntities, pNow);
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
                      pOntology, pEntities, pNow);
@@ -510,7 +511,8 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
     return true;
   }
 
-  auto res = pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, &newParameters, pCheckAllPossibilities, pParametersToPossibleArgumentsPtr);
+  auto res = pFactOptional.fact.isInOtherFactsMap(_factsMapping, true, &newParameters, pCheckAllPossibilities, pParametersToPossibleArgumentsPtr,
+                                                  pParametersToModifyInPlacePtr);
   if (pParametersToPossibleArgumentsPtr != nullptr)
     applyNewParams(*pParametersToPossibleArgumentsPtr, newParameters);
   return res;
@@ -518,9 +520,11 @@ bool WorldState::isOptionalFactSatisfiedInASpecificContext(const FactOptional& p
 
 
 
-bool WorldState::isGoalSatisfied(const Goal& pGoal) const
+bool WorldState::isGoalSatisfied(const Goal& pGoal,
+                                 const SetOfEntities& pConstants,
+                                 const SetOfEntities& pObjects) const
 {
-  return pGoal.objective().isTrue(*this);
+  return pGoal.objective().isTrue(*this, pConstants, pObjects);
 }
 
 
@@ -592,7 +596,8 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
         std::map<Parameter, std::set<Entity>> parametersToValues;
         for (const auto& currParam : currEvent.parameters)
           parametersToValues[currParam];
-        if (!currEvent.precondition || currEvent.precondition->isTrue(*this, pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
+        if (!currEvent.precondition || currEvent.precondition->isTrue(*this, pOntology.constants, pEntities,
+                                                                      pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
                                                                       &parametersToValues))
         {
           if (currEvent.factsToModify)
@@ -631,7 +636,7 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
               _modify(pWhatChanged, &*currEvent.factsToModify, pGoalStack, pSetOfEvents, pCallbacks, pOntology, pEntities, pNow, canFactsBeRemoved);
             }
           }
-          if (pGoalStack.addGoals(currEvent.goalsToAdd, *this, pNow))
+          if (pGoalStack.addGoals(currEvent.goalsToAdd, *this, pOntology.constants, pEntities, pNow))
             pGoalChanged = true;
           somethingChanged = true;
         }
@@ -645,6 +650,8 @@ bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,
 
 void WorldState::_tryToCallCallbacks(std::set<CallbackId>& pCallbackAlreadyCalled,
                                      const WhatChanged& pWhatChanged,
+                                     const SetOfEntities& pConstants,
+                                     const SetOfEntities& pObjects,
                                      const FactsToValue::ConstMapOfFactIterator& pCallbackIds,
                                      const std::map<CallbackId, ConditionToCallback>& pCallbacks)
 {
@@ -660,7 +667,8 @@ void WorldState::_tryToCallCallbacks(std::set<CallbackId>& pCallbackAlreadyCalle
         std::map<Parameter, std::set<Entity>> parametersToValues;
         for (const auto& currParam : currCallback.parameters)
           parametersToValues[currParam];
-        if (currCallback.condition && currCallback.condition->isTrue(*this, pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
+        if (currCallback.condition && currCallback.condition->isTrue(*this, pConstants, pObjects,
+                                                                     pWhatChanged.punctualFacts, pWhatChanged.removedFacts,
                                                                      &parametersToValues))
         {
           pCallbackAlreadyCalled.insert(currCallbackId);
@@ -727,17 +735,17 @@ void WorldState::_notifyWhatChanged(WhatChanged& pWhatChanged,
         for (auto& currAddedFact : pWhatChanged.punctualFacts)
         {
           auto it = condToReachableCallbacks.find(currAddedFact);
-          _tryToCallCallbacks(callbackAlreadyCalled, pWhatChanged, it, callbacks);
+          _tryToCallCallbacks(callbackAlreadyCalled, pWhatChanged, pOntology.constants, pEntities, it, callbacks);
         }
         for (auto& currAddedFact : pWhatChanged.addedFacts)
         {
           auto it = condToReachableCallbacks.find(currAddedFact);
-          _tryToCallCallbacks(callbackAlreadyCalled, pWhatChanged, it, callbacks);
+          _tryToCallCallbacks(callbackAlreadyCalled, pWhatChanged, pOntology.constants, pEntities, it, callbacks);
         }
         for (auto& currRemovedFact : pWhatChanged.removedFacts)
         {
           auto it = notCondToReachableCallbacks.find(currRemovedFact);
-          _tryToCallCallbacks(callbackAlreadyCalled, pWhatChanged, it, callbacks);
+          _tryToCallCallbacks(callbackAlreadyCalled, pWhatChanged, pOntology.constants, pEntities, it, callbacks);
         }
       }
     }

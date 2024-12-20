@@ -107,16 +107,17 @@ void _setGoalsForAPriority(ogp::Problem& pProblem,
   std::vector<ogp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
     goals.emplace_back(ogp::Goal::fromStr(currFactStr, pOntology, ogp::SetOfEntities()));
-  pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow, pPriority);
+  pProblem.goalStack.setGoals(goals, pProblem.worldState, pOntology.constants, pProblem.entities, pNow, pPriority);
 }
 
 
 void _setGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
+                           const ogp::SetOfEntities& pConstants,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = ogp::GoalStack::getDefaultPriority())
 {
-  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow, pPriority);
+  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pConstants, pProblem.entities, pNow, pPriority);
 }
 
 
@@ -132,15 +133,16 @@ void _setGoals(ogp::Problem& pProblem,
     for (auto& currGoal : currGoals.second)
       goalsForAPrio.emplace_back(ogp::Goal::fromStr(currGoal, pOntology, ogp::SetOfEntities()));
   }
-  pProblem.goalStack.setGoals(goals, pProblem.worldState, pNow);
+  pProblem.goalStack.setGoals(goals, pProblem.worldState, pOntology.constants, pProblem.entities, pNow);
 }
 
 
 void _setGoals(ogp::Problem& pProblem,
                const std::map<int, std::vector<ogp::Goal>>& pGoals,
+               const ogp::SetOfEntities& pConstants,
                const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {})
 {
-  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pNow);
+  pProblem.goalStack.setGoals(pGoals, pProblem.worldState, pConstants, pProblem.entities, pNow);
 }
 
 
@@ -156,7 +158,7 @@ void _addGoals(ogp::Problem& pProblem,
     for (auto& currGoal : currGoals.second)
       goalsForAPrio.emplace_back(ogp::Goal::fromStr(currGoal, pOntology, ogp::SetOfEntities()));
   }
-  pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow);
+  pProblem.goalStack.addGoals(goals, pProblem.worldState, pOntology.constants, pProblem.entities, pNow);
 }
 
 void _addGoalsForAPriority(ogp::Problem& pProblem,
@@ -168,16 +170,17 @@ void _addGoalsForAPriority(ogp::Problem& pProblem,
   std::vector<ogp::Goal> goals;
   for (auto& currFactStr : pGoalStrs)
     goals.emplace_back(ogp::Goal::fromStr(currFactStr, pOntology, ogp::SetOfEntities()));
-  pProblem.goalStack.addGoals(goals, pProblem.worldState, pNow, pPriority);
+  pProblem.goalStack.addGoals(goals, pProblem.worldState, pOntology.constants, pProblem.entities, pNow, pPriority);
 }
 
 
 void _addGoalsForAPriority(ogp::Problem& pProblem,
                            const std::vector<ogp::Goal>& pGoals,
+                           const ogp::SetOfEntities& pConstants,
                            const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow = {},
                            int pPriority = ogp::GoalStack::getDefaultPriority())
 {
-  pProblem.goalStack.addGoals(pGoals, pProblem.worldState, pNow, pPriority);
+  pProblem.goalStack.addGoals(pGoals, pProblem.worldState, pConstants, pProblem.entities, pNow, pPriority);
 }
 
 
@@ -496,29 +499,30 @@ void _test_checkCondition()
   ontology.predicates = ogp::SetOfPredicates::fromStr("a - entity", ontology.types);
 
   ogp::WorldState worldState;
+  ogp::SetOfEntities objects;
   ogp::GoalStack goalStack;
   std::map<ogp::SetOfEventsId, ogp::SetOfEvents> setOfEvents;
   worldState.addFact(_fact("a=c", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
-  EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
-  EXPECT_FALSE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
+  EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState, ontology.constants, objects));
+  EXPECT_FALSE(_condition_fromStr("a!=c", ontology)->isTrue(worldState, ontology.constants, objects));
   EXPECT_EQ(1, worldState.facts().size());
   worldState.addFact(_fact("a!=c", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(1, worldState.facts().size());
-  EXPECT_FALSE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
-  EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
+  EXPECT_FALSE(_condition_fromStr("a!=b", ontology)->isTrue(worldState, ontology.constants, objects));
+  EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState, ontology.constants, objects));
   worldState.addFact(_fact("a!=b", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(2, worldState.facts().size());
-  EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
-  EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
+  EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState, ontology.constants, objects));
+  EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState, ontology.constants, objects));
   worldState.addFact(_fact("a=d", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(1, worldState.facts().size());
-  EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState));
-  EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState));
-  EXPECT_TRUE(_condition_fromStr("a=d", ontology)->isTrue(worldState));
-  EXPECT_FALSE(_condition_fromStr("a!=d", ontology)->isTrue(worldState));
+  EXPECT_TRUE(_condition_fromStr("a!=b", ontology)->isTrue(worldState, ontology.constants, objects));
+  EXPECT_TRUE(_condition_fromStr("a!=c", ontology)->isTrue(worldState, ontology.constants, objects));
+  EXPECT_TRUE(_condition_fromStr("a=d", ontology)->isTrue(worldState, ontology.constants, objects));
+  EXPECT_FALSE(_condition_fromStr("a!=d", ontology)->isTrue(worldState, ontology.constants, objects));
   worldState.addFact(_fact("a!=c", ontology), goalStack, setOfEvents, _emptyCallbacks, {}, {}, {});
   EXPECT_EQ(1, worldState.facts().size());
-  EXPECT_TRUE(_condition_fromStr("a=d", ontology)->isTrue(worldState));
+  EXPECT_TRUE(_condition_fromStr("a=d", ontology)->isTrue(worldState, ontology.constants, objects));
 }
 
 
@@ -530,11 +534,12 @@ void _automaticallyRemoveGoalsWithAMaxTimeToKeepInactiveEqualTo0()
                                                       _fact_checkedIn, ontology.types);
   ogp::GoalStack goalStack;
   ogp::WorldState worldState;
+  ogp::SetOfEntities objects;
   EXPECT_EQ(0u, goalStack.goals().size());
-  goalStack.pushBackGoal(_goal(_fact_advertised, ontology), worldState, {}, 10);
-  goalStack.pushBackGoal(_goal(_fact_beHappy, ontology), worldState, {}, 9);
+  goalStack.pushBackGoal(_goal(_fact_advertised, ontology), worldState, ontology.constants, objects, {}, 10);
+  goalStack.pushBackGoal(_goal(_fact_beHappy, ontology), worldState, ontology.constants, objects, {}, 9);
   EXPECT_EQ(2u, goalStack.goals().size());
-  goalStack.pushBackGoal(_goal(_fact_checkedIn, ontology, 0), worldState, {}, 9);
+  goalStack.pushBackGoal(_goal(_fact_checkedIn, ontology, 0), worldState, ontology.constants, objects, {}, 9);
   EXPECT_EQ(2u, goalStack.goals().size());
   EXPECT_EQ(1u, goalStack.goals().find(9)->second.size());
 }
@@ -547,10 +552,11 @@ void _maxTimeToKeepInactiveEqualTo0UnderAnAlreadySatisfiedGoal()
                                                       _fact_checkedIn, ontology.types);
   ogp::GoalStack goalStack;
   ogp::WorldState worldState;
+  ogp::SetOfEntities objects;
   EXPECT_EQ(0u, goalStack.goals().size());
-  goalStack.pushBackGoal(_goal("persist(!" + _fact_a + ")", ontology), worldState, {}, 10);
+  goalStack.pushBackGoal(_goal("persist(!" + _fact_a + ")", ontology), worldState, ontology.constants, objects, {}, 10);
   EXPECT_EQ(1u, goalStack.goals().size());
-  goalStack.pushBackGoal(_goal(_fact_checkedIn, ontology, 0), worldState, {}, 9);
+  goalStack.pushBackGoal(_goal(_fact_checkedIn, ontology, 0), worldState, ontology.constants, objects, {}, 9);
   EXPECT_EQ(2u, goalStack.goals().size());
 }
 
@@ -634,16 +640,16 @@ void _removeSomeGoals()
   auto onGoalsRemovedConnection = goalsRemovedTracker.onGoalsRemoved.connectUnsafe([&](const std::set<std::string>& pGoalsRemoved) {
     goalsRemoved = pGoalsRemoved;
   });
-  problem.goalStack.pushFrontGoal(_goal("checked_in", ontology, -1, goalGroupId), problem.worldState, {});
-  problem.goalStack.pushFrontGoal(_goal("greeted", ontology, -1, goalGroupId), problem.worldState, {});
+  problem.goalStack.pushFrontGoal(_goal("checked_in", ontology, -1, goalGroupId), problem.worldState, ontology.constants, problem.entities, {});
+  problem.goalStack.pushFrontGoal(_goal("greeted", ontology, -1, goalGroupId), problem.worldState, ontology.constants, problem.entities, {});
   EXPECT_EQ(_action_greet, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(0, goalsRemoved.size());
-  EXPECT_TRUE(problem.goalStack.removeGoals(goalGroupId, problem.worldState, {}));
+  EXPECT_TRUE(problem.goalStack.removeGoals(goalGroupId, problem.worldState, ontology.constants, problem.entities, {}));
   EXPECT_EQ(2, goalsRemoved.size());
-  EXPECT_FALSE(problem.goalStack.removeGoals(goalGroupId, problem.worldState, {}));
+  EXPECT_FALSE(problem.goalStack.removeGoals(goalGroupId, problem.worldState, ontology.constants, problem.entities, {}));
   EXPECT_EQ(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
   EXPECT_EQ(_action_goodBoy, _lookForAnActionToDoConstStr(problem, domain));
-  problem.goalStack.clearGoals(problem.worldState, {});
+  problem.goalStack.clearGoals(problem.worldState, ontology.constants, problem.entities, {});
   EXPECT_EQ("", _lookForAnActionToDoConstStr(problem, domain));
   onGoalsRemovedConnection.disconnect();
 }
@@ -665,31 +671,31 @@ void _notifyGoalRemovedWhenItIsImmediatlyRemoved()
     goalsRemoved = pGoalsRemoved;
   });
 
-  problem.goalStack.addGoals({{10, {_goal(_fact_a, ontology)}}}, problem.worldState, {});
+  problem.goalStack.addGoals({{10, {_goal(_fact_a, ontology)}}}, problem.worldState, ontology.constants, problem.entities, {});
 
-  problem.goalStack.addGoals({{9, {_goal(_fact_b, ontology, 0)}}}, problem.worldState, {});
+  problem.goalStack.addGoals({{9, {_goal(_fact_b, ontology, 0)}}}, problem.worldState, ontology.constants, problem.entities, {});
   EXPECT_EQ(1u, goalsRemoved.size());
   EXPECT_EQ(_fact_b, *goalsRemoved.begin());
   goalsRemoved.clear();
 
-  problem.goalStack.pushBackGoal(_goal(_fact_c, ontology, 0), problem.worldState, {}, 9);
+  problem.goalStack.pushBackGoal(_goal(_fact_c, ontology, 0), problem.worldState, ontology.constants, problem.entities, {}, 9);
   EXPECT_EQ(1u, goalsRemoved.size());
   EXPECT_EQ(_fact_c, *goalsRemoved.begin());
   goalsRemoved.clear();
 
-  problem.goalStack.pushFrontGoal(_goal(_fact_d, ontology, 0), problem.worldState, {}, 9);
+  problem.goalStack.pushFrontGoal(_goal(_fact_d, ontology, 0), problem.worldState, ontology.constants, problem.entities, {}, 9);
   EXPECT_EQ(1u, goalsRemoved.size());
   EXPECT_EQ(_fact_d, *goalsRemoved.begin());
   goalsRemoved.clear();
 
-  problem.goalStack.pushFrontGoal(_goal(_fact_e, ontology, 0), problem.worldState, {}, 11);
+  problem.goalStack.pushFrontGoal(_goal(_fact_e, ontology, 0), problem.worldState, ontology.constants, problem.entities, {}, 11);
   EXPECT_EQ(0u, goalsRemoved.size());
-  problem.goalStack.changeGoalPriority(_fact_e, 9, true, problem.worldState, {});
+  problem.goalStack.changeGoalPriority(_fact_e, 9, true, problem.worldState, ontology.constants, problem.entities, {});
   EXPECT_EQ(1u, goalsRemoved.size());
   EXPECT_EQ(_fact_e, *goalsRemoved.begin());
   goalsRemoved.clear();
 
-  problem.goalStack.setGoals({{10, {_goal(_fact_a, ontology, 0)}}, {9, {_goal(_fact_b, ontology, 0)}}}, problem.worldState, {});
+  problem.goalStack.setGoals({{10, {_goal(_fact_a, ontology, 0)}}, {9, {_goal(_fact_b, ontology, 0)}}}, problem.worldState, ontology.constants, problem.entities, {});
   EXPECT_EQ(1u, goalsRemoved.size());
   EXPECT_EQ(_fact_b, *goalsRemoved.begin());
   onGoalsRemovedConnection.disconnect();
@@ -1280,7 +1286,7 @@ void _actionWithConstantValue()
   actions.emplace(_action_navigate, navigate);
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("place=kitchen", ontology)});
+  _setGoalsForAPriority(problem, {_goal("place=kitchen", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate, _solveStr(problem, actions, ontology));
 }
 
@@ -1299,7 +1305,7 @@ void _actionWithParameterizedValue()
   actions.emplace(_action_navigate, navigate);
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("place=kitchen", ontology)});
+  _setGoalsForAPriority(problem, {_goal("place=kitchen", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?target -> kitchen)", _solveStr(problem, actions, ontology));
 }
 
@@ -1318,7 +1324,7 @@ void _actionWithParameterizedParameter()
   actions.emplace(_action_joke, joke);
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)}, ontology.constants);
   EXPECT_EQ(_action_joke + "(?human -> h1)", _solveStr(problem, actions, ontology));
 }
 
@@ -1340,7 +1346,7 @@ void _actionWithParametersInPreconditionsAndEffectsWithoutSolution()
 
   ogp::Problem problem;
   _addFact(problem.worldState, "isEngaged(h2)", problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("isHappy(h1)", ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStr(problem, actions, ontology));
 }
 
@@ -1365,7 +1371,7 @@ void _actionWithParametersInsideThePath()
 
   ogp::Problem problem;
   _addFact(problem.worldState, "place=kitchen", problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)});
+  _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?target -> entrance)" + _sep +
             _action_welcome, _solveStr(problem, actions, ontology));
   EXPECT_TRUE(_hasFact(problem.worldState, "place=entrance", ontology));
@@ -1382,7 +1388,7 @@ void _testPersistGoal()
   actions.emplace(_action_welcome, ogp::Action({}, _worldStateModification_fromStr("welcomePeople", ontology)));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)});
+  _setGoalsForAPriority(problem, {_goal("welcomePeople", ontology)}, ontology.constants);
   EXPECT_EQ(1, problem.goalStack.goals().size());
   EXPECT_EQ(_action_welcome, _solveStr(problem, actions, ontology));
   EXPECT_EQ(0, problem.goalStack.goals().size());
@@ -1390,7 +1396,7 @@ void _testPersistGoal()
   EXPECT_EQ(0, problem.goalStack.goals().size());
 
   problem = ogp::Problem();
-  _setGoalsForAPriority(problem, {_goal("persist(welcomePeople)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("persist(welcomePeople)", ontology)}, ontology.constants);
   EXPECT_EQ(1, problem.goalStack.goals().size());
   EXPECT_EQ(_action_welcome, _solveStr(problem, actions, ontology));
   EXPECT_EQ(1, problem.goalStack.goals().size());
@@ -1410,7 +1416,7 @@ void _testPersistImplyGoal()
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_greeted + ", " + _fact_checkedIn + "))", ontology)});
+  _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_greeted + ", " + _fact_checkedIn + "))", ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStr(problem, actions, ontology));
   _addFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
   EXPECT_EQ(_action_checkIn, _solveStr(problem, actions, ontology));
@@ -1428,7 +1434,7 @@ void _testImplyGoal()
   actions.emplace(_action_checkIn, ogp::Action({}, _worldStateModification_fromStr(_fact_checkedIn, ontology)));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("imply(" + _fact_greeted + ", " + _fact_checkedIn + ")", ontology)});
+  _setGoalsForAPriority(problem, {_goal("imply(" + _fact_greeted + ", " + _fact_checkedIn + ")", ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStr(problem, actions, ontology));
   // It is not a persistent goal it is removed
   _addFact(problem.worldState, _fact_greeted, problem.goalStack, ontology);
@@ -1514,13 +1520,13 @@ void _stackablePropertyOfGoals()
   actions.emplace(_action_presentation, ogp::Action({}, _worldStateModification_fromStr(_fact_presented, ontology)));
 
   ogp::Problem problem;
-  _setGoals(problem, {{10, {_goal(_fact_greeted, ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
+  _setGoals(problem, {{10, {_goal(_fact_greeted, ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, ontology.constants);
   EXPECT_EQ(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem, actions, ontology));
 
   ogp::Problem problem2;
-  _setGoals(problem2, {{10, {_goal(_fact_greeted, ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
-  problem2.goalStack.pushFrontGoal(_goal(_fact_presented, ontology), problem2.worldState, {}, 10);
+  _setGoals(problem2, {{10, {_goal(_fact_greeted, ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, ontology.constants);
+  problem2.goalStack.pushFrontGoal(_goal(_fact_presented, ontology), problem2.worldState, ontology.constants, problem2.entities, {}, 10);
   EXPECT_EQ(_action_presentation + _sep +
             _action_goodBoy, _solveStr(problem2, actions, ontology));
 }
@@ -1543,26 +1549,26 @@ void _doNotRemoveAGoalWithMaxTimeToKeepInactiveEqual0BelowAGoalWithACondotionNot
 
   // Even if _fact_checkedIn has maxTimeToKeepInactive equal to 0, it is not removed because the goal with a higher priority is inactive.
   ogp::Problem problem;
-  _setGoals(problem, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
+  _setGoals(problem, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, ontology.constants);
   EXPECT_EQ(_action_checkIn + _sep +
             _action_goodBoy, _solveStr(problem, actions, ontology));
 
   ogp::Problem problem2;
   _addFact(problem2.worldState, _fact_presented, problem2.goalStack, ontology); // The difference here is that the condition of the first goal is satisfied
-  _setGoals(problem2, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
+  _setGoals(problem2, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, ontology.constants);
   EXPECT_EQ(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem2, actions, ontology));
 
 
   ogp::Problem problem3;
-  _setGoals(problem3, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
+  _setGoals(problem3, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, ontology.constants);
   _addFact(problem3.worldState, _fact_presented, problem3.goalStack, ontology); // The difference here is that the condition is validated after the add of the goal
   EXPECT_EQ(_action_greet + _sep +
             _action_goodBoy, _solveStr(problem3, actions, ontology));
 
 
   ogp::Problem problem4;
-  _setGoals(problem4, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}});
+  _setGoals(problem4, {{10, {_goal("imply(" + _fact_presented + ", " + _fact_greeted + ")", ontology, 0)}}, {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, ontology.constants);
   _addFact(problem4.worldState, _fact_presented, problem4.goalStack, ontology); // Here _fact_checkedIn goal shoud be removed from the stack
   _removeFact(problem4.worldState, _fact_presented, problem4.goalStack, ontology); // The difference here is that the condition was validated only punctually
   EXPECT_EQ(_action_goodBoy, _solveStr(problem4, actions, ontology));
@@ -1583,13 +1589,13 @@ void _checkMaxTimeToKeepInactiveForGoals()
 
 
   ogp::Problem problem;
-  _setGoals(problem, {{10, {_goal(_fact_greeted, ontology), _goal(_fact_checkedIn, ontology, 60)}}}, now);
+  _setGoals(problem, {{10, {_goal(_fact_greeted, ontology), _goal(_fact_checkedIn, ontology, 60)}}}, ontology.constants, now);
   EXPECT_EQ(_action_greet + _sep +
             _action_checkIn, _solveStr(problem, actions, ontology, now));
 
 
   ogp::Problem problem2;
-  _setGoals(problem2, {{10, {_goal(_fact_greeted, ontology), _goal(_fact_checkedIn, ontology, 60)}}}, now);
+  _setGoals(problem2, {{10, {_goal(_fact_greeted, ontology), _goal(_fact_checkedIn, ontology, 60)}}}, ontology.constants, now);
   now = std::make_unique<std::chrono::steady_clock::time_point>(*now + std::chrono::seconds(100));
   EXPECT_EQ(_action_greet, _solveStr(problem2, actions, ontology, now));
 }
@@ -1627,7 +1633,7 @@ void _changePriorityOfGoal()
     EXPECT_EQ(2, goals.find(10)->second.size());
   }
 
-  problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, true, problem.worldState, _now);
+  problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, true, problem.worldState, ontology.constants, problem.entities, _now);
   {
     auto& goals = problem.goalStack.goals();
     EXPECT_EQ(goalsFromSubscription, goals);
@@ -1639,7 +1645,7 @@ void _changePriorityOfGoal()
   }
 
   _setGoals(problem, {{9, {_fact_userSatisfied}}, {10, {_fact_greeted, _fact_checkedIn}}}, ontology);
-  problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, false, problem.worldState, _now);
+  problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, false, problem.worldState, ontology.constants, problem.entities, _now);
   {
     auto& goals = problem.goalStack.goals();
     EXPECT_EQ(goalsFromSubscription, goals);
@@ -1651,7 +1657,7 @@ void _changePriorityOfGoal()
   }
 
   _setGoals(problem, {{10, {_fact_greeted, _fact_checkedIn}}}, ontology);
-  problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, true, problem.worldState, _now);
+  problem.goalStack.changeGoalPriority(_fact_checkedIn, 9, true, problem.worldState, ontology.constants, problem.entities, _now);
   {
     auto& goals = problem.goalStack.goals();
     EXPECT_EQ(goalsFromSubscription, goals);
@@ -1815,7 +1821,7 @@ void _checkEventsWithImply()
                                 _worldStateModification_fromStr(_fact_userWantsToCheckedIn + " & !" + _fact_headTouched, ontology)));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))", ontology)});
+  _setGoalsForAPriority(problem, {_goal("persist(imply(" + _fact_userWantsToCheckedIn + ", " + _fact_checkedIn + "))", ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfEvents();
   _addFact(problem.worldState, _fact_headTouched, problem.goalStack, ontology, setOfReferencesMap, _now);
@@ -1839,7 +1845,7 @@ void _checkEventWithPunctualCondition()
                                 _worldStateModification_fromStr(_fact_userWantsToCheckedIn, ontology)));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
+  _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfEvents();
   _addFact(problem.worldState, _fact_punctual_headTouched, problem.goalStack, ontology, setOfReferencesMap, _now);
@@ -1866,7 +1872,7 @@ void _checkEventAtEndOfAPlan()
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
+  _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStr(problem, domain, _now));
   auto& setOfReferencesMap = domain.getSetOfEvents();
   _addFact(problem.worldState, _fact_punctual_headTouched, problem.goalStack, ontology, setOfReferencesMap, _now);
@@ -1901,7 +1907,7 @@ void _checkEventInsideAPlan()
   }
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStrConst(problem, domain));
 
   domain.addSetOfEvents(ogp::Event(_condition_fromStr(_fact_b, ontology),
@@ -1956,7 +1962,7 @@ void _checkEventThatAddAGoal()
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("imply(" + _fact_g + ", " + _fact_d + ")", ontology)});
+  _setGoalsForAPriority(problem, {_goal("imply(" + _fact_g + ", " + _fact_d + ")", ontology)}, ontology.constants);
   EXPECT_EQ("", _solveStrConst(problem, domain));
   auto& setOfEventsMap = domain.getSetOfEvents();
   _addFact(problem.worldState, _fact_g, problem.goalStack, ontology, setOfEventsMap, _now);
@@ -1982,19 +1988,19 @@ void _testGetNotSatisfiedGoals()
   _addGoalsForAPriority(problem, {goal2, goal3, goal4}, ontology);
 
   EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3 + ", " + goal4, ogp::printGoals(problem.goalStack.goals()));
-  EXPECT_EQ(goal2 + ", " + goal4, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal2 + ", " + goal4, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState, ontology.constants, problem.entities)));
   _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
-  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal4, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal4, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState, ontology.constants, problem.entities)));
   _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
-  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal1 + ", " + goal2 + ", " + goal3, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState, ontology.constants, problem.entities)));
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology);
-  EXPECT_EQ(goal1 + ", " + goal2, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal1 + ", " + goal2, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState, ontology.constants, problem.entities)));
   _removeFact(problem.worldState, _fact_a, problem.goalStack, ontology);
-  EXPECT_EQ(goal2, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal2, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState, ontology.constants, problem.entities)));
   _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
-  EXPECT_EQ("", ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ("", ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState, ontology.constants, problem.entities)));
   _removeFact(problem.worldState, _fact_d, problem.goalStack, ontology);
-  EXPECT_EQ(goal3, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState)));
+  EXPECT_EQ(goal3, ogp::printGoals(problem.goalStack.getNotSatisfiedGoals(problem.worldState, ontology.constants, problem.entities)));
 }
 
 
@@ -2020,22 +2026,22 @@ void _testGoalUnderPersist()
   {
     ogp::Problem problem;
     _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, ontology.constants, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
     _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
-    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, ontology.constants, now, ogp::GoalStack::getDefaultPriority());
+    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, ontology.constants, problem.entities, {});
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
     _addGoalsForAPriority(problem, {"persist(!" + _fact_a + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, ontology.constants, now, ogp::GoalStack::getDefaultPriority());
     _addFact(problem.worldState, _fact_a, problem.goalStack, ontology);
     EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain));
   }
@@ -2045,7 +2051,7 @@ void _testGoalUnderPersist()
     _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
     EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain));
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, ontology.constants, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
@@ -2053,8 +2059,8 @@ void _testGoalUnderPersist()
     ogp::Problem problem;
     _addGoalsForAPriority(problem, {"persist(" + _fact_c + ")"}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
-    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
+    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, ontology.constants, problem.entities, {});
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, ontology.constants, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
@@ -2062,30 +2068,30 @@ void _testGoalUnderPersist()
     ogp::Problem problem;
     _addGoalsForAPriority(problem, {_fact_c}, ontology, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain).actionInvocation.actionId);
-    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, {});
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, now, ogp::GoalStack::getDefaultPriority());
+    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, ontology.constants, problem.entities, {});
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 0)}, ontology.constants, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain));
   }
 
   {
     ogp::Problem problem;
-    problem.goalStack.pushBackGoal({_goal("persist(!" + _fact_e + ")", ontology)}, problem.worldState, now, ogp::GoalStack::getDefaultPriority() + 2);
-    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, ogp::GoalStack::getDefaultPriority() + 2);
+    problem.goalStack.pushBackGoal({_goal("persist(!" + _fact_e + ")", ontology)}, problem.worldState, ontology.constants, problem.entities, now, ogp::GoalStack::getDefaultPriority() + 2);
+    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, ontology.constants, problem.entities, now, ogp::GoalStack::getDefaultPriority() + 2);
     EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId);
-    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
-    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 1)}, now, ogp::GoalStack::getDefaultPriority());
+    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, ontology.constants, problem.entities, now);
+    _addGoalsForAPriority(problem, {_goal(_fact_b, ontology, 1)}, ontology.constants, now, ogp::GoalStack::getDefaultPriority());
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain, now));
     EXPECT_EQ(action1, _lookForAnActionToDoStr(problem, domain, now));
 
     _removeFact(problem.worldState, _fact_c, problem.goalStack, ontology);
-    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, now, ogp::GoalStack::getDefaultPriority() + 2);
+    problem.goalStack.pushBackGoal(_goal(_fact_c, ontology), problem.worldState, ontology.constants, problem.entities, now, ogp::GoalStack::getDefaultPriority() + 2);
     auto plannerResult = _lookForAnActionToDo(problem, domain, now);
     EXPECT_EQ(action2, plannerResult.actionInvocation.actionId);
 
     now = std::make_unique<std::chrono::steady_clock::time_point>(std::chrono::steady_clock::now() + std::chrono::minutes(5));
     ogp::notifyActionDone(problem, domain, _emptyCallbacks, plannerResult, now);
 
-    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, now);
+    problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, ontology.constants, problem.entities, now);
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, now).actionInvocation.actionId); // Not action1 because it was inactive for too long
   }
 
@@ -2106,7 +2112,7 @@ void _checkLinkedEvents()
 
   ogp::SetOfEvents setOfEvents;
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)});
+  _setGoalsForAPriority(problem, {_goal("persist(!" + _fact_userWantsToCheckedIn + ")", ontology)}, ontology.constants);
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_punctual_p2, ontology),
                              _worldStateModification_fromStr(_fact_a, ontology)));
   setOfEvents.add(ogp::Event(_condition_fromStr(_fact_punctual_p5, ontology),
@@ -2144,8 +2150,8 @@ void _oneStepTowards()
   auto implyGoal = _goal("persist(imply(" + _fact_a + ", " + _fact_b + "))", ontology, 0);
   _setGoals(problem, {{11, {implyGoal}},
                       {10, {_goal("oneStepTowards(" + _fact_greeted + ")", ontology, 0)}},
-                      {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, _now);
-  problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, _now);
+                      {9, {_goal(_fact_checkedIn, ontology, 0), _goal(_fact_beHappy, ontology)}}}, ontology.constants, _now);
+  problem.goalStack.removeFirstGoalsThatAreAlreadySatisfied(problem.worldState, ontology.constants, problem.entities, _now);
   EXPECT_EQ(_action_greet, _lookForAnActionToDoStr(problem, domain, _now));
   EXPECT_EQ(_action_greet, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
   EXPECT_EQ(_action_goodBoy, _lookForAnActionToDoStr(problem, domain, _now));
@@ -2182,7 +2188,7 @@ void _infrenceLinksFromManyEventsSets()
                                    {}, _emptyParameters,
                                    {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology)}}}));
   ogp::Problem problem;
-  _setGoals(problem, {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology, 0)}}});
+  _setGoals(problem, {{lowPriority, {_goal("oneStepTowards(" + _fact_d + ")", ontology, 0)}}}, ontology.constants);
 
   {
     ogp::SetOfEvents setOfEvents2;
@@ -2218,7 +2224,7 @@ void _factValueModification()
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
-  _setGoals(problem, {{10, {_goal("persist(imply(" + _fact_a + "=a, " + "!" + _fact_b + "))", ontology, 0)}}});
+  _setGoals(problem, {{10, {_goal("persist(imply(" + _fact_a + "=a, " + "!" + _fact_b + "))", ontology, 0)}}}, ontology.constants);
 
   _addFact(problem.worldState, _fact_b, problem.goalStack, ontology);
   EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain, _now));
@@ -2282,7 +2288,7 @@ void _setWsModification()
   ogp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(object)=kitchen", problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal("location(me)=kitchen", ontology)});
+  _setGoalsForAPriority(problem, {_goal("location(me)=kitchen", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate, _solveStr(problem, actions, ontology));
 }
 
@@ -2308,7 +2314,7 @@ void _forAllWsModification()
   _addFact(problem.worldState, "grab(me, object1)", problem.goalStack, ontology);
   _addFact(problem.worldState, "grab(me, object2)", problem.goalStack, ontology);
 
-  _setGoalsForAPriority(problem, {_goal("location(object2)=corridor", ontology)});
+  _setGoalsForAPriority(problem, {_goal("location(object2)=corridor", ontology)}, ontology.constants);
   EXPECT_EQ(action1, _solveStr(problem, actions, ontology));
 }
 
@@ -2340,7 +2346,7 @@ void _actionNavigationAndGrabObjectWithParameters()
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   const auto& setOfFacts = problem.worldState.factsMapping();
   EXPECT_EQ("kitchen", setOfFacts.getFactFluent(_fact("location(sweets)=*", ontology))->value);
-  _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)",
             _solveStr(problem, actions, ontology));
 }
@@ -2373,7 +2379,7 @@ void _actionNavigationAndGrabObjectWithParameters2()
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
   const auto& setOfFacts = problem.worldState.factsMapping();
   EXPECT_EQ("kitchen", setOfFacts.getFactFluent(_fact("location(sweets)=*", ontology))->value);
-  _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("grab(me, sweets)", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets)",
             _solveStr(problem, actions, ontology));
 }
@@ -2413,7 +2419,7 @@ void _moveObject()
   ogp::Problem problem;
   _addFact(problem.worldState, "location(me)=corridor", problem.goalStack, ontology);
   _addFact(problem.worldState, "location(sweets)=kitchen", problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal("location(sweets)=bedroom", ontology)});
+  _setGoalsForAPriority(problem, {_goal("location(sweets)=bedroom", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen), " + _action_grab + "(?object -> sweets), " +
             actionNavigate2 + "(?object -> sweets, ?targetLocation -> bedroom)",
             _solveStr(problem, actions, ontology));
@@ -2461,7 +2467,7 @@ void _moveAndUngrabObject()
 
   auto& setOfEventsMap = domain.getSetOfEvents();
   _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)}, ontology.constants);
 
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2531,14 +2537,14 @@ void _failToMoveAnUnknownObject()
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)}, ontology.constants);
 
   auto& setOfEventsMap = domain.getSetOfEvents();
   _addFact(problem.worldState, "charging(me)", problem.goalStack, ontology, setOfEventsMap, _now);
   EXPECT_EQ(actionWhereIsObject + "(?aLocation -> bedroom, ?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   _addFact(problem.worldState, "locationOfObj(sweets)=kitchen", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfObj(sweets)=bedroom & !grab(me, sweets)", ontology)}, ontology.constants);
   EXPECT_EQ(actionLeavePod, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_navigate + "(?targetLocation -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2598,18 +2604,18 @@ void _completeMovingObjectScenario()
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets", ontology)}, ontology.constants);
 
   EXPECT_EQ(actionWhereIsObject + "(?aLocation -> bedroom, ?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   auto& setOfEventsMap = domain.getSetOfEvents();
   _addFact(problem.worldState, "locationOfObject(sweets)=kitchen", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=bedroom & !grab(me)=sweets", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_navigate + "(?targetPlace -> bedroom)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_ungrab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
-  _setGoalsForAPriority(problem, {_goal("locationOfObject(bottle)=entrance & !grab(me)=bottle", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfObject(bottle)=entrance & !grab(me)=bottle", ontology)}, ontology.constants);
   EXPECT_EQ(actionWhereIsObject + "(?aLocation -> entrance, ?object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -2649,7 +2655,7 @@ void _moveAnObject()
   auto& setOfEventsMap = domain.getSetOfEvents();
   _addFact(problem.worldState, "locationOfObject(sweets)=kitchen", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "locationOfObject(entrance_checkpoint)=entrance", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=entrance", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfObject(sweets)=entrance", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?e -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_grab + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(_action_navigate + "(?e -> entrance_checkpoint)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2673,7 +2679,7 @@ void _matchSkillWithObjectsWithASubType()
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("locationOfRobot=kitchen", ontology)});
+  _setGoalsForAPriority(problem, {_goal("locationOfRobot=kitchen", ontology)}, ontology.constants);
   EXPECT_EQ(_action_navigate + "(?targetPlace -> kitchen)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -2728,7 +2734,7 @@ void _eventWithANegatedFactWithParameter()
   _addFact(problem.worldState, "grabLeftHand(me)=sweets", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "grabRightHand(me)=sweets", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "grab(me, sweets)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal("!grab(me, sweets)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("!grab(me, sweets)", ontology)}, ontology.constants);
 
   EXPECT_EQ(actionUngrabBothHands + "(?object -> sweets)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2736,7 +2742,7 @@ void _eventWithANegatedFactWithParameter()
 
   _addFact(problem.worldState, "grabLeftHand(me)=bottle", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "grab(me, bottle)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal("!grab(me, bottle)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("!grab(me, bottle)", ontology)}, ontology.constants);
   EXPECT_EQ(actionUngrabLeftHand + "(?object -> bottle)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 
@@ -2744,7 +2750,7 @@ void _eventWithANegatedFactWithParameter()
   _addFact(problem.worldState, "grab(me, bottle)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "grabRightHand(me)=glass", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, "grab(me, glass)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal("!grab(me, glass)", ontology)});
+  _setGoalsForAPriority(problem, {_goal("!grab(me, glass)", ontology)}, ontology.constants);
   EXPECT_EQ(actionUngrabRightHand + "(?object -> glass)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_FALSE(_hasFact(problem.worldState, "grab(me, glass)", ontology));
 }
@@ -2778,7 +2784,7 @@ void _actionWithANegatedFactNotTriggeredIfNotNecessary()
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
 
   EXPECT_EQ(action3, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2839,7 +2845,7 @@ void _linkWithAnyValueInCondition()
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_a + "=toto", problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
   EXPECT_EQ(action2 + "(?aVal -> toto)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -2861,7 +2867,7 @@ void _removeAFactWithAnyValue()
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_b + "=toto", problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal(_fact_a, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_a, ontology)}, ontology.constants);
   EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_FALSE(_hasFact(problem.worldState, _fact_b + "=toto", ontology));
 }
@@ -2895,7 +2901,7 @@ void _notDeducePathIfTheParametersOfAFactAreDifferents()
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_a + "(e2)", problem.goalStack, ontology);
   _addFact(problem.worldState, _fact_c, problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)}, ontology.constants);
 
   EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.actionId);
 }
@@ -2976,7 +2982,7 @@ void _actionWithFactWithANegatedFact()
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_e, problem.goalStack, ontology);
-  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)}, ontology.constants);
 
   EXPECT_EQ(action3, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3001,21 +3007,21 @@ void _negatedFactValueInWorldState()
 
   {
     ogp::Problem problem;
-    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   }
 
   {
     ogp::Problem problem;
     _addFact(problem.worldState, _fact_a + "=b", problem.goalStack, ontology);
-    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   }
 
   {
     ogp::Problem problem;
     _addFact(problem.worldState, _fact_a + "=c", problem.goalStack, ontology);
-    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
 
     EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3024,7 +3030,7 @@ void _negatedFactValueInWorldState()
   {
     ogp::Problem problem;
     _addFact(problem.worldState, _fact_a + "!=b", problem.goalStack, ontology);
-    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
 
     EXPECT_EQ(action1, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
     EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3047,13 +3053,13 @@ void _problemThatUseADomainThatChangedSinceLastUsage()
   ogp::Domain domain(std::move(actions), ontology);
 
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
   EXPECT_EQ("", _lookForAnActionToDoStr(problem, domain, _now)); // set problem cache about domain
 
   domain.addAction(action2, ogp::Action({},
                                         _worldStateModification_fromStr(_fact_a, ontology)));
 
-  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
   EXPECT_EQ(action2, _lookForAnActionToDoStr(problem, domain, _now)); // as domain as changed since last time the problem cache should be regenerated
 }
 
@@ -3090,7 +3096,7 @@ void _checkFilterFactInCondition()
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(obj1, loc2)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)}, ontology.constants);
   EXPECT_EQ(action1 + "(?obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action2 + "(?loc -> loc1, ?obj -> obj1)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3137,7 +3143,7 @@ void _checkFilterFactInConditionAndThenPropagate()
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_b + "(obj1, loc1)", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(obj2, loc2)", problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal(_fact_d + "(loc2)", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d + "(loc2)", ontology)}, ontology.constants);
   EXPECT_EQ(action1 + "(?obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action2 + "(?loc -> loc2, ?obj -> obj2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action3 + "(?loc -> loc2)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3159,7 +3165,7 @@ void _checkOutputValueOfLookForAnActionToDo()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_a, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_a, ontology)}, ontology.constants);
 
   {
     ogp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
@@ -3179,7 +3185,7 @@ void _checkOutputValueOfLookForAnActionToDo()
   }
 
   {
-    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)});
+    _setGoalsForAPriority(problem, {_goal(_fact_b, ontology)}, ontology.constants);
     ogp::LookForAnActionOutputInfos lookForAnActionOutputInfos;
     auto res = ogp::planForMoreImportantGoalPossible(problem, domain, true, _now, nullptr, &lookForAnActionOutputInfos);
     assert(res.empty());
@@ -3239,7 +3245,7 @@ void _hardProblemThatNeedsToBeSmart()
 
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)}, ontology.constants);
 
   EXPECT_EQ(action1 + "(?obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action4, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3305,7 +3311,7 @@ void _hardProblemThatNeedsToBeSmartWithAnEvent()
 
   ogp::Problem problem;
   _addFact(problem.worldState, _fact_d, problem.goalStack, ontology, setOfEventsMap, _now);
-  _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_e, ontology)}, ontology.constants);
 
   EXPECT_EQ(action1 + "(?obj -> val3)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ(action1 + "(?obj -> val1)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3346,7 +3352,7 @@ void _checkOverallEffectDuringParallelisation()
 
   ogp::Domain domain(std::move(actions), ontology);
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)}, ontology.constants);
 
   EXPECT_EQ(action1, _lookForAnActionToDoInParallelThenNotifyToStr(problem, domain, _now));
   EXPECT_TRUE(_hasFact(problem.worldState, _fact_e, ontology));
@@ -3380,7 +3386,7 @@ void _orInCondition()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_a, problem.goalStack, ontology, setOfEventsMap, _now);
 
   EXPECT_EQ(action2, _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
@@ -3455,7 +3461,7 @@ void _assignAnotherValueToSatisfyNotGoal()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)});
+  _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)}, ontology.constants);
 
   EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
   _addFact(problem.worldState, _fact_a + "=titi", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3478,7 +3484,7 @@ void _assignUndefined()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)});
+  _setGoalsForAPriority(problem, {_goal("!" + _fact_a + "=titi", ontology)}, ontology.constants);
 
   EXPECT_EQ("", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
   _addFact(problem.worldState, _fact_a + "=titi", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3509,7 +3515,7 @@ void _assignAFact()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_a + "=valGoal", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_a + "=valGoal", ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3543,7 +3549,7 @@ void _assignAFactToAction()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_c, ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3581,7 +3587,7 @@ void _assignAFactThenCheckEqualityWithAnotherFact()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3623,7 +3629,7 @@ void _assignAFactThenCheckExistWithAnotherFact()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3669,7 +3675,7 @@ void _existWithEqualityInEvent()
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_a + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3685,7 +3691,7 @@ void _existWithEqualityInEvent()
   _addFact(problem.worldState, _fact_c + "(pc1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   EXPECT_EQ(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p1)", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p1)", ontology)}, ontology.constants);
   EXPECT_EQ(action1 + "(?o -> p1)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -3722,7 +3728,7 @@ void _existWithEqualityInEvent_withEqualityInverted()
   ogp::Domain domain(std::move(actions), ontology, std::move(setOfEvents));
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p2)", ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_a + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_a + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_a + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3738,7 +3744,7 @@ void _existWithEqualityInEvent_withEqualityInverted()
   _addFact(problem.worldState, _fact_c + "(pc1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   EXPECT_EQ(action1 + "(?o -> p2)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
-  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p1)", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d + "(p1)", ontology)}, ontology.constants);
   EXPECT_EQ(action1 + "(?o -> p1)", _lookForAnActionToDoConst(problem, domain, _now).actionInvocation.toStr());
 }
 
@@ -3802,7 +3808,7 @@ void _fixEventWithFluentInParameter()
             "action: action2\n", domain.printSuccessionCache());
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
 
@@ -3858,7 +3864,7 @@ void _derivedPredicates()
 
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_d, ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_c + "(pc2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
 
@@ -3896,7 +3902,7 @@ void _assignAFactTwoTimesInTheSamePlan()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_a + "=kitchen", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_a + "=kitchen", ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);
@@ -3950,7 +3956,7 @@ void _checkTwoTimesTheEqualityOfAFact()
   ogp::Domain domain(std::move(actions), ontology);
   auto& setOfEventsMap = domain.getSetOfEvents();
   ogp::Problem problem;
-  _setGoalsForAPriority(problem, {_goal(_fact_f + "=bedroom", ontology)});
+  _setGoalsForAPriority(problem, {_goal(_fact_f + "=bedroom", ontology)}, ontology.constants);
   _addFact(problem.worldState, _fact_b + "(p1)=aVal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p2)=valGoal", problem.goalStack, ontology, setOfEventsMap, _now);
   _addFact(problem.worldState, _fact_b + "(p3)=anotherVal", problem.goalStack, ontology, setOfEventsMap, _now);

@@ -29,6 +29,7 @@ void notifyActionInvocationDone(Problem& pProblem,
 
   pGoalChanged = pProblem.goalStack.notifyActionDone(pOnStepOfPlannerResult, pNow, pGoalsToAdd,
                                                      pGoalsToAddInCurrentPriority, pProblem.worldState,
+                                                     pOntology.constants, pProblem.entities,
                                                      pLookForAnActionOutputInfosPtr) || pGoalChanged;
 }
 

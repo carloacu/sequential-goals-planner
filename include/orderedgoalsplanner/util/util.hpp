@@ -18,6 +18,7 @@ struct ActionsToDoInParallel;
 struct Entity;
 struct Goal;
 struct Parameter;
+struct SetOfEntities;
 
 
 // A variant type that can hold either int or float
@@ -97,6 +98,11 @@ void rtrim(std::string& s);
 ORDEREDGOALSPLANNER_API
 void trim(std::string& s);
 
+
+ORDEREDGOALSPLANNER_API
+bool hasAnEntyTypeWihTypename(const std::string& pParamtypename,
+                             const ogp::SetOfEntities& pConstants,
+                             const ogp::SetOfEntities& pObjects);
 
 template <typename T>
 bool areUPtrEqual(const std::unique_ptr<T>& pPtr1,

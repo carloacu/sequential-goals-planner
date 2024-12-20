@@ -28,11 +28,13 @@ void _test_pddlSerializationParts()
     ontology.predicates = ogp::SetOfPredicates::fromPddl("(pred_a ?e - entity)\n"
                                                         "pred_b\n"
                                                         "(pred_c ?e - entity)\n"
+                                                        "(pred_d ?e - entity) - entity\n"
                                                         "(battery-amount ?t - type1) - number", pos, ontology.types);
     EXPECT_EQ("battery-amount(?t - type1) - number\n"
               "pred_a(?e - entity)\n"
               "pred_b()\n"
-              "pred_c(?e - entity)", ontology.predicates.toStr());
+              "pred_c(?e - entity)\n"
+              "pred_d(?e - entity) - entity", ontology.predicates.toStr());
   }
 
   {
@@ -63,6 +65,15 @@ void _test_pddlSerializationParts()
     std::size_t pos = 0;
     ogp::Fact fact = ogp::Fact::fromPddl("(battery-amount toto)", ontology, {}, {}, pos, &pos, true);
     EXPECT_EQ("(battery-amount toto)", fact.toPddl(false));
+  }
+
+
+  {
+    std::size_t pos = 0;
+    std::unique_ptr<ogp::Condition> cond = ogp::pddlToCondition("(exists (?e - entity) (= (pred_d ?e) undefined))", pos, ontology, {}, {});
+    if (!cond)
+      ASSERT_TRUE(false);
+    EXPECT_EQ("exists(?e - entity, !pred_d(?e)=*)", cond->toStr());
   }
 
   {

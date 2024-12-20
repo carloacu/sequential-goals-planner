@@ -87,6 +87,8 @@ struct ORDEREDGOALSPLANNER_API Condition
   virtual bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState& pWorldState,
+      const SetOfEntities& pConstants,
+      const SetOfEntities& pObjects,
       const Fact& pFactFromEffect,
       const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
       const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
@@ -114,6 +116,8 @@ struct ORDEREDGOALSPLANNER_API Condition
    * @return True if this condition is satisfied.
    */
   virtual bool isTrue(const WorldState& pWorldState,
+                      const SetOfEntities& pConstants,
+                      const SetOfEntities& pObjects,
                       const std::set<Fact>& pPunctualFacts = {},
                       const std::set<Fact>& pRemovedFacts = {},
                       std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments = nullptr,
@@ -228,6 +232,8 @@ struct ORDEREDGOALSPLANNER_API ConditionNode : public Condition
                          bool pOnlyMandatoryFacts) const override;
   bool findConditionCandidateFromFactFromEffect(const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
                                                 const WorldState& pWorldState,
+                                                const SetOfEntities& pConstants,
+                                                const SetOfEntities& pObjects,
                                                 const Fact& pFactFromEffect,
                                                 const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
                                                 const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
@@ -236,6 +242,8 @@ struct ORDEREDGOALSPLANNER_API ConditionNode : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const SetOfFacts& pSetOfFact) const override;
   bool isTrue(const WorldState& pWorldState,
+              const SetOfEntities& pConstants,
+              const SetOfEntities& pObjects,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
@@ -296,6 +304,8 @@ struct ORDEREDGOALSPLANNER_API ConditionExists : public Condition
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState& pWorldState,
+      const SetOfEntities& pConstants,
+      const SetOfEntities& pObjects,
       const Fact& pFactFromEffect,
       const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
       const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
@@ -305,6 +315,8 @@ struct ORDEREDGOALSPLANNER_API ConditionExists : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
                   const SetOfFacts&) const override { return true; } // TODO
   bool isTrue(const WorldState& pWorldState,
+              const SetOfEntities& pConstants,
+              const SetOfEntities& pObjects,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
@@ -364,6 +376,8 @@ struct ORDEREDGOALSPLANNER_API ConditionNot : public Condition
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState& pWorldState,
+      const SetOfEntities& pConstants,
+      const SetOfEntities& pObjects,
       const Fact& pFactFromEffect,
       const std::map<Parameter, std::set<Entity>>& pFactFromEffectParameters,
       const std::map<Parameter, std::set<Entity>>* pFactFromEffectTmpParametersPtr,
@@ -373,6 +387,8 @@ struct ORDEREDGOALSPLANNER_API ConditionNot : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const SetOfFacts& pSetOfFact) const override { return true; } // TODO
   bool isTrue(const WorldState& pWorldState,
+              const SetOfEntities& pConstants,
+              const SetOfEntities& pObjects,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
@@ -429,6 +445,8 @@ struct ORDEREDGOALSPLANNER_API ConditionFact : public Condition
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>& pDoesConditionFactMatchFactFromEffect,
       const WorldState&,
+      const SetOfEntities&,
+      const SetOfEntities&,
       const Fact&,
       const std::map<Parameter, std::set<Entity>>&,
       const std::map<Parameter, std::set<Entity>>*,
@@ -437,6 +455,8 @@ struct ORDEREDGOALSPLANNER_API ConditionFact : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>& pFactCallback,
                   const SetOfFacts&) const override { return pFactCallback(factOptional); }
   bool isTrue(const WorldState& pWorldState,
+              const SetOfEntities& pConstants,
+              const SetOfEntities& pObjects,
               const std::set<Fact>& pPunctualFacts,
               const std::set<Fact>& pRemovedFacts,
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
@@ -490,6 +510,8 @@ struct ORDEREDGOALSPLANNER_API ConditionNumber : public Condition
   bool findConditionCandidateFromFactFromEffect(
       const std::function<bool (const FactOptional&)>&,
       const WorldState&,
+      const SetOfEntities&,
+      const SetOfEntities&,
       const Fact&,
       const std::map<Parameter, std::set<Entity>>&,
       const std::map<Parameter, std::set<Entity>>*,
@@ -498,6 +520,8 @@ struct ORDEREDGOALSPLANNER_API ConditionNumber : public Condition
   bool untilFalse(const std::function<bool (const FactOptional&)>&,
                   const SetOfFacts&) const override { return true; }
   bool isTrue(const WorldState&,
+              const SetOfEntities&,
+              const SetOfEntities&,
               const std::set<Fact>&,
               const std::set<Fact>&,
               std::map<Parameter, std::set<Entity>>*,
