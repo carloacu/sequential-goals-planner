@@ -7,6 +7,7 @@ option(
   include
 )
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include(orderedgoalsplanner-config.cmake)
 
