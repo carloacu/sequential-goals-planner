@@ -166,6 +166,8 @@ std::string _effectToPddl(
       return "(+ " + leftOperandStr + " " + rightOperandStr + ")";
     case WorldStateModificationNodeType::MINUS:
       return "(- " + leftOperandStr + " " + rightOperandStr + ")";
+    case WorldStateModificationNodeType::WHEN:
+      return "(when " + leftOperandStr + " " + rightOperandStr + ")";
     }
 
     throw std::runtime_error("Unkown WorldStateModificationNodeType type");

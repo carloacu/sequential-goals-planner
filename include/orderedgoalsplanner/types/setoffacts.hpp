@@ -105,6 +105,8 @@ struct ORDEREDGOALSPLANNER_API SetOfFacts
                                                  const Fact& pFact,
                                                  const std::string& pParameter) const;
 
+  bool hasFact(const Fact& pFact) const;
+
   bool empty() const { return _facts.empty(); }
 
 private:

@@ -75,7 +75,7 @@ requirements:
 - [x] `:existential-preconditions`
 - [ ] `:universal-preconditions`
 - [ ] `:quantified-preconditions`
-- [ ] `:conditional-effects`
+- [x] `:conditional-effects`
 - [x] `:fluents`
 - [x] `:numeric-fluents`
 - [x] `:object-fluents`

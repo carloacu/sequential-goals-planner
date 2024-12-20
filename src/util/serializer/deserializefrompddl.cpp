@@ -470,6 +470,17 @@ std::unique_ptr<WorldStateModification> _expressionParsedToWsModification(const 
                                                          std::move(leftOpPtr),
                                                          std::move(rightOpPtr));
   }
+  else if (pExpressionParsed.name == _whenWsFunctionName &&
+           pExpressionParsed.arguments.size() == 2)
+  {
+    auto itWhenArg = pExpressionParsed.arguments.begin();
+    auto& firstWhenArg = *itWhenArg;
+    ++itWhenArg;
+    auto& secondWhenArg = *itWhenArg;
+    res = std::make_unique<WorldStateModificationNode>(WorldStateModificationNodeType::WHEN,
+                                                       std::make_unique<WorldStateModificationFact>(firstWhenArg.toFact(pOntology, pEntities, {}, false)),
+                                                       _expressionParsedToWsModification(secondWhenArg, pOntology, pEntities, {}, false));
+  }
   else
   {
     if (pExpressionParsed.arguments.empty() && pExpressionParsed.value == "")

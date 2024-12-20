@@ -19,6 +19,7 @@ add_executable(
 
   src/test_arithmeticevaluator.cpp
   src/test_callbacks.cpp
+  src/test_conditional_effects_requirement.cpp
   src/test_evaluate.cpp
   src/test_existential_preconditions_requirement.cpp
   src/test_facttoconditions.cpp

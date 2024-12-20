@@ -18,7 +18,8 @@ enum class WorldStateModificationNodeType
   DECREASE,
   MULTIPLY,
   PLUS,
-  MINUS
+  MINUS,
+  WHEN
 };
 
 enum class WsModificationPart
@@ -65,7 +66,8 @@ struct WorldStateModificationNode : public WorldStateModification
         nodeType == WorldStateModificationNodeType::DECREASE ||
         nodeType == WorldStateModificationNodeType::MULTIPLY ||
         nodeType == WorldStateModificationNodeType::PLUS ||
-        nodeType == WorldStateModificationNodeType::MINUS)
+        nodeType == WorldStateModificationNodeType::MINUS ||
+        nodeType == WorldStateModificationNodeType::WHEN)
       return false;
     return (leftOperand && leftOperand->isOnlyASetOfFacts()) &&
         (rightOperand && rightOperand->isOnlyASetOfFacts());

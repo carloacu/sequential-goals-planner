@@ -386,6 +386,29 @@ void SetOfFacts::extractPotentialArgumentsOfAFactParameter(
 }
 
 
+bool SetOfFacts::hasFact(const Fact& pFact) const
+{
+  auto factMatchingInWs = find(pFact);
+  for (const auto& currFact : factMatchingInWs)
+  {
+    if (currFact.arguments().size() == pFact.arguments().size())
+    {
+      bool doesItMatch = true;
+      for (auto i = 0; i < pFact.arguments().size(); ++i)
+      {
+        if (pFact.arguments()[i] == currFact.arguments()[i])
+          continue;
+        doesItMatch = false;
+        break;
+      }
+      if (doesItMatch)
+        return true;
+    }
+  }
+  return false;
+}
+
+
 void SetOfFacts::_removeAValueForList(std::list<Fact>& pList,
                                      const Fact& pValue) const
 {
