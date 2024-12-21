@@ -955,7 +955,6 @@ bool _goalToPlanRec(
     int pPriority,
     const ActionPtrWithGoal* pPreviousActionPtr)
 {
-  pProblem.worldState.refreshCacheIfNeeded(pDomain);
   TreeOfAlreadyDonePath treeOfAlreadyDonePath;
 
   std::unique_ptr<ActionInvocationWithGoal> potentialRes;

@@ -25,7 +25,6 @@ struct ActionInvocationWithGoal;
 struct SetOfCallbacks;
 struct SetOfEvents;
 struct WorldStateModification;
-struct WorldStateCache;
 
 /**
  * @brief Current state of the world.<br/>
@@ -255,15 +254,10 @@ struct ORDEREDGOALSPLANNER_API WorldState
                               const std::map<Parameter, std::set<Entity>>* pParametersToConsiderAsAnyValuePtr = nullptr) const;
 
 
-  void refreshCacheIfNeeded(const Domain& pDomain);
-
-  const SetOfFacts& removableFacts() const;
-
 
 private:
   /// Facts of the world state.
   SetOfFacts _factsMapping;
-  std::unique_ptr<WorldStateCache> _cache;
 
   /// Stored what changed.
   struct WhatChanged

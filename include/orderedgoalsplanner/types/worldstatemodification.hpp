@@ -96,14 +96,6 @@ struct ORDEREDGOALSPLANNER_API WorldStateModification
   virtual ContinueOrBreak forAllThatCanBeModified(const std::function<ContinueOrBreak (const FactOptional&)>& pFactCallback) const = 0;
 
   /**
-   * @brief Iterate over all the optional facts that can be accessible.
-   * @param[in] pFactCallback Callback called for each optional fact that can be accessible.
-   * @param[in] pSetOfFact Facts to use to extract value of the facts.
-   */
-  virtual void iterateOverAllAccessibleFacts(const std::function<void (const FactOptional&)>& pFactCallback,
-                                             const SetOfFacts& pSetOfFact) const = 0;
-
-  /**
    * @brief Iterate over all the optional facts with fact value resolution according to the world state until the callback returns true.
    * @param[in] pFactCallback Callback called for each optional fact of this object.
    * @param[in] pSetOfFact Facts to use to extract value of the facts.

@@ -10,7 +10,6 @@
 #include <orderedgoalsplanner/util/util.hpp>
 #include <orderedgoalsplanner/util/serializer/deserializefrompddl.hpp>
 #include "expressionParsed.hpp"
-#include "worldstatecache.hpp"
 
 namespace ogp
 {
@@ -20,8 +19,7 @@ WorldState::WorldState(const SetOfFacts* pFactsPtr)
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
-    _factsMapping(pFactsPtr != nullptr ? *pFactsPtr : SetOfFacts()),
-    _cache(std::make_unique<WorldStateCache>(*this))
+    _factsMapping(pFactsPtr != nullptr ? *pFactsPtr : SetOfFacts())
 {
 }
 
@@ -31,8 +29,7 @@ WorldState::WorldState(const WorldState& pOther)
     onPunctualFacts(),
     onFactsAdded(),
     onFactsRemoved(),
-    _factsMapping(pOther._factsMapping),
-    _cache(std::make_unique<WorldStateCache>(*this, *pOther._cache))
+    _factsMapping(pOther._factsMapping)
 {
 }
 
@@ -45,7 +42,6 @@ WorldState::~WorldState()
 void WorldState::operator=(const WorldState& pOther)
 {
   _factsMapping = pOther._factsMapping;
-  _cache = std::make_unique<WorldStateCache>(*this, *pOther._cache);
 }
 
 
@@ -260,7 +256,6 @@ void WorldState::_addAFact(WhatChanged& pWhatChanged,
   {
     pWhatChanged.addedFacts.insert(pFact);
     _factsMapping.add(pFact, pCanFactsBeRemoved);
-    _cache->notifyAboutANewFact(pFact);
   }
 }
 
@@ -278,7 +273,6 @@ void WorldState::_removeAFact(WhatChanged& pWhatChanged,
 {
   pWhatChanged.removedFacts.insert(pFact);
   _factsMapping.erase(pFact);
-  _cache->clear();
 }
 
 void WorldState::_modify(WhatChanged& pWhatChanged,
@@ -340,7 +334,6 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
   _factsMapping.clear();
   for (const auto& currFact : pFacts)
     _factsMapping.add(currFact);
-  _cache->clear();
   WhatChanged whatChanged;
   pGoalStack._removeNoStackableGoalsAndNotifyGoalsChanged(*this, pOntology.constants, pEntities, pNow);
   bool goalChanged = false;
@@ -476,18 +469,6 @@ void WorldState::iterateOnMatchingFacts
         break;
 }
 
-
-
-void WorldState::refreshCacheIfNeeded(const Domain& pDomain)
-{
-  _cache->refreshIfNeeded(pDomain, _factsMapping.facts());
-}
-
-
-const SetOfFacts& WorldState::removableFacts() const
-{
-  return _cache->removableFacts();
-}
 
 
 bool WorldState::_tryToApplyEvent(std::set<EventId>& pEventsAlreadyApplied,

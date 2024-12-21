@@ -628,31 +628,6 @@ Fact Fact::fromPddl(const std::string& pStr,
 }
 
 
-bool Fact::replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToReplace)
-{
-  bool res = false;
-  for (const auto& currParam : pArgumentsToReplace)
-  {
-    for (auto& currFactParam : _arguments)
-    {
-      if (currFactParam.value == currParam.name)
-      {
-        currFactParam.value = Entity::anyEntityValue();
-        res = true;
-      }
-    }
-    if (_fluent && _fluent->value == currParam.name)
-    {
-      _fluent->value = Entity::anyEntityValue();
-      res = true;
-    }
-  }
-
-  _resetFactSignatureCache();
-  return res;
-}
-
-
 bool Fact::isInOtherFacts(const std::set<Fact>& pOtherFacts,
                           bool pParametersAreForTheFact,
                           std::map<Parameter, std::set<Entity>>* pNewParametersPtr,

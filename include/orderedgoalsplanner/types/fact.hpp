@@ -190,13 +190,6 @@ struct ORDEREDGOALSPLANNER_API Fact
                        bool pIsOkIfFluentIsMissing = false);
 
   /**
-   * @brief Set "any value" to all of the specified arguments.
-   * @param pArgumentsToReplace[in] Arguments to replace by "any value".
-   * @return True if at least one "any value" has been set, false otherwise.
-   */
-  bool replaceSomeArgumentsByAny(const std::vector<Parameter>& pArgumentsToReplace);
-
-  /**
    * @brief Does the fact matches any of the other facts.
    * @param[in] pOtherFacts Set of other facts.
    * @param[in] pParametersAreForTheFact If true, get the parameters from the fact else get the parameters from the set of other facts.
