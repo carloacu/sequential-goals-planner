@@ -619,47 +619,6 @@ bool ConditionNode::isTrue(const WorldState& pWorldState,
   return !pIsWrappingExpressionNegated;
 }
 
-bool ConditionNode::canBecomeTrue(const WorldState& pWorldState,
-                                  const std::vector<Parameter>& pParameters,
-                                  bool pIsWrappingExpressionNegated) const
-{
-  if (nodeType == ConditionNodeType::AND)
-  {
-    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
-      return pIsWrappingExpressionNegated;
-    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
-      return pIsWrappingExpressionNegated;
-  }
-  else if (nodeType == ConditionNodeType::OR)
-  {
-    if (leftOperand && leftOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
-      return !pIsWrappingExpressionNegated;
-    if (rightOperand && rightOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
-      return !pIsWrappingExpressionNegated;
-    return pIsWrappingExpressionNegated;
-  }
-  else if (nodeType == ConditionNodeType::IMPLY)
-  {
-    if (leftOperand && !leftOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
-      return !pIsWrappingExpressionNegated;
-    if (rightOperand && !rightOperand->canBecomeTrue(pWorldState, pParameters, pIsWrappingExpressionNegated))
-      return pIsWrappingExpressionNegated;
-  }
-  else if (nodeType == ConditionNodeType::EQUALITY && leftOperand && rightOperand)
-  {
-    auto* leftFactPtr = leftOperand->fcFactPtr();
-    auto* rightFactPtr = rightOperand->fcFactPtr();
-    if (leftFactPtr != nullptr && rightFactPtr != nullptr)
-    {
-      auto factToCheck = leftFactPtr->factOptional.fact;
-      const auto& setOfFacts = pWorldState.factsMapping();
-      factToCheck.setFluent(setOfFacts.getFactFluent(rightFactPtr->factOptional.fact));
-      return pWorldState.canFactBecomeTrue(factToCheck, pParameters);
-    }
-  }
-  return true;
-}
-
 bool ConditionNode::operator==(const Condition& pOther) const
 {
   auto* otherNodePtr = pOther.fcNodePtr();
@@ -857,33 +816,6 @@ bool ConditionExists::isTrue(const WorldState& pWorldState,
 }
 
 
-bool ConditionExists::canBecomeTrue(const WorldState& pWorldState,
-                                    const std::vector<Parameter>& pParameters,
-                                    bool pIsWrappingExpressionNegated) const
-{
-  if (condition)
-  {
-    auto* factOfConditionPtr = condition->fcFactPtr();
-    if (factOfConditionPtr != nullptr)
-    {
-      const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-      std::set<Entity> potentialArgumentsOfTheParameter;
-      const auto& setOfFacts = pWorldState.factsMapping();
-      setOfFacts.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter,
-                                                           factToOfCondition, parameter.name);
-      for (auto& currPot : potentialArgumentsOfTheParameter)
-      {
-        auto factToCheck = factToOfCondition;
-        factToCheck.replaceArguments({{parameter, currPot}});
-        if (pWorldState.canFactBecomeTrue(factToCheck, pParameters))
-          return true;
-      }
-      return pIsWrappingExpressionNegated;
-    }
-  }
-  return true;
-}
-
 bool ConditionExists::operator==(const Condition& pOther) const
 {
   auto* otherExistsPtr = pOther.fcExistsPtr();
@@ -1059,32 +991,6 @@ bool ConditionForall::isTrue(const WorldState& pWorldState,
 }
 
 
-bool ConditionForall::canBecomeTrue(const WorldState& pWorldState,
-                                    const std::vector<Parameter>& pParameters,
-                                    bool pIsWrappingExpressionNegated) const
-{
-  if (condition)
-  {
-    auto* factOfConditionPtr = condition->fcFactPtr();
-    if (factOfConditionPtr != nullptr)
-    {
-      const auto& factToOfCondition = factOfConditionPtr->factOptional.fact;
-      std::set<Entity> potentialArgumentsOfTheParameter;
-      const auto& setOfFacts = pWorldState.factsMapping();
-      setOfFacts.extractPotentialArgumentsOfAFactParameter(potentialArgumentsOfTheParameter,
-                                                           factToOfCondition, parameter.name);
-      for (auto& currPot : potentialArgumentsOfTheParameter)
-      {
-        auto factToCheck = factToOfCondition;
-        factToCheck.replaceArguments({{parameter, currPot}});
-        if (pWorldState.canFactBecomeTrue(factToCheck, pParameters))
-          return true;
-      }
-      return pIsWrappingExpressionNegated;
-    }
-  }
-  return true;
-}
 
 bool ConditionForall::operator==(const Condition& pOther) const
 {
@@ -1227,15 +1133,6 @@ bool ConditionNot::isTrue(const WorldState& pWorldState,
 }
 
 
-bool ConditionNot::canBecomeTrue(const WorldState& pWorldState,
-                                 const std::vector<Parameter>& pParameters,
-                                 bool pIsWrappingExpressionNegated) const
-{
-  if (condition)
-    return condition->canBecomeTrue(pWorldState, pParameters, !pIsWrappingExpressionNegated);
-  return true;
-}
-
 bool ConditionNot::operator==(const Condition& pOther) const
 {
   auto* otherNotPtr = pOther.fcNotPtr();
@@ -1326,16 +1223,6 @@ bool ConditionFact::isTrue(const WorldState& pWorldState,
                            bool pIsWrappingExpressionNegated) const
 {
   bool res = pWorldState.isOptionalFactSatisfiedInASpecificContext(factOptional, pPunctualFacts, pRemovedFacts, false, pConditionParametersToPossibleArguments, nullptr, pCanBecomeTruePtr);
-  if (!pIsWrappingExpressionNegated)
-    return res;
-  return !res;
-}
-
-bool ConditionFact::canBecomeTrue(const WorldState& pWorldState,
-                                  const std::vector<Parameter>& pParameters,
-                                  bool pIsWrappingExpressionNegated) const
-{
-  bool res =  pWorldState.canFactOptBecomeTrue(factOptional, pParameters);
   if (!pIsWrappingExpressionNegated)
     return res;
   return !res;

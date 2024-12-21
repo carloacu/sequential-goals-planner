@@ -187,23 +187,6 @@ struct ORDEREDGOALSPLANNER_API WorldState
                 const SetOfEntities& pEntities,
                 const std::unique_ptr<std::chrono::steady_clock::time_point>& pNow);
 
-  /**
-   * @brief Can an optional fact become true, according to the world and the accessible facts stored internally in this object.
-   * @param[in] pFactOptional Optional fact to check if it can become true.
-   * @param[in] pParameters Parameter of the fact.
-   * @return True if the optional fact can become true, false otherwise.
-   */
-  bool canFactOptBecomeTrue(const FactOptional& pFactOptional,
-                            const std::vector<Parameter>& pParameters) const;
-
-  /**
-   * @brief Can a fact become true, according to the world and the accessible facts stored internally in this object.
-   * @param[in] pFact Fact to check if it can become true.
-   * @param[in] pParameters Parameter of the fact.
-   * @return True if the fact can become true, false otherwise.
-   */
-  bool canFactBecomeTrue(const Fact& pFact,
-                         const std::vector<Parameter>& pParameters) const;
 
   /// Facts of the world.
   const std::map<Fact, bool>& facts() const { return _factsMapping.facts(); }

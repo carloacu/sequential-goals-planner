@@ -298,8 +298,7 @@ PossibleEffect _lookForAPossibleDeduction(TreeOfAlreadyDonePath& pTreeOfAlreadyD
                                           const std::string& pFromDeductionId)
 {
   if (!pCondition ||
-      (pCondition->containsFactOpt(pFactOptional, pParentParameters, pTmpParentParametersPtr, pParameters) &&
-       pCondition->canBecomeTrue(pContext.problem.worldState, pParameters)))
+      pCondition->containsFactOpt(pFactOptional, pParentParameters, pTmpParentParametersPtr, pParameters))
   {
     PotentialNextActionParametersWithTmpData parametersWithData;
     for (const auto& currParam : pParameters)

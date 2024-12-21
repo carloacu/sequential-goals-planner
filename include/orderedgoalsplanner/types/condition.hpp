@@ -125,17 +125,6 @@ struct ORDEREDGOALSPLANNER_API Condition
                       bool* pCanBecomeTruePtr = nullptr,
                       bool pIsWrappingExpressionNegated = false) const = 0;
 
-  /**
-   * @brief Check if the condition can become true according to the facts that can become true in a world state.
-   * @param[in] pWorldState World state to consider.
-   * @param[in] pParameters Parameter of the condition.
-   * @param[in] pIsWrappingExpressionNegated Is the expression wrapping this call is negated.
-   * @return True if this condition can be satisfied.
-   */
-  virtual bool canBecomeTrue(const WorldState& pWorldState,
-                             const std::vector<Parameter>& pParameters,
-                             bool pIsWrappingExpressionNegated = false) const = 0;
-
   /// Equality operators.
   virtual bool operator==(const Condition& pOther) const = 0;
   virtual bool operator!=(const Condition& pOther) const { return !operator==(pOther); }
@@ -254,9 +243,6 @@ struct ORDEREDGOALSPLANNER_API ConditionNode : public Condition
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExpressionNegated) const override;
-  bool canBecomeTrue(const WorldState& pWorldState,
-                     const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const override;
@@ -329,9 +315,6 @@ struct ORDEREDGOALSPLANNER_API ConditionExists : public Condition
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExpressionNegated) const override;
-  bool canBecomeTrue(const WorldState& pWorldState,
-                     const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const SetOfFacts&) const override { return {}; }
@@ -404,9 +387,6 @@ struct ORDEREDGOALSPLANNER_API ConditionForall : public Condition
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExpressionNegated) const override;
-  bool canBecomeTrue(const WorldState& pWorldState,
-                     const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const SetOfFacts&) const override { return {}; }
@@ -478,9 +458,6 @@ struct ORDEREDGOALSPLANNER_API ConditionNot : public Condition
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExpressionNegated) const override;
-  bool canBecomeTrue(const WorldState& pWorldState,
-                     const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const SetOfFacts&) const override { return {}; }
@@ -548,9 +525,6 @@ struct ORDEREDGOALSPLANNER_API ConditionFact : public Condition
               std::map<Parameter, std::set<Entity>>* pConditionParametersToPossibleArguments,
               bool* pCanBecomeTruePtr,
               bool pIsWrappingExpressionNegated) const override;
-  bool canBecomeTrue(const WorldState& pWorldState,
-                     const std::vector<Parameter>& pParameters,
-                     bool pIsWrappingExpressionNegated) const override;
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const override;
@@ -615,9 +589,6 @@ struct ORDEREDGOALSPLANNER_API ConditionNumber : public Condition
               std::map<Parameter, std::set<Entity>>*,
               bool*,
               bool pIsWrappingExpressionNegated) const override { return !pIsWrappingExpressionNegated; }
-  bool canBecomeTrue(const WorldState&,
-                     const std::vector<Parameter>&,
-                     bool) const override  { return true; }
   bool operator==(const Condition& pOther) const override;
 
   std::optional<Entity> getFluent(const SetOfFacts& pSetOfFact) const override;

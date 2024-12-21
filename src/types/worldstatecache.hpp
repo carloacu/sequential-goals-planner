@@ -35,10 +35,10 @@ struct ORDEREDGOALSPLANNER_API WorldStateCache
   /// Clear accessible and removable facts.
   void clear();
 
-  const SetOfFacts& accessibleFacts() const { return _accessibleFacts; }
-  const std::set<Fact>& accessibleFactsWithAnyValues() const { return _accessibleFactsWithAnyValues; }
-  const SetOfFacts& removableFacts() const { return _removableFacts; }
-  const std::set<Fact>& removableFactsWithAnyValues() const { return _removableFactsWithAnyValues; }
+  const SetOfFacts& accessibleFacts() const { return _accessibleFacts; } // TODO: remove?
+  const std::set<Fact>& accessibleFactsWithAnyValues() const { return _accessibleFactsWithAnyValues; } // TODO: remove?
+  const SetOfFacts& removableFacts() const { return _removableFacts; } // TODO: remove?
+  const std::set<Fact>& removableFactsWithAnyValues() const { return _removableFactsWithAnyValues; } // TODO: remove?
 
 
 private:

@@ -15,24 +15,6 @@
 namespace ogp
 {
 
-namespace
-{
-
-bool _isNegatedFactCompatibleWithFacts(
-    const Fact& pNegatedFact,
-    const std::map<Fact, bool>& pFacts)
-{
-  for (const auto& currFact : pFacts)
-    if (currFact.first.areEqualWithoutFluentConsideration(pNegatedFact) &&
-        ((currFact.first.isValueNegated() && currFact.first.fluent() == pNegatedFact.fluent()) ||
-         (!currFact.first.isValueNegated() && currFact.first.fluent() != pNegatedFact.fluent())))
-      return true;
-  return false;
-}
-
-}
-
-
 WorldState::WorldState(const SetOfFacts* pFactsPtr)
   : onFactsChanged(),
     onPunctualFacts(),
@@ -364,67 +346,6 @@ void WorldState::setFacts(const std::set<Fact>& pFacts,
   bool goalChanged = false;
   _notifyWhatChanged(whatChanged, goalChanged, pGoalStack, pSetOfEvents, pCallbacks,
                      pOntology, pEntities, pNow);
-}
-
-
-bool WorldState::canFactOptBecomeTrue(const FactOptional& pFactOptional,
-                                      const std::vector<Parameter>& pParameters) const
-{
-  const auto& accessibleFacts = _cache->accessibleFacts();
-  if (!pFactOptional.isFactNegated)
-    return canFactBecomeTrue(pFactOptional.fact, pParameters);
-
-  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, _factsMapping.facts()))
-    return true;
-  if (_isNegatedFactCompatibleWithFacts(pFactOptional.fact, accessibleFacts.facts()))
-    return true;
-
-  const auto& removableFacts = _cache->removableFacts();
-  if (removableFacts.facts().count(pFactOptional.fact) > 0)
-    return true;
-
-  const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
-  for (const auto& currRemovableFact : removableFactsWithAnyValues)
-    if (pFactOptional.fact.areEqualExceptAnyValues(currRemovableFact, nullptr, nullptr, &pParameters))
-      return true;
-
-  if (_factsMapping.facts().count(pFactOptional.fact) > 0)
-    return false;
-  return true;
-}
-
-bool WorldState::canFactBecomeTrue(const Fact& pFact,
-                                   const std::vector<Parameter>& pParameters) const
-{
-  const auto& accessibleFacts = _cache->accessibleFacts();
-  if (!pFact.isValueNegated())
-  {
-    if (!_factsMapping.find(pFact).empty() ||
-        !accessibleFacts.find(pFact).empty())
-      return true;
-
-    const auto& accessibleFactsWithAnyValues = _cache->accessibleFactsWithAnyValues();
-    for (const auto& currAccessibleFact : accessibleFactsWithAnyValues)
-      if (pFact.areEqualExceptAnyValues(currAccessibleFact, nullptr, nullptr, &pParameters))
-        return true;
-  }
-  else
-  {
-    if (_isNegatedFactCompatibleWithFacts(pFact, _factsMapping.facts()))
-      return true;
-    if (_isNegatedFactCompatibleWithFacts(pFact, accessibleFacts.facts()))
-      return true;
-
-    const auto& removableFacts = _cache->removableFacts();
-    if (removableFacts.facts().count(pFact) > 0)
-      return true;
-
-    const auto& removableFactsWithAnyValues = _cache->removableFactsWithAnyValues();
-    for (const auto& currRemovableFact : removableFactsWithAnyValues)
-      if (pFact.areEqualExceptAnyValues(currRemovableFact, nullptr, nullptr, &pParameters))
-        return true;
-  }
-  return false;
 }
 
 
