@@ -582,7 +582,16 @@ bool _checkObjectiveCallback(std::map<Parameter, std::set<Entity>>& pParameters,
       if (foundSomethingThatMatched && newParamValues.empty())
       {
         if (pParameter.type)
+        {
+          // find all the possible occurence in the entities
           newParamValues = typenameToEntities(pParameter.type->name, ontology.constants, pContext.problem.entities);
+
+          // remove the ones that are already in the world state for this fact
+          std::set<Entity> parameterValues;
+          pContext.problem.worldState.factsMapping().extractPotentialArgumentsOfAFactParameter(parameterValues, pFactOptional.fact, pParameter.name);
+          for (const auto& elem : parameterValues)
+              newParamValues.erase(elem);
+        }
         return !newParamValues.empty();
       }
     }

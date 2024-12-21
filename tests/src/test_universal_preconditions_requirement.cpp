@@ -136,6 +136,35 @@ void _forallConditions()
 }
 
 
+void _forallGoal()
+{
+  const std::string action1 = "action1";
+
+  ogp::Ontology ontology;
+  ontology.types = ogp::SetOfTypes::fromPddl("t1\n"
+                                             "t2");
+  ontology.constants = ogp::SetOfEntities::fromPddl("v1a v1b v1c - t1\n"
+                                                    "v2a - t2\n", ontology.types);
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a(?t - t1)\n"
+                                                      "fact_b", ontology.types);
+
+  std::map<std::string, ogp::Action> actions;
+  std::vector<ogp::Parameter> actionParameters{_parameter("?v1 - t1", ontology)};
+  ogp::Action actionObj1({}, _worldStateModification_fromPddl("(fact_a ?v1)", ontology, actionParameters));
+  actionObj1.parameters = std::move(actionParameters);
+  actions.emplace(action1, actionObj1);
+
+  ogp::Domain domain(std::move(actions), ontology);
+  ogp::Problem problem;
+  _setGoalsForAPriority(problem, {_pddlGoal("(forall (?t - t1) (fact_a ?t))", ontology)}, ontology.constants);
+  EXPECT_EQ("action1(?v1 -> v1a)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("action1(?v1 -> v1b)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("action1(?v1 -> v1c)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+  EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+
+}
+
+
 }
 
 
@@ -143,4 +172,5 @@ void _forallConditions()
 TEST(Planner, test_universalPreconditionsRequirement)
 {
   _forallConditions();
+  _forallGoal();
 }
