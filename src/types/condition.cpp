@@ -1011,9 +1011,20 @@ bool ConditionForall::findConditionCandidateFromFactFromEffect(
     parameters[parameter];
 
     return condition->findConditionCandidateFromFactFromEffect([&](const FactOptional& pConditionFact) {
-      auto factToConsider = pConditionFact;
-      factToConsider.fact.replaceArguments(localParamToValue);
-      return pDoesConditionFactMatchFactFromEffect(factToConsider) == !pIsWrappingExpressionNegated;
+      bool res = false;
+      auto& values = localParamToValue[parameter];
+
+      while (true)
+      {
+        auto factToConsider = pConditionFact;
+        factToConsider.fact.replaceArguments(localParamToValue);
+        res = pDoesConditionFactMatchFactFromEffect(factToConsider) || res;
+        if (values.empty())
+          break;
+        values.erase(values.begin());
+      }
+
+      return res == !pIsWrappingExpressionNegated;
     }, pWorldState, pConstants, pObjects, pFactFromEffect, pFactFromEffectParameters, pFactFromEffectTmpParametersPtr,
     parameters, pIsWrappingExpressionNegated);
   }

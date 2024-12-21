@@ -145,8 +145,7 @@ void _forallGoal()
                                              "t2");
   ontology.constants = ogp::SetOfEntities::fromPddl("v1a v1b v1c - t1\n"
                                                     "v2a - t2\n", ontology.types);
-  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a(?t - t1)\n"
-                                                      "fact_b", ontology.types);
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a(?t - t1)", ontology.types);
 
   std::map<std::string, ogp::Action> actions;
   std::vector<ogp::Parameter> actionParameters{_parameter("?v1 - t1", ontology)};
@@ -161,7 +160,42 @@ void _forallGoal()
   EXPECT_EQ("action1(?v1 -> v1b)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("action1(?v1 -> v1c)", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
   EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
+}
 
+
+void _forallGoalWithAnd()
+{
+  const std::string action1 = "action1";
+
+  ogp::Ontology ontology;
+  ontology.types = ogp::SetOfTypes::fromPddl("t1\n"
+                                             "t2");
+  ontology.constants = ogp::SetOfEntities::fromPddl("v1a v1b - t1\n"
+                                                    "v2a - t2\n", ontology.types);
+  ontology.predicates = ogp::SetOfPredicates::fromStr("fact_a(?t - t1)\n"
+                                                      "fact_b(?t - t1)", ontology.types);
+
+  std::map<std::string, ogp::Action> actions;
+  std::vector<ogp::Parameter> actionParameters{_parameter("?v1 - t1", ontology)};
+  ogp::Action actionObj1({}, _worldStateModification_fromPddl("(fact_a ?v1)", ontology, actionParameters));
+  actionObj1.parameters = std::move(actionParameters);
+  actions.emplace(action1, actionObj1);
+
+  ogp::Domain domain(std::move(actions), ontology);
+  auto& setOfEventsMap = domain.getSetOfEvents();
+  ogp::Problem problem;
+  _setGoalsForAPriority(problem, {_pddlGoal("(forall (?t - t1) (and (fact_a ?t) (fact_b ?t)))", ontology)}, ontology.constants);
+  _addFact(problem.worldState, "fact_b(v1a)", problem.goalStack, ontology, setOfEventsMap, _now);
+  _addFact(problem.worldState, "fact_b(v1b)", problem.goalStack, ontology, setOfEventsMap, _now);
+
+  auto res1 = _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr();
+  auto res2 = _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr();
+  EXPECT_NE(res1, res2);
+  if (res1 != "action1(?v1 -> v1a)" && res1 != "action1(?v1 -> v1b)")
+    EXPECT_FALSE(true);
+  if (res2 != "action1(?v1 -> v1a)" && res2 != "action1(?v1 -> v1b)")
+    EXPECT_FALSE(true);
+  EXPECT_EQ("", _lookForAnActionToDoThenNotify(problem, domain, _now).actionInvocation.toStr());
 }
 
 
@@ -173,4 +207,5 @@ TEST(Planner, test_universalPreconditionsRequirement)
 {
   _forallConditions();
   _forallGoal();
+  _forallGoalWithAnd();
 }
